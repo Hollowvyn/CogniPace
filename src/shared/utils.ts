@@ -51,6 +51,35 @@ export function parseDifficulty(input?: string): Difficulty {
   return "Unknown";
 }
 
+export function difficultyGoalMs(difficulty: Difficulty): number {
+  if (difficulty === "Easy") {
+    return 20 * 60 * 1000;
+  }
+  if (difficulty === "Medium") {
+    return 35 * 60 * 1000;
+  }
+  if (difficulty === "Hard") {
+    return 50 * 60 * 1000;
+  }
+  return 30 * 60 * 1000;
+}
+
+export function formatClock(totalMs: number): string {
+  const safeMs = Math.max(0, Math.floor(totalMs));
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const mm = String(minutes).padStart(2, "0");
+  const ss = String(seconds).padStart(2, "0");
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, "0")}:${mm}:${ss}`;
+  }
+  return `${mm}:${ss}`;
+}
+
 export function uniqueStrings(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }

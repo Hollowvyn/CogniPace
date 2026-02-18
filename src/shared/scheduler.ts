@@ -1,12 +1,13 @@
 import { createDefaultStudyState } from "./constants";
 import {
   AttemptHistoryEntry,
+  Difficulty,
   Rating,
   ReviewMode,
   StudyState,
   UserSettings
 } from "./types";
-import { addDaysIso, nowIso } from "./utils";
+import { addDaysIso, difficultyGoalMs, nowIso } from "./utils";
 
 const MAX_INTERVAL_DAYS = 180;
 
@@ -123,7 +124,11 @@ function lapsesInLastDays(history: AttemptHistoryEntry[], days: number, now: Dat
   ).length;
 }
 
-function computeStatus(nextState: StudyState, now: Date): StudyState["status"] {
+function computeStatus(
+  nextState: StudyState,
+  now: Date,
+  difficulty: Difficulty
+): StudyState["status"] {
   if (nextState.status === "SUSPENDED") {
     return "SUSPENDED";
   }
@@ -140,12 +145,19 @@ function computeStatus(nextState: StudyState, now: Date): StudyState["status"] {
   const lastTwo = lastRatings(history, 2);
   const lastThree = lastRatings(history, 3);
   const currentInterval = nextState.intervalDays;
+  const timedSolveWithinGoal =
+    typeof nextState.lastSolveTimeMs === "number" &&
+    nextState.lastSolveTimeMs <= difficultyGoalMs(difficulty);
 
   const canBeReviewing = currentInterval >= 7 && lastTwo.length === 2 && lastTwo.every((rating) => rating >= 2);
   if (canBeReviewing) {
     const recentLapses = lapsesInLastDays(history, 30, now);
     const canBeMastered =
-      currentInterval >= 30 && lastThree.length === 3 && ratingAverage(lastThree) >= 2.5 && recentLapses === 0;
+      currentInterval >= 30 &&
+      lastThree.length === 3 &&
+      ratingAverage(lastThree) >= 2.5 &&
+      recentLapses === 0 &&
+      timedSolveWithinGoal;
 
     if (canBeMastered) {
       return "MASTERED";
@@ -159,6 +171,7 @@ function computeStatus(nextState: StudyState, now: Date): StudyState["status"] {
 
 export interface ApplyReviewInput {
   state?: StudyState;
+  difficulty?: Difficulty;
   rating: Rating;
   solveTimeMs?: number;
   mode?: ReviewMode;
@@ -210,7 +223,7 @@ export function applyReview(input: ApplyReviewInput): StudyState {
     attemptHistory: [...state.attemptHistory, historyEntry]
   };
 
-  updated.status = computeStatus(updated, nowDate);
+  updated.status = computeStatus(updated, nowDate, input.difficulty ?? "Unknown");
   if (effectiveRating === 0) {
     updated.status = "LEARNING";
   }

@@ -128,7 +128,7 @@ function renderTable(): void {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td><a href="${row.problem.url}" target="_blank">${escapeHtml(row.problem.title)}</a><div class="sub">${escapeHtml(
+      <td><a href="${row.problem.url}" target="_blank" data-problem-link="true">${escapeHtml(row.problem.title)}</a><div class="sub">${escapeHtml(
       row.problem.leetcodeSlug
     )}</div></td>
       <td>${row.problem.difficulty}</td>
@@ -173,6 +173,13 @@ function renderTable(): void {
 
       actionCell.appendChild(suspend);
       actionCell.appendChild(reset);
+    }
+
+    const link = tr.querySelector<HTMLAnchorElement>('a[data-problem-link="true"]');
+    if (link) {
+      link.addEventListener("click", () => {
+        void sendMessage("QUEUE_AUTO_TIMER_START", { slug: row.problem.leetcodeSlug });
+      });
     }
 
     tbody.appendChild(tr);
