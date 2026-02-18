@@ -15,19 +15,19 @@
 
       <section class="metrics">
         <div class="metric"><span>Due</span><strong id="due-count">0</strong></div>
-        <div class="metric"><span>New</span><strong id="new-count">0</strong></div>
         <div class="metric"><span>Streak</span><strong id="streak-count">0</strong></div>
       </section>
 
       <section class="next-review">Next review: <strong id="next-review">-</strong></section>
 
-      <section class="filters">
-        <button id="filter-all" data-active="true">All</button>
-        <button id="filter-due" data-active="false">Due</button>
-        <button id="filter-new" data-active="false">New</button>
+      <section class="focus-panel">
+        <div class="focus-header">
+          <h2>Focus now</h2>
+          <button id="shuffle-focus-btn" class="secondary">Shuffle</button>
+        </div>
+        <p id="focus-caption" class="focus-caption">Random due picks.</p>
+        <ul id="focus-list" class="focus-list"></ul>
       </section>
-
-      <ul id="queue-list" class="queue-list"></ul>
 
       <section class="add-panel">
         <button id="add-current-btn">Add current problem</button>

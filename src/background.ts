@@ -1,5 +1,5 @@
 import { summarizeAnalytics } from "./shared/analytics";
-import { getCuratedSet, listCuratedSetNames } from "./shared/curatedSets";
+import { getCuratedSet, getCurriculumRecommendations, listCuratedSetNames } from "./shared/curatedSets";
 import { buildTodayQueue } from "./shared/queue";
 import {
   ensureProblem,
@@ -21,6 +21,72 @@ function ok<T>(data: T): RuntimeResponse<T> {
 function fail(error: unknown): RuntimeResponse<never> {
   const message = error instanceof Error ? error.message : "Unknown error";
   return { ok: false, error: message };
+}
+
+const AUTO_TIMER_QUEUE_KEY = "lcsr_auto_timer_queue_v1";
+const AUTO_TIMER_TTL_MS = 15 * 60 * 1000;
+
+type AutoTimerQueue = Record<string, number[]>;
+
+async function getAutoTimerQueue(): Promise<AutoTimerQueue> {
+  const result = await chrome.storage.local.get(AUTO_TIMER_QUEUE_KEY);
+  return (result[AUTO_TIMER_QUEUE_KEY] as AutoTimerQueue | undefined) ?? {};
+}
+
+async function saveAutoTimerQueue(queue: AutoTimerQueue): Promise<void> {
+  await chrome.storage.local.set({ [AUTO_TIMER_QUEUE_KEY]: queue });
+}
+
+function pruneAutoTimerQueue(queue: AutoTimerQueue, nowMs: number): AutoTimerQueue {
+  const next: AutoTimerQueue = {};
+
+  for (const [slug, timestamps] of Object.entries(queue)) {
+    const valid = timestamps.filter((ts) => nowMs - ts <= AUTO_TIMER_TTL_MS);
+    if (valid.length > 0) {
+      next[slug] = valid;
+    }
+  }
+
+  return next;
+}
+
+async function queueAutoTimerStart(payload: { slug: string }): Promise<RuntimeResponse> {
+  const slug = normalizeSlug(payload.slug);
+  if (!slug) {
+    throw new Error("Invalid slug for timer queue.");
+  }
+
+  const nowMs = Date.now();
+  const queue = pruneAutoTimerQueue(await getAutoTimerQueue(), nowMs);
+  queue[slug] = [...(queue[slug] ?? []), nowMs];
+  await saveAutoTimerQueue(queue);
+
+  return ok({ queued: true, slug });
+}
+
+async function consumeAutoTimerStart(payload: { slug: string }): Promise<RuntimeResponse> {
+  const slug = normalizeSlug(payload.slug);
+  if (!slug) {
+    return ok({ autoStart: false });
+  }
+
+  const nowMs = Date.now();
+  const queue = pruneAutoTimerQueue(await getAutoTimerQueue(), nowMs);
+  const entries = [...(queue[slug] ?? [])];
+
+  const autoStart = entries.length > 0;
+  if (autoStart) {
+    entries.shift();
+  }
+
+  if (entries.length > 0) {
+    queue[slug] = entries;
+  } else {
+    delete queue[slug];
+  }
+
+  await saveAutoTimerQueue(queue);
+  return ok({ autoStart });
 }
 
 async function upsertFromPage(payload: {
@@ -90,6 +156,7 @@ async function rateProblem(payload: {
 
     const nextState = applyReview({
       state: current,
+      difficulty: problem.difficulty,
       rating: payload.rating,
       solveTimeMs: payload.solveTimeMs,
       mode: payload.mode,
@@ -144,6 +211,7 @@ async function getQueue(): Promise<RuntimeResponse> {
 async function getDashboardData(): Promise<RuntimeResponse> {
   const data = await getAppData();
   const queue = buildTodayQueue(data);
+  const curriculum = getCurriculumRecommendations(data, 3);
   const analytics = summarizeAnalytics(data);
   const problems = Object.values(data.problemsBySlug)
     .map((problem) => ({
@@ -155,6 +223,14 @@ async function getDashboardData(): Promise<RuntimeResponse> {
   return ok({
     problems,
     queue,
+    curriculum: {
+      topic: curriculum.topic,
+      completed: curriculum.completed,
+      items: curriculum.items.map((item) => ({
+        ...item,
+        isInLibrary: !!data.problemsBySlug[item.slug]
+      }))
+    },
     analytics,
     settings: data.settings,
     curatedSetNames: listCuratedSetNames()
@@ -291,15 +367,25 @@ async function updateSettings(payload: Record<string, unknown>): Promise<Runtime
   return ok({ settings: updated.settings });
 }
 
-async function addProblemByInput(payload: { input: string; sourceSet?: string }): Promise<RuntimeResponse> {
+async function addProblemByInput(payload: {
+  input: string;
+  sourceSet?: string;
+  topics?: string[];
+  markAsStarted?: boolean;
+}): Promise<RuntimeResponse> {
   const parsed = parseProblemInput(payload.input);
   const updated = await mutateAppData((data) => {
     const problem = ensureProblem(data, {
       slug: parsed.slug,
       url: parsed.url,
-      sourceSet: payload.sourceSet
+      sourceSet: payload.sourceSet,
+      topics: payload.topics
     });
     const state = ensureStudyState(data, parsed.slug);
+    if (payload.markAsStarted && state.reviewCount === 0 && state.status === "NEW") {
+      state.status = "LEARNING";
+      state.lastReviewedAt = nowIso();
+    }
 
     return {
       ...data,
@@ -360,6 +446,10 @@ async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> 
       return getQueue();
     case "GET_DASHBOARD_DATA":
       return getDashboardData();
+    case "QUEUE_AUTO_TIMER_START":
+      return queueAutoTimerStart(message.payload as Parameters<typeof queueAutoTimerStart>[0]);
+    case "CONSUME_AUTO_TIMER_START":
+      return consumeAutoTimerStart(message.payload as Parameters<typeof consumeAutoTimerStart>[0]);
     case "IMPORT_CURATED_SET":
       return importCurated(message.payload as Parameters<typeof importCurated>[0]);
     case "IMPORT_CUSTOM_SET":

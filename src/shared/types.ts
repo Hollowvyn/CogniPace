@@ -165,6 +165,12 @@ export interface MessageRequestMap {
   };
   GET_TODAY_QUEUE: Record<string, never>;
   GET_DASHBOARD_DATA: Record<string, never>;
+  QUEUE_AUTO_TIMER_START: {
+    slug: string;
+  };
+  CONSUME_AUTO_TIMER_START: {
+    slug: string;
+  };
   IMPORT_CURATED_SET: {
     setName: string;
   };
@@ -178,6 +184,8 @@ export interface MessageRequestMap {
   ADD_PROBLEM_BY_INPUT: {
     input: string;
     sourceSet?: string;
+    topics?: string[];
+    markAsStarted?: boolean;
   };
   SUSPEND_PROBLEM: {
     slug: string;

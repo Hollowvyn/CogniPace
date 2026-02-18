@@ -1,81 +1,148 @@
-import { CuratedProblemInput } from "./types";
-import { slugToTitle, uniqueStrings } from "./utils";
+import { AppData, CuratedProblemInput, StudyState } from "./types";
+import { slugToTitle, slugToUrl, uniqueStrings } from "./utils";
 
-const blind75Slugs = [
-  "two-sum",
-  "best-time-to-buy-and-sell-stock",
-  "contains-duplicate",
-  "product-of-array-except-self",
-  "maximum-subarray",
-  "maximum-product-subarray",
-  "find-minimum-in-rotated-sorted-array",
-  "search-in-rotated-sorted-array",
-  "3sum",
-  "container-with-most-water",
-  "sum-of-two-integers",
-  "number-of-1-bits",
-  "counting-bits",
-  "missing-number",
-  "reverse-bits",
-  "climbing-stairs",
-  "coin-change",
-  "longest-increasing-subsequence",
-  "word-break",
-  "combination-sum",
-  "house-robber",
-  "house-robber-ii",
-  "decode-ways",
-  "unique-paths",
-  "jump-game",
-  "clone-graph",
-  "course-schedule",
-  "pacific-atlantic-water-flow",
-  "number-of-islands",
-  "longest-consecutive-sequence",
-  "alien-dictionary",
-  "graph-valid-tree",
-  "number-of-connected-components-in-an-undirected-graph",
-  "insert-interval",
-  "merge-intervals",
-  "non-overlapping-intervals",
-  "meeting-rooms",
-  "meeting-rooms-ii",
-  "reverse-linked-list",
-  "linked-list-cycle",
-  "merge-two-sorted-lists",
-  "merge-k-sorted-lists",
-  "remove-nth-node-from-end-of-list",
-  "reorder-list",
-  "set-matrix-zeroes",
-  "spiral-matrix",
-  "rotate-image",
-  "word-search",
-  "longest-substring-without-repeating-characters",
-  "longest-repeating-character-replacement",
-  "minimum-window-substring",
-  "valid-anagram",
-  "group-anagrams",
-  "valid-parentheses",
-  "valid-palindrome",
-  "longest-palindromic-substring",
-  "palindromic-substrings",
-  "encode-and-decode-strings",
-  "maximum-depth-of-binary-tree",
-  "same-tree",
-  "invert-binary-tree",
-  "binary-tree-level-order-traversal",
-  "serialize-and-deserialize-binary-tree",
-  "subtree-of-another-tree",
-  "construct-binary-tree-from-preorder-and-inorder-traversal",
-  "validate-binary-search-tree",
-  "kth-smallest-element-in-a-bst",
-  "lowest-common-ancestor-of-a-binary-search-tree",
-  "implement-trie-prefix-tree",
-  "add-and-search-word-data-structure-design",
-  "word-search-ii",
-  "top-k-frequent-elements",
-  "find-median-from-data-stream"
+interface TopicPathSection {
+  topic: string;
+  slugs: string[];
+}
+
+export interface CurriculumStep {
+  topic: string;
+  slug: string;
+  title: string;
+  url: string;
+}
+
+const blind75TopicPath: TopicPathSection[] = [
+  {
+    topic: "Array",
+    slugs: [
+      "two-sum",
+      "best-time-to-buy-and-sell-stock",
+      "contains-duplicate",
+      "product-of-array-except-self",
+      "maximum-subarray",
+      "maximum-product-subarray",
+      "find-minimum-in-rotated-sorted-array",
+      "search-in-rotated-sorted-array",
+      "3sum",
+      "container-with-most-water"
+    ]
+  },
+  {
+    topic: "Binary",
+    slugs: [
+      "sum-of-two-integers",
+      "number-of-1-bits",
+      "counting-bits",
+      "missing-number",
+      "reverse-bits"
+    ]
+  },
+  {
+    topic: "Dynamic Programming",
+    slugs: [
+      "climbing-stairs",
+      "coin-change",
+      "longest-increasing-subsequence",
+      "longest-common-subsequence",
+      "word-break",
+      "combination-sum-iv",
+      "house-robber",
+      "house-robber-ii",
+      "decode-ways",
+      "unique-paths",
+      "jump-game"
+    ]
+  },
+  {
+    topic: "Graph",
+    slugs: [
+      "clone-graph",
+      "course-schedule",
+      "pacific-atlantic-water-flow",
+      "number-of-islands",
+      "longest-consecutive-sequence",
+      "alien-dictionary",
+      "graph-valid-tree",
+      "number-of-connected-components-in-an-undirected-graph"
+    ]
+  },
+  {
+    topic: "Interval",
+    slugs: [
+      "insert-interval",
+      "merge-intervals",
+      "non-overlapping-intervals",
+      "meeting-rooms",
+      "meeting-rooms-ii"
+    ]
+  },
+  {
+    topic: "Linked List",
+    slugs: [
+      "reverse-linked-list",
+      "linked-list-cycle",
+      "merge-two-sorted-lists",
+      "merge-k-sorted-lists",
+      "remove-nth-node-from-end-of-list",
+      "reorder-list"
+    ]
+  },
+  {
+    topic: "Matrix",
+    slugs: [
+      "set-matrix-zeroes",
+      "spiral-matrix",
+      "rotate-image",
+      "word-search"
+    ]
+  },
+  {
+    topic: "String",
+    slugs: [
+      "longest-substring-without-repeating-characters",
+      "longest-repeating-character-replacement",
+      "minimum-window-substring",
+      "valid-anagram",
+      "group-anagrams",
+      "valid-parentheses",
+      "valid-palindrome",
+      "longest-palindromic-substring",
+      "palindromic-substrings",
+      "encode-and-decode-strings"
+    ]
+  },
+  {
+    topic: "Tree",
+    slugs: [
+      "maximum-depth-of-binary-tree",
+      "same-tree",
+      "invert-binary-tree",
+      "binary-tree-maximum-path-sum",
+      "binary-tree-level-order-traversal",
+      "serialize-and-deserialize-binary-tree",
+      "subtree-of-another-tree",
+      "construct-binary-tree-from-preorder-and-inorder-traversal",
+      "validate-binary-search-tree",
+      "kth-smallest-element-in-a-bst",
+      "lowest-common-ancestor-of-a-binary-search-tree",
+      "implement-trie-prefix-tree",
+      "add-and-search-word-data-structure-design",
+      "word-search-ii"
+    ]
+  },
+  {
+    topic: "Heap",
+    slugs: [
+      "merge-k-sorted-lists",
+      "top-k-frequent-elements",
+      "find-median-from-data-stream"
+    ]
+  }
 ];
+
+const blind75Slugs = blind75TopicPath.flatMap((section) => section.slugs);
 
 const leetcode75Slugs = [
   "merge-strings-alternately",
@@ -317,8 +384,68 @@ function fromSlugs(slugs: string[]): CuratedProblemInput[] {
   }));
 }
 
+function fromTopicPath(path: TopicPathSection[]): CuratedProblemInput[] {
+  const bySlug = new Map<string, CuratedProblemInput>();
+
+  for (const section of path) {
+    for (const slug of section.slugs) {
+      const existing = bySlug.get(slug);
+      if (existing) {
+        existing.tags = uniqueStrings([...(existing.tags ?? []), section.topic]);
+        continue;
+      }
+
+      bySlug.set(slug, {
+        slug,
+        title: slugToTitle(slug),
+        tags: [section.topic]
+      });
+    }
+  }
+
+  return Array.from(bySlug.values());
+}
+
+function buildCurriculumSteps(path: TopicPathSection[]): CurriculumStep[] {
+  const seen = new Set<string>();
+  const steps: CurriculumStep[] = [];
+
+  for (const section of path) {
+    for (const slug of section.slugs) {
+      if (seen.has(slug)) {
+        continue;
+      }
+      seen.add(slug);
+      steps.push({
+        topic: section.topic,
+        slug,
+        title: slugToTitle(slug),
+        url: slugToUrl(slug)
+      });
+    }
+  }
+
+  return steps;
+}
+
+function hasStartedStep(state?: StudyState): boolean {
+  if (!state) {
+    return false;
+  }
+
+  return (
+    state.reviewCount > 0 ||
+    state.status === "LEARNING" ||
+    state.status === "REVIEWING" ||
+    state.status === "MASTERED" ||
+    (state.attemptHistory?.length ?? 0) > 0
+  );
+}
+
+const defaultCurriculumSteps = buildCurriculumSteps(blind75TopicPath);
+
 export const CURATED_SETS: Record<string, CuratedProblemInput[]> = {
-  Blind75: fromSlugs(blind75Slugs),
+  Blind75: fromTopicPath(blind75TopicPath),
   LeetCode75: fromSlugs(leetcode75Slugs),
   Grind75: fromSlugs(grind75Slugs),
   NeetCode150: fromSlugs([...blind75Slugs, ...leetcode75Slugs, ...neetCodeExtra])
@@ -330,4 +457,47 @@ export function getCuratedSet(name: string): CuratedProblemInput[] {
 
 export function listCuratedSetNames(): string[] {
   return Object.keys(CURATED_SETS);
+}
+
+export function getDefaultCurriculumSteps(): CurriculumStep[] {
+  return [...defaultCurriculumSteps];
+}
+
+export function getCurriculumRecommendations(
+  data: AppData,
+  maxItems = 3
+): { topic: string | null; items: CurriculumStep[]; completed: boolean } {
+  if (data.settings.setsEnabled.Blind75 === false) {
+    return { topic: null, items: [], completed: false };
+  }
+
+  const limit = Math.max(1, Math.floor(maxItems));
+  const firstPendingIndex = defaultCurriculumSteps.findIndex(
+    (step) => !hasStartedStep(data.studyStatesBySlug[step.slug])
+  );
+
+  if (firstPendingIndex < 0) {
+    return { topic: null, items: [], completed: true };
+  }
+
+  const topic = defaultCurriculumSteps[firstPendingIndex].topic;
+  const items: CurriculumStep[] = [];
+
+  for (let i = firstPendingIndex; i < defaultCurriculumSteps.length; i += 1) {
+    const step = defaultCurriculumSteps[i];
+    if (step.topic !== topic && items.length > 0) {
+      break;
+    }
+
+    if (hasStartedStep(data.studyStatesBySlug[step.slug])) {
+      continue;
+    }
+
+    items.push(step);
+    if (items.length >= limit) {
+      break;
+    }
+  }
+
+  return { topic, items, completed: false };
 }
