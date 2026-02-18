@@ -1,6 +1,6 @@
 import { createDefaultStudyState } from "./constants";
 import { AppData, CuratedProblemInput, Difficulty, Problem, StudyState } from "./types";
-import { normalizeSlug, nowIso, parseDifficulty, slugToTitle, slugToUrl, uniqueStrings } from "./utils";
+import { isProblemPage, normalizeSlug, nowIso, parseDifficulty, slugToTitle, slugToUrl, uniqueStrings } from "./utils";
 
 export interface UpsertProblemInput {
   slug: string;
@@ -104,10 +104,14 @@ export function parseProblemInput(input: string): { slug: string; url?: string }
     throw new Error("Enter a LeetCode URL or slug.");
   }
 
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
     try {
+      if (!isProblemPage(trimmed)) {
+        throw new Error("URL does not appear to be a LeetCode problem.");
+      }
+
       const parsed = new URL(trimmed);
-      const match = parsed.pathname.match(/\/problems\/([^/]+)\/?/);
+      const match = parsed.pathname.match(/\/problems\/([^/]+)\/?/i);
       if (!match?.[1]) {
         throw new Error("URL does not appear to be a LeetCode problem.");
       }
@@ -119,7 +123,7 @@ export function parseProblemInput(input: string): { slug: string; url?: string }
 
       return { slug, url: `https://leetcode.com/problems/${slug}/` };
     } catch {
-      throw new Error("Invalid URL.");
+      throw new Error("URL does not appear to be a LeetCode problem.");
     }
   }
 
