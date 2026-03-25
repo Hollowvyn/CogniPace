@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&amp;family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-dim": "#131313",
+            "surface": "#131313",
+            "background": "#131313",
+            "primary-container": "#ffa116",
+            "tertiary-container": "#02c4ff",
+            "on-primary-fixed": "#2b1700",
+            "outline": "#a18d7a",
+            "secondary": "#f2bc82",
+            "primary": "#ffc78b",
+            "error": "#ffb4ab",
+            "on-tertiary-fixed-variant": "#004d66",
+            "on-tertiary-fixed": "#001e2b",
+            "secondary-fixed": "#ffddba",
+            "tertiary-fixed-dim": "#71d2ff",
+            "tertiary": "#94dbff",
+            "on-error": "#690005",
+            "inverse-surface": "#e5e2e1",
+            "on-primary-container": "#683e00",
+            "surface-variant": "#353534",
+            "on-tertiary-container": "#004d67",
+            "surface-container": "#201f1f",
+            "secondary-fixed-dim": "#f2bc82",
+            "surface-container-lowest": "#0e0e0e",
+            "primary-fixed": "#ffddba",
+            "surface-bright": "#393939",
+            "tertiary-fixed": "#c0e8ff",
+            "on-secondary": "#482900",
+            "on-tertiary": "#003547",
+            "surface-tint": "#ffb867",
+            "surface-container-high": "#2a2a2a",
+            "on-surface": "#e5e2e1",
+            "on-surface-variant": "#d9c3ad",
+            "outline-variant": "#544434",
+            "on-secondary-fixed-variant": "#633f10",
+            "surface-container-highest": "#353534",
+            "secondary-container": "#664112",
+            "on-secondary-container": "#e3af75",
+            "on-primary": "#482900",
+            "primary-fixed-dim": "#ffb867",
+            "on-background": "#e5e2e1",
+            "on-primary-fixed-variant": "#673d00",
+            "inverse-on-surface": "#313030",
+            "error-container": "#93000a",
+            "on-secondary-fixed": "#2b1700",
+            "inverse-primary": "#875200",
+            "on-error-container": "#ffdad6",
+            "surface-container-low": "#1c1b1b"
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-size: 18px;
+    }
+    body {
+      width: 360px;
+      height: auto;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #131313;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #353534;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased">
+<!-- Header: TopAppBar -->
+<header class="bg-[#131313] flex justify-between items-center w-full px-3 py-2 border-b border-[#ffffff15]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#ffc78b]" style="font-variation-settings: 'FILL' 1;">terminal</span>
+<h1 class="text-sm font-bold tracking-tight text-[#e5e2e1] font-headline">LeetCode Reviews</h1>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1.5 text-[#a1a1a1] hover:bg-[#2a2a2a] transition-colors active:scale-[0.97] rounded">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+<button class="p-1.5 text-[#a1a1a1] hover:bg-[#2a2a2a] transition-colors active:scale-[0.97] rounded">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<main class="p-3 space-y-4">
+<!-- Summary Bar -->
+<div class="flex items-center justify-between bg-surface-container-low p-2 rounded">
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-tertiary">3 items due</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-high px-2 py-0.5 rounded border border-[#ffffff08]">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface">Streak: 12 days</span>
+</div>
+</div>
+<!-- Recommended Question Section -->
+<section class="space-y-2">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Recommended Now</h2>
+<span class="h-[1px] flex-grow ml-3 bg-outline-variant opacity-20"></span>
+</div>
+<div class="bg-surface-container-high p-3 rounded-lg border border-[#ffffff08] group">
+<div class="flex justify-between items-start mb-3">
+<div class="space-y-1">
+<h3 class="text-sm font-bold font-headline text-on-surface">2Sum</h3>
+<div class="flex gap-2">
+<span class="text-[9px] font-bold uppercase tracking-tighter px-1.5 py-0.5 bg-surface-container-highest text-tertiary-fixed-dim rounded">Easy</span>
+<span class="text-[9px] font-bold uppercase tracking-tighter px-1.5 py-0.5 bg-primary-container/10 text-primary rounded border border-primary/20">Due Now</span>
+</div>
+</div>
+<button class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-bright transition-all active:scale-95 rounded">
+<span class="material-symbols-outlined">shuffle</span>
+</button>
+</div>
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:brightness-110">
+<span>Open Problem</span>
+<span class="material-symbols-outlined text-sm">open_in_new</span>
+</button>
+</div>
+</section>
+<!-- Course Progression Section -->
+<section class="space-y-2">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Next in Course</h2>
+<span class="h-[1px] flex-grow ml-3 bg-outline-variant opacity-20"></span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-[#ffffff08] flex flex-col gap-3">
+<div class="flex items-start gap-3">
+<div class="bg-surface-container-highest p-2 rounded shrink-0">
+<span class="material-symbols-outlined text-tertiary">school</span>
+</div>
+<div class="min-w-0">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest font-semibold truncate">Blind 75</p>
+<p class="text-[9px] text-outline truncate mb-1">Chapter: Arrays &amp; Hashing</p>
+<h3 class="text-xs font-bold text-on-surface truncate">3Sum - Medium</h3>
+</div>
+</div>
+<button class="w-full bg-surface-container-highest text-on-surface py-2 px-4 rounded font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-surface-bright">
+<span>Continue Path</span>
+<span class="material-symbols-outlined text-sm">arrow_forward_ios</span>
+</button>
+</div>
+</section>
+</main>
+<!-- Footer: Navigation Simulation -->
+<footer class="mt-2">
+<div class="flex justify-around items-center h-10 bg-[#1c1c1c] border-t border-[#ffffff15]">
+<button class="flex items-center justify-center text-[#ffc78b] py-2 w-full transition-all active:scale-[0.98]">
+<span class="text-[10px] font-bold uppercase tracking-widest font-['Inter']">Study Mode</span>
+</button>
+<button class="flex items-center justify-center text-[#a1a1a1] py-2 w-full transition-all active:scale-[0.98] hover:text-[#ffc78b]">
+<span class="text-[10px] font-bold uppercase tracking-widest font-['Inter']">Full Dashboard</span>
+</button>
+</div>
+</footer>
+</body></html>

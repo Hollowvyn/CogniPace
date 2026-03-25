@@ -5,7 +5,8 @@
   "description": "LeetCode spaced repetition Chrome extension",
   "scripts": {
     "build": "node build.cjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:logic": "node tests/run-tests.cjs"
   },
   "keywords": [
     "chrome-extension",
@@ -19,5 +20,8 @@
     "@types/chrome": "^0.1.36",
     "esbuild": "^0.27.3",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "ts-fsrs": "^5.3.1"
   }
 }

@@ -1,5 +1,5 @@
 import { sendMessage } from "./shared/runtime";
-import { Difficulty, StudyState } from "./shared/types";
+import { Difficulty, Rating, StudyState } from "./shared/types";
 import { difficultyGoalMs, formatClock, normalizeSlug, parseDifficulty, slugToTitle } from "./shared/utils";
 
 const OVERLAY_ID = "lcsr-overlay-root";
@@ -30,6 +30,10 @@ let autoStartHandle: number | null = null;
 let judgeTimeoutHandle: number | null = null;
 let awaitingJudgeResult = false;
 let latestSubmitAtMs = 0;
+let overlayCollapsed = false;
+let selectedRating: Rating = 2;
+let draftNotes = "";
+let draftContextSlug = "";
 
 function getProblemSlugFromUrl(url = window.location.href): string | null {
   const match = url.match(/\/problems\/([^/]+)\/?/);
@@ -74,17 +78,11 @@ function ensureOverlay(): HTMLElement {
   const root = document.createElement("div");
   root.id = OVERLAY_ID;
   root.style.position = "fixed";
-  root.style.right = "16px";
-  root.style.bottom = "16px";
+  root.style.right = "20px";
+  root.style.bottom = "20px";
   root.style.zIndex = "2147483647";
-  root.style.maxWidth = "340px";
-  root.style.background = "#0d1117";
-  root.style.color = "#f8fafc";
-  root.style.border = "1px solid #243244";
-  root.style.borderRadius = "12px";
-  root.style.boxShadow = "0 8px 30px rgba(0,0,0,0.35)";
-  root.style.padding = "12px";
-  root.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+  root.style.maxWidth = "360px";
+  root.style.fontFamily = '"Inter", "Segoe UI", sans-serif';
   root.style.fontSize = "12px";
   root.style.lineHeight = "1.45";
   document.body.appendChild(root);
@@ -260,6 +258,7 @@ function resetRuntimeStateForNavigation(): void {
   pausedElapsedMs = 0;
   awaitingJudgeResult = false;
   latestSubmitAtMs = 0;
+  draftContextSlug = "";
 }
 
 function scheduleAutoStartTimer(): void {
@@ -279,81 +278,261 @@ function scheduleAutoStartTimer(): void {
   setFeedback("Opened from extension. Timer will auto-start in 5 seconds.");
 }
 
+function modeBadge(state: StudyState | null): string {
+  return state?.reviewCount ? "REPEAT_REVIEW" : "FIRST_SOLVE";
+}
+
+function renderRatingButton(rating: Rating, label: string): string {
+  const active = selectedRating === rating;
+  return `
+    <button
+      data-rating="${rating}"
+      style="
+        min-height:64px;
+        border-radius:4px;
+        border:${active ? "1px solid #ffa116" : "1px solid rgba(161,141,122,0.12)"};
+        background:${active ? "rgba(255,161,22,0.18)" : "rgba(255,255,255,0.04)"};
+        color:${active ? "#ffc78b" : "#e5e2e1"};
+        display:grid;
+        gap:4px;
+        place-items:center;
+        font-weight:700;
+        text-transform:uppercase;
+        letter-spacing:0.08em;
+        cursor:pointer;
+      "
+    >
+      <span>${label}</span>
+      <span style="font-size:10px;color:${active ? "#ffc78b" : "#8f857d"};">${
+        rating === 0 ? "<1m" : rating === 1 ? "2d" : rating === 2 ? "4d" : "7d"
+      }</span>
+    </button>
+  `;
+}
+
+function renderCollapsedOverlay(title: string, state: StudyState | null): string {
+  return `
+    <style>
+      #${OVERLAY_ID} * { box-sizing: border-box; }
+      #${OVERLAY_ID} button { font: inherit; }
+    </style>
+    <section
+      style="
+        min-width:320px;
+        border-radius:6px;
+        background:rgba(19,19,19,0.9);
+        color:#e5e2e1;
+        box-shadow:0 24px 64px rgba(0,0,0,0.45);
+        backdrop-filter:blur(14px);
+        overflow:hidden;
+        border:1px solid rgba(161,141,122,0.18);
+      "
+    >
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(161,141,122,0.08);">
+        <div style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-weight:700;letter-spacing:0.08em;color:#ffa116;">TRACKING_SOLVE</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8f857d;">${escapeHtml(
+            state?.status ?? "ACTIVE"
+          )}</span>
+          <button id="lcsr-expand-chip" style="width:28px;height:28px;border-radius:4px;background:rgba(255,161,22,0.1);color:#ffc78b;border:0;cursor:pointer;">▢</button>
+        </div>
+      </div>
+      <div style="display:grid;gap:6px;padding:12px 14px;">
+        <div style="font-size:20px;font-weight:700;letter-spacing:-0.03em;">${escapeHtml(title)}</div>
+        <div style="display:flex;justify-content:space-between;gap:8px;color:#a99f96;">
+          <span>${escapeHtml(currentDifficulty)}</span>
+          <span>${formatClock(timerGoalMs)}</span>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 function renderOverlay(slug: string, title: string, state: StudyState | null, solvedDetected: boolean): void {
   const root = ensureOverlay();
   currentState = state;
   currentTitle = title;
+  if (draftContextSlug !== slug) {
+    draftNotes = state?.notes ?? "";
+    selectedRating = (state?.lastRating ?? 2) as Rating;
+    draftContextSlug = slug;
+  }
 
   const status = state?.status ?? "NEW";
   const nextReview = state?.nextReviewAt ? formatDate(state.nextReviewAt) : "Not scheduled";
+  const saveButtonLabel = state?.reviewCount ? "Save Review" : "Save First Solve";
+
+  if (overlayCollapsed) {
+    root.innerHTML = renderCollapsedOverlay(title, state);
+    const expand = root.querySelector<HTMLButtonElement>("#lcsr-expand-chip");
+    if (expand) {
+      expand.onclick = () => {
+        overlayCollapsed = false;
+        renderOverlay(slug, title, state, solvedDetected);
+      };
+    }
+    return;
+  }
 
   root.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-      <strong style="font-size:13px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(title)}</strong>
-      <span style="padding:2px 8px;border-radius:999px;background:${statusColor(status)}22;color:${statusColor(
-    status
-  )};font-weight:700;">${status}</span>
-    </div>
-    <div style="margin-bottom:8px;color:#cbd5e1;">Next review: <strong style="color:#f8fafc;">${escapeHtml(
-      nextReview
-    )}</strong></div>
-    <div style="margin-bottom:8px;color:#94a3b8;">Solved detected: ${solvedDetected ? "Yes" : "No"}</div>
-
-    <div style="margin-bottom:8px;border:1px solid #334155;border-radius:8px;padding:8px;background:#0b1220;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
-        <span style="color:#cbd5e1;">Timer goal (${escapeHtml(currentDifficulty)})</span>
-        <strong id="lcsr-goal-value" style="color:#f8fafc;">${formatClock(timerGoalMs)}</strong>
+    <style>
+      #${OVERLAY_ID} * { box-sizing: border-box; }
+      #${OVERLAY_ID} button,
+      #${OVERLAY_ID} select,
+      #${OVERLAY_ID} textarea {
+        font: inherit;
+      }
+      #${OVERLAY_ID} textarea::placeholder {
+        color: #6f6761;
+      }
+    </style>
+    <section
+      style="
+        width:360px;
+        border-radius:6px;
+        background:rgba(19,19,19,0.92);
+        color:#e5e2e1;
+        box-shadow:0 24px 64px rgba(0,0,0,0.45);
+        backdrop-filter:blur(14px);
+        overflow:hidden;
+        border:1px solid rgba(161,141,122,0.18);
+      "
+    >
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(161,141,122,0.08);background:rgba(0,0,0,0.18);">
+        <div style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-weight:700;letter-spacing:0.08em;color:#ffa116;">KINETIC_TERMINAL</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button id="lcsr-open-settings" style="width:28px;height:28px;border-radius:4px;background:rgba(255,255,255,0.04);color:#a99f96;border:0;cursor:pointer;">⚙</button>
+          <button id="lcsr-collapse" style="width:28px;height:28px;border-radius:4px;background:rgba(255,255,255,0.04);color:#a99f96;border:0;cursor:pointer;">▁</button>
+        </div>
       </div>
-      <div id="lcsr-timer-value" style="font-size:20px;font-weight:700;color:#38bdf8;margin-bottom:6px;">${formatClock(
-        timerGoalMs
-      )}</div>
-      <div id="lcsr-timer-hint" style="font-size:11px;color:#94a3b8;margin-bottom:6px;">Start timer, submit, and get Accepted to log timed review.</div>
-      <div style="display:flex;gap:6px;">
-        <button id="lcsr-timer-start" style="flex:1;background:#0ea5e9;color:#fff;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;font-weight:700;">Start</button>
-        <button id="lcsr-timer-pause" style="flex:1;background:#334155;color:#fff;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;font-weight:700;">Pause</button>
-        <button id="lcsr-timer-reset" style="flex:1;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:6px 8px;cursor:pointer;font-weight:700;">Reset</button>
-      </div>
-    </div>
+      <div style="display:grid;gap:16px;padding:14px;">
+        <section style="display:grid;gap:8px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div>
+              <h1 style="margin:0;font-family:'Space Grotesk','Segoe UI',sans-serif;font-size:30px;line-height:0.95;letter-spacing:-0.04em;">${escapeHtml(
+                title
+              )}</h1>
+              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                <span style="padding:4px 8px;border-radius:999px;background:rgba(255,161,22,0.16);color:#ffc78b;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">${modeBadge(
+                  state
+                )}</span>
+                <span style="padding:4px 8px;border-radius:999px;background:${statusColor(status)}22;color:${statusColor(
+                  status
+                )};font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">${status}</span>
+              </div>
+            </div>
+            <div style="display:grid;gap:8px;justify-items:end;">
+              <span style="padding:6px 10px;border-radius:4px;background:rgba(255,255,255,0.05);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#ffc78b;">${escapeHtml(
+                currentDifficulty
+              )}</span>
+              <span style="color:#a99f96;font-size:11px;">Next: ${escapeHtml(nextReview)}</span>
+            </div>
+          </div>
+          <div style="color:#8f857d;font-size:12px;">Solved detected: ${solvedDetected ? "Yes" : "No"} · ${state?.lastReviewedAt ? `Last reviewed ${escapeHtml(
+            formatDate(state.lastReviewedAt)
+          )}` : "Awaiting first logged solve."}</div>
+        </section>
 
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-      ${buttonHtml(0, "Again", "#ef4444")}
-      ${buttonHtml(1, "Hard", "#f97316")}
-      ${buttonHtml(2, "Good", "#22c55e")}
-      ${buttonHtml(3, "Easy", "#0ea5e9")}
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;">
-      <select id="lcsr-mode" style="flex:1;background:#111827;border:1px solid #334155;border-radius:6px;color:#f8fafc;padding:4px;">
-        <option value="FULL_SOLVE">Full solve</option>
-        <option value="RECALL">Recall mode</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:8px;">
-      <button id="lcsr-note-btn" style="flex:1;background:#1d4ed8;color:#fff;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;">Add note</button>
-      <button id="lcsr-refresh-btn" style="background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:6px 8px;cursor:pointer;">Refresh</button>
-    </div>
-    <div id="lcsr-feedback" style="min-height:16px;color:#94a3b8;">${state?.lastReviewedAt ? `Last reviewed: ${escapeHtml(
-      formatDate(state.lastReviewedAt)
-    )}` : "Submit Accepted under the goal to progress toward mastery."}</div>
+        <section style="display:grid;gap:10px;padding:14px;border-radius:4px;background:rgba(255,255,255,0.03);box-shadow:inset 0 0 0 1px rgba(161,141,122,0.08);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#a99f96;">Timer Goal</span>
+            <strong id="lcsr-goal-value" style="color:#e5e2e1;">${formatClock(timerGoalMs)}</strong>
+          </div>
+          <div id="lcsr-timer-value" style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-size:28px;font-weight:700;color:#94dbff;">${formatClock(
+            timerGoalMs
+          )}</div>
+          <div id="lcsr-timer-hint" style="font-size:12px;color:#8f857d;">Start timer, submit, and get Accepted to log a timed review.</div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+            <button id="lcsr-timer-start" style="min-height:34px;border-radius:4px;background:#ffc78b;color:#2b1700;border:0;font-weight:700;cursor:pointer;">Start</button>
+            <button id="lcsr-timer-pause" style="min-height:34px;border-radius:4px;background:rgba(255,255,255,0.05);color:#e5e2e1;border:0;cursor:pointer;">Pause</button>
+            <button id="lcsr-timer-reset" style="min-height:34px;border-radius:4px;background:rgba(255,255,255,0.05);color:#e5e2e1;border:0;cursor:pointer;">Reset</button>
+          </div>
+        </section>
+
+        <section style="display:grid;gap:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#a99f96;">Recalibration Protocol</span>
+            <select id="lcsr-mode" style="min-height:34px;padding:0 10px;border-radius:4px;border:0;background:rgba(255,255,255,0.05);color:#e5e2e1;">
+              <option value="FULL_SOLVE">Full solve</option>
+              <option value="RECALL">Recall mode</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
+            ${renderRatingButton(0, "Again")}
+            ${renderRatingButton(1, "Hard")}
+            ${renderRatingButton(2, "Good")}
+            ${renderRatingButton(3, "Easy")}
+          </div>
+        </section>
+
+        <section style="display:grid;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#a99f96;">Technical Notes</span>
+            <span style="color:#94dbff;font-size:11px;">Optional</span>
+          </div>
+          <textarea id="lcsr-notes" rows="5" style="width:100%;padding:12px;border-radius:4px;border:0;background:rgba(255,255,255,0.04);color:#e5e2e1;resize:vertical;">${escapeHtml(
+            draftNotes
+          )}</textarea>
+        </section>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <button id="lcsr-refresh-btn" style="min-height:36px;padding:0 14px;border-radius:4px;background:rgba(255,255,255,0.05);color:#a99f96;border:0;cursor:pointer;">Refresh</button>
+          <button id="lcsr-save-review" style="min-height:42px;padding:0 18px;border-radius:4px;background:linear-gradient(180deg,#ffc78b,#ffa116);color:#2b1700;border:0;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">${saveButtonLabel}</button>
+        </div>
+
+        <div id="lcsr-feedback" style="min-height:18px;color:#8f857d;font-size:12px;">${state?.lastReviewedAt ? `Last reviewed: ${escapeHtml(
+          formatDate(state.lastReviewedAt)
+        )}` : "Submit Accepted under the goal to progress toward mastery."}</div>
+      </div>
+    </section>
   `;
 
   root.querySelectorAll<HTMLButtonElement>("[data-rating]").forEach((button) => {
     button.onclick = () => {
-      const rating = Number(button.dataset.rating) as 0 | 1 | 2 | 3;
-      void onRate(slug, rating);
+      selectedRating = Number(button.dataset.rating) as Rating;
+      renderOverlay(slug, title, state, solvedDetected);
     };
   });
 
-  const noteButton = root.querySelector<HTMLButtonElement>("#lcsr-note-btn");
-  if (noteButton) {
-    noteButton.onclick = () => {
-      void onAddNote(slug);
+  const collapseButton = root.querySelector<HTMLButtonElement>("#lcsr-collapse");
+  if (collapseButton) {
+    collapseButton.onclick = () => {
+      overlayCollapsed = true;
+      renderOverlay(slug, title, state, solvedDetected);
     };
+  }
+
+  const settingsButton = root.querySelector<HTMLButtonElement>("#lcsr-open-settings");
+  if (settingsButton) {
+    settingsButton.onclick = () => {
+      chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html?view=settings") });
+    };
+  }
+
+  const notesField = root.querySelector<HTMLTextAreaElement>("#lcsr-notes");
+  if (notesField) {
+    notesField.value = draftNotes;
+    notesField.oninput = () => {
+      draftNotes = notesField.value;
+    };
+  }
+
+  const modeSelect = root.querySelector<HTMLSelectElement>("#lcsr-mode");
+  if (modeSelect) {
+    modeSelect.value = state?.reviewCount ? "RECALL" : "FULL_SOLVE";
   }
 
   const refreshButton = root.querySelector<HTMLButtonElement>("#lcsr-refresh-btn");
   if (refreshButton) {
     refreshButton.onclick = () => {
       void refreshCurrentPage();
+    };
+  }
+
+  const saveButton = root.querySelector<HTMLButtonElement>("#lcsr-save-review");
+  if (saveButton) {
+    saveButton.onclick = () => {
+      void onSaveReview(slug);
     };
   }
 
@@ -381,10 +560,6 @@ function renderOverlay(slug: string, title: string, state: StudyState | null, so
   updateTimerUi();
 }
 
-function buttonHtml(rating: number, label: string, color: string): string {
-  return `<button data-rating="${rating}" style="flex:1;background:${color};color:#fff;border:0;border-radius:6px;padding:6px 8px;cursor:pointer;font-weight:700;">${label}</button>`;
-}
-
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -400,17 +575,18 @@ function getMode(): "RECALL" | "FULL_SOLVE" {
   return select?.value === "RECALL" ? "RECALL" : "FULL_SOLVE";
 }
 
-async function onRate(slug: string, rating: 0 | 1 | 2 | 3): Promise<void> {
+async function onSaveReview(slug: string): Promise<void> {
   setFeedback("Saving review...");
   const elapsedMs = getElapsedMs();
   const solveTimeMs = elapsedMs > 0 ? elapsedMs : undefined;
 
-  const response = await sendMessage("RATE_PROBLEM", {
+  const response = await sendMessage("SAVE_REVIEW_RESULT", {
     slug,
-    rating,
+    rating: selectedRating,
     mode: getMode(),
     solveTimeMs,
-    notesSnapshot: currentState?.notes
+    notes: draftNotes,
+    source: "overlay"
   });
 
   if (!response.ok) {
@@ -419,27 +595,6 @@ async function onRate(slug: string, rating: 0 | 1 | 2 | 3): Promise<void> {
   }
 
   setFeedback("Saved. Recomputing status...");
-  await refreshCurrentPage();
-}
-
-async function onAddNote(slug: string): Promise<void> {
-  const initial = currentState?.notes ?? "";
-  const notes = window.prompt("Add/update note for this problem", initial);
-  if (notes === null) {
-    return;
-  }
-
-  const response = await sendMessage("UPDATE_NOTES", {
-    slug,
-    notes
-  });
-
-  if (!response.ok) {
-    setFeedback(response.error ?? "Failed to save note.", true);
-    return;
-  }
-
-  setFeedback("Note saved.");
   await refreshCurrentPage();
 }
 
@@ -557,15 +712,17 @@ async function onAcceptedDetected(): Promise<void> {
   const elapsedMs = getElapsedMs();
   const withinGoal = elapsedMs <= timerGoalMs;
   const rating: 0 | 1 | 2 | 3 = withinGoal ? 3 : 2;
+  selectedRating = rating;
 
   setFeedback("Accepted detected. Logging timed review...");
 
-  const response = await sendMessage("RATE_PROBLEM", {
+  const response = await sendMessage("SAVE_REVIEW_RESULT", {
     slug: activeSlug,
     rating,
     mode: getMode(),
     solveTimeMs: elapsedMs,
-    notesSnapshot: currentState?.notes
+    notes: draftNotes,
+    source: "overlay"
   });
 
   if (!response.ok) {

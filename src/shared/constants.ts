@@ -1,22 +1,27 @@
-import { StudyState, UserSettings } from "./types";
+import { STORAGE_SCHEMA_VERSION, StudyState, UserSettings } from "./types";
 
-export const STORAGE_KEY = "leetcode_spaced_repetition_data_v1";
+export const STORAGE_KEY = "leetcode_spaced_repetition_data_v2";
+export const LEGACY_STORAGE_KEY = "leetcode_spaced_repetition_data_v1";
+export const CURRENT_STORAGE_SCHEMA_VERSION = STORAGE_SCHEMA_VERSION;
 
-export const DEFAULT_STUDY_PLAN_ID = "Blind75";
+export const DEFAULT_COURSE_ID = "Blind75";
 
-export const BUILT_IN_SETS = ["Blind75", "NeetCode150", "NeetCode250", "Grind75", "LeetCode75"];
+export const BUILT_IN_SETS = ["Blind75", "ByteByteGo101", "NeetCode150", "NeetCode250", "Grind75", "LeetCode75"];
 
 export const DEFAULT_SETTINGS: UserSettings = {
   dailyNewLimit: 3,
   dailyReviewLimit: 15,
   reviewOrder: "dueFirst",
   studyMode: "studyPlan",
-  activeStudyPlanId: DEFAULT_STUDY_PLAN_ID,
+  activeCourseId: DEFAULT_COURSE_ID,
   setsEnabled: {
     Blind75: true,
+    ByteByteGo101: true,
     NeetCode150: true,
+    NeetCode250: true,
     Grind75: true,
     LeetCode75: true,
+    LeetCode150: true,
     Custom: true
   },
   scheduleIntensity: "normal",

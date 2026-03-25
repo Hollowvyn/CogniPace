@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Course Management | Kinetic Terminal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ffc78b",
+                        "outline-variant": "#544434",
+                        "background": "#131313",
+                        "surface-bright": "#393939",
+                        "on-error": "#690005",
+                        "primary-container": "#ffa116",
+                        "on-secondary-container": "#e3af75",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-container": "#683e00",
+                        "primary-fixed": "#ffddba",
+                        "surface-variant": "#353534",
+                        "on-secondary-fixed": "#2b1700",
+                        "surface-container-low": "#1c1b1b",
+                        "secondary-fixed-dim": "#f2bc82",
+                        "on-tertiary-fixed-variant": "#004d66",
+                        "on-primary-fixed": "#2b1700",
+                        "on-primary-fixed-variant": "#673d00",
+                        "inverse-surface": "#e5e2e1",
+                        "on-surface": "#e5e2e1",
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#2a2a2a",
+                        "tertiary-fixed": "#c0e8ff",
+                        "on-secondary-fixed-variant": "#633f10",
+                        "surface-tint": "#ffb867",
+                        "tertiary-container": "#02c4ff",
+                        "surface-container-highest": "#353534",
+                        "inverse-primary": "#875200",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#ffb867",
+                        "on-secondary": "#482900",
+                        "tertiary-fixed-dim": "#71d2ff",
+                        "tertiary": "#94dbff",
+                        "on-tertiary-container": "#004d67",
+                        "secondary-container": "#664112",
+                        "on-background": "#e5e2e1",
+                        "outline": "#a18d7a",
+                        "surface-dim": "#131313",
+                        "on-tertiary-fixed": "#001e2b",
+                        "secondary-fixed": "#ffddba",
+                        "inverse-on-surface": "#313030",
+                        "surface-container": "#201f1f",
+                        "secondary": "#f2bc82",
+                        "surface": "#131313",
+                        "on-primary": "#482900",
+                        "on-tertiary": "#003547",
+                        "on-surface-variant": "#d9c3ad"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 1.25rem;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #131313;
+            color: #e5e2e1;
+            scrollbar-width: thin;
+            scrollbar-color: #353534 #131313;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #131313; }
+        ::-webkit-scrollbar-thumb { background: #353534; border-radius: 10px; }
+        .glass-panel {
+            background: rgba(57, 57, 57, 0.6);
+            backdrop-filter: blur(12px);
+        }
+        .tabular { font-variant-numeric: tabular-nums; }
+        .path-connector::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            width: 8px;
+            height: 1px;
+            background: #353534;
+            transform: translateY(-50%);
+        }
+        .active-connector::after {
+            background: #ffc78b;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+<!-- Left Navigation Shell (SideNavBar) -->
+<aside class="bg-[#131313] border-r border-[#1c1c1c] flex flex-col h-full py-4 gap-2 w-16 md:w-48 transition-all duration-200 z-50">
+<div class="px-4 mb-6">
+<h1 class="font-['Space_Grotesk'] font-bold text-[#ffc78b] text-xl tracking-tighter">KT</h1>
+<p class="hidden md:block text-[0.6rem] text-on-surface-variant opacity-50 uppercase tracking-widest mt-1">v1.0.4</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 text-[#e5e2e1] opacity-50 px-4 py-2 hover:bg-[#1c1c1c] hover:opacity-100 active:scale-[0.97] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="hidden md:block font-['Inter'] text-[0.6875rem] font-medium tracking-wide uppercase">Overview</span>
+</a>
+<a class="flex items-center gap-3 bg-[#1c1c1c] text-[#ffc78b] border-l-2 border-[#ffc78b] px-4 py-2 active:scale-[0.97] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+<span class="hidden md:block font-['Inter'] text-[0.6875rem] font-medium tracking-wide uppercase">Courses</span>
+</a>
+<a class="flex items-center gap-3 text-[#e5e2e1] opacity-50 px-4 py-2 hover:bg-[#1c1c1c] hover:opacity-100 active:scale-[0.97] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="hidden md:block font-['Inter'] text-[0.6875rem] font-medium tracking-wide uppercase">Chapters</span>
+</a>
+<a class="flex items-center gap-3 text-[#e5e2e1] opacity-50 px-4 py-2 hover:bg-[#1c1c1c] hover:opacity-100 active:scale-[0.97] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="quiz">quiz</span>
+<span class="hidden md:block font-['Inter'] text-[0.6875rem] font-medium tracking-wide uppercase">Questions</span>
+</a>
+<a class="flex items-center gap-3 text-[#e5e2e1] opacity-50 px-4 py-2 hover:bg-[#1c1c1c] hover:opacity-100 active:scale-[0.97] transition-all mt-auto" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="hidden md:block font-['Inter'] text-[0.6875rem] font-medium tracking-wide uppercase">Settings</span>
+</a>
+</nav>
+<div class="px-3 mt-4">
+<button class="w-full bg-primary text-on-primary py-2 rounded text-[0.6875rem] font-bold uppercase tracking-wider hidden md:block hover:brightness-110 active:scale-95 transition-all">
+                Add Question
+            </button>
+<button class="w-full bg-primary text-on-primary p-2 rounded md:hidden flex justify-center">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 bg-background overflow-hidden">
+<!-- TopAppBar -->
+<header class="bg-[#131313] flex justify-between items-center px-4 py-2 w-full max-w-none z-40">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-2 text-xs font-medium uppercase tracking-tighter">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+<span class="hidden sm:inline">Back to Dashboard</span>
+</button>
+<div class="h-4 w-[1px] bg-surface-container-high"></div>
+<span class="font-['Space_Grotesk'] text-sm tracking-tight font-bold text-[#ffc78b] uppercase">Course Management</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="hidden sm:flex items-center gap-4 mr-4">
+<a class="text-[#ffc78b] border-b-2 border-[#ffc78b] pb-1 font-['Space_Grotesk'] text-sm tracking-tight" href="#">Active</a>
+<a class="text-[#e5e2e1] opacity-60 font-['Space_Grotesk'] text-sm tracking-tight hover:opacity-100 transition-opacity" href="#">Library</a>
+<a class="text-[#e5e2e1] opacity-60 font-['Space_Grotesk'] text-sm tracking-tight hover:opacity-100 transition-opacity" href="#">Analytics</a>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-[#1c1c1c] rounded transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-[#1c1c1c] rounded transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<div class="bg-[#1c1c1c] h-[1px] w-full"></div>
+<!-- Scrollable Dashboard Content -->
+<div class="flex-1 overflow-y-auto p-4 space-y-4">
+<!-- Bento Row 1: Active Course & Add Question -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+<!-- Active Course Overview -->
+<section class="lg:col-span-8 bg-surface-container-low p-5 rounded relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+<div class="relative z-10 flex flex-col md:flex-row gap-6">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<span class="bg-primary/10 text-primary text-[0.6rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded">Current Track</span>
+<span class="text-tertiary text-[0.6875rem] font-mono tabular">Completion: 45%</span>
+</div>
+<h2 class="font-headline text-3xl font-bold text-on-surface tracking-tighter mb-2">Blind 75</h2>
+<p class="text-on-surface-variant text-sm max-w-xl leading-relaxed mb-6">The essential list of LeetCode questions for coding interviews. Focused on fundamental patterns and spaced repetition mastery.</p>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+<div class="bg-surface-container-high p-3 rounded">
+<p class="text-[0.6rem] uppercase tracking-widest text-on-surface-variant mb-1">Chapters</p>
+<p class="text-xl font-headline font-bold text-on-surface">08</p>
+</div>
+<div class="bg-surface-container-high p-3 rounded">
+<p class="text-[0.6rem] uppercase tracking-widest text-on-surface-variant mb-1">Questions</p>
+<p class="text-xl font-headline font-bold text-on-surface tabular">75</p>
+</div>
+<div class="bg-surface-container-high p-3 rounded border-l-2 border-tertiary">
+<p class="text-[0.6rem] uppercase tracking-widest text-tertiary mb-1">Next Up</p>
+<p class="text-sm font-bold text-on-surface truncate">3Sum</p>
+</div>
+<div class="bg-surface-container-high p-3 rounded">
+<p class="text-[0.6rem] uppercase tracking-widest text-on-surface-variant mb-1">Status</p>
+<p class="text-[0.65rem] font-bold text-on-surface uppercase mt-1.5 px-1.5 py-0.5 bg-green-900/30 text-green-400 w-fit rounded">Operational</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded font-bold text-xs uppercase tracking-wider hover:brightness-110 active:scale-[0.97] transition-all flex items-center gap-2">
+                                    Continue Path <span class="material-symbols-outlined text-sm" data-icon="play_arrow">play_arrow</span>
+</button>
+<button class="bg-surface-container-highest text-on-surface px-6 py-2.5 rounded font-bold text-xs uppercase tracking-wider hover:bg-surface-bright active:scale-[0.97] transition-all">
+                                    Change Active Course
+                                </button>
+</div>
+</div>
+<div class="w-full md:w-48 flex flex-col justify-center items-center gap-2">
+<div class="relative w-32 h-32">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-dasharray="364.4" stroke-dashoffset="200.4" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-headline font-bold tabular">45%</span>
+<span class="text-[0.5rem] uppercase tracking-tighter opacity-50">Mastery</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Add Question Panel -->
+<section class="lg:col-span-4 bg-surface-container-low p-5 rounded flex flex-col">
+<h3 class="font-headline text-lg font-bold text-primary tracking-tight mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="add_circle">add_circle</span>
+                        Ingest Question
+                    </h3>
+<div class="space-y-4 flex-1">
+<div>
+<label class="block text-[0.6rem] uppercase tracking-widest text-on-surface-variant mb-1.5 font-bold">LeetCode URL</label>
+<input class="w-full bg-surface-container-high border-b border-outline-variant/30 focus:border-primary focus:ring-0 text-sm py-2 px-3 transition-colors outline-none rounded-t" placeholder="https://leetcode.com/problems/..." type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block text-[0.6rem] uppercase tracking-widest text-on-surface-variant mb-1.5 font-bold">Course</label>
+<select class="w-full bg-surface-container-high border-b border-outline-variant/30 focus:border-primary focus:ring-0 text-sm py-2 px-2 transition-colors outline-none rounded-t appearance-none">
+<option>Blind 75</option>
+<option>NeetCode 150</option>
+</select>
+</div>
+<div>
+<label class="block text-[0.6rem] uppercase tracking-widest text-on-surface-variant mb-1.5 font-bold">Chapter</label>
+<select class="w-full bg-surface-container-high border-b border-outline-variant/30 focus:border-primary focus:ring-0 text-sm py-2 px-2 transition-colors outline-none rounded-t appearance-none">
+<option>Arrays &amp; Hashing</option>
+<option>Two Pointers</option>
+</select>
+</div>
+</div>
+<div class="pt-2">
+<button class="w-full bg-primary text-on-primary py-3 rounded font-bold text-xs uppercase tracking-widest hover:brightness-110 active:scale-[0.97] transition-all">
+                                Add to Protocol
+                            </button>
+</div>
+<div class="mt-auto p-3 bg-tertiary/5 rounded border-l border-tertiary/30">
+<p class="text-[0.65rem] text-tertiary/80 leading-snug">Spaced repetition interval will be initialized to 4 hours post-first-submission.</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Main Operational Area: Split Column Layout -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+<!-- Left Column: Course List & Settings -->
+<div class="xl:col-span-3 space-y-4">
+<!-- Course Library -->
+<section class="bg-surface-container-low rounded p-1">
+<div class="px-3 py-3 border-b border-outline-variant/10">
+<h3 class="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Course Library</h3>
+</div>
+<div class="space-y-1 mt-1">
+<div class="p-3 bg-surface-container-high/50 flex flex-col gap-2 rounded-sm border-l-2 border-primary">
+<div class="flex justify-between items-start">
+<span class="font-bold text-xs text-on-surface">Blind 75</span>
+<span class="text-[0.55rem] font-black uppercase bg-primary text-on-primary px-1.5 rounded-sm">Active</span>
+</div>
+<div class="flex justify-between text-[0.6rem] text-on-surface-variant tabular">
+<span>75 Questions</span>
+<span class="text-primary">45%</span>
+</div>
+</div>
+<div class="p-3 hover:bg-surface-container-high transition-colors flex flex-col gap-2 rounded-sm group cursor-pointer">
+<div class="flex justify-between items-start">
+<span class="font-bold text-xs text-on-surface group-hover:text-primary transition-colors">NeetCode 150</span>
+</div>
+<div class="flex justify-between text-[0.6rem] text-on-surface-variant tabular">
+<span>150 Questions</span>
+<span>12%</span>
+</div>
+<div class="flex gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-[0.55rem] uppercase font-bold text-tertiary">Set Active</button>
+<button class="text-[0.55rem] uppercase font-bold text-on-surface-variant">Details</button>
+</div>
+</div>
+<div class="p-3 hover:bg-surface-container-high transition-colors flex flex-col gap-2 rounded-sm group cursor-pointer">
+<div class="flex justify-between items-start">
+<span class="font-bold text-xs text-on-surface group-hover:text-primary transition-colors">Top Interview 150</span>
+</div>
+<div class="flex justify-between text-[0.6rem] text-on-surface-variant tabular">
+<span>150 Questions</span>
+<span>0%</span>
+</div>
+<div class="flex gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-[0.55rem] uppercase font-bold text-tertiary">Set Active</button>
+<button class="text-[0.55rem] uppercase font-bold text-on-surface-variant">Details</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Control Plane Config -->
+<section class="bg-surface-container-low rounded p-4">
+<h3 class="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-4">Control Plane Config</h3>
+<div class="space-y-4">
+<div class="flex items-start justify-between gap-3">
+<div>
+<p class="text-xs font-medium text-on-surface">Popup Auto-Inject</p>
+<p class="text-[0.6rem] text-on-surface-variant mt-0.5">Show next question on browser focus</p>
+</div>
+<div class="w-8 h-4 bg-primary rounded-full relative cursor-pointer">
+<div class="absolute right-0.5 top-0.5 w-3 h-3 bg-on-primary rounded-full"></div>
+</div>
+</div>
+<div class="flex items-start justify-between gap-3">
+<div>
+<p class="text-xs font-medium text-on-surface">Review Priority</p>
+<p class="text-[0.6rem] text-on-surface-variant mt-0.5">Prioritize due cards over new path</p>
+</div>
+<div class="w-8 h-4 bg-surface-container-highest rounded-full relative cursor-pointer">
+<div class="absolute left-0.5 top-0.5 w-3 h-3 bg-on-surface-variant rounded-full"></div>
+</div>
+</div>
+<div class="flex items-start justify-between gap-3">
+<div>
+<p class="text-xs font-medium text-on-surface">Auto-Unlock Path</p>
+<p class="text-[0.6rem] text-on-surface-variant mt-0.5">Unlock next chapter on completion</p>
+</div>
+<div class="w-8 h-4 bg-primary rounded-full relative cursor-pointer">
+<div class="absolute right-0.5 top-0.5 w-3 h-3 bg-on-primary rounded-full"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Learning Path & Question Management -->
+<div class="xl:col-span-9 space-y-4">
+<!-- Ordered Learning Path Strip -->
+<section class="bg-surface-container-low rounded overflow-hidden">
+<div class="flex items-center gap-0 overflow-x-auto p-1 no-scrollbar border-b border-outline-variant/5">
+<!-- Completed Chapter -->
+<div class="flex items-center group relative flex-shrink-0">
+<div class="p-1 cursor-grab opacity-30 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[10px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<button class="flex items-center gap-2 bg-[#1c1c1c]/50 text-green-400 px-4 py-2.5 rounded-sm whitespace-nowrap path-connector relative">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="text-left">
+<p class="text-[0.65rem] font-bold uppercase tracking-wider">Arrays &amp; Hashing</p>
+<p class="text-[0.5rem] uppercase opacity-60">Completed</p>
+</div>
+</button>
+<span class="material-symbols-outlined text-on-surface-variant/30 text-xs px-1" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Current Chapter -->
+<div class="flex items-center group relative flex-shrink-0">
+<div class="p-1 cursor-grab opacity-30 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[10px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<button class="flex items-center gap-2 bg-[#1c1c1c] text-primary px-4 py-2.5 rounded-sm border-b-2 border-primary whitespace-nowrap active-connector relative">
+<span class="material-symbols-outlined text-sm" data-icon="play_circle" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<div class="text-left">
+<p class="text-[0.65rem] font-bold uppercase tracking-wider">Two Pointers</p>
+<p class="text-[0.5rem] uppercase font-black text-primary/80">Current</p>
+</div>
+</button>
+<span class="material-symbols-outlined text-primary/30 text-xs px-1" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Upcoming Chapter -->
+<div class="flex items-center group relative flex-shrink-0">
+<div class="p-1 cursor-grab opacity-30 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[10px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<button class="flex items-center gap-2 hover:bg-[#1c1c1c] text-on-surface-variant px-4 py-2.5 rounded-sm whitespace-nowrap transition-colors path-connector relative">
+<span class="material-symbols-outlined text-sm" data-icon="pending">pending</span>
+<div class="text-left">
+<p class="text-[0.65rem] font-bold uppercase tracking-wider">Sliding Window</p>
+<p class="text-[0.5rem] uppercase opacity-60">Upcoming</p>
+</div>
+</button>
+<span class="material-symbols-outlined text-on-surface-variant/30 text-xs px-1" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Locked Chapter -->
+<div class="flex items-center group relative flex-shrink-0">
+<div class="p-1 cursor-grab opacity-30 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[10px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<button class="flex items-center gap-2 text-on-surface-variant/40 px-4 py-2.5 rounded-sm whitespace-nowrap cursor-not-allowed">
+<span class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+<div class="text-left">
+<p class="text-[0.65rem] font-bold uppercase tracking-wider">Stack</p>
+<p class="text-[0.5rem] uppercase opacity-40">Locked</p>
+</div>
+</button>
+</div>
+<div class="ml-auto flex items-center pr-2 gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+</button>
+<div class="h-4 w-[1px] bg-outline-variant/20 mx-1"></div>
+<button class="bg-surface-container-highest text-[0.6rem] font-black uppercase tracking-widest px-3 py-1.5 rounded hover:bg-surface-bright transition-all active:scale-95 text-on-surface">
+                                    Save Path
+                                </button>
+</div>
+</div>
+<!-- Chapter Context Info -->
+<div class="px-4 py-2 flex justify-between items-center bg-surface-container-high/10">
+<div class="flex items-center gap-2">
+<span class="text-[0.6rem] font-bold text-primary uppercase tracking-[0.2em]">Chapter 2 of 8</span>
+<div class="h-1 w-12 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/4"></div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1 text-[0.6rem] uppercase tracking-widest text-on-surface-variant/60 hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[10px]" data-icon="arrow_back">arrow_back</span>
+<span>Prev: Arrays</span>
+</button>
+<button class="flex items-center gap-1 text-[0.6rem] uppercase tracking-widest text-on-surface-variant/60 hover:text-on-surface transition-colors">
+<span>Next: Sliding Window</span>
+<span class="material-symbols-outlined text-[10px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Question Table -->
+<section class="bg-surface-container-low rounded overflow-hidden">
+<div class="overflow-x-auto">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none"></div><table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-high/30">
+<tr>
+<th class="px-4 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-on-surface-variant">Question Title</th>
+<th class="px-4 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-on-surface-variant text-center">Difficulty</th>
+<th class="px-4 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-on-surface-variant">Status</th>
+<th class="px-4 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-on-surface-variant">Next Review</th>
+<th class="px-4 py-3 text-[0.6rem] font-bold uppercase tracking-widest text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Row: Mastered -->
+<tr class="hover:bg-surface-container-high/40 transition-colors group">
+<td class="px-4 py-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-green-500 text-sm" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-xs font-medium text-on-surface group-hover:text-primary">Valid Palindrome</span>
+</div>
+</td>
+<td class="px-4 py-3 text-center">
+<span class="text-[0.55rem] font-black uppercase text-green-400 bg-green-900/20 px-1.5 py-0.5 rounded">Easy</span>
+</td>
+<td class="px-4 py-3">
+<span class="text-[0.6rem] font-bold text-on-surface-variant/80 uppercase tracking-tighter">Mastered</span>
+</td>
+<td class="px-4 py-3 text-[0.6rem] text-on-surface-variant tabular">In 14 days</td>
+<td class="px-4 py-3 text-right">
+<button class="text-on-surface-variant hover:text-primary p-1">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+</button>
+</td>
+</tr>
+<!-- Row: Next Path (Enhanced) -->
+<tr class="bg-primary/5 hover:bg-primary/10 transition-all border-l-4 border-primary relative">
+<td class="px-4 py-3 relative">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-sm animate-pulse" data-icon="target">target</span>
+<div>
+<span class="text-xs font-bold text-on-surface block">Two Sum II - Input Array Is Sorted</span>
+<span class="text-[0.5rem] text-primary uppercase font-black tracking-widest flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-primary rounded-full inline-block"></span>
+                                                        Strategic Path Core
+                                                    </span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 text-center relative">
+<span class="text-[0.55rem] font-black uppercase text-yellow-400 bg-yellow-900/20 px-1.5 py-0.5 rounded">Medium</span>
+</td>
+<td class="px-4 py-3 relative">
+<span class="text-[0.6rem] font-bold text-primary uppercase tracking-tighter">Due Now</span>
+</td>
+<td class="px-4 py-3 text-[0.6rem] text-primary tabular font-bold relative">READY</td>
+<td class="px-4 py-3 text-right relative">
+<button class="bg-primary text-on-primary px-4 py-1.5 rounded-sm text-[0.55rem] font-black uppercase hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
+                                                Launch
+                                            </button>
+</td>
+</tr>
+<!-- Row: Learning -->
+<tr class="hover:bg-surface-container-high/40 transition-colors group">
+<td class="px-4 py-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="pending">pending</span>
+<span class="text-xs font-medium text-on-surface">3Sum</span>
+</div>
+</td>
+<td class="px-4 py-3 text-center">
+<span class="text-[0.55rem] font-black uppercase text-yellow-400 bg-yellow-900/20 px-1.5 py-0.5 rounded">Medium</span>
+</td>
+<td class="px-4 py-3">
+<span class="text-[0.6rem] font-bold text-on-surface-variant/80 uppercase tracking-tighter">Reviewing</span>
+</td>
+<td class="px-4 py-3 text-[0.6rem] text-on-surface-variant tabular">In 4 hours</td>
+<td class="px-4 py-3 text-right">
+<button class="text-on-surface-variant hover:text-primary p-1">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+</button>
+</td>
+</tr>
+<!-- Row: De-emphasized/Locked Upcoming -->
+<tr class="opacity-40 grayscale-[0.5] hover:opacity-60 transition-opacity group bg-surface-container-high/10">
+<td class="px-4 py-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant/40 text-sm" data-icon="lock_clock">lock_clock</span>
+<span class="text-xs font-medium text-on-surface">Container With Most Water</span>
+</div>
+</td>
+<td class="px-4 py-3 text-center">
+<span class="text-[0.55rem] font-black uppercase text-yellow-400 bg-yellow-900/10 px-1.5 py-0.5 rounded">Medium</span>
+</td>
+<td class="px-4 py-3">
+<span class="text-[0.6rem] font-bold text-on-surface-variant/40 uppercase tracking-tighter">Queued</span>
+</td>
+<td class="px-4 py-3 text-[0.6rem] text-on-surface-variant/30 tabular">TBD</td>
+<td class="px-4 py-3 text-right">
+<span class="material-symbols-outlined text-sm text-on-surface-variant/20" data-icon="lock">lock</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 bg-surface-container-high/20 flex justify-between items-center">
+<p class="text-[0.6rem] text-on-surface-variant/60 uppercase tracking-widest">Protocol: Linear Mastery (Must complete Current Chapter to advance)</p>
+<div class="flex gap-2">
+<button class="p-1.5 hover:bg-surface-container-high rounded transition-colors">
+<span class="material-symbols-outlined text-xs" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="p-1.5 hover:bg-surface-container-high rounded transition-colors">
+<span class="material-symbols-outlined text-xs" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<!-- Visual Texture Layers -->
+<div class="fixed inset-0 pointer-events-none opacity-20 overflow-hidden mix-blend-overlay">
+<div class="absolute inset-0" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDMyf8J4eEgX8cU6Kq_WjVDq2wSLyUkhJ-C24cIkVEgAV9pt1YvSKJ22nIo2Xi8V6N5NPpD5YhkKKrb9B8QZCsyOwwCEqrmDLhfo5Fun4q0Qpqh_HYOIsWR6e7H7_Bavcrkt9S_0_cy-hIHNiw6rATcvHFn1DTSddFFI8H-pUOHEwXWzmrtDC_iqd1afQyVlDKuW7n6tMVJG9mptsN1XWGRVOJbP7EdiXTZYbZOi4mhP5nY363ql1hO-5d79pPtz0CUaphwV1LChA');"></div>
+</div>
+<!-- Dynamic Accent Glow -->
+<div class="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -mr-64 -mt-64 pointer-events-none"></div>
+</body></html>

@@ -1,63 +1,10 @@
 import { sendMessage } from "../shared/runtime";
-import { QueueItem, UserSettings } from "../shared/types";
-import { isProblemPage } from "../shared/utils";
+import { AppShellPayload, CourseQuestionView, RecommendedProblemView } from "../shared/types";
 
-const MAX_FOCUS_ITEMS = 3;
-
-interface StudyPlanSummary {
-  id: string;
-  name: string;
-  description: string;
-  sourceSet: string;
-  topicCount: number;
-  problemCount: number;
-}
-
-interface CurriculumItem {
-  planId: string;
-  planName: string;
-  sourceSet: string;
-  topic: string;
-  slug: string;
-  title: string;
-  url: string;
-  isInLibrary: boolean;
-}
-
-interface DashboardData {
-  queue: {
-    dueCount: number;
-    newCount: number;
-    reinforcementCount: number;
-    items: QueueItem[];
-  };
-  analytics: {
-    streakDays: number;
-  };
-  settings: UserSettings;
-  studyPlans: StudyPlanSummary[];
-  curriculum: {
-    planId: string;
-    planName: string;
-    sourceSet: string;
-    topic: string | null;
-    completed: boolean;
-    items: CurriculumItem[];
-  };
-}
-
-let dueCandidates: QueueItem[] = [];
-let focusItems: QueueItem[] = [];
-let focusTopic: string | null = null;
-
-let curriculumItems: CurriculumItem[] = [];
-let curriculumTopic: string | null = null;
-let curriculumCompleted = false;
-let curriculumPlanName: string | null = null;
-
-let studyMode: UserSettings["studyMode"] = "studyPlan";
-let activeStudyPlanId = "Blind75";
-let availableStudyPlans: StudyPlanSummary[] = [];
+let payload: AppShellPayload | null = null;
+let recommendedIndex = 0;
+let statusMessage = "";
+let statusIsError = false;
 
 function byId<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -67,324 +14,330 @@ function byId<T extends HTMLElement>(id: string): T {
   return node as T;
 }
 
-function formatNextReview(iso?: string): string {
-  if (!iso) {
-    return "Not scheduled";
-  }
-  return new Date(iso).toLocaleString();
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
-function pickRandomItems<T>(items: T[], count: number): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const swapIndex = Math.floor(Math.random() * (i + 1));
-    const current = copy[i];
-    copy[i] = copy[swapIndex];
-    copy[swapIndex] = current;
+function difficultyBadge(difficulty: string): string {
+  if (difficulty === "Easy") {
+    return "kt-pill kt-pill-blue";
   }
-  return copy.slice(0, Math.min(count, copy.length));
+  if (difficulty === "Hard") {
+    return "kt-pill kt-pill-danger";
+  }
+  return "kt-pill kt-pill-accent";
 }
 
-function chooseFocusItems(items: QueueItem[]): { items: QueueItem[]; topic: string | null } {
-  if (items.length === 0) {
-    return { items: [], topic: null };
+function reasonBadge(reason: RecommendedProblemView["reason"]): string {
+  if (reason === "Overdue") {
+    return "kt-pill kt-pill-danger";
+  }
+  if (reason === "Review focus") {
+    return "kt-pill kt-pill-blue";
+  }
+  return "kt-pill kt-pill-accent";
+}
+
+function currentRecommended(): RecommendedProblemView | null {
+  if (!payload) {
+    return null;
   }
 
-  const topicBuckets = new Map<string, QueueItem[]>();
-  for (const item of items) {
-    const topicCandidates = [...(item.problem.topics ?? []), ...(item.studyState.tags ?? [])]
-      .map((topic) => topic.trim())
-      .filter(Boolean);
-    const uniqueTopics = Array.from(new Set(topicCandidates));
-    for (const topic of uniqueTopics) {
-      const current = topicBuckets.get(topic) ?? [];
-      current.push(item);
-      topicBuckets.set(topic, current);
+  const candidates = payload.popup.recommendedCandidates;
+  if (candidates.length === 0) {
+    return payload.popup.recommended;
+  }
+
+  return candidates[recommendedIndex % candidates.length] ?? candidates[0];
+}
+
+function recommendedCard(view: RecommendedProblemView | null): string {
+  if (!view) {
+    return `
+      <section class="kt-card kt-popup-card">
+        <div class="kt-card-stack">
+          <div class="kt-card-header">
+            <div>
+              <p class="kt-section-label">Recommended Now</p>
+              <h2 class="kt-card-title">Queue clear</h2>
+            </div>
+          </div>
+          <p class="kt-card-copy">No due reviews are waiting right now. Open the dashboard to keep momentum with your active course.</p>
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="kt-card kt-popup-card">
+      <div class="kt-card-stack">
+        <div class="kt-card-header">
+          <div>
+            <p class="kt-section-label">Recommended Now</p>
+            <h2 class="kt-card-title">${escapeHtml(view.title)}</h2>
+          </div>
+          <button id="shuffle-recommended" class="kt-icon-button" title="Shuffle recommendation">↻</button>
+        </div>
+        <div class="kt-card-meta">
+          <span class="${difficultyBadge(view.difficulty)}">${escapeHtml(view.difficulty)}</span>
+          <span class="${reasonBadge(view.reason)}">${escapeHtml(view.reason)}</span>
+          ${view.alsoCourseNext ? '<span class="kt-pill kt-pill-success">Also next in course</span>' : ""}
+        </div>
+        <p class="kt-card-copy">
+          ${
+            view.nextReviewAt
+              ? `Next review window: ${escapeHtml(new Date(view.nextReviewAt).toLocaleString())}`
+              : "Best retention move right now."
+          }
+        </p>
+        <button id="open-recommended" class="kt-button kt-button-block">Open Problem</button>
+      </div>
+    </section>
+  `;
+}
+
+function courseCard(view: CourseQuestionView | null): string {
+  if (!payload?.popup.activeCourse) {
+    return `
+      <section class="kt-card kt-popup-card">
+        <div class="kt-card-stack">
+          <div>
+            <p class="kt-section-label">Next In Course</p>
+            <h2 class="kt-card-title">No active course</h2>
+          </div>
+          <p class="kt-card-copy">Choose an active course in the dashboard to restore the guided path.</p>
+          <button data-open-dashboard="true" class="kt-button-secondary kt-button-block">Open Dashboard</button>
+        </div>
+      </section>
+    `;
+  }
+
+  if (!view) {
+    return `
+      <section class="kt-card kt-popup-card">
+        <div class="kt-card-stack">
+          <div>
+            <p class="kt-section-label">Next In Course</p>
+            <h2 class="kt-card-title">${escapeHtml(payload.popup.activeCourse.name)}</h2>
+          </div>
+          <p class="kt-card-copy">This course is fully traversed. Use the dashboard to switch tracks or focus on due reviews.</p>
+          <button data-open-dashboard="true" class="kt-button-secondary kt-button-block">Open Dashboard</button>
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="kt-card kt-popup-card">
+      <div class="kt-card-stack">
+        <div>
+          <p class="kt-section-label">Next In Course</p>
+          <h2 class="kt-card-title">${escapeHtml(view.title)}</h2>
+        </div>
+        <div class="kt-card-meta">
+          <span class="kt-pill">${escapeHtml(payload.popup.activeCourse.name)}</span>
+          <span class="kt-pill">${escapeHtml(view.chapterTitle)}</span>
+          <span class="${difficultyBadge(view.difficulty)}">${escapeHtml(view.difficulty)}</span>
+        </div>
+        <p class="kt-card-copy">Status: ${escapeHtml(view.status.replace(/_/g, " "))}</p>
+        <button id="open-course-next" class="kt-button-secondary kt-button-block">Continue Path</button>
+      </div>
+    </section>
+  `;
+}
+
+function render(): void {
+  const root = byId<HTMLDivElement>("popup-root");
+  const recommended = currentRecommended();
+  const activeCourse = payload?.popup.activeCourse ?? null;
+
+  root.innerHTML = `
+    <header class="kt-popup-topbar">
+      <div class="kt-brand">
+        <span class="kt-brand-mark">⌘</span>
+        <div class="kt-brand-title">LeetCode Reviews</div>
+      </div>
+      <div class="kt-inline-actions">
+        <button id="refresh-popup" class="kt-icon-button" title="Refresh">↻</button>
+        <button id="open-settings" class="kt-icon-button" title="Settings">⚙</button>
+      </div>
+    </header>
+
+    <section class="kt-summary-row">
+      <div class="kt-summary-chip">
+        <span class="kt-summary-chip-label">Items Due</span>
+        <strong class="kt-summary-chip-value">${payload?.popup.dueCount ?? 0}</strong>
+      </div>
+      <div class="kt-summary-chip">
+        <span class="kt-summary-chip-label">Streak</span>
+        <strong class="kt-summary-chip-value">${payload?.popup.streakDays ?? 0}</strong>
+      </div>
+    </section>
+
+    ${recommendedCard(recommended)}
+    ${courseCard(payload?.popup.courseNext ?? null)}
+
+    ${
+      activeCourse
+        ? `
+          <section class="kt-card kt-popup-card">
+            <div class="kt-card-stack">
+              <div class="kt-card-header">
+                <div>
+                  <p class="kt-section-label">Active Track</p>
+                  <h2 class="kt-card-title">${escapeHtml(activeCourse.name)}</h2>
+                </div>
+                <span class="kt-pill">${activeCourse.completionPercent}%</span>
+              </div>
+              <div class="kt-progress"><span style="width:${activeCourse.completionPercent}%"></span></div>
+              <p class="kt-card-copy">${activeCourse.completedQuestions}/${activeCourse.totalQuestions} questions traversed.</p>
+            </div>
+          </section>
+        `
+        : ""
     }
-  }
 
-  const eligibleBuckets = Array.from(topicBuckets.entries()).filter(([, bucket]) => bucket.length >= 2);
-  if (eligibleBuckets.length > 0) {
-    const maxBucketSize = Math.max(...eligibleBuckets.map(([, bucket]) => bucket.length));
-    const strongestBuckets = eligibleBuckets.filter(([, bucket]) => bucket.length === maxBucketSize);
-    const [topic, bucket] = strongestBuckets[Math.floor(Math.random() * strongestBuckets.length)];
-    return { items: pickRandomItems(bucket, MAX_FOCUS_ITEMS), topic };
-  }
+    <section class="kt-popup-footer">
+      <button
+        id="toggle-mode"
+        class="kt-button-secondary kt-button-block"
+      >${payload?.settings.studyMode === "studyPlan" ? "Study Mode" : "Freestyle"}</button>
+      <button id="open-dashboard-main" class="kt-button kt-button-block">Full Dashboard</button>
+    </section>
 
-  return { items: pickRandomItems(items, MAX_FOCUS_ITEMS), topic: null };
+    <div
+      id="popup-status"
+      class="kt-status"
+      data-error="${statusIsError ? "true" : "false"}"
+    >${escapeHtml(statusMessage)}</div>
+  `;
+
+  bindEvents();
 }
 
-function regenerateFocusItems(): void {
-  const selection = chooseFocusItems(dueCandidates);
-  focusItems = selection.items;
-  focusTopic = selection.topic;
-}
-
-function renderStudyControls(): void {
-  const modeSelect = byId<HTMLSelectElement>("study-mode-select");
-  const planSelect = byId<HTMLSelectElement>("study-plan-select");
-
-  modeSelect.value = studyMode;
-
-  const previousPlan = activeStudyPlanId;
-  planSelect.innerHTML = "";
-
-  for (const plan of availableStudyPlans) {
-    const option = document.createElement("option");
-    option.value = plan.id;
-    option.textContent = `${plan.name} (${plan.problemCount})`;
-    planSelect.appendChild(option);
-  }
-
-  if (availableStudyPlans.length === 0) {
-    planSelect.disabled = true;
+async function loadPayload(resetRecommendation = false): Promise<void> {
+  const response = await sendMessage("GET_APP_SHELL_DATA", {});
+  if (!response.ok) {
+    statusMessage = response.error ?? "Failed to load extension state.";
+    statusIsError = true;
+    render();
     return;
   }
 
-  const hasCurrentPlan = availableStudyPlans.some((plan) => plan.id === previousPlan);
-  if (!hasCurrentPlan) {
-    activeStudyPlanId = availableStudyPlans[0].id;
-  }
-
-  planSelect.value = activeStudyPlanId;
-  planSelect.disabled = studyMode !== "studyPlan";
-}
-
-async function saveStudyPreferences(patch: Partial<UserSettings>): Promise<void> {
-  const response = await sendMessage("UPDATE_SETTINGS", patch as never);
-  if (!response.ok) {
-    byId<HTMLElement>("error").textContent = response.error ?? "Failed to save study preferences.";
-    return;
-  }
-
-  await refresh();
-}
-
-async function openProblemFromExtension(url: string, slug: string): Promise<void> {
-  await sendMessage("QUEUE_AUTO_TIMER_START", { slug });
-  chrome.tabs.create({ url });
-}
-
-async function startCurriculumProblem(item: CurriculumItem): Promise<void> {
-  const response = await sendMessage("ADD_PROBLEM_BY_INPUT", {
-    input: item.slug,
-    sourceSet: item.sourceSet,
-    topics: [item.topic]
-  });
-
-  if (!response.ok) {
-    byId<HTMLElement>("error").textContent = response.error ?? "Failed to add curriculum problem.";
+  payload = response.data as AppShellPayload;
+  if (resetRecommendation) {
+    recommendedIndex = 0;
+  } else if (payload.popup.recommendedCandidates.length > 0) {
+    recommendedIndex %= payload.popup.recommendedCandidates.length;
   } else {
-    byId<HTMLElement>("error").textContent = "";
+    recommendedIndex = 0;
   }
-
-  await openProblemFromExtension(item.url, item.slug);
-  void refresh();
+  statusMessage = "";
+  statusIsError = false;
+  render();
 }
 
-function renderFocusList(): void {
-  const list = byId<HTMLUListElement>("focus-list");
-  const caption = byId<HTMLElement>("focus-caption");
-  const shuffleButton = byId<HTMLButtonElement>("shuffle-focus-btn");
-  list.innerHTML = "";
+async function openProblem(
+  target: { slug: string; url: string },
+  courseContext?: { courseId?: string; chapterId?: string }
+): Promise<void> {
+  await sendMessage("QUEUE_AUTO_TIMER_START", { slug: target.slug });
+  if (courseContext?.courseId || courseContext?.chapterId) {
+    await sendMessage("TRACK_COURSE_QUESTION_LAUNCH", {
+      slug: target.slug,
+      courseId: courseContext.courseId,
+      chapterId: courseContext.chapterId
+    });
+  }
+  chrome.tabs.create({ url: target.url });
+}
 
-  if (dueCandidates.length === 0) {
-    shuffleButton.disabled = true;
-
-    if (studyMode === "studyPlan" && curriculumItems.length > 0) {
-      caption.textContent = curriculumTopic
-        ? `${curriculumPlanName ?? "Study plan"}: ${curriculumTopic}. Do this next problem before moving on.`
-        : `${curriculumPlanName ?? "Study plan"}: do this next problem before moving on.`;
-
-      for (const item of curriculumItems) {
-        const li = document.createElement("li");
-        li.className = "focus-item";
-
-        const titleButton = document.createElement("button");
-        titleButton.className = "link-btn";
-        titleButton.textContent = item.title;
-        titleButton.onclick = () => {
-          void startCurriculumProblem(item);
-        };
-
-        const meta = document.createElement("div");
-        meta.className = "meta";
-        meta.textContent = `${item.topic} · ${item.isInLibrary ? "In your queue" : "Starter problem"}`;
-
-        li.appendChild(titleButton);
-        li.appendChild(meta);
-        list.appendChild(li);
-      }
-      return;
-    }
-
-    if (studyMode === "studyPlan" && curriculumCompleted) {
-      caption.textContent = `${curriculumPlanName ?? "Study plan"} complete. No due reviews right now.`;
-    } else if (studyMode === "studyPlan") {
-      caption.textContent = "No due items. Import the selected plan set or switch to freestyle.";
-    } else {
-      caption.textContent = "Freestyle mode: no due or overdue problems right now.";
-    }
-
-    const empty = document.createElement("li");
-    empty.className = "queue-empty";
-    empty.textContent =
-      studyMode === "studyPlan" && curriculumCompleted
-        ? "Plan completed. Keep reviewing previously solved problems for retention."
-        : "You are clear. New reviews will appear here when they are due.";
-    list.appendChild(empty);
+async function toggleStudyMode(): Promise<void> {
+  if (!payload) {
     return;
   }
 
-  shuffleButton.disabled = dueCandidates.length <= 1;
-  caption.textContent = focusTopic
-    ? `Topic focus: ${focusTopic}. Random due picks (up to ${MAX_FOCUS_ITEMS}).`
-    : `Random due picks (up to ${MAX_FOCUS_ITEMS}).`;
-
-  if (studyMode === "studyPlan" && curriculumItems.length > 0) {
-    const next = curriculumItems[0];
-    caption.textContent += ` Next in ${next.planName}: ${next.title}.`;
-  }
-
-  for (const item of focusItems) {
-    const li = document.createElement("li");
-    li.className = "focus-item";
-
-    const titleButton = document.createElement("button");
-    titleButton.className = "link-btn";
-    titleButton.textContent = item.problem.title;
-    titleButton.onclick = () => {
-      void openProblemFromExtension(item.problem.url, item.problem.leetcodeSlug);
-    };
-
-    const meta = document.createElement("div");
-    meta.className = "meta";
-    meta.textContent = `${item.problem.difficulty} · Next: ${formatNextReview(item.studyState.nextReviewAt)}`;
-
-    li.appendChild(titleButton);
-    li.appendChild(meta);
-    list.appendChild(li);
-  }
-}
-
-async function refresh(): Promise<void> {
-  const response = await sendMessage("GET_DASHBOARD_DATA", {});
+  const nextMode = payload.settings.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
+  const response = await sendMessage("UPDATE_SETTINGS", { studyMode: nextMode });
   if (!response.ok) {
-    byId<HTMLElement>("error").textContent = response.error ?? "Failed to load queue";
+    statusMessage = response.error ?? "Failed to update study mode.";
+    statusIsError = true;
+    render();
     return;
   }
 
-  byId<HTMLElement>("error").textContent = "";
-  const data = response.data as DashboardData;
-
-  studyMode = data.settings.studyMode;
-  activeStudyPlanId = data.settings.activeStudyPlanId;
-  availableStudyPlans = data.studyPlans ?? [];
-
-  dueCandidates = data.queue.items.filter((item) => item.category === "due");
-  curriculumItems = data.curriculum?.items ?? [];
-  curriculumTopic = data.curriculum?.topic ?? null;
-  curriculumCompleted = data.curriculum?.completed ?? false;
-  curriculumPlanName = data.curriculum?.planName ?? null;
-
-  byId<HTMLElement>("due-count").textContent = String(data.queue.dueCount);
-  byId<HTMLElement>("streak-count").textContent = String(data.analytics.streakDays);
-
-  const nextDue = dueCandidates.find((item) => item.studyState.nextReviewAt);
-  byId<HTMLElement>("next-review").textContent = nextDue
-    ? formatNextReview(nextDue.studyState.nextReviewAt)
-    : "-";
-
-  renderStudyControls();
-  regenerateFocusItems();
-  renderFocusList();
+  await loadPayload();
 }
 
-async function addInputProblem(): Promise<void> {
-  const inputEl = byId<HTMLInputElement>("manual-input");
-  const input = inputEl.value.trim();
-  if (!input) {
-    return;
+function openDashboard(view?: string): void {
+  const url = new URL(chrome.runtime.getURL("dashboard.html"));
+  if (view) {
+    url.searchParams.set("view", view);
   }
-
-  const response = await sendMessage("ADD_PROBLEM_BY_INPUT", { input });
-  if (!response.ok) {
-    byId<HTMLElement>("error").textContent = response.error ?? "Failed to add problem";
-    return;
-  }
-
-  inputEl.value = "";
-  await refresh();
-}
-
-async function addCurrentProblem(): Promise<void> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.url) {
-    byId<HTMLElement>("error").textContent = "No active tab URL.";
-    return;
-  }
-
-  if (!isProblemPage(tab.url)) {
-    byId<HTMLElement>("error").textContent = "Current tab is not a LeetCode problem.";
-    return;
-  }
-
-  const response = await sendMessage("ADD_PROBLEM_BY_INPUT", { input: tab.url });
-  if (!response.ok) {
-    byId<HTMLElement>("error").textContent = response.error ?? "Current tab is not a LeetCode problem.";
-    return;
-  }
-
-  await refresh();
+  chrome.tabs.create({ url: url.toString() });
 }
 
 function bindEvents(): void {
-  byId<HTMLButtonElement>("manual-add-btn").onclick = () => {
-    void addInputProblem();
+  byId<HTMLButtonElement>("refresh-popup").onclick = () => {
+    void loadPayload(true);
   };
 
-  byId<HTMLButtonElement>("add-current-btn").onclick = () => {
-    void addCurrentProblem();
+  byId<HTMLButtonElement>("open-settings").onclick = () => {
+    openDashboard("settings");
   };
 
-  byId<HTMLButtonElement>("open-dashboard-btn").onclick = () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") });
+  byId<HTMLButtonElement>("toggle-mode").onclick = () => {
+    void toggleStudyMode();
   };
 
-  byId<HTMLButtonElement>("refresh-btn").onclick = () => {
-    void refresh();
+  byId<HTMLButtonElement>("open-dashboard-main").onclick = () => {
+    openDashboard();
   };
 
-  byId<HTMLButtonElement>("shuffle-focus-btn").onclick = () => {
-    regenerateFocusItems();
-    renderFocusList();
-  };
-
-  byId<HTMLSelectElement>("study-mode-select").addEventListener("change", (event) => {
-    const nextMode = (event.target as HTMLSelectElement).value;
-    if (nextMode !== "freestyle" && nextMode !== "studyPlan") {
-      return;
-    }
-
-    void saveStudyPreferences({
-      studyMode: nextMode,
-      activeStudyPlanId
-    });
+  document.querySelectorAll<HTMLElement>("[data-open-dashboard='true']").forEach((button) => {
+    button.onclick = () => {
+      openDashboard();
+    };
   });
 
-  byId<HTMLSelectElement>("study-plan-select").addEventListener("change", (event) => {
-    const nextPlanId = (event.target as HTMLSelectElement).value;
-    void saveStudyPreferences({
-      activeStudyPlanId: nextPlanId
-    });
-  });
+  const shuffle = document.getElementById("shuffle-recommended");
+  if (shuffle) {
+    shuffle.onclick = () => {
+      const candidateCount = payload?.popup.recommendedCandidates.length ?? 0;
+      if (candidateCount > 1) {
+        recommendedIndex = (recommendedIndex + 1) % candidateCount;
+        render();
+      }
+    };
+  }
 
-  byId<HTMLInputElement>("manual-input").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      void addInputProblem();
-    }
-  });
+  const openRecommendedButton = document.getElementById("open-recommended");
+  if (openRecommendedButton) {
+    openRecommendedButton.onclick = () => {
+      const recommended = currentRecommended();
+      if (!recommended) {
+        return;
+      }
+      void openProblem(recommended);
+    };
+  }
+
+  const openCourseButton = document.getElementById("open-course-next");
+  const currentPayload = payload;
+  const courseNext = currentPayload?.popup.courseNext;
+  if (openCourseButton && courseNext) {
+    openCourseButton.onclick = () => {
+      void openProblem(courseNext, {
+        courseId: currentPayload.popup.activeCourse?.id,
+        chapterId: courseNext.chapterId
+      });
+    };
+  }
 }
 
-bindEvents();
-void refresh();
+void loadPayload(true);

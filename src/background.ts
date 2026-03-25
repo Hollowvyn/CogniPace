@@ -1,10 +1,17 @@
 import { summarizeAnalytics } from "./shared/analytics";
 import {
-  getCuratedSet,
-  getCurriculumRecommendations,
-  listCuratedSetNames,
-  listStudyPlans
-} from "./shared/curatedSets";
+  buildActiveCourseView,
+  buildCourseCards,
+  buildCourseOptions,
+  ensureCourseData,
+  ensureProblemInCourse,
+  getCourseMemberships,
+  markCourseQuestionLaunched,
+  setActiveCourse,
+  setActiveCourseChapter,
+  syncCourseProgress
+} from "./shared/courses";
+import { getCuratedSet, listCuratedSetNames } from "./shared/curatedSets";
 import { buildTodayQueue } from "./shared/queue";
 import {
   ensureProblem,
@@ -13,10 +20,18 @@ import {
   normalizeDifficulty,
   parseProblemInput
 } from "./shared/repository";
-import { applyReview, resetSchedule } from "./shared/scheduler";
+import { buildRecommendedCandidates } from "./shared/recommendations";
 import { RuntimeResponse } from "./shared/runtime";
+import { applyReview, resetSchedule } from "./shared/scheduler";
 import { getAppData, mergeSettings, mutateAppData } from "./shared/storage";
-import { ExportPayload, MessageType, RuntimeMessage, StudyState } from "./shared/types";
+import {
+  AppShellPayload,
+  ExportPayload,
+  LibraryProblemRow,
+  MessageType,
+  RuntimeMessage,
+  StudyState
+} from "./shared/types";
 import { normalizeSlug, nowIso, slugToTitle, slugToUrl, uniqueStrings } from "./shared/utils";
 
 function ok<T>(data: T): RuntimeResponse<T> {
@@ -78,8 +93,8 @@ async function consumeAutoTimerStart(payload: { slug: string }): Promise<Runtime
   const nowMs = Date.now();
   const queue = pruneAutoTimerQueue(await getAutoTimerQueue(), nowMs);
   const entries = [...(queue[slug] ?? [])];
-
   const autoStart = entries.length > 0;
+
   if (autoStart) {
     entries.shift();
   }
@@ -92,6 +107,57 @@ async function consumeAutoTimerStart(payload: { slug: string }): Promise<Runtime
 
   await saveAutoTimerQueue(queue);
   return ok({ autoStart });
+}
+
+function normalizeImportedState(state: StudyState): StudyState {
+  return {
+    ...state,
+    tags: Array.isArray(state.tags) ? state.tags : [],
+    attemptHistory: Array.isArray(state.attemptHistory) ? state.attemptHistory : [],
+    reviewCount: Number.isFinite(state.reviewCount) ? state.reviewCount : 0,
+    lapses: Number.isFinite(state.lapses) ? state.lapses : 0,
+    ease: Number.isFinite(state.ease) ? state.ease : 2.5,
+    intervalDays: Number.isFinite(state.intervalDays) ? state.intervalDays : 0,
+    status: state.status ?? "NEW"
+  };
+}
+
+function libraryRows(payload: Awaited<ReturnType<typeof getAppData>>): LibraryProblemRow[] {
+  return Object.values(payload.problemsBySlug)
+    .map((problem) => ({
+      problem,
+      studyState: payload.studyStatesBySlug[problem.leetcodeSlug] ?? null,
+      courses: getCourseMemberships(payload, problem.leetcodeSlug)
+    }))
+    .sort((a, b) => a.problem.title.localeCompare(b.problem.title));
+}
+
+async function getAppShellData(): Promise<RuntimeResponse<AppShellPayload>> {
+  const data = await getAppData();
+  const queue = buildTodayQueue(data);
+  const analytics = summarizeAnalytics(data);
+  const courses = buildCourseCards(data);
+  const activeCourse = buildActiveCourseView(data);
+  const candidates = buildRecommendedCandidates(queue, activeCourse?.nextQuestion?.slug);
+
+  return ok({
+    queue,
+    analytics,
+    settings: data.settings,
+    popup: {
+      dueCount: queue.dueCount,
+      streakDays: analytics.streakDays,
+      recommended: candidates[0] ?? null,
+      recommendedCandidates: candidates,
+      courseNext: activeCourse?.nextQuestion ?? null,
+      activeCourse: courses.find((course) => course.id === data.settings.activeCourseId) ?? null
+    },
+    recommendedCandidates: candidates,
+    courses,
+    activeCourse,
+    library: libraryRows(data),
+    courseOptions: buildCourseOptions(data)
+  });
 }
 
 async function upsertFromPage(payload: {
@@ -111,6 +177,7 @@ async function upsertFromPage(payload: {
     });
 
     const state = ensureStudyState(data, payload.slug);
+    syncCourseProgress(data);
 
     return {
       ...data,
@@ -125,7 +192,11 @@ async function upsertFromPage(payload: {
     };
   });
 
-  const slug = payload.slug.toLowerCase();
+  const slug = normalizeSlug(payload.slug);
+  if (!slug) {
+    throw new Error("Invalid slug.");
+  }
+
   return ok({
     problem: updated.problemsBySlug[slug],
     studyState: updated.studyStatesBySlug[slug]
@@ -134,17 +205,63 @@ async function upsertFromPage(payload: {
 
 async function getProblemContext(payload: { slug: string }): Promise<RuntimeResponse> {
   const data = await getAppData();
-  const slug = payload.slug.toLowerCase();
-  const problem = data.problemsBySlug[slug];
-  const studyState = data.studyStatesBySlug[slug];
-
-  if (!problem) {
+  const slug = normalizeSlug(payload.slug);
+  if (!slug) {
     return ok({ problem: null, studyState: null });
   }
 
   return ok({
-    problem,
-    studyState: studyState ?? null
+    problem: data.problemsBySlug[slug] ?? null,
+    studyState: data.studyStatesBySlug[slug] ?? null
+  });
+}
+
+async function saveReviewResult(payload: {
+  slug: string;
+  rating: 0 | 1 | 2 | 3;
+  solveTimeMs?: number;
+  mode?: "RECALL" | "FULL_SOLVE";
+  notes?: string;
+  courseId?: string;
+  chapterId?: string;
+}): Promise<RuntimeResponse> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) {
+    throw new Error("Invalid slug.");
+  }
+
+  const now = nowIso();
+  const updated = await mutateAppData((data) => {
+    const problem = ensureProblem(data, { slug: normalized });
+    const current = ensureStudyState(data, normalized);
+
+    const nextState = applyReview({
+      state: current,
+      difficulty: problem.difficulty,
+      rating: payload.rating,
+      solveTimeMs: payload.solveTimeMs,
+      mode: payload.mode,
+      notesSnapshot: payload.notes ?? current.notes,
+      settings: data.settings,
+      now
+    });
+
+    if (typeof payload.notes === "string") {
+      nextState.notes = payload.notes;
+    }
+
+    data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
+    markCourseQuestionLaunched(data, normalized, now, payload.courseId, payload.chapterId);
+    syncCourseProgress(data, now);
+    return data;
+  });
+
+  const nextState = updated.studyStatesBySlug[normalized];
+  return ok({
+    studyState: nextState,
+    nextReviewAt: nextState.nextReviewAt,
+    status: nextState.status,
+    lastRating: nextState.lastRating
   });
 }
 
@@ -155,96 +272,52 @@ async function rateProblem(payload: {
   mode?: "RECALL" | "FULL_SOLVE";
   notesSnapshot?: string;
 }): Promise<RuntimeResponse> {
-  const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, { slug: payload.slug });
-    const current = ensureStudyState(data, payload.slug);
-
-    const nextState = applyReview({
-      state: current,
-      difficulty: problem.difficulty,
-      rating: payload.rating,
-      solveTimeMs: payload.solveTimeMs,
-      mode: payload.mode,
-      notesSnapshot: payload.notesSnapshot,
-      settings: data.settings
-    });
-
-    data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
-    return data;
-  });
-
-  const slug = payload.slug.toLowerCase();
-  const nextState = updated.studyStatesBySlug[slug];
-
-  return ok({
-    studyState: nextState,
-    nextReviewAt: nextState.nextReviewAt,
-    status: nextState.status,
-    lastRating: nextState.lastRating
+  return saveReviewResult({
+    slug: payload.slug,
+    rating: payload.rating,
+    solveTimeMs: payload.solveTimeMs,
+    mode: payload.mode,
+    notes: payload.notesSnapshot
   });
 }
 
 async function updateNotes(payload: { slug: string; notes: string }): Promise<RuntimeResponse> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) {
+    throw new Error("Invalid slug.");
+  }
+
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, { slug: payload.slug });
-    const state = ensureStudyState(data, payload.slug);
+    ensureProblem(data, { slug: normalized });
+    const state = ensureStudyState(data, normalized);
     state.notes = payload.notes;
-    data.studyStatesBySlug[payload.slug.toLowerCase()] = state;
+    data.studyStatesBySlug[normalized] = state;
     return data;
   });
 
-  return ok({ studyState: updated.studyStatesBySlug[payload.slug.toLowerCase()] });
+  return ok({ studyState: updated.studyStatesBySlug[normalized] });
 }
 
 async function updateTags(payload: { slug: string; tags: string[] }): Promise<RuntimeResponse> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) {
+    throw new Error("Invalid slug.");
+  }
+
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, { slug: payload.slug });
-    const state = ensureStudyState(data, payload.slug);
+    ensureProblem(data, { slug: normalized });
+    const state = ensureStudyState(data, normalized);
     state.tags = payload.tags.map((tag) => tag.trim()).filter(Boolean);
-    data.studyStatesBySlug[payload.slug.toLowerCase()] = state;
+    data.studyStatesBySlug[normalized] = state;
     return data;
   });
 
-  return ok({ studyState: updated.studyStatesBySlug[payload.slug.toLowerCase()] });
+  return ok({ studyState: updated.studyStatesBySlug[normalized] });
 }
 
 async function getQueue(): Promise<RuntimeResponse> {
   const data = await getAppData();
   return ok(buildTodayQueue(data));
-}
-
-async function getDashboardData(): Promise<RuntimeResponse> {
-  const data = await getAppData();
-  const queue = buildTodayQueue(data);
-  const curriculum = getCurriculumRecommendations(data, data.settings.activeStudyPlanId, 1);
-  const studyPlans = listStudyPlans();
-  const analytics = summarizeAnalytics(data);
-  const problems = Object.values(data.problemsBySlug)
-    .map((problem) => ({
-      problem,
-      studyState: data.studyStatesBySlug[problem.leetcodeSlug] ?? null
-    }))
-    .sort((a, b) => a.problem.title.localeCompare(b.problem.title));
-
-  return ok({
-    problems,
-    queue,
-    curriculum: {
-      planId: curriculum.planId,
-      planName: curriculum.planName,
-      sourceSet: curriculum.sourceSet,
-      topic: curriculum.topic,
-      completed: curriculum.completed,
-      items: curriculum.items.map((item) => ({
-        ...item,
-        isInLibrary: !!data.problemsBySlug[item.slug]
-      }))
-    },
-    studyPlans,
-    analytics,
-    settings: data.settings,
-    curatedSetNames: listCuratedSetNames()
-  });
 }
 
 async function importCurated(payload: { setName: string }): Promise<RuntimeResponse> {
@@ -254,7 +327,6 @@ async function importCurated(payload: { setName: string }): Promise<RuntimeRespo
   }
 
   let importResult = { added: 0, updated: 0 };
-
   await mutateAppData((data) => {
     importResult = importProblemsIntoSet(data, payload.setName, setProblems);
     data.settings = mergeSettings(data.settings, {
@@ -263,6 +335,7 @@ async function importCurated(payload: { setName: string }): Promise<RuntimeRespo
         [payload.setName]: true
       }
     });
+    syncCourseProgress(data);
     return data;
   });
 
@@ -294,6 +367,7 @@ async function importCustom(payload: {
         Custom: true
       }
     });
+    syncCourseProgress(data);
     return data;
   });
 
@@ -308,23 +382,14 @@ async function importCustom(payload: {
 async function exportData(): Promise<RuntimeResponse<ExportPayload>> {
   const data = await getAppData();
   return ok({
+    version: 2,
     problems: Object.values(data.problemsBySlug),
     studyStatesBySlug: data.studyStatesBySlug,
-    settings: data.settings
+    settings: data.settings,
+    coursesById: data.coursesById,
+    courseOrder: data.courseOrder,
+    courseProgressById: data.courseProgressById
   });
-}
-
-function normalizeImportedState(state: StudyState): StudyState {
-  return {
-    ...state,
-    tags: Array.isArray(state.tags) ? state.tags : [],
-    attemptHistory: Array.isArray(state.attemptHistory) ? state.attemptHistory : [],
-    reviewCount: Number.isFinite(state.reviewCount) ? state.reviewCount : 0,
-    lapses: Number.isFinite(state.lapses) ? state.lapses : 0,
-    ease: Number.isFinite(state.ease) ? state.ease : 2.5,
-    intervalDays: Number.isFinite(state.intervalDays) ? state.intervalDays : 0,
-    status: state.status ?? "NEW"
-  };
 }
 
 async function importData(payload: ExportPayload): Promise<RuntimeResponse> {
@@ -334,6 +399,10 @@ async function importData(payload: ExportPayload): Promise<RuntimeResponse> {
 
   await mutateAppData((data) => {
     data.problemsBySlug = {};
+    data.studyStatesBySlug = {};
+    data.coursesById = payload.coursesById ?? {};
+    data.courseOrder = payload.courseOrder ?? [];
+    data.courseProgressById = payload.courseProgressById ?? {};
 
     for (const problem of payload.problems) {
       const slug = normalizeSlug(problem.leetcodeSlug);
@@ -356,12 +425,13 @@ async function importData(payload: ExportPayload): Promise<RuntimeResponse> {
       };
     }
 
-    data.studyStatesBySlug = {};
     for (const [slug, state] of Object.entries(payload.studyStatesBySlug ?? {})) {
       data.studyStatesBySlug[slug.toLowerCase()] = normalizeImportedState(state);
     }
 
     data.settings = mergeSettings(data.settings, payload.settings ?? {});
+    ensureCourseData(data);
+    syncCourseProgress(data);
     return data;
   });
 
@@ -371,6 +441,8 @@ async function importData(payload: ExportPayload): Promise<RuntimeResponse> {
 async function updateSettings(payload: Record<string, unknown>): Promise<RuntimeResponse> {
   const updated = await mutateAppData((data) => {
     data.settings = mergeSettings(data.settings, payload);
+    ensureCourseData(data);
+    syncCourseProgress(data);
     return data;
   });
 
@@ -396,6 +468,7 @@ async function addProblemByInput(payload: {
       state.status = "LEARNING";
       state.lastReviewedAt = nowIso();
     }
+    syncCourseProgress(data);
 
     return {
       ...data,
@@ -417,27 +490,122 @@ async function addProblemByInput(payload: {
   });
 }
 
-async function suspendProblem(payload: { slug: string; suspend: boolean }): Promise<RuntimeResponse> {
+async function addProblemToCourse(payload: {
+  courseId: string;
+  chapterId: string;
+  input: string;
+  markAsStarted?: boolean;
+}): Promise<RuntimeResponse> {
+  const parsed = parseProblemInput(payload.input);
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, { slug: payload.slug });
-    const state = ensureStudyState(data, payload.slug);
-    state.status = payload.suspend ? "SUSPENDED" : "LEARNING";
-    data.studyStatesBySlug[payload.slug.toLowerCase()] = state;
+    const course = data.coursesById[payload.courseId];
+    if (!course || !course.chaptersById[payload.chapterId]) {
+      throw new Error("Course or chapter not found.");
+    }
+
+    const chapter = course.chaptersById[payload.chapterId];
+    const problem = ensureProblem(data, {
+      slug: parsed.slug,
+      url: parsed.url,
+      sourceSet: course.sourceSet,
+      topics: [chapter.title]
+    });
+    const state = ensureStudyState(data, parsed.slug);
+    if (payload.markAsStarted && state.reviewCount === 0 && state.status === "NEW") {
+      state.status = "LEARNING";
+      state.lastReviewedAt = nowIso();
+    }
+
+    ensureProblemInCourse(course, payload.chapterId, problem);
+    markCourseQuestionLaunched(data, problem.leetcodeSlug, nowIso(), payload.courseId, payload.chapterId);
+    syncCourseProgress(data);
     return data;
   });
 
-  return ok({ studyState: updated.studyStatesBySlug[payload.slug.toLowerCase()] });
+  const normalized = normalizeSlug(parsed.slug);
+  if (!normalized) {
+    throw new Error("Invalid slug.");
+  }
+
+  return ok({
+    problem: updated.problemsBySlug[normalized],
+    studyState: updated.studyStatesBySlug[normalized],
+    course: buildActiveCourseView(updated, payload.courseId)
+  });
+}
+
+async function switchActiveCourse(payload: { courseId: string }): Promise<RuntimeResponse> {
+  const updated = await mutateAppData((data) => {
+    setActiveCourse(data, payload.courseId);
+    return data;
+  });
+
+  return ok({
+    activeCourseId: updated.settings.activeCourseId,
+    activeCourse: buildActiveCourseView(updated, updated.settings.activeCourseId)
+  });
+}
+
+async function activateCourseChapter(payload: { courseId: string; chapterId: string }): Promise<RuntimeResponse> {
+  const updated = await mutateAppData((data) => {
+    setActiveCourseChapter(data, payload.courseId, payload.chapterId);
+    return data;
+  });
+
+  return ok({
+    activeCourse: buildActiveCourseView(updated, payload.courseId)
+  });
+}
+
+async function trackCourseQuestionLaunch(payload: {
+  slug: string;
+  courseId?: string;
+  chapterId?: string;
+}): Promise<RuntimeResponse> {
+  const updated = await mutateAppData((data) => {
+    markCourseQuestionLaunched(data, payload.slug, nowIso(), payload.courseId, payload.chapterId);
+    return data;
+  });
+
+  return ok({
+    tracked: true,
+    activeCourse: buildActiveCourseView(updated, payload.courseId ?? updated.settings.activeCourseId)
+  });
+}
+
+async function suspendProblem(payload: { slug: string; suspend: boolean }): Promise<RuntimeResponse> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) {
+    throw new Error("Invalid slug.");
+  }
+
+  const updated = await mutateAppData((data) => {
+    ensureProblem(data, { slug: normalized });
+    const state = ensureStudyState(data, normalized);
+    state.status = payload.suspend ? "SUSPENDED" : "LEARNING";
+    data.studyStatesBySlug[normalized] = state;
+    syncCourseProgress(data);
+    return data;
+  });
+
+  return ok({ studyState: updated.studyStatesBySlug[normalized] });
 }
 
 async function resetProblem(payload: { slug: string; keepNotes?: boolean }): Promise<RuntimeResponse> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) {
+    throw new Error("Invalid slug.");
+  }
+
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, { slug: payload.slug });
-    const state = data.studyStatesBySlug[payload.slug.toLowerCase()];
-    data.studyStatesBySlug[payload.slug.toLowerCase()] = resetSchedule(state, payload.keepNotes ?? true);
+    ensureProblem(data, { slug: normalized });
+    const state = data.studyStatesBySlug[normalized];
+    data.studyStatesBySlug[normalized] = resetSchedule(state, payload.keepNotes ?? true);
+    syncCourseProgress(data);
     return data;
   });
 
-  return ok({ studyState: updated.studyStatesBySlug[payload.slug.toLowerCase()] });
+  return ok({ studyState: updated.studyStatesBySlug[normalized] });
 }
 
 async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> {
@@ -448,6 +616,8 @@ async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> 
       return getProblemContext(message.payload as Parameters<typeof getProblemContext>[0]);
     case "RATE_PROBLEM":
       return rateProblem(message.payload as Parameters<typeof rateProblem>[0]);
+    case "SAVE_REVIEW_RESULT":
+      return saveReviewResult(message.payload as Parameters<typeof saveReviewResult>[0]);
     case "UPDATE_NOTES":
       return updateNotes(message.payload as Parameters<typeof updateNotes>[0]);
     case "UPDATE_TAGS":
@@ -455,7 +625,14 @@ async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> 
     case "GET_TODAY_QUEUE":
       return getQueue();
     case "GET_DASHBOARD_DATA":
-      return getDashboardData();
+    case "GET_APP_SHELL_DATA":
+      return getAppShellData();
+    case "SWITCH_ACTIVE_COURSE":
+      return switchActiveCourse(message.payload as Parameters<typeof switchActiveCourse>[0]);
+    case "SET_ACTIVE_COURSE_CHAPTER":
+      return activateCourseChapter(message.payload as Parameters<typeof activateCourseChapter>[0]);
+    case "TRACK_COURSE_QUESTION_LAUNCH":
+      return trackCourseQuestionLaunch(message.payload as Parameters<typeof trackCourseQuestionLaunch>[0]);
     case "QUEUE_AUTO_TIMER_START":
       return queueAutoTimerStart(message.payload as Parameters<typeof queueAutoTimerStart>[0]);
     case "CONSUME_AUTO_TIMER_START":
@@ -472,6 +649,8 @@ async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> 
       return updateSettings(message.payload as Record<string, unknown>);
     case "ADD_PROBLEM_BY_INPUT":
       return addProblemByInput(message.payload as Parameters<typeof addProblemByInput>[0]);
+    case "ADD_PROBLEM_TO_COURSE":
+      return addProblemToCourse(message.payload as Parameters<typeof addProblemToCourse>[0]);
     case "SUSPEND_PROBLEM":
       return suspendProblem(message.payload as Parameters<typeof suspendProblem>[0]);
     case "RESET_PROBLEM_SCHEDULE":
@@ -519,7 +698,10 @@ async function maybeNotifyDueQueue(): Promise<void> {
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
-  await mutateAppData((data) => ({ ...data }));
+  await mutateAppData((data) => {
+    ensureCourseData(data);
+    return data;
+  });
   chrome.alarms.create("due-check", { periodInMinutes: 60 });
 });
 

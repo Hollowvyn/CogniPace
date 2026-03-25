@@ -1,18 +1,39 @@
-import { BUILT_IN_SETS, DEFAULT_SETTINGS } from "./constants";
+import {
+  BUILT_IN_SETS,
+  CURRENT_STORAGE_SCHEMA_VERSION,
+  DEFAULT_COURSE_ID,
+  DEFAULT_SETTINGS,
+  LEGACY_STORAGE_KEY,
+  STORAGE_KEY
+} from "./constants";
+import { ensureCourseData } from "./courses";
 import { AppData, UserSettings } from "./types";
 
-const STORAGE_KEY = "leetcode_spaced_repetition_data_v1";
+export type LegacySettingsPatch = Partial<UserSettings> & {
+  activeStudyPlanId?: string;
+};
+
+export type StoredAppData = Partial<AppData> & {
+  settings?: LegacySettingsPatch;
+  schemaVersion?: number;
+};
 
 const EMPTY_DATA: AppData = {
+  schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
   problemsBySlug: {},
   studyStatesBySlug: {},
+  coursesById: {},
+  courseOrder: [],
+  courseProgressById: {},
   settings: DEFAULT_SETTINGS
 };
 
-function normalizeSettings(input?: Partial<UserSettings>): UserSettings {
+function normalizeSettings(input?: LegacySettingsPatch): UserSettings {
+  const nextActiveCourseId = input?.activeCourseId || input?.activeStudyPlanId || DEFAULT_COURSE_ID;
   const merged: UserSettings = {
     ...DEFAULT_SETTINGS,
     ...(input ?? {}),
+    activeCourseId: nextActiveCourseId,
     quietHours: {
       ...DEFAULT_SETTINGS.quietHours,
       ...(input?.quietHours ?? {})
@@ -27,14 +48,18 @@ function normalizeSettings(input?: Partial<UserSettings>): UserSettings {
     merged.studyMode = DEFAULT_SETTINGS.studyMode;
   }
 
-  if (typeof merged.activeStudyPlanId !== "string" || !merged.activeStudyPlanId.trim()) {
-    merged.activeStudyPlanId = DEFAULT_SETTINGS.activeStudyPlanId;
+  if (typeof merged.activeCourseId !== "string" || !merged.activeCourseId.trim()) {
+    merged.activeCourseId = DEFAULT_COURSE_ID;
   }
 
   for (const setName of BUILT_IN_SETS) {
     if (typeof merged.setsEnabled[setName] !== "boolean") {
       merged.setsEnabled[setName] = true;
     }
+  }
+
+  if (typeof merged.setsEnabled.LeetCode150 !== "boolean") {
+    merged.setsEnabled.LeetCode150 = true;
   }
 
   if (typeof merged.setsEnabled.Custom !== "boolean") {
@@ -44,29 +69,59 @@ function normalizeSettings(input?: Partial<UserSettings>): UserSettings {
   return merged;
 }
 
-export async function getAppData(): Promise<AppData> {
-  const result = await chrome.storage.local.get(STORAGE_KEY);
-  const stored = result[STORAGE_KEY] as Partial<AppData> | undefined;
+export function normalizeStoredAppData(stored?: StoredAppData): AppData {
+  const data: AppData = {
+    schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
+    problemsBySlug: stored?.problemsBySlug ?? {},
+    studyStatesBySlug: stored?.studyStatesBySlug ?? {},
+    coursesById: stored?.coursesById ?? {},
+    courseOrder: Array.isArray(stored?.courseOrder) ? stored!.courseOrder! : [],
+    courseProgressById: stored?.courseProgressById ?? {},
+    settings: normalizeSettings(stored?.settings)
+  };
 
-  if (!stored) {
-    return { ...EMPTY_DATA, settings: normalizeSettings() };
+  ensureCourseData(data);
+  return data;
+}
+
+export async function getAppData(): Promise<AppData> {
+  const result = await chrome.storage.local.get([STORAGE_KEY, LEGACY_STORAGE_KEY]);
+  const current = result[STORAGE_KEY] as StoredAppData | undefined;
+  const legacy = result[LEGACY_STORAGE_KEY] as StoredAppData | undefined;
+  const usingLegacy = !current && !!legacy;
+  const stored = current ?? legacy;
+
+  const normalized = normalizeStoredAppData(stored);
+  const needsWriteBack =
+    !stored ||
+    usingLegacy ||
+    stored.schemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION ||
+    !stored.coursesById ||
+    !stored.courseOrder ||
+    !stored.courseProgressById ||
+    (stored.settings && "activeStudyPlanId" in stored.settings);
+
+  if (needsWriteBack) {
+    await saveAppData(normalized);
   }
 
-  return {
-    problemsBySlug: stored.problemsBySlug ?? {},
-    studyStatesBySlug: stored.studyStatesBySlug ?? {},
-    settings: normalizeSettings(stored.settings)
-  };
+  return normalized;
 }
 
 export async function saveAppData(data: AppData): Promise<void> {
   const payload: AppData = {
+    schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
     problemsBySlug: data.problemsBySlug,
     studyStatesBySlug: data.studyStatesBySlug,
+    coursesById: data.coursesById,
+    courseOrder: data.courseOrder,
+    courseProgressById: data.courseProgressById,
     settings: normalizeSettings(data.settings)
   };
 
+  ensureCourseData(payload);
   await chrome.storage.local.set({ [STORAGE_KEY]: payload });
+  await chrome.storage.local.remove(LEGACY_STORAGE_KEY);
 }
 
 export async function mutateAppData(
@@ -74,17 +129,19 @@ export async function mutateAppData(
 ): Promise<AppData> {
   const current = await getAppData();
   const updated = await updater(current);
+  ensureCourseData(updated);
   await saveAppData(updated);
   return updated;
 }
 
 export function mergeSettings(
   current: UserSettings,
-  patch: Partial<UserSettings>
+  patch: LegacySettingsPatch
 ): UserSettings {
   return normalizeSettings({
     ...current,
     ...patch,
+    activeCourseId: patch.activeCourseId || patch.activeStudyPlanId || current.activeCourseId,
     quietHours: {
       ...current.quietHours,
       ...(patch.quietHours ?? {})

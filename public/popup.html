@@ -4,60 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LeetCode Reviews</title>
-    <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="app.css" />
   </head>
-  <body>
-    <main class="popup">
-      <header class="header">
-        <h1>Today’s Review Queue</h1>
-        <button id="refresh-btn" class="secondary">Refresh</button>
-      </header>
-
-      <section class="metrics">
-        <div class="metric"><span>Due</span><strong id="due-count">0</strong></div>
-        <div class="metric"><span>Streak</span><strong id="streak-count">0</strong></div>
-      </section>
-
-      <section class="mode-panel">
-        <label>
-          Study mode
-          <select id="study-mode-select">
-            <option value="studyPlan">Study plan</option>
-            <option value="freestyle">Freestyle</option>
-          </select>
-        </label>
-        <label>
-          Active plan
-          <select id="study-plan-select"></select>
-        </label>
-      </section>
-
-      <section class="next-review">Next review: <strong id="next-review">-</strong></section>
-
-      <section class="focus-panel">
-        <div class="focus-header">
-          <h2>Focus now</h2>
-          <button id="shuffle-focus-btn" class="secondary">Shuffle</button>
-        </div>
-        <p id="focus-caption" class="focus-caption">Random due picks.</p>
-        <ul id="focus-list" class="focus-list"></ul>
-      </section>
-
-      <section class="add-panel">
-        <button id="add-current-btn">Add current problem</button>
-        <div class="manual-row">
-          <input id="manual-input" placeholder="Slug or LeetCode URL" />
-          <button id="manual-add-btn">Add</button>
-        </div>
-      </section>
-
-      <div id="error" class="error"></div>
-
-      <footer>
-        <button id="open-dashboard-btn" class="secondary full">Open Dashboard</button>
-      </footer>
-    </main>
-
+  <body class="kt-page kt-popup-page">
+    <main id="popup-root" class="kt-popup"></main>
     <script src="popup.js"></script>
   </body>
 </html>

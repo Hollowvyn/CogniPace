@@ -1,63 +1,92 @@
-import { AppData, CuratedProblemInput, Difficulty, StudyState } from "./types";
-import { slugToTitle, slugToUrl, uniqueStrings } from "./utils";
+"use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 
-interface TopicPathProblemInput {
-  slug: string;
-  displayTitle?: string;
-  difficulty?: Difficulty;
-  tags?: string[];
+// tests/logic.test.ts
+var import_strict = __toESM(require("node:assert/strict"));
+
+// src/shared/types.ts
+var STORAGE_SCHEMA_VERSION = 2;
+
+// src/shared/constants.ts
+var CURRENT_STORAGE_SCHEMA_VERSION = STORAGE_SCHEMA_VERSION;
+var DEFAULT_COURSE_ID = "Blind75";
+var BUILT_IN_SETS = ["Blind75", "ByteByteGo101", "NeetCode150", "NeetCode250", "Grind75", "LeetCode75"];
+var DEFAULT_SETTINGS = {
+  dailyNewLimit: 3,
+  dailyReviewLimit: 15,
+  reviewOrder: "dueFirst",
+  studyMode: "studyPlan",
+  activeCourseId: DEFAULT_COURSE_ID,
+  setsEnabled: {
+    Blind75: true,
+    ByteByteGo101: true,
+    NeetCode150: true,
+    NeetCode250: true,
+    Grind75: true,
+    LeetCode75: true,
+    LeetCode150: true,
+    Custom: true
+  },
+  scheduleIntensity: "normal",
+  requireSolveTime: false,
+  autoDetectSolved: true,
+  notifications: false,
+  quietHours: {
+    startHour: 22,
+    endHour: 8
+  },
+  slowSolveDowngradeEnabled: false,
+  slowSolveThresholdMs: 40 * 60 * 1e3
+};
+function createDefaultStudyState() {
+  return {
+    status: "NEW",
+    reviewCount: 0,
+    lapses: 0,
+    ease: 2.5,
+    intervalDays: 0,
+    tags: [],
+    attemptHistory: []
+  };
 }
 
-type TopicPathProblem = string | TopicPathProblemInput;
-
-interface TopicPathSection {
-  topic: string;
-  slugs: TopicPathProblem[];
+// src/shared/utils.ts
+function slugToTitle(slug) {
+  return slug.split("-").filter(Boolean).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+}
+function slugToUrl(slug) {
+  return `https://leetcode.com/problems/${slug}/`;
+}
+function nowIso() {
+  return (/* @__PURE__ */ new Date()).toISOString();
+}
+function uniqueStrings(values) {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
-interface StudyPlanInput {
-  id: string;
-  name: string;
-  description: string;
-  sourceSet: string;
-  sections: TopicPathSection[];
-}
-
-export interface StudyPlanSummary {
-  id: string;
-  name: string;
-  description: string;
-  sourceSet: string;
-  topicCount: number;
-  problemCount: number;
-}
-
-export interface CurriculumStep {
-  planId: string;
-  planName: string;
-  sourceSet: string;
-  topic: string;
-  slug: string;
-  title: string;
-  url: string;
-  difficulty?: Difficulty;
-}
-
-export interface ProblemCatalogEntry {
-  slug: string;
-  title: string;
-  url: string;
-  sourceSets: string[];
-  topics: string[];
-}
-
-interface PlanRuntime {
-  summary: StudyPlanSummary;
-  steps: CurriculumStep[];
-  problems: CuratedProblemInput[];
-}
-
-function courseProblem(slug: string, displayTitle: string, difficulty: Difficulty, tags?: string[]): TopicPathProblemInput {
+// src/shared/curatedSets.ts
+function courseProblem(slug, displayTitle, difficulty, tags) {
   return {
     slug,
     displayTitle,
@@ -65,23 +94,16 @@ function courseProblem(slug: string, displayTitle: string, difficulty: Difficult
     tags
   };
 }
-
-function normalizeTopicPathProblem(input: TopicPathProblem): Required<Pick<TopicPathProblemInput, "slug">> & {
-  displayTitle: string;
-  title: string;
-  difficulty?: Difficulty;
-  tags: string[];
-} {
+function normalizeTopicPathProblem(input) {
   if (typeof input === "string") {
-    const title = slugToTitle(input);
+    const title2 = slugToTitle(input);
     return {
       slug: input,
-      displayTitle: title,
-      title,
+      displayTitle: title2,
+      title: title2,
       tags: []
     };
   }
-
   const title = slugToTitle(input.slug);
   return {
     slug: input.slug,
@@ -91,8 +113,7 @@ function normalizeTopicPathProblem(input: TopicPathProblem): Required<Pick<Topic
     tags: uniqueStrings(input.tags ?? [])
   };
 }
-
-const blind75TopicPath: TopicPathSection[] = [
+var blind75TopicPath = [
   {
     topic: "Array",
     slugs: [
@@ -220,8 +241,7 @@ const blind75TopicPath: TopicPathSection[] = [
     ]
   }
 ];
-
-const leetcode75TopicPath: TopicPathSection[] = [
+var leetcode75TopicPath = [
   {
     topic: "Array / String",
     slugs: [
@@ -408,8 +428,7 @@ const leetcode75TopicPath: TopicPathSection[] = [
     ]
   }
 ];
-
-const grind75Slugs = [
+var grind75Slugs = [
   "two-sum",
   "valid-parentheses",
   "merge-two-sorted-lists",
@@ -487,8 +506,7 @@ const grind75Slugs = [
   "lfu-cache",
   "minimum-window-substring"
 ];
-
-const neetCode150TopicPath: TopicPathSection[] = [
+var neetCode150TopicPath = [
   {
     topic: "Arrays & Hashing",
     slugs: [
@@ -719,8 +737,7 @@ const neetCode150TopicPath: TopicPathSection[] = [
     ]
   }
 ];
-
-const neetCode250TopicPath: TopicPathSection[] = [
+var neetCode250TopicPath = [
   {
     topic: "Arrays & Hashing",
     slugs: [
@@ -854,7 +871,7 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "serialize-and-deserialize-binary-tree",
       "delete-node-in-a-bst",
       "insert-into-a-binary-search-tree",
-      "construct-quad-tree",
+      "construct-quad-tree"
     ]
   },
   {
@@ -1056,8 +1073,7 @@ const neetCode250TopicPath: TopicPathSection[] = [
     ]
   }
 ];
-
-const byteByteGo101TopicPath: TopicPathSection[] = [
+var byteByteGo101TopicPath = [
   {
     topic: "Two Pointers",
     slugs: [
@@ -1259,22 +1275,15 @@ const byteByteGo101TopicPath: TopicPathSection[] = [
     ]
   }
 ];
-
-function flattenSections(sections: TopicPathSection[]): string[] {
-  return sections.flatMap((section) => section.slugs.map((item) => normalizeTopicPathProblem(item).slug));
-}
-
-function mergeCuratedLists(...lists: CuratedProblemInput[][]): CuratedProblemInput[] {
-  const bySlug = new Map<string, CuratedProblemInput>();
-
+function mergeCuratedLists(...lists) {
+  const bySlug = /* @__PURE__ */ new Map();
   for (const list of lists) {
     for (const item of list) {
       const existing = bySlug.get(item.slug);
       if (existing) {
-        existing.tags = uniqueStrings([...(existing.tags ?? []), ...(item.tags ?? [])]);
+        existing.tags = uniqueStrings([...existing.tags ?? [], ...item.tags ?? []]);
         continue;
       }
-
       bySlug.set(item.slug, {
         slug: item.slug,
         title: item.title ?? slugToTitle(item.slug),
@@ -1283,21 +1292,18 @@ function mergeCuratedLists(...lists: CuratedProblemInput[][]): CuratedProblemInp
       });
     }
   }
-
   return Array.from(bySlug.values());
 }
-
-function buildPlanRuntime(plan: StudyPlanInput): PlanRuntime {
-  const bySlug = new Map<string, CuratedProblemInput>();
-  const seenSteps = new Set<string>();
-  const steps: CurriculumStep[] = [];
-
+function buildPlanRuntime(plan) {
+  const bySlug = /* @__PURE__ */ new Map();
+  const seenSteps = /* @__PURE__ */ new Set();
+  const steps = [];
   for (const section of plan.sections) {
     for (const rawItem of section.slugs) {
       const item = normalizeTopicPathProblem(rawItem);
       const existing = bySlug.get(item.slug);
       if (existing) {
-        existing.tags = uniqueStrings([...(existing.tags ?? []), section.topic, ...item.tags]);
+        existing.tags = uniqueStrings([...existing.tags ?? [], section.topic, ...item.tags]);
         existing.difficulty = existing.difficulty ?? item.difficulty;
       } else {
         bySlug.set(item.slug, {
@@ -1307,11 +1313,9 @@ function buildPlanRuntime(plan: StudyPlanInput): PlanRuntime {
           tags: uniqueStrings([section.topic, ...item.tags])
         });
       }
-
       if (seenSteps.has(item.slug)) {
         continue;
       }
-
       seenSteps.add(item.slug);
       steps.push({
         planId: plan.id,
@@ -1325,9 +1329,7 @@ function buildPlanRuntime(plan: StudyPlanInput): PlanRuntime {
       });
     }
   }
-
   const problems = Array.from(bySlug.values());
-
   return {
     summary: {
       id: plan.id,
@@ -1341,8 +1343,7 @@ function buildPlanRuntime(plan: StudyPlanInput): PlanRuntime {
     problems
   };
 }
-
-const STUDY_PLAN_INPUTS: StudyPlanInput[] = [
+var STUDY_PLAN_INPUTS = [
   {
     id: "Blind75",
     name: "Blind 75",
@@ -1386,25 +1387,20 @@ const STUDY_PLAN_INPUTS: StudyPlanInput[] = [
     sections: neetCode250TopicPath
   }
 ];
-
-const PLAN_RUNTIME = new Map<string, PlanRuntime>(
+var PLAN_RUNTIME = new Map(
   STUDY_PLAN_INPUTS.map((plan) => {
     const runtime = buildPlanRuntime(plan);
     return [runtime.summary.id, runtime];
   })
 );
-
-const DEFAULT_PLAN_ID = STUDY_PLAN_INPUTS[0]?.id ?? "Blind75";
-
-const curatedBySet = new Map<string, CuratedProblemInput[]>();
+var DEFAULT_PLAN_ID = STUDY_PLAN_INPUTS[0]?.id ?? "Blind75";
+var curatedBySet = /* @__PURE__ */ new Map();
 for (const runtime of PLAN_RUNTIME.values()) {
   const existing = curatedBySet.get(runtime.summary.sourceSet) ?? [];
   curatedBySet.set(runtime.summary.sourceSet, mergeCuratedLists(existing, runtime.problems));
 }
-
-export const CURATED_SETS: Record<string, CuratedProblemInput[]> = Object.fromEntries(curatedBySet.entries());
-
-const problemCatalog = new Map<string, ProblemCatalogEntry>();
+var CURATED_SETS = Object.fromEntries(curatedBySet.entries());
+var problemCatalog = /* @__PURE__ */ new Map();
 for (const runtime of PLAN_RUNTIME.values()) {
   for (const problem of runtime.problems) {
     const existing = problemCatalog.get(problem.slug);
@@ -1418,123 +1414,720 @@ for (const runtime of PLAN_RUNTIME.values()) {
       });
       continue;
     }
-
     existing.sourceSets = uniqueStrings([...existing.sourceSets, runtime.summary.sourceSet]);
-    existing.topics = uniqueStrings([...existing.topics, ...(problem.tags ?? [])]);
+    existing.topics = uniqueStrings([...existing.topics, ...problem.tags ?? []]);
   }
 }
-
-function hasStartedStep(state?: StudyState): boolean {
-  if (!state) {
-    return false;
-  }
-
-  return (
-    state.reviewCount > 0 ||
-    (state.attemptHistory?.length ?? 0) > 0 ||
-    state.lastRating !== undefined ||
-    !!state.lastReviewedAt
-  );
-}
-
-function resolvePlan(planId?: string): PlanRuntime {
-  const byId = planId ? PLAN_RUNTIME.get(planId) : undefined;
+function resolvePlan(planId) {
+  const byId = planId ? PLAN_RUNTIME.get(planId) : void 0;
   if (byId) {
     return byId;
   }
-
   const fallback = PLAN_RUNTIME.get(DEFAULT_PLAN_ID);
   if (!fallback) {
     throw new Error("No study plans configured.");
   }
   return fallback;
 }
-
-export function getCuratedSet(name: string): CuratedProblemInput[] {
-  return CURATED_SETS[name] ?? [];
-}
-
-export function listCuratedSetNames(): string[] {
-  return Array.from(curatedBySet.keys());
-}
-
-export function listStudyPlans(): StudyPlanSummary[] {
+function listStudyPlans() {
   return STUDY_PLAN_INPUTS.map((plan) => resolvePlan(plan.id).summary);
 }
-
-export function getProblemCatalog(): ProblemCatalogEntry[] {
-  return Array.from(problemCatalog.values()).sort((a, b) => a.title.localeCompare(b.title));
-}
-
-export function getDefaultCurriculumSteps(planId?: string): CurriculumStep[] {
+function getDefaultCurriculumSteps(planId) {
   return [...resolvePlan(planId).steps];
 }
 
-export function getCurriculumRecommendations(
-  data: AppData,
-  planId?: string,
-  maxItems = 1
-): {
-  planId: string;
-  planName: string;
-  sourceSet: string;
-  topic: string | null;
-  items: CurriculumStep[];
-  completed: boolean;
-} {
-  const runtime = resolvePlan(planId);
-  const { summary, steps } = runtime;
-
-  if (data.settings.setsEnabled[summary.sourceSet] === false) {
-    return {
-      planId: summary.id,
-      planName: summary.name,
-      sourceSet: summary.sourceSet,
-      topic: null,
-      items: [],
-      completed: false
-    };
+// src/shared/courses.ts
+function slugifySegment(value) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+function chapterId(courseId, order, title) {
+  return `${courseId}::${String(order + 1).padStart(2, "0")}::${slugifySegment(title)}`;
+}
+function createQuestionProgress(slug) {
+  return { slug };
+}
+function createChapterProgress(chapter) {
+  const questionProgressBySlug = {};
+  for (const slug of chapter.questionSlugs) {
+    questionProgressBySlug[slug] = createQuestionProgress(slug);
   }
-
-  const limit = Math.max(1, Math.floor(maxItems));
-  const firstPendingIndex = steps.findIndex((step) => !hasStartedStep(data.studyStatesBySlug[step.slug]));
-
-  if (firstPendingIndex < 0) {
-    return {
-      planId: summary.id,
-      planName: summary.name,
-      sourceSet: summary.sourceSet,
-      topic: null,
-      items: [],
-      completed: true
-    };
-  }
-
-  const topic = steps[firstPendingIndex].topic;
-  const items: CurriculumStep[] = [];
-
-  for (let i = firstPendingIndex; i < steps.length; i += 1) {
-    const step = steps[i];
-    if (step.topic !== topic && items.length > 0) {
-      break;
-    }
-
-    if (hasStartedStep(data.studyStatesBySlug[step.slug])) {
-      continue;
-    }
-
-    items.push(step);
-    if (items.length >= limit) {
-      break;
-    }
-  }
-
   return {
-    planId: summary.id,
-    planName: summary.name,
-    sourceSet: summary.sourceSet,
-    topic,
-    items,
-    completed: false
+    chapterId: chapter.id,
+    currentQuestionSlug: chapter.questionSlugs[0],
+    questionProgressBySlug
   };
 }
+function createCourseProgress(course, now) {
+  const chapterProgressById = {};
+  for (const chapterIdValue of course.chapterIds) {
+    chapterProgressById[chapterIdValue] = createChapterProgress(course.chaptersById[chapterIdValue]);
+  }
+  return {
+    courseId: course.id,
+    activeChapterId: course.chapterIds[0] ?? "",
+    startedAt: now,
+    lastInteractedAt: now,
+    chapterProgressById
+  };
+}
+function buildCuratedCourseDefinition(summary, now) {
+  const steps = getDefaultCurriculumSteps(summary.id);
+  const chapterIds = [];
+  const chaptersById = {};
+  const questionRefsBySlug = {};
+  const grouped = /* @__PURE__ */ new Map();
+  for (const step of steps) {
+    const current = grouped.get(step.topic) ?? [];
+    current.push(step.slug);
+    grouped.set(step.topic, current);
+    questionRefsBySlug[step.slug] = {
+      slug: step.slug,
+      title: step.title,
+      url: step.url,
+      difficulty: step.difficulty,
+      chapterId: "",
+      chapterTitle: step.topic,
+      order: current.length - 1
+    };
+  }
+  Array.from(grouped.entries()).forEach(([title, questionSlugs], order) => {
+    const id = chapterId(summary.id, order, title);
+    chapterIds.push(id);
+    chaptersById[id] = {
+      id,
+      title,
+      order,
+      questionSlugs
+    };
+    questionSlugs.forEach((slug, index) => {
+      questionRefsBySlug[slug] = {
+        ...questionRefsBySlug[slug],
+        chapterId: id,
+        chapterTitle: title,
+        order: index
+      };
+    });
+  });
+  return {
+    id: summary.id,
+    name: summary.name,
+    description: summary.description,
+    sourceSet: summary.sourceSet,
+    chapterIds,
+    chaptersById,
+    questionRefsBySlug,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+function buildCuratedSeed(now) {
+  const coursesById = {};
+  const courseOrder = [];
+  for (const summary of listStudyPlans()) {
+    const course = buildCuratedCourseDefinition(summary, now);
+    coursesById[course.id] = course;
+    courseOrder.push(course.id);
+  }
+  return { coursesById, courseOrder };
+}
+function mergeCourseDefinition(curated, existing, now) {
+  if (!existing) {
+    return curated;
+  }
+  const mergedChapterIds = [...curated.chapterIds];
+  const mergedChaptersById = {};
+  const mergedQuestionRefsBySlug = { ...curated.questionRefsBySlug };
+  for (const chapterIdValue of curated.chapterIds) {
+    const curatedChapter = curated.chaptersById[chapterIdValue];
+    const existingChapter = existing.chaptersById[chapterIdValue];
+    const questionSlugs = existingChapter ? uniqueStrings([...curatedChapter.questionSlugs, ...existingChapter.questionSlugs]) : curatedChapter.questionSlugs;
+    mergedChaptersById[chapterIdValue] = {
+      ...curatedChapter,
+      questionSlugs
+    };
+  }
+  for (const chapterIdValue of existing.chapterIds) {
+    if (mergedChaptersById[chapterIdValue]) {
+      continue;
+    }
+    mergedChapterIds.push(chapterIdValue);
+    mergedChaptersById[chapterIdValue] = existing.chaptersById[chapterIdValue];
+  }
+  for (const [slug, ref] of Object.entries(existing.questionRefsBySlug)) {
+    if (mergedQuestionRefsBySlug[slug]) {
+      continue;
+    }
+    mergedQuestionRefsBySlug[slug] = ref;
+  }
+  return {
+    ...curated,
+    chapterIds: mergedChapterIds,
+    chaptersById: mergedChaptersById,
+    questionRefsBySlug: mergedQuestionRefsBySlug,
+    createdAt: existing.createdAt || curated.createdAt,
+    updatedAt: now
+  };
+}
+function isStarted(state) {
+  return Boolean(state && (state.reviewCount > 0 || state.status !== "NEW"));
+}
+function isDue(state) {
+  return Boolean(
+    state && state.nextReviewAt && state.status !== "SUSPENDED" && new Date(state.nextReviewAt).getTime() <= Date.now()
+  );
+}
+function firstIncompleteChapterId(data, course) {
+  for (const chapterIdValue of course.chapterIds) {
+    const chapter = course.chaptersById[chapterIdValue];
+    const complete = chapter.questionSlugs.every((slug) => isStarted(data.studyStatesBySlug[slug]));
+    if (!complete) {
+      return chapterIdValue;
+    }
+  }
+  return course.chapterIds[course.chapterIds.length - 1] ?? null;
+}
+function findCurrentQuestionSlug(data, chapter) {
+  const current = chapter.questionSlugs.find((slug) => !isStarted(data.studyStatesBySlug[slug]));
+  return current ?? null;
+}
+function courseQuestionStatus(data, chapter, slug, chapterStatus) {
+  const state = data.studyStatesBySlug[slug];
+  const inLibrary = Boolean(data.problemsBySlug[slug]);
+  const currentSlug = findCurrentQuestionSlug(data, chapter);
+  if (isDue(state)) {
+    return "DUE_NOW";
+  }
+  if (state?.status === "MASTERED") {
+    return "MASTERED";
+  }
+  if (isStarted(state)) {
+    return "REVIEWING";
+  }
+  if (chapterStatus === "UPCOMING") {
+    return "LOCKED";
+  }
+  if (currentSlug === slug) {
+    return inLibrary ? "READY" : "CURRENT";
+  }
+  return "LOCKED";
+}
+function ensureCourseData(data, now = nowIso()) {
+  const curated = buildCuratedSeed(now);
+  const mergedCoursesById = {};
+  for (const courseIdValue of curated.courseOrder) {
+    mergedCoursesById[courseIdValue] = mergeCourseDefinition(
+      curated.coursesById[courseIdValue],
+      data.coursesById[courseIdValue],
+      now
+    );
+  }
+  for (const [courseIdValue, course] of Object.entries(data.coursesById)) {
+    if (mergedCoursesById[courseIdValue]) {
+      continue;
+    }
+    mergedCoursesById[courseIdValue] = course;
+  }
+  data.coursesById = mergedCoursesById;
+  data.courseOrder = uniqueStrings([...curated.courseOrder, ...data.courseOrder]);
+  for (const courseIdValue of data.courseOrder) {
+    const course = data.coursesById[courseIdValue];
+    if (!course) {
+      continue;
+    }
+    const existing = data.courseProgressById[courseIdValue] ?? createCourseProgress(course, now);
+    for (const chapterIdValue of course.chapterIds) {
+      const chapter = course.chaptersById[chapterIdValue];
+      const chapterProgress = existing.chapterProgressById[chapterIdValue] ?? createChapterProgress(chapter);
+      for (const slug of chapter.questionSlugs) {
+        chapterProgress.questionProgressBySlug[slug] = chapterProgress.questionProgressBySlug[slug] ?? createQuestionProgress(slug);
+      }
+      existing.chapterProgressById[chapterIdValue] = chapterProgress;
+    }
+    data.courseProgressById[courseIdValue] = existing;
+  }
+  if (!data.settings.activeCourseId || !data.coursesById[data.settings.activeCourseId]) {
+    data.settings.activeCourseId = data.courseOrder[0] ?? DEFAULT_COURSE_ID;
+  }
+  syncCourseProgress(data, now);
+}
+function syncCourseProgress(data, now = nowIso()) {
+  for (const courseIdValue of data.courseOrder) {
+    const course = data.coursesById[courseIdValue];
+    if (!course) {
+      continue;
+    }
+    const progress = data.courseProgressById[courseIdValue] ?? createCourseProgress(course, now);
+    const firstIncomplete = firstIncompleteChapterId(data, course);
+    for (const chapterIdValue of course.chapterIds) {
+      const chapter = course.chaptersById[chapterIdValue];
+      const chapterProgress = progress.chapterProgressById[chapterIdValue] ?? createChapterProgress(chapter);
+      const currentQuestionSlug = findCurrentQuestionSlug(data, chapter);
+      chapterProgress.currentQuestionSlug = currentQuestionSlug ?? chapter.questionSlugs[chapter.questionSlugs.length - 1];
+      let chapterComplete = true;
+      for (const slug of chapter.questionSlugs) {
+        const questionProgress = chapterProgress.questionProgressBySlug[slug] ?? createQuestionProgress(slug);
+        const state = data.studyStatesBySlug[slug];
+        const problem = data.problemsBySlug[slug];
+        if (problem && !questionProgress.addedToLibraryAt) {
+          questionProgress.addedToLibraryAt = problem.createdAt || now;
+        }
+        if (state?.lastReviewedAt) {
+          questionProgress.lastReviewedAt = state.lastReviewedAt;
+        }
+        if (isStarted(state)) {
+          questionProgress.completedAt = questionProgress.completedAt ?? state?.lastReviewedAt ?? now;
+        } else {
+          chapterComplete = false;
+          delete questionProgress.completedAt;
+        }
+        chapterProgress.questionProgressBySlug[slug] = questionProgress;
+      }
+      if (chapterComplete) {
+        chapterProgress.completedAt = chapterProgress.completedAt ?? now;
+      } else {
+        delete chapterProgress.completedAt;
+      }
+      progress.chapterProgressById[chapterIdValue] = chapterProgress;
+    }
+    progress.activeChapterId = firstIncomplete ?? course.chapterIds[0] ?? progress.activeChapterId;
+    progress.lastInteractedAt = progress.lastInteractedAt || now;
+    progress.startedAt = progress.startedAt || now;
+    data.courseProgressById[courseIdValue] = progress;
+  }
+}
+function buildCourseCards(data) {
+  const cards = [];
+  for (const courseIdValue of data.courseOrder) {
+    const course = data.coursesById[courseIdValue];
+    if (!course) {
+      continue;
+    }
+    let totalQuestions = 0;
+    let completedQuestions = 0;
+    let dueCount = 0;
+    let completedChapters = 0;
+    let nextQuestionTitle;
+    let nextChapterTitle;
+    for (const chapterIdValue of course.chapterIds) {
+      const chapter = course.chaptersById[chapterIdValue];
+      const chapterComplete = chapter.questionSlugs.every((slug) => isStarted(data.studyStatesBySlug[slug]));
+      if (chapterComplete) {
+        completedChapters += 1;
+      }
+      for (const slug of chapter.questionSlugs) {
+        totalQuestions += 1;
+        if (isStarted(data.studyStatesBySlug[slug])) {
+          completedQuestions += 1;
+        } else if (!nextQuestionTitle) {
+          nextQuestionTitle = course.questionRefsBySlug[slug]?.title ?? slugToTitle(slug);
+          nextChapterTitle = chapter.title;
+        }
+        if (isDue(data.studyStatesBySlug[slug])) {
+          dueCount += 1;
+        }
+      }
+    }
+    cards.push({
+      id: course.id,
+      name: course.name,
+      description: course.description,
+      sourceSet: course.sourceSet,
+      active: data.settings.activeCourseId === course.id,
+      totalQuestions,
+      completedQuestions,
+      completionPercent: totalQuestions === 0 ? 0 : Math.round(completedQuestions / totalQuestions * 100),
+      dueCount,
+      totalChapters: course.chapterIds.length,
+      completedChapters,
+      nextQuestionTitle,
+      nextChapterTitle
+    });
+  }
+  return cards;
+}
+function buildActiveCourseView(data, courseId = data.settings.activeCourseId) {
+  const course = data.coursesById[courseId];
+  if (!course) {
+    return null;
+  }
+  const card = buildCourseCards(data).find((entry) => entry.id === courseId);
+  const firstIncomplete = firstIncompleteChapterId(data, course);
+  const activeChapterIdValue = firstIncomplete ?? course.chapterIds[0] ?? null;
+  const activeChapterTitle = activeChapterIdValue ? course.chaptersById[activeChapterIdValue]?.title ?? null : null;
+  let nextQuestion = null;
+  const chapters = course.chapterIds.map((chapterIdValue) => {
+    const chapter = course.chaptersById[chapterIdValue];
+    const completedQuestions = chapter.questionSlugs.filter((slug) => isStarted(data.studyStatesBySlug[slug])).length;
+    const status = completedQuestions === chapter.questionSlugs.length ? "COMPLETE" : chapterIdValue === activeChapterIdValue ? "CURRENT" : "UPCOMING";
+    const questions = chapter.questionSlugs.map((slug) => {
+      const problem = data.problemsBySlug[slug];
+      const ref = course.questionRefsBySlug[slug];
+      const state = data.studyStatesBySlug[slug];
+      const questionStatus = courseQuestionStatus(data, chapter, slug, status);
+      const view = {
+        slug,
+        title: ref?.title || problem?.title || slugToTitle(slug),
+        url: problem?.url || ref?.url || slugToUrl(slug),
+        difficulty: problem?.difficulty || ref?.difficulty || "Unknown",
+        chapterId: chapterIdValue,
+        chapterTitle: chapter.title,
+        status: questionStatus,
+        nextReviewAt: state?.nextReviewAt,
+        inLibrary: Boolean(problem),
+        isCurrent: questionStatus === "CURRENT" || questionStatus === "READY"
+      };
+      if (!nextQuestion && view.isCurrent) {
+        nextQuestion = view;
+      }
+      return view;
+    });
+    return {
+      id: chapterIdValue,
+      title: chapter.title,
+      order: chapter.order,
+      status,
+      totalQuestions: chapter.questionSlugs.length,
+      completedQuestions,
+      questions
+    };
+  });
+  return {
+    ...card ?? {
+      id: course.id,
+      name: course.name,
+      description: course.description,
+      sourceSet: course.sourceSet,
+      active: true,
+      totalQuestions: 0,
+      completedQuestions: 0,
+      completionPercent: 0,
+      dueCount: 0,
+      totalChapters: course.chapterIds.length,
+      completedChapters: 0
+    },
+    activeChapterId: activeChapterIdValue,
+    activeChapterTitle,
+    nextQuestion,
+    chapters
+  };
+}
+
+// src/shared/queue.ts
+function cloneStateOrDefault(state) {
+  return state ? { ...state } : createDefaultStudyState();
+}
+function isSetEnabled(problem, setsEnabled) {
+  if (problem.sourceSet.length === 0) {
+    return setsEnabled.Custom !== false;
+  }
+  return problem.sourceSet.some((set) => setsEnabled[set] !== false);
+}
+function sortByDueDateAsc(items) {
+  return [...items].sort((a, b) => {
+    const aTs = a.studyState.nextReviewAt ? new Date(a.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
+    const bTs = b.studyState.nextReviewAt ? new Date(b.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
+    return aTs - bTs;
+  });
+}
+function sortWeakest(items) {
+  return [...items].sort((a, b) => {
+    if (b.studyState.lapses !== a.studyState.lapses) {
+      return b.studyState.lapses - a.studyState.lapses;
+    }
+    if (a.studyState.ease !== b.studyState.ease) {
+      return a.studyState.ease - b.studyState.ease;
+    }
+    const aTs = a.studyState.nextReviewAt ? new Date(a.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
+    const bTs = b.studyState.nextReviewAt ? new Date(b.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
+    return aTs - bTs;
+  });
+}
+function interleaveByDifficulty(items) {
+  const buckets = {
+    Easy: [],
+    Medium: [],
+    Hard: [],
+    Unknown: []
+  };
+  for (const item of sortByDueDateAsc(items)) {
+    buckets[item.problem.difficulty].push(item);
+  }
+  const order = ["Easy", "Medium", "Hard", "Unknown"];
+  const result = [];
+  let added = true;
+  while (added) {
+    added = false;
+    for (const key of order) {
+      const next = buckets[key].shift();
+      if (next) {
+        result.push(next);
+        added = true;
+      }
+    }
+  }
+  return result;
+}
+function orderItems(items, strategy) {
+  if (strategy === "weakestFirst") {
+    return sortWeakest(items);
+  }
+  if (strategy === "mixByDifficulty") {
+    return interleaveByDifficulty(items);
+  }
+  return sortByDueDateAsc(items);
+}
+function buildTodayQueue(data, now = /* @__PURE__ */ new Date()) {
+  const problems = Object.values(data.problemsBySlug).filter(
+    (problem) => isSetEnabled(problem, data.settings.setsEnabled)
+  );
+  const due = [];
+  const newCandidates = [];
+  const reinforcementCandidates = [];
+  for (const problem of problems) {
+    const state = cloneStateOrDefault(data.studyStatesBySlug[problem.leetcodeSlug]);
+    if (state.status === "SUSPENDED") {
+      continue;
+    }
+    const dueAt = state.nextReviewAt ? new Date(state.nextReviewAt).getTime() : Number.POSITIVE_INFINITY;
+    const isDue2 = state.reviewCount > 0 && dueAt <= now.getTime();
+    if (isDue2) {
+      due.push({
+        slug: problem.leetcodeSlug,
+        problem,
+        studyState: state,
+        due: true,
+        category: "due"
+      });
+      continue;
+    }
+    if (state.reviewCount === 0 || state.status === "NEW") {
+      newCandidates.push({
+        slug: problem.leetcodeSlug,
+        problem,
+        studyState: state,
+        due: false,
+        category: "new"
+      });
+      continue;
+    }
+    reinforcementCandidates.push({
+      slug: problem.leetcodeSlug,
+      problem,
+      studyState: state,
+      due: false,
+      category: "reinforcement"
+    });
+  }
+  const dueOrdered = orderItems(due, data.settings.reviewOrder);
+  const newOrdered = orderItems(newCandidates, data.settings.reviewOrder).slice(
+    0,
+    data.settings.dailyNewLimit
+  );
+  const reinforcementSlots = Math.max(0, data.settings.dailyReviewLimit - dueOrdered.length);
+  const reinforcementOrdered = orderItems(reinforcementCandidates, data.settings.reviewOrder).slice(
+    0,
+    reinforcementSlots
+  );
+  return {
+    generatedAt: now.toISOString(),
+    dueCount: dueOrdered.length,
+    newCount: newOrdered.length,
+    reinforcementCount: reinforcementOrdered.length,
+    items: [...dueOrdered, ...newOrdered, ...reinforcementOrdered]
+  };
+}
+
+// src/shared/recommendations.ts
+function buildRecommendedCandidates(queue, activeCourseNextSlug, nowMs = Date.now()) {
+  const candidates = queue.items.filter((item, index) => item.category === "due" || item.category === "reinforcement" || index === 0).slice(0, 12).map((item) => {
+    const dueAt = item.studyState.nextReviewAt ? new Date(item.studyState.nextReviewAt).getTime() : null;
+    const overdueDays = dueAt !== null && dueAt < nowMs ? Math.floor((nowMs - dueAt) / (24 * 60 * 60 * 1e3)) : 0;
+    const reason = item.category === "due" ? overdueDays >= 1 ? "Overdue" : "Due now" : "Review focus";
+    return {
+      slug: item.slug,
+      title: item.problem.title || item.slug,
+      url: item.problem.url,
+      difficulty: item.problem.difficulty,
+      reason,
+      nextReviewAt: item.studyState.nextReviewAt,
+      daysOverdue: overdueDays > 0 ? overdueDays : void 0,
+      alsoCourseNext: activeCourseNextSlug === item.slug
+    };
+  });
+  const seen = /* @__PURE__ */ new Set();
+  return candidates.filter((candidate) => {
+    if (seen.has(candidate.slug)) {
+      return false;
+    }
+    seen.add(candidate.slug);
+    return true;
+  });
+}
+
+// src/shared/storage.ts
+function normalizeSettings(input) {
+  const nextActiveCourseId = input?.activeCourseId || input?.activeStudyPlanId || DEFAULT_COURSE_ID;
+  const merged = {
+    ...DEFAULT_SETTINGS,
+    ...input ?? {},
+    activeCourseId: nextActiveCourseId,
+    quietHours: {
+      ...DEFAULT_SETTINGS.quietHours,
+      ...input?.quietHours ?? {}
+    },
+    setsEnabled: {
+      ...DEFAULT_SETTINGS.setsEnabled,
+      ...input?.setsEnabled ?? {}
+    }
+  };
+  if (merged.studyMode !== "freestyle" && merged.studyMode !== "studyPlan") {
+    merged.studyMode = DEFAULT_SETTINGS.studyMode;
+  }
+  if (typeof merged.activeCourseId !== "string" || !merged.activeCourseId.trim()) {
+    merged.activeCourseId = DEFAULT_COURSE_ID;
+  }
+  for (const setName of BUILT_IN_SETS) {
+    if (typeof merged.setsEnabled[setName] !== "boolean") {
+      merged.setsEnabled[setName] = true;
+    }
+  }
+  if (typeof merged.setsEnabled.LeetCode150 !== "boolean") {
+    merged.setsEnabled.LeetCode150 = true;
+  }
+  if (typeof merged.setsEnabled.Custom !== "boolean") {
+    merged.setsEnabled.Custom = true;
+  }
+  return merged;
+}
+function normalizeStoredAppData(stored) {
+  const data = {
+    schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
+    problemsBySlug: stored?.problemsBySlug ?? {},
+    studyStatesBySlug: stored?.studyStatesBySlug ?? {},
+    coursesById: stored?.coursesById ?? {},
+    courseOrder: Array.isArray(stored?.courseOrder) ? stored.courseOrder : [],
+    courseProgressById: stored?.courseProgressById ?? {},
+    settings: normalizeSettings(stored?.settings)
+  };
+  ensureCourseData(data);
+  return data;
+}
+
+// tests/logic.test.ts
+function makeProblem(slug, title, difficulty = "Medium") {
+  return {
+    id: slug,
+    leetcodeSlug: slug,
+    title,
+    difficulty,
+    url: `https://leetcode.com/problems/${slug}/`,
+    topics: [],
+    sourceSet: ["Blind75"],
+    createdAt: "2026-03-01T00:00:00.000Z",
+    updatedAt: "2026-03-01T00:00:00.000Z"
+  };
+}
+function makeReviewedState(nextReviewAt) {
+  return {
+    ...createDefaultStudyState(),
+    status: "REVIEWING",
+    reviewCount: 1,
+    lastReviewedAt: "2026-03-10T00:00:00.000Z",
+    nextReviewAt,
+    intervalDays: 4,
+    lastRating: 2,
+    attemptHistory: [
+      {
+        reviewedAt: "2026-03-10T00:00:00.000Z",
+        rating: 2,
+        mode: "FULL_SOLVE"
+      }
+    ]
+  };
+}
+function testLegacyStorageMigration() {
+  const migrated = normalizeStoredAppData({
+    problemsBySlug: {
+      "two-sum": makeProblem("two-sum", "Two Sum", "Easy")
+    },
+    studyStatesBySlug: {
+      "two-sum": makeReviewedState("2026-03-12T00:00:00.000Z")
+    },
+    settings: {
+      activeStudyPlanId: "Blind75",
+      dailyNewLimit: 5
+    }
+  });
+  import_strict.default.equal(migrated.settings.activeCourseId, "Blind75");
+  import_strict.default.ok(migrated.coursesById.Blind75);
+  import_strict.default.ok(migrated.courseProgressById.Blind75);
+  const activeChapterId = migrated.courseProgressById.Blind75.activeChapterId;
+  const chapterProgress = migrated.courseProgressById.Blind75.chapterProgressById[activeChapterId];
+  import_strict.default.ok(chapterProgress);
+}
+function testCourseProgressionSelection() {
+  const data = normalizeStoredAppData({
+    settings: {
+      activeStudyPlanId: "Blind75"
+    }
+  });
+  data.problemsBySlug["two-sum"] = makeProblem("two-sum", "Two Sum", "Easy");
+  data.problemsBySlug["best-time-to-buy-and-sell-stock"] = makeProblem(
+    "best-time-to-buy-and-sell-stock",
+    "Best Time To Buy And Sell Stock",
+    "Easy"
+  );
+  data.studyStatesBySlug["two-sum"] = makeReviewedState("2026-03-11T00:00:00.000Z");
+  data.studyStatesBySlug["best-time-to-buy-and-sell-stock"] = makeReviewedState("2026-03-14T00:00:00.000Z");
+  syncCourseProgress(data, "2026-03-15T00:00:00.000Z");
+  const active = buildActiveCourseView(data, "Blind75");
+  import_strict.default.ok(active);
+  import_strict.default.equal(active?.nextQuestion?.slug, "contains-duplicate");
+  import_strict.default.equal(active?.chapters[0].status, "CURRENT");
+}
+function testRecommendedAndCourseNextStaySeparate() {
+  const data = normalizeStoredAppData({
+    settings: {
+      activeStudyPlanId: "Blind75"
+    }
+  });
+  data.problemsBySlug["two-sum"] = makeProblem("two-sum", "Two Sum", "Easy");
+  data.problemsBySlug["best-time-to-buy-and-sell-stock"] = makeProblem(
+    "best-time-to-buy-and-sell-stock",
+    "Best Time To Buy And Sell Stock",
+    "Easy"
+  );
+  data.studyStatesBySlug["two-sum"] = makeReviewedState("2026-03-01T00:00:00.000Z");
+  data.studyStatesBySlug["best-time-to-buy-and-sell-stock"] = makeReviewedState("2026-04-01T00:00:00.000Z");
+  syncCourseProgress(data, "2026-03-15T00:00:00.000Z");
+  const queue = buildTodayQueue(data, /* @__PURE__ */ new Date("2026-03-15T00:00:00.000Z"));
+  const active = buildActiveCourseView(data, "Blind75");
+  const recommended = buildRecommendedCandidates(queue, active?.nextQuestion?.slug, (/* @__PURE__ */ new Date("2026-03-15T00:00:00.000Z")).getTime());
+  import_strict.default.ok(active?.nextQuestion);
+  import_strict.default.equal(active?.nextQuestion?.slug, "contains-duplicate");
+  import_strict.default.equal(recommended[0]?.slug, "two-sum");
+  import_strict.default.equal(recommended[0]?.alsoCourseNext, false);
+}
+function testByteByteGoCourseSeed() {
+  const data = normalizeStoredAppData();
+  const summary = listStudyPlans().find((plan) => plan.id === "ByteByteGo101");
+  const course = buildActiveCourseView(data, "ByteByteGo101");
+  import_strict.default.ok(summary);
+  import_strict.default.equal(summary?.problemCount, 101);
+  import_strict.default.equal(summary?.topicCount, 19);
+  import_strict.default.ok(course);
+  import_strict.default.equal(course?.name, "ByteByteGo Coding Patterns 101");
+  import_strict.default.equal(course?.totalQuestions, 101);
+  import_strict.default.equal(course?.totalChapters, 19);
+  import_strict.default.equal(course?.nextQuestion?.title, "Pair Sum - Sorted");
+  import_strict.default.equal(course?.nextQuestion?.difficulty, "Easy");
+  import_strict.default.equal(course?.nextQuestion?.slug, "two-sum-ii-input-array-is-sorted");
+}
+function run() {
+  testLegacyStorageMigration();
+  testCourseProgressionSelection();
+  testRecommendedAndCourseNextStaySeparate();
+  testByteByteGoCourseSeed();
+  console.log("logic tests passed");
+}
+run();

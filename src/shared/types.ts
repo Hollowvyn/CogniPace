@@ -1,3 +1,5 @@
+export const STORAGE_SCHEMA_VERSION = 2;
+
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
 
 export type StudyStatus =
@@ -21,6 +23,7 @@ export type SourceSet =
   | "Blind75"
   | "LeetCode150"
   | "LeetCode75"
+  | "ByteByteGo101"
   | "NeetCode150"
   | "NeetCode250"
   | "Grind75"
@@ -74,7 +77,7 @@ export interface UserSettings {
   dailyReviewLimit: number;
   reviewOrder: ReviewOrder;
   studyMode: StudyMode;
-  activeStudyPlanId: string;
+  activeCourseId: string;
   setsEnabled: Record<string, boolean>;
   scheduleIntensity: ScheduleIntensity;
   requireSolveTime: boolean;
@@ -85,9 +88,65 @@ export interface UserSettings {
   slowSolveThresholdMs: number;
 }
 
+export interface CourseQuestionRef {
+  slug: string;
+  title: string;
+  url: string;
+  difficulty?: Difficulty;
+  chapterId: string;
+  chapterTitle: string;
+  order: number;
+}
+
+export interface CourseChapter {
+  id: string;
+  title: string;
+  order: number;
+  questionSlugs: string[];
+}
+
+export interface CourseDefinition {
+  id: string;
+  name: string;
+  description: string;
+  sourceSet: string;
+  chapterIds: string[];
+  chaptersById: Record<string, CourseChapter>;
+  questionRefsBySlug: Record<string, CourseQuestionRef>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseQuestionProgress {
+  slug: string;
+  addedToLibraryAt?: string;
+  lastOpenedAt?: string;
+  lastReviewedAt?: string;
+  completedAt?: string;
+}
+
+export interface CourseChapterProgress {
+  chapterId: string;
+  currentQuestionSlug?: string;
+  completedAt?: string;
+  questionProgressBySlug: Record<string, CourseQuestionProgress>;
+}
+
+export interface CourseProgress {
+  courseId: string;
+  activeChapterId: string;
+  startedAt: string;
+  lastInteractedAt: string;
+  chapterProgressById: Record<string, CourseChapterProgress>;
+}
+
 export interface AppData {
+  schemaVersion: number;
   problemsBySlug: Record<string, Problem>;
   studyStatesBySlug: Record<string, StudyState>;
+  coursesById: Record<string, CourseDefinition>;
+  courseOrder: string[];
+  courseProgressById: Record<string, CourseProgress>;
   settings: UserSettings;
 }
 
@@ -132,14 +191,133 @@ export interface CuratedProblemInput {
 }
 
 export interface ExportPayload {
+  version?: number;
   problems: Problem[];
   studyStatesBySlug: Record<string, StudyState>;
-  settings: UserSettings;
+  settings?: Partial<UserSettings> & {
+    activeStudyPlanId?: string;
+  };
+  coursesById?: Record<string, CourseDefinition>;
+  courseOrder?: string[];
+  courseProgressById?: Record<string, CourseProgress>;
 }
 
 export interface ProblemSnapshot {
   problem: Problem;
   studyState: StudyState;
+}
+
+export type RecommendedReason = "Due now" | "Overdue" | "Review focus";
+
+export interface RecommendedProblemView {
+  slug: string;
+  title: string;
+  url: string;
+  difficulty: Difficulty;
+  reason: RecommendedReason;
+  nextReviewAt?: string;
+  daysOverdue?: number;
+  alsoCourseNext?: boolean;
+}
+
+export type CourseQuestionStatusView =
+  | "CURRENT"
+  | "LOCKED"
+  | "QUEUED"
+  | "READY"
+  | "REVIEWING"
+  | "DUE_NOW"
+  | "MASTERED";
+
+export interface CourseQuestionView {
+  slug: string;
+  title: string;
+  url: string;
+  difficulty: Difficulty;
+  chapterId: string;
+  chapterTitle: string;
+  status: CourseQuestionStatusView;
+  nextReviewAt?: string;
+  inLibrary: boolean;
+  isCurrent: boolean;
+}
+
+export type CourseChapterStatusView = "COMPLETE" | "CURRENT" | "UPCOMING";
+
+export interface CourseChapterView {
+  id: string;
+  title: string;
+  order: number;
+  status: CourseChapterStatusView;
+  totalQuestions: number;
+  completedQuestions: number;
+  questions: CourseQuestionView[];
+}
+
+export interface CourseCardView {
+  id: string;
+  name: string;
+  description: string;
+  sourceSet: string;
+  active: boolean;
+  totalQuestions: number;
+  completedQuestions: number;
+  completionPercent: number;
+  dueCount: number;
+  totalChapters: number;
+  completedChapters: number;
+  nextQuestionTitle?: string;
+  nextChapterTitle?: string;
+}
+
+export interface ActiveCourseView extends CourseCardView {
+  activeChapterId: string | null;
+  activeChapterTitle: string | null;
+  nextQuestion: CourseQuestionView | null;
+  chapters: CourseChapterView[];
+}
+
+export interface LibraryCourseReference {
+  courseId: string;
+  courseName: string;
+  chapterId: string;
+  chapterTitle: string;
+}
+
+export interface LibraryProblemRow {
+  problem: Problem;
+  studyState: StudyState | null;
+  courses: LibraryCourseReference[];
+}
+
+export interface CourseOption {
+  id: string;
+  name: string;
+  chapterOptions: Array<{
+    id: string;
+    title: string;
+  }>;
+}
+
+export interface PopupViewData {
+  dueCount: number;
+  streakDays: number;
+  recommended: RecommendedProblemView | null;
+  recommendedCandidates: RecommendedProblemView[];
+  courseNext: CourseQuestionView | null;
+  activeCourse: CourseCardView | null;
+}
+
+export interface AppShellPayload {
+  queue: TodayQueue;
+  analytics: AnalyticsSummary;
+  settings: UserSettings;
+  popup: PopupViewData;
+  recommendedCandidates: RecommendedProblemView[];
+  courses: CourseCardView[];
+  activeCourse: ActiveCourseView | null;
+  library: LibraryProblemRow[];
+  courseOptions: CourseOption[];
 }
 
 export interface MessageRequestMap {
@@ -161,6 +339,16 @@ export interface MessageRequestMap {
     mode?: ReviewMode;
     notesSnapshot?: string;
   };
+  SAVE_REVIEW_RESULT: {
+    slug: string;
+    rating: Rating;
+    solveTimeMs?: number;
+    mode?: ReviewMode;
+    notes?: string;
+    courseId?: string;
+    chapterId?: string;
+    source?: "overlay" | "dashboard";
+  };
   UPDATE_NOTES: {
     slug: string;
     notes: string;
@@ -171,6 +359,19 @@ export interface MessageRequestMap {
   };
   GET_TODAY_QUEUE: Record<string, never>;
   GET_DASHBOARD_DATA: Record<string, never>;
+  GET_APP_SHELL_DATA: Record<string, never>;
+  SWITCH_ACTIVE_COURSE: {
+    courseId: string;
+  };
+  SET_ACTIVE_COURSE_CHAPTER: {
+    courseId: string;
+    chapterId: string;
+  };
+  TRACK_COURSE_QUESTION_LAUNCH: {
+    slug: string;
+    courseId?: string;
+    chapterId?: string;
+  };
   QUEUE_AUTO_TIMER_START: {
     slug: string;
   };
@@ -186,11 +387,19 @@ export interface MessageRequestMap {
   };
   EXPORT_DATA: Record<string, never>;
   IMPORT_DATA: ExportPayload;
-  UPDATE_SETTINGS: Partial<UserSettings>;
+  UPDATE_SETTINGS: Partial<UserSettings> & {
+    activeStudyPlanId?: string;
+  };
   ADD_PROBLEM_BY_INPUT: {
     input: string;
     sourceSet?: string;
     topics?: string[];
+    markAsStarted?: boolean;
+  };
+  ADD_PROBLEM_TO_COURSE: {
+    courseId: string;
+    chapterId: string;
+    input: string;
     markAsStarted?: boolean;
   };
   SUSPEND_PROBLEM: {

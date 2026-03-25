@@ -1,87 +1,29 @@
 import { sendMessage } from "../shared/runtime";
-import { formatClock, startOfDay, ymd } from "../shared/utils";
-import { AnalyticsSummary, Problem, StudyState, TodayQueue, UserSettings } from "../shared/types";
+import {
+  ActiveCourseView,
+  AppShellPayload,
+  CourseCardView,
+  LibraryProblemRow,
+  ReviewOrder,
+  ScheduleIntensity,
+  StudyMode
+} from "../shared/types";
 
-interface StudyPlanSummary {
-  id: string;
-  name: string;
-  description: string;
-  sourceSet: string;
-  topicCount: number;
-  problemCount: number;
+type AppView = "dashboard" | "courses" | "library" | "analytics" | "settings";
+
+interface ViewState {
+  view: AppView;
+  payload: AppShellPayload | null;
+  status: string;
+  statusIsError: boolean;
 }
 
-interface DashboardPayload {
-  queue: TodayQueue;
-  analytics: AnalyticsSummary;
-  settings: UserSettings;
-  studyPlans: StudyPlanSummary[];
-  curatedSetNames: string[];
-  problems: Array<{ problem: Problem; studyState: StudyState | null }>;
-  curriculum: {
-    planId: string;
-    planName: string;
-    sourceSet: string;
-    topic: string | null;
-    completed: boolean;
-    items: Array<{
-      slug: string;
-      title: string;
-      url: string;
-      isInLibrary: boolean;
-    }>;
-  };
-}
-
-let settings: UserSettings;
-let studyPlans: StudyPlanSummary[] = [];
-let currentQueue: TodayQueue | null = null;
-let sessionQueue: SessionItem[] = [];
-let sessionIndex = 0;
-let sessionStartMs = 0;
-let sessionItemStartMs = 0;
-let sessionRatings: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0 };
-let sessionTimeMs = 0;
-let manualAdds = new Set<string>();
-let lastPayload: DashboardPayload | null = null;
-
-const DUE_VISIBLE_LIMIT = 6;
-const SPEED_DAYS_SHORT = 14;
-const SPEED_DAYS_LONG = 30;
-const RECALL_LIMIT = 8;
-const RETRIEVABILITY_THRESHOLD = 0.3;
-const RECENT_LAPSE_DAYS = 14;
-const OVERDUE_DAYS = 2;
-const TOPICS_LIMIT = 8;
-
-type WeakestSortKey = "problem" | "status" | "ease" | "lapses" | "rating" | "avgTime" | "nextDue";
-type SortDirection = "asc" | "desc";
-
-interface WeakestRow {
-  slug: string;
-  title: string;
-  url: string;
-  status: StudyState["status"];
-  statusOrder: number;
-  ease: number;
-  stabilityDays: number;
-  lapses: number;
-  lastRating: number | null;
-  avgTimeMs: number | null;
-  nextDueAt: number | null;
-  nextDueLabel: string;
-}
-
-let weakestRows: WeakestRow[] = [];
-let weakestSort: { key: WeakestSortKey; direction: SortDirection } = { key: "lapses", direction: "desc" };
-
-interface SessionItem {
-  slug: string;
-  title: string;
-  url: string;
-  difficulty: Problem["difficulty"];
-  category: "due" | "new" | "manual";
-}
+const state: ViewState = {
+  view: readViewFromLocation(),
+  payload: null,
+  status: "",
+  statusIsError: false
+};
 
 function byId<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -91,1005 +33,20 @@ function byId<T extends HTMLElement>(id: string): T {
   return node as T;
 }
 
-function showStatus(message: string, isError = false): void {
-  const status = byId<HTMLElement>("status");
-  status.textContent = message;
-  status.dataset.error = isError ? "true" : "false";
-}
-
-function showDataStatus(message: string, isError = false): void {
-  const status = byId<HTMLElement>("data-status");
-  status.textContent = message;
-  status.dataset.error = isError ? "true" : "false";
-}
-
-function setSavedState(visible: boolean, message = "Saved"): void {
-  const saved = byId<HTMLElement>("settings-saved");
-  saved.textContent = visible ? message : "";
-  saved.classList.toggle("visible", visible);
-}
-
-function updateSettingsVisibility(): void {
-  document.querySelectorAll<HTMLElement>("[data-conditional]").forEach((element) => {
-    const key = element.dataset.conditional;
-    if (!key) {
-      return;
-    }
-    const toggle = byId<HTMLInputElement>(key);
-    element.classList.toggle("hidden", !toggle.checked);
-  });
-}
-
-function setModalOpen(open: boolean): void {
-  const modal = byId<HTMLElement>("data-modal");
-  modal.dataset.open = open ? "true" : "false";
-  modal.setAttribute("aria-hidden", open ? "false" : "true");
-  if (open) {
-    showDataStatus("");
+function readViewFromLocation(): AppView {
+  const value = new URLSearchParams(window.location.search).get("view");
+  if (value === "dashboard" || value === "courses" || value === "library" || value === "analytics" || value === "settings") {
+    return value;
   }
+  return "dashboard";
 }
 
-function renderAnalytics(payload: DashboardPayload): void {
-  byId<HTMLElement>("metric-streak").textContent = String(payload.analytics.streakDays);
-  byId<HTMLElement>("metric-total-reviews").textContent = String(payload.analytics.totalReviews);
-  byId<HTMLElement>("metric-mastered").textContent = String(payload.analytics.masteredCount);
-  byId<HTMLElement>("metric-retention").textContent = `${Math.round(payload.analytics.retentionProxy * 100)}%`;
-}
-
-function statusOrder(status: StudyState["status"]): number {
-  if (status === "NEW") return 0;
-  if (status === "LEARNING") return 1;
-  if (status === "REVIEWING") return 2;
-  if (status === "MASTERED") return 3;
-  return 4;
-}
-
-function formatStatus(status: StudyState["status"]): string {
-  return status.charAt(0) + status.slice(1).toLowerCase();
-}
-
-function formatNextDue(iso?: string): { label: string; ts: number | null } {
-  if (!iso) {
-    return { label: "-", ts: null };
-  }
-  const ts = new Date(iso).getTime();
-  const now = Date.now();
-  if (ts <= now) {
-    return { label: "Due", ts };
-  }
-  return { label: ymd(new Date(ts)), ts };
-}
-
-function formatRating(value: number | null): string {
-  if (value === null || Number.isNaN(value)) {
-    return "-";
-  }
-  return String(value);
-}
-
-function formatAvgTime(avgTimeMs: number | null): string {
-  if (!avgTimeMs || avgTimeMs <= 0) {
-    return "-";
-  }
-  return formatClock(avgTimeMs);
-}
-
-function computeAverage(values: number[]): number | null {
-  if (values.length === 0) {
-    return null;
-  }
-  const total = values.reduce((sum, value) => sum + value, 0);
-  return total / values.length;
-}
-
-function buildWeakestRows(payload: DashboardPayload): WeakestRow[] {
-  const rows: WeakestRow[] = [];
-
-  for (const entry of payload.problems) {
-    if (!entry.studyState) {
-      continue;
-    }
-    const state = entry.studyState;
-    const attempts = state.attemptHistory ?? [];
-    const times = attempts.map((attempt) => attempt.solveTimeMs).filter((ms): ms is number => typeof ms === "number");
-    const avgTimeMs = computeAverage(times);
-    const lastRating = state.lastRating ?? attempts[attempts.length - 1]?.rating ?? null;
-    const due = formatNextDue(state.nextReviewAt);
-
-    rows.push({
-      slug: entry.problem.leetcodeSlug,
-      title: entry.problem.title || entry.problem.leetcodeSlug,
-      url: entry.problem.url,
-      status: state.status,
-      statusOrder: statusOrder(state.status),
-      ease: state.ease,
-      stabilityDays: state.intervalDays,
-      lapses: state.lapses,
-      lastRating: lastRating ?? null,
-      avgTimeMs,
-      nextDueAt: due.ts,
-      nextDueLabel: due.label
-    });
-  }
-
-  return rows;
-}
-
-function compareNumber(a: number | null, b: number | null, direction: SortDirection): number {
-  const aValue = a ?? (direction === "asc" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY);
-  const bValue = b ?? (direction === "asc" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY);
-  if (aValue === bValue) {
-    return 0;
-  }
-  return direction === "asc" ? aValue - bValue : bValue - aValue;
-}
-
-function compareString(a: string, b: string, direction: SortDirection): number {
-  const result = a.localeCompare(b);
-  return direction === "asc" ? result : -result;
-}
-
-function sortedWeakestRows(): WeakestRow[] {
-  const { key, direction } = weakestSort;
-  return [...weakestRows].sort((a, b) => {
-    switch (key) {
-      case "problem":
-        return compareString(a.title, b.title, direction);
-      case "status":
-        return compareNumber(a.statusOrder, b.statusOrder, direction);
-      case "ease": {
-        const easeCompare = compareNumber(a.ease, b.ease, direction);
-        if (easeCompare !== 0) {
-          return easeCompare;
-        }
-        return compareNumber(a.stabilityDays, b.stabilityDays, direction);
-      }
-      case "lapses":
-        return compareNumber(a.lapses, b.lapses, direction);
-      case "rating":
-        return compareNumber(a.lastRating, b.lastRating, direction);
-      case "avgTime":
-        return compareNumber(a.avgTimeMs, b.avgTimeMs, direction);
-      case "nextDue":
-        return compareNumber(a.nextDueAt, b.nextDueAt, direction);
-      default:
-        return 0;
-    }
-  });
-}
-
-function renderWeakestTable(): void {
-  const body = byId<HTMLTableSectionElement>("weakest-table-body");
-  const empty = byId<HTMLElement>("weakest-empty");
-  body.innerHTML = "";
-
-  const rows = sortedWeakestRows();
-  updateSortButtons();
-  if (rows.length === 0) {
-    empty.textContent = "No review history yet.";
-    return;
-  }
-  empty.textContent = "";
-
-  for (const row of rows) {
-    const tr = document.createElement("tr");
-
-    const problemCell = document.createElement("td");
-    const link = document.createElement("a");
-    link.href = row.url;
-    link.target = "_blank";
-    link.rel = "noreferrer";
-    link.textContent = row.title;
-    problemCell.appendChild(link);
-    tr.appendChild(problemCell);
-
-    const statusCell = document.createElement("td");
-    statusCell.textContent = formatStatus(row.status);
-    tr.appendChild(statusCell);
-
-    const easeCell = document.createElement("td");
-    easeCell.textContent = row.stabilityDays > 0 ? `${row.ease.toFixed(2)} / ${Math.round(row.stabilityDays)}d` : "-";
-    tr.appendChild(easeCell);
-
-    const lapsesCell = document.createElement("td");
-    lapsesCell.textContent = String(row.lapses);
-    tr.appendChild(lapsesCell);
-
-    const ratingCell = document.createElement("td");
-    ratingCell.textContent = formatRating(row.lastRating);
-    tr.appendChild(ratingCell);
-
-    const timeCell = document.createElement("td");
-    timeCell.textContent = formatAvgTime(row.avgTimeMs);
-    tr.appendChild(timeCell);
-
-    const dueCell = document.createElement("td");
-    dueCell.textContent = row.nextDueLabel;
-    tr.appendChild(dueCell);
-
-    body.appendChild(tr);
-  }
-
-}
-
-function updateSortButtons(): void {
-  document.querySelectorAll<HTMLButtonElement>("[data-sort]").forEach((button) => {
-    const key = button.dataset.sort as WeakestSortKey | undefined;
-    if (!key) {
-      return;
-    }
-    const isActive = key === weakestSort.key;
-    button.classList.toggle("active", isActive);
-    button.classList.toggle("asc", isActive && weakestSort.direction === "asc");
-    button.classList.toggle("desc", isActive && weakestSort.direction === "desc");
-  });
-}
-
-function renderForecast(payload: DashboardPayload): void {
-  const container = byId<HTMLDivElement>("forecast-bars");
-  const summary = byId<HTMLElement>("forecast-summary");
-  container.innerHTML = "";
-
-  const items = payload.analytics.dueByDay;
-  if (!items.length) {
-    summary.textContent = "No forecast data";
-    return;
-  }
-
-  const counts = items.map((item) => item.count);
-  const max = Math.max(...counts, 1);
-  const avg = counts.reduce((sum, count) => sum + count, 0) / counts.length;
-  const spikeThreshold = Math.max(3, Math.round(avg * 1.5));
-  const spikes = items.filter((item) => item.count >= spikeThreshold).length;
-
-  summary.textContent = `Avg ${avg.toFixed(1)} / day${spikes ? ` - ${spikes} spike${spikes > 1 ? "s" : ""}` : ""}`;
-
-  for (const item of items) {
-    const row = document.createElement("div");
-    row.className = "bar-row";
-    if (item.count >= spikeThreshold && item.count > 0) {
-      row.classList.add("spike");
-    }
-
-    const label = document.createElement("span");
-    label.textContent = item.date.slice(5);
-
-    const bar = document.createElement("div");
-    bar.className = "bar";
-    const fill = document.createElement("div");
-    fill.className = "bar-fill";
-    fill.style.width = `${Math.round((item.count / max) * 100)}%`;
-    bar.appendChild(fill);
-
-    const value = document.createElement("span");
-    value.className = "bar-value";
-    value.textContent = String(item.count);
-
-    row.appendChild(label);
-    row.appendChild(bar);
-    row.appendChild(value);
-    container.appendChild(row);
-  }
-}
-
-function renderTopics(payload: DashboardPayload): void {
-  const body = byId<HTMLTableSectionElement>("topics-table-body");
-  const empty = byId<HTMLElement>("topics-empty");
-  body.innerHTML = "";
-
-  const topicMap = new Map<string, { lapses: number; reviews: number; ratingSum: number; ratingCount: number; timeSum: number; timeCount: number }>();
-
-  for (const entry of payload.problems) {
-    const state = entry.studyState;
-    if (!state) {
-      continue;
-    }
-
-    const tags = Array.isArray(state.tags) ? state.tags : [];
-    const topics = new Set<string>([...(entry.problem.topics ?? []), ...tags].filter(Boolean));
-    if (topics.size === 0) {
-      continue;
-    }
-
-    const attempts = state.attemptHistory ?? [];
-    const ratings = attempts.map((attempt) => attempt.rating);
-    const times = attempts.map((attempt) => attempt.solveTimeMs).filter((ms): ms is number => typeof ms === "number");
-
-    for (const topic of topics) {
-      const entryStats = topicMap.get(topic) ?? {
-        lapses: 0,
-        reviews: 0,
-        ratingSum: 0,
-        ratingCount: 0,
-        timeSum: 0,
-        timeCount: 0
-      };
-      entryStats.lapses += state.lapses;
-      entryStats.reviews += state.reviewCount;
-      entryStats.ratingSum += ratings.reduce((sum, rating) => sum + rating, 0);
-      entryStats.ratingCount += ratings.length;
-      entryStats.timeSum += times.reduce((sum, time) => sum + time, 0);
-      entryStats.timeCount += times.length;
-      topicMap.set(topic, entryStats);
-    }
-  }
-
-  const rows = Array.from(topicMap.entries())
-    .map(([topic, stats]) => {
-      const lapsesRate = stats.reviews > 0 ? stats.lapses / stats.reviews : 0;
-      const avgRating = stats.ratingCount > 0 ? stats.ratingSum / stats.ratingCount : null;
-      const avgTime = stats.timeCount > 0 ? stats.timeSum / stats.timeCount : null;
-      return { topic, lapsesRate, avgRating, avgTime, reviews: stats.reviews };
-    })
-    .sort((a, b) => b.lapsesRate - a.lapsesRate);
-
-  if (rows.length === 0) {
-    empty.textContent = "No topic performance data yet.";
-    return;
-  }
-  empty.textContent = "";
-
-  for (const row of rows) {
-    const tr = document.createElement("tr");
-
-    const topicCell = document.createElement("td");
-    topicCell.textContent = row.topic;
-    tr.appendChild(topicCell);
-
-    const lapseCell = document.createElement("td");
-    lapseCell.textContent = `${(row.lapsesRate * 100).toFixed(1)}%`;
-    tr.appendChild(lapseCell);
-
-    const ratingCell = document.createElement("td");
-    ratingCell.textContent = row.avgRating === null ? "-" : row.avgRating.toFixed(2);
-    tr.appendChild(ratingCell);
-
-    const timeCell = document.createElement("td");
-    timeCell.textContent = formatAvgTime(row.avgTime);
-    tr.appendChild(timeCell);
-
-    const reviewCell = document.createElement("td");
-    reviewCell.textContent = String(row.reviews);
-    tr.appendChild(reviewCell);
-
-    body.appendChild(tr);
-  }
-}
-
-function collectSolveTimes(payload: DashboardPayload): Array<{ date: string; solveTimeMs: number }> {
-  const entries: Array<{ date: string; solveTimeMs: number }> = [];
-  for (const entry of payload.problems) {
-    const state = entry.studyState;
-    if (!state) {
-      continue;
-    }
-    for (const attempt of state.attemptHistory ?? []) {
-      if (typeof attempt.solveTimeMs !== "number") {
-        continue;
-      }
-      entries.push({ date: ymd(new Date(attempt.reviewedAt)), solveTimeMs: attempt.solveTimeMs });
-    }
-  }
-  return entries;
-}
-
-function buildSpeedSeries(entries: Array<{ date: string; solveTimeMs: number }>, days: number) {
-  const now = startOfDay(new Date());
-  const buckets = new Map<string, { total: number; count: number }>();
-
-  for (let offset = 0; offset < days; offset += 1) {
-    const day = new Date(now.getTime() - (days - 1 - offset) * 24 * 60 * 60 * 1000);
-    buckets.set(ymd(day), { total: 0, count: 0 });
-  }
-
-  for (const entry of entries) {
-    const bucket = buckets.get(entry.date);
-    if (!bucket) {
-      continue;
-    }
-    bucket.total += entry.solveTimeMs;
-    bucket.count += 1;
-  }
-
-  return Array.from(buckets.entries()).map(([date, stats]) => ({
-    date,
-    avgTimeMs: stats.count > 0 ? stats.total / stats.count : null,
-    count: stats.count
-  }));
-}
-
-function renderSpeedBars(containerId: string, series: Array<{ date: string; avgTimeMs: number | null }>): void {
-  const container = byId<HTMLDivElement>(containerId);
-  container.innerHTML = "";
-
-  const max = Math.max(
-    ...series.map((item) => item.avgTimeMs ?? 0),
-    1
-  );
-
-  for (const item of series) {
-    const row = document.createElement("div");
-    row.className = "bar-row";
-
-    const label = document.createElement("span");
-    label.textContent = item.date.slice(5);
-
-    const bar = document.createElement("div");
-    bar.className = "bar";
-    const fill = document.createElement("div");
-    fill.className = "bar-fill";
-    const width = item.avgTimeMs ? Math.round((item.avgTimeMs / max) * 100) : 0;
-    fill.style.width = `${width}%`;
-    bar.appendChild(fill);
-
-    const value = document.createElement("span");
-    value.className = "bar-value";
-    value.textContent = formatAvgTime(item.avgTimeMs);
-
-    row.appendChild(label);
-    row.appendChild(bar);
-    row.appendChild(value);
-    container.appendChild(row);
-  }
-}
-
-function renderSpeed(payload: DashboardPayload): void {
-  const entries = collectSolveTimes(payload);
-  const summary = byId<HTMLElement>("speed-summary");
-
-  if (entries.length === 0) {
-    summary.textContent = "No solve-time data yet.";
-    byId<HTMLDivElement>("speed-14").innerHTML = "";
-    byId<HTMLDivElement>("speed-30").innerHTML = "";
-    return;
-  }
-
-  const series14 = buildSpeedSeries(entries, SPEED_DAYS_SHORT);
-  const series30 = buildSpeedSeries(entries, SPEED_DAYS_LONG);
-  renderSpeedBars("speed-14", series14);
-  renderSpeedBars("speed-30", series30);
-
-  const avg14 = computeAverage(series14.map((item) => item.avgTimeMs ?? 0).filter((value) => value > 0));
-  const avg30 = computeAverage(series30.map((item) => item.avgTimeMs ?? 0).filter((value) => value > 0));
-
-  summary.textContent = `14-day avg ${formatAvgTime(avg14)} - 30-day avg ${formatAvgTime(avg30)}`;
-}
-
-function renderAnalyticsTabs(payload: DashboardPayload): void {
-  weakestRows = buildWeakestRows(payload);
-  renderWeakestTable();
-  renderForecast(payload);
-  renderTopics(payload);
-  renderSpeed(payload);
-}
-
-function setActiveTab(tabKey: string): void {
-  const panels = document.querySelectorAll<HTMLElement>(".tab-panel");
-  panels.forEach((panel) => {
-    panel.classList.toggle("active", panel.id === `tab-${tabKey}`);
-  });
-
-  document.querySelectorAll<HTMLButtonElement>(".tab-button").forEach((button) => {
-    const isActive = button.dataset.tab === tabKey;
-    button.classList.toggle("active", isActive);
-    button.setAttribute("aria-selected", isActive ? "true" : "false");
-  });
-}
-
-function renderToday(queue: TodayQueue): void {
-  currentQueue = queue;
-  const manualCount = manualAdds.size;
-  byId<HTMLElement>("queue-summary").textContent =
-    `Due ${queue.dueCount} - New ${queue.newCount} - Reinforcement ${queue.reinforcementCount}` +
-    (manualCount > 0 ? ` - Added ${manualCount}` : "");
-  byId<HTMLElement>("today-due-count").textContent = String(queue.dueCount);
-  byId<HTMLElement>("today-new-count").textContent = String(queue.newCount);
-  byId<HTMLElement>("today-reinforce-count").textContent = String(queue.reinforcementCount);
-  byId<HTMLElement>("today-manual-count").textContent = String(manualAdds.size);
-
-  const dueItems = queue.items.filter((item) => item.category === "due");
-  const dueList = byId<HTMLUListElement>("due-list");
-  const overflow = byId<HTMLElement>("due-overflow");
-  dueList.innerHTML = "";
-
-  if (dueItems.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "No reviews due right now.";
-    li.classList.add("empty");
-    dueList.appendChild(li);
-    overflow.textContent = "";
-    return;
-  }
-
-  for (const item of dueItems.slice(0, DUE_VISIBLE_LIMIT)) {
-    const li = document.createElement("li");
-    const link = document.createElement("a");
-    link.href = item.problem.url;
-    link.target = "_blank";
-    link.rel = "noreferrer";
-    link.textContent = item.problem.title || item.slug;
-
-    const tag = document.createElement("span");
-    tag.className = "tag";
-    tag.textContent = item.problem.difficulty;
-
-    li.appendChild(link);
-    li.appendChild(tag);
-    dueList.appendChild(li);
-  }
-
-  const remaining = Math.max(0, dueItems.length - DUE_VISIBLE_LIMIT);
-  overflow.textContent = remaining > 0 ? `+${remaining} more due today.` : "";
-}
-
-function buildSessionQueue(payload: DashboardPayload): SessionItem[] {
-  const dueItems = payload.queue.items.filter((item) => item.category === "due");
-  const newItems = payload.queue.items
-    .filter((item) => item.category === "new")
-    .slice(0, payload.settings.dailyNewLimit);
-
-  const manualItems = payload.problems
-    .filter((entry) => manualAdds.has(entry.problem.leetcodeSlug))
-    .map((entry) => ({
-      slug: entry.problem.leetcodeSlug,
-      title: entry.problem.title || entry.problem.leetcodeSlug,
-      url: entry.problem.url,
-      difficulty: entry.problem.difficulty,
-      category: "manual" as const
-    }));
-
-  const base = [...dueItems, ...newItems].map((item) => ({
-    slug: item.slug,
-    title: item.problem.title || item.slug,
-    url: item.problem.url,
-    difficulty: item.problem.difficulty,
-    category: item.category
-  }));
-
-  const existing = new Set(base.map((item) => item.slug));
-  const extras = manualItems.filter((item) => !existing.has(item.slug));
-  return [...base, ...extras];
-}
-
-interface RecallRow {
-  slug: string;
-  title: string;
-  url: string;
-  reasons: string[];
-  score: number;
-}
-
-function difficultyScore(difficulty: Problem["difficulty"]): number {
-  if (difficulty === "Hard") return 8;
-  if (difficulty === "Medium") return 6;
-  if (difficulty === "Easy") return 3;
-  return 5;
-}
-
-function computeRetrievability(state: StudyState): number | null {
-  if (!state.lastReviewedAt || state.intervalDays <= 0) {
-    return null;
-  }
-  const daysSince = (Date.now() - new Date(state.lastReviewedAt).getTime()) / (24 * 60 * 60 * 1000);
-  const interval = Math.max(1, state.intervalDays);
-  const value = 1 - daysSince / interval;
-  return Math.max(0, Math.min(1, value));
-}
-
-function buildRecallRows(payload: DashboardPayload, limit = RECALL_LIMIT): RecallRow[] {
-  const now = Date.now();
-  const rows: RecallRow[] = [];
-
-  for (const entry of payload.problems) {
-    const state = entry.studyState;
-    if (!state || state.status === "SUSPENDED") {
-      continue;
-    }
-
-    const reasons: string[] = [];
-    let score = 0;
-
-    const retrievability = computeRetrievability(state);
-    if (retrievability !== null && retrievability < RETRIEVABILITY_THRESHOLD) {
-      reasons.push("Low recall");
-      score += 4;
-    }
-
-    if (state.ease <= 2 && state.lastReviewedAt) {
-      const daysSince = (now - new Date(state.lastReviewedAt).getTime()) / (24 * 60 * 60 * 1000);
-      if (daysSince <= RECENT_LAPSE_DAYS) {
-        reasons.push("Recent lapse");
-        score += 3;
-      }
-    }
-
-    if (difficultyScore(entry.problem.difficulty) >= 7) {
-      reasons.push("High difficulty");
-      score += 2;
-    }
-
-    if (state.nextReviewAt) {
-      const overdueDays = (now - new Date(state.nextReviewAt).getTime()) / (24 * 60 * 60 * 1000);
-      if (overdueDays > OVERDUE_DAYS) {
-        reasons.push("Overdue");
-        score += 5;
-      }
-    }
-
-    if (reasons.length === 0) {
-      continue;
-    }
-
-    rows.push({
-      slug: entry.problem.leetcodeSlug,
-      title: entry.problem.title || entry.problem.leetcodeSlug,
-      url: entry.problem.url,
-      reasons,
-      score
-    });
-  }
-
-  const sorted = rows
-    .sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score;
-      }
-      return a.title.localeCompare(b.title);
-    });
-
-  return sorted.slice(0, limit);
-}
-
-function renderRecallFocus(payload: DashboardPayload): RecallRow[] {
-  const body = byId<HTMLTableSectionElement>("recall-table-body");
-  const empty = byId<HTMLElement>("recall-empty");
-  body.innerHTML = "";
-
-  const rows = buildRecallRows(payload, RECALL_LIMIT);
-  if (rows.length === 0) {
-    empty.textContent = "No recall focus items yet.";
-    return [];
-  }
-  empty.textContent = "";
-
-  for (const row of rows) {
-    const tr = document.createElement("tr");
-
-    const problemCell = document.createElement("td");
-    const link = document.createElement("a");
-    link.href = row.url;
-    link.target = "_blank";
-    link.rel = "noreferrer";
-    link.textContent = row.title;
-    problemCell.appendChild(link);
-    tr.appendChild(problemCell);
-
-    const whyCell = document.createElement("td");
-    const chipRow = document.createElement("div");
-    chipRow.className = "chip-row";
-    row.reasons.forEach((reason) => {
-      const chip = document.createElement("span");
-      chip.className = "chip alert";
-      chip.textContent = reason;
-      chipRow.appendChild(chip);
-    });
-    whyCell.appendChild(chipRow);
-    tr.appendChild(whyCell);
-
-    const actionCell = document.createElement("td");
-    const button = document.createElement("button");
-    button.className = "secondary small";
-    button.textContent = manualAdds.has(row.slug) ? "Added" : "Add to today";
-    button.disabled = manualAdds.has(row.slug);
-    button.dataset.addSlug = row.slug;
-    actionCell.appendChild(button);
-    tr.appendChild(actionCell);
-
-    body.appendChild(tr);
-  }
-
-  return rows;
-}
-
-function renderTopicsCard(payload: DashboardPayload, recallRows: RecallRow[]): void {
-  const list = byId<HTMLUListElement>("topics-list");
-  const empty = byId<HTMLElement>("topics-empty");
-  list.innerHTML = "";
-
-  const recallSet = new Set(buildRecallRows(payload, Number.MAX_SAFE_INTEGER).map((row) => row.slug));
-  const topicMap = new Map<string, { total: number; mastered: number; dueToday: number; recallCount: number }>();
-  const now = Date.now();
-
-  for (const entry of payload.problems) {
-    const topics = entry.problem.topics ?? [];
-    if (topics.length === 0) {
-      continue;
-    }
-    const state = entry.studyState;
-
-    for (const topic of topics) {
-      const stats = topicMap.get(topic) ?? { total: 0, mastered: 0, dueToday: 0, recallCount: 0 };
-      stats.total += 1;
-      if (state?.status === "MASTERED") {
-        stats.mastered += 1;
-      }
-      if (state?.status !== "SUSPENDED" && state?.nextReviewAt && new Date(state.nextReviewAt).getTime() <= now) {
-        stats.dueToday += 1;
-      }
-      if (recallSet.has(entry.problem.leetcodeSlug)) {
-        stats.recallCount += 1;
-      }
-      topicMap.set(topic, stats);
-    }
-  }
-
-  const rows = Array.from(topicMap.entries())
-    .map(([topic, stats]) => ({ topic, ...stats }))
-    .sort((a, b) => {
-      if (b.recallCount !== a.recallCount) {
-        return b.recallCount - a.recallCount;
-      }
-      if (b.dueToday !== a.dueToday) {
-        return b.dueToday - a.dueToday;
-      }
-      return a.topic.localeCompare(b.topic);
-    })
-    .slice(0, TOPICS_LIMIT);
-
-  if (rows.length === 0) {
-    empty.textContent = "No topic data yet.";
-    return;
-  }
-  empty.textContent = "";
-
-  for (const row of rows) {
-    const li = document.createElement("li");
-    li.className = "topic-item";
-    li.dataset.topic = row.topic;
-
-    const meta = document.createElement("div");
-    meta.className = "topic-meta";
-    const title = document.createElement("strong");
-    title.textContent = row.topic;
-    const stats = document.createElement("div");
-    stats.className = "topic-stats";
-    stats.textContent = `Total ${row.total} - Due ${row.dueToday} - Recall ${row.recallCount}`;
-    meta.appendChild(title);
-    meta.appendChild(stats);
-
-    const progressWrap = document.createElement("div");
-    const progress = document.createElement("div");
-    progress.className = "progress";
-    const fill = document.createElement("div");
-    fill.className = "progress-fill";
-    const percent = row.total > 0 ? Math.round((row.mastered / row.total) * 100) : 0;
-    fill.style.width = `${percent}%`;
-    progress.appendChild(fill);
-    const progressLabel = document.createElement("div");
-    progressLabel.className = "sub";
-    progressLabel.textContent = `${row.mastered} / ${row.total} mastered`;
-    progressWrap.appendChild(progress);
-    progressWrap.appendChild(progressLabel);
-
-    li.appendChild(meta);
-    li.appendChild(progressWrap);
-    list.appendChild(li);
-  }
-}
-
-function setSessionModalOpen(open: boolean): void {
-  const modal = byId<HTMLElement>("session-modal");
-  modal.dataset.open = open ? "true" : "false";
-  modal.setAttribute("aria-hidden", open ? "false" : "true");
-}
-
-function formatSessionProgress(): string {
-  if (sessionQueue.length === 0) {
-    return "0 / 0";
-  }
-  return `${Math.min(sessionIndex + 1, sessionQueue.length)} / ${sessionQueue.length}`;
-}
-
-function renderSessionList(): void {
-  const list = byId<HTMLUListElement>("session-list");
-  list.innerHTML = "";
-
-  if (sessionQueue.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "No due or new items in today's queue.";
-    li.classList.add("empty");
-    list.appendChild(li);
-    return;
-  }
-
-  sessionQueue.forEach((item, index) => {
-    const li = document.createElement("li");
-    if (index === sessionIndex) {
-      li.classList.add("active");
-    } else if (index < sessionIndex) {
-      li.classList.add("done");
-    }
-
-    const title = document.createElement("span");
-    title.textContent = item.title;
-
-    const tag = document.createElement("span");
-    tag.className = "tag";
-    if (item.category === "due") {
-      tag.textContent = "Due";
-    } else if (item.category === "new") {
-      tag.textContent = "New";
-    } else {
-      tag.textContent = "Added";
-    }
-
-    li.appendChild(title);
-    li.appendChild(tag);
-    list.appendChild(li);
-  });
-}
-
-function renderSessionFocus(): void {
-  const title = byId<HTMLElement>("session-problem-title");
-  const meta = byId<HTMLElement>("session-problem-meta");
-  const tag = byId<HTMLElement>("session-problem-tag");
-  const progress = byId<HTMLElement>("session-progress");
-
-  progress.textContent = formatSessionProgress();
-
-  const item = sessionQueue[sessionIndex];
-  if (!item) {
-    title.textContent = "Session complete";
-    meta.textContent = "You finished today's queue.";
-    tag.textContent = "";
-    return;
-  }
-
-  title.textContent = item.title;
-  const categoryLabel = item.category === "due" ? "Due now" : item.category === "new" ? "New item" : "Manual add";
-  meta.textContent = `${item.difficulty} - ${categoryLabel}`;
-  tag.textContent = item.difficulty;
-  sessionItemStartMs = Date.now();
-}
-
-function renderSessionSummary(streakDays: number): void {
-  const summary = byId<HTMLElement>("session-summary");
-  const body = byId<HTMLElement>("session-body");
-  const ratings = byId<HTMLElement>("session-ratings");
-  const time = byId<HTMLElement>("session-time");
-  const streak = byId<HTMLElement>("session-streak");
-
-  body.classList.add("hidden");
-  summary.classList.remove("hidden");
-
-  ratings.innerHTML = "";
-  const ratingLabels: Record<number, string> = { 3: "Easy", 2: "Good", 1: "Hard", 0: "Again" };
-  [3, 2, 1, 0].forEach((value) => {
-    const row = document.createElement("div");
-    row.textContent = `${ratingLabels[value]}: ${sessionRatings[value] ?? 0}`;
-    ratings.appendChild(row);
-  });
-
-  time.textContent = formatClock(sessionTimeMs);
-  streak.textContent = `${streakDays} day${streakDays === 1 ? "" : "s"}`;
-}
-
-function resetSessionSummary(): void {
-  byId<HTMLElement>("session-body").classList.remove("hidden");
-  byId<HTMLElement>("session-summary").classList.add("hidden");
-}
-
-async function finishSession(): Promise<void> {
-  sessionTimeMs = Date.now() - sessionStartMs;
-  const response = await sendMessage("GET_DASHBOARD_DATA", {});
-  if (response.ok) {
-    const payload = response.data as DashboardPayload;
-    renderSessionSummary(payload.analytics.streakDays);
-  } else {
-    renderSessionSummary(0);
-  }
-  await loadDashboard();
-}
-
-async function rateSessionItem(rating: number): Promise<void> {
-  const item = sessionQueue[sessionIndex];
-  if (!item) {
-    return;
-  }
-
-  const solveTimeMs = Math.max(0, Date.now() - sessionItemStartMs);
-  const response = await sendMessage("RATE_PROBLEM", {
-    slug: item.slug,
-    rating,
-    solveTimeMs,
-    mode: "RECALL"
-  });
-
-  if (!response.ok) {
-    showStatus(response.error ?? "Failed to rate problem", true);
-    return;
-  }
-
-  sessionRatings[rating] = (sessionRatings[rating] ?? 0) + 1;
-  sessionIndex += 1;
-
-  if (sessionIndex >= sessionQueue.length) {
-    await finishSession();
-    return;
-  }
-
-  renderSessionList();
-  renderSessionFocus();
-}
-
-function renderStudyPlan(payload: DashboardPayload): void {
-  const curriculum = payload.curriculum;
-  const summary = payload.studyPlans.find((plan) => plan.id === curriculum.planId);
-
-  const status = byId<HTMLElement>("study-plan-status");
-  const name = byId<HTMLElement>("study-plan-name");
-  const meta = byId<HTMLElement>("study-plan-meta");
-  const topic = byId<HTMLElement>("study-plan-topic");
-  const items = byId<HTMLUListElement>("study-plan-items");
-
-  name.textContent = curriculum.planName;
-  const metaParts = [curriculum.sourceSet];
-  if (summary?.problemCount) {
-    metaParts.unshift(`${summary.problemCount} problems`);
-  }
-  meta.textContent = metaParts.join(" - ");
-
-  if (curriculum.completed) {
-    status.textContent = "Complete";
-  } else if (settings.studyMode !== "studyPlan") {
-    status.textContent = "Freestyle";
-  } else {
-    status.textContent = "Active";
-  }
-
-  if (curriculum.completed) {
-    topic.textContent = "All topics completed.";
-  } else if (!curriculum.topic) {
-    topic.textContent = `Enable ${curriculum.sourceSet} to resume this plan.`;
-  } else {
-    topic.textContent = `Next topic: ${curriculum.topic}`;
-  }
-
-  items.innerHTML = "";
-
-  if (curriculum.items.length === 0) {
-    const li = document.createElement("li");
-    if (curriculum.completed) {
-      li.textContent = "Plan complete. Pick a new plan to keep momentum.";
-    } else if (settings.studyMode !== "studyPlan") {
-      li.textContent = "Switch to Study plan mode to follow this path.";
-    } else {
-      li.textContent = "No upcoming steps yet.";
-    }
-    li.classList.add("empty");
-    items.appendChild(li);
-    return;
-  }
-
-  curriculum.items.forEach((item, index) => {
-    const li = document.createElement("li");
-    const link = document.createElement("a");
-    link.href = item.url;
-    link.target = "_blank";
-    link.rel = "noreferrer";
-    link.textContent = item.title || item.slug;
-
-    li.appendChild(link);
-
-    if (index === 0) {
-      const tag = document.createElement("span");
-      tag.className = "tag";
-      tag.textContent = "Next";
-      li.appendChild(tag);
-    }
-
-    items.appendChild(li);
-  });
+function setView(view: AppView): void {
+  state.view = view;
+  const url = new URL(window.location.href);
+  url.searchParams.set("view", view);
+  history.replaceState({}, "", url);
+  render();
 }
 
 function escapeHtml(value: string): string {
@@ -1097,435 +54,1294 @@ function escapeHtml(value: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
-function populateCuratedSetOptions(payload: DashboardPayload): void {
-  const curated = byId<HTMLSelectElement>("curated-select");
-  curated.innerHTML = "";
-  for (const setName of payload.curatedSetNames) {
-    const option = document.createElement("option");
-    option.value = setName;
-    option.textContent = setName;
-    curated.appendChild(option);
+function formatDate(iso?: string): string {
+  if (!iso) {
+    return "Not scheduled";
+  }
+  return new Date(iso).toLocaleString();
+}
+
+function toneForDifficulty(difficulty: string): string {
+  if (difficulty === "Easy") {
+    return "kt-pill kt-pill-blue";
+  }
+  if (difficulty === "Hard") {
+    return "kt-pill kt-pill-danger";
+  }
+  return "kt-pill kt-pill-accent";
+}
+
+function toneForQuestionStatus(status: string): string {
+  if (status === "MASTERED" || status === "COMPLETE") {
+    return "kt-pill kt-pill-success";
+  }
+  if (status === "DUE_NOW" || status === "CURRENT" || status === "READY") {
+    return "kt-pill kt-pill-accent";
+  }
+  if (status === "LOCKED") {
+    return "kt-pill";
+  }
+  return "kt-pill kt-pill-blue";
+}
+
+function currentRecommended(): AppShellPayload["popup"]["recommended"] {
+  return state.payload?.popup.recommended ?? null;
+}
+
+function activeCourse(): ActiveCourseView | null {
+  return state.payload?.activeCourse ?? null;
+}
+
+function shellTitle(view: AppView): { title: string; copy: string } {
+  switch (view) {
+    case "courses":
+      return {
+        title: "Course Management",
+        copy: "Curated-first traversal, chapter progression, and intake control."
+      };
+    case "library":
+      return {
+        title: "Library",
+        copy: "Inspect every tracked problem, its review state, and course membership."
+      };
+    case "analytics":
+      return {
+        title: "Analytics",
+        copy: "Retention, due load, weakest items, and course completion signals."
+      };
+    case "settings":
+      return {
+        title: "Control Center",
+        copy: "Global configuration for review cadence, automation behavior, and alerts."
+      };
+    default:
+      return {
+        title: "Dashboard",
+        copy: "The best next move for retention and the live state of your active path."
+      };
   }
 }
 
-function populateStudyPlanOptions(current: UserSettings, plans: StudyPlanSummary[]): void {
-  const select = byId<HTMLSelectElement>("settings-active-plan");
-  select.innerHTML = "";
-
-  for (const plan of plans) {
-    const option = document.createElement("option");
-    option.value = plan.id;
-    option.textContent = `${plan.name} (${plan.problemCount})`;
-    select.appendChild(option);
-  }
-
-  if (plans.length === 0) {
-    select.disabled = true;
-    return;
-  }
-
-  const activeExists = plans.some((plan) => plan.id === current.activeStudyPlanId);
-  select.value = activeExists ? current.activeStudyPlanId : plans[0].id;
-  select.disabled = current.studyMode !== "studyPlan";
+function statusMarkup(): string {
+  return `
+    <div id="app-status" class="kt-status" data-error="${state.statusIsError ? "true" : "false"}">
+      ${escapeHtml(state.status)}
+    </div>
+  `;
 }
 
-function populateSettingsForm(current: UserSettings, plans: StudyPlanSummary[]): void {
-  const setsContainer = byId<HTMLDivElement>("sets-enabled");
-  setsContainer.innerHTML = "";
-  for (const [setName, enabled] of Object.entries(current.setsEnabled)) {
-    const label = document.createElement("label");
-    label.innerHTML = `<input type=\"checkbox\" data-set-toggle=\"${escapeHtml(setName)}\" ${
-      enabled ? "checked" : ""
-    } /> ${escapeHtml(setName)}`;
-    setsContainer.appendChild(label);
-  }
-
-  byId<HTMLInputElement>("settings-daily-new").value = String(current.dailyNewLimit);
-  byId<HTMLInputElement>("settings-daily-review").value = String(current.dailyReviewLimit);
-  byId<HTMLSelectElement>("settings-study-mode").value = current.studyMode;
-  byId<HTMLSelectElement>("settings-order").value = current.reviewOrder;
-  byId<HTMLSelectElement>("settings-intensity").value = current.scheduleIntensity;
-  byId<HTMLInputElement>("settings-require-time").checked = current.requireSolveTime;
-  byId<HTMLInputElement>("settings-autodetect").checked = current.autoDetectSolved;
-  byId<HTMLInputElement>("settings-notifications").checked = current.notifications;
-  byId<HTMLInputElement>("settings-slow-downgrade").checked = current.slowSolveDowngradeEnabled;
-  byId<HTMLInputElement>("settings-slow-threshold").value = String(
-    Math.round(current.slowSolveThresholdMs / 60000)
-  );
-
-  byId<HTMLInputElement>("settings-quiet-start").value = String(current.quietHours.startHour);
-  byId<HTMLInputElement>("settings-quiet-end").value = String(current.quietHours.endHour);
-
-  populateStudyPlanOptions(current, plans);
-  updateSettingsVisibility();
+function navButton(view: AppView, icon: string, label: string): string {
+  return `
+    <button class="kt-nav-button" data-view="${view}" data-active="${state.view === view ? "true" : "false"}">
+      <span>${icon}</span>
+      <span class="kt-nav-button-label">${label}</span>
+    </button>
+  `;
 }
 
-async function importCuratedSet(): Promise<void> {
-  const setName = byId<HTMLSelectElement>("curated-select").value;
-  const response = await sendMessage("IMPORT_CURATED_SET", { setName });
-  if (!response.ok) {
-    showStatus(response.error ?? "Curated import failed", true);
-    showDataStatus(response.error ?? "Curated import failed", true);
-    return;
-  }
-
-  showStatus(`Imported ${setName}.`);
-  showDataStatus(`Imported ${setName}.`);
-  await loadDashboard();
+function courseCard(course: CourseCardView): string {
+  return `
+    <article class="kt-course-card" data-active="${course.active ? "true" : "false"}">
+      <div class="kt-card-header">
+        <div>
+          <p class="kt-section-label">${escapeHtml(course.sourceSet)}</p>
+          <h3 class="kt-card-title">${escapeHtml(course.name)}</h3>
+        </div>
+        ${course.active ? '<span class="kt-pill kt-pill-accent">Active</span>' : ""}
+      </div>
+      <p class="kt-card-copy">${escapeHtml(course.description)}</p>
+      <div class="kt-progress"><span style="width:${course.completionPercent}%"></span></div>
+      <div class="kt-pair">
+        <span class="kt-card-copy">${course.completedQuestions}/${course.totalQuestions} traversed</span>
+        <strong class="kt-summary-chip-label">${course.completionPercent}%</strong>
+      </div>
+      <div class="kt-pair">
+        <span class="kt-inline-note">${course.nextQuestionTitle ? `Next: ${escapeHtml(course.nextQuestionTitle)}` : "Course complete"}</span>
+        <button class="kt-button-secondary kt-button-small" data-action="switch-course" data-course-id="${escapeHtml(course.id)}">
+          ${course.active ? "Viewing" : "Set Active"}
+        </button>
+      </div>
+    </article>
+  `;
 }
 
-async function importCustomSet(): Promise<void> {
-  const setName = byId<HTMLInputElement>("custom-set-name").value.trim();
-  const raw = byId<HTMLTextAreaElement>("custom-set-json").value.trim();
-  if (!raw) {
-    showStatus("Paste a JSON array of slugs or objects.", true);
-    showDataStatus("Paste a JSON array of slugs or objects.", true);
-    return;
+function recommendedPanel(): string {
+  const recommended = currentRecommended();
+  if (!recommended) {
+    return `
+      <section class="kt-shell-card">
+        <div class="kt-card-stack">
+          <div>
+            <p class="kt-section-label">Recommended Now</p>
+            <h2 class="kt-card-title">Queue clear</h2>
+          </div>
+          <p class="kt-card-copy">No review pressure right now. Shift to the active course to keep the streak moving.</p>
+        </div>
+      </section>
+    `;
   }
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    showStatus("Invalid JSON in custom import.", true);
-    showDataStatus("Invalid JSON in custom import.", true);
-    return;
-  }
+  return `
+    <section class="kt-shell-card">
+      <div class="kt-card-stack">
+        <div class="kt-card-header">
+          <div>
+            <p class="kt-section-label">Recommended Now</p>
+            <h2 class="kt-card-title">${escapeHtml(recommended.title)}</h2>
+          </div>
+          <span class="${toneForDifficulty(recommended.difficulty)}">${escapeHtml(recommended.difficulty)}</span>
+        </div>
+        <div class="kt-badge-grid">
+          <span class="${recommended.reason === "Overdue" ? "kt-pill kt-pill-danger" : recommended.reason === "Review focus" ? "kt-pill kt-pill-blue" : "kt-pill kt-pill-accent"}">${escapeHtml(recommended.reason)}</span>
+          ${recommended.alsoCourseNext ? '<span class="kt-pill kt-pill-success">Also next in course</span>' : ""}
+        </div>
+        <p class="kt-card-copy">
+          ${
+            recommended.nextReviewAt
+              ? `Next review window: ${escapeHtml(formatDate(recommended.nextReviewAt))}`
+              : "Highest leverage problem in the queue."
+          }
+        </p>
+        <div class="kt-action-row">
+          <button
+            class="kt-button"
+            data-action="open-problem"
+            data-slug="${escapeHtml(recommended.slug)}"
+            data-url="${escapeHtml(recommended.url)}"
+          >Open Problem</button>
+          <button class="kt-button-secondary" data-action="refresh">Refresh</button>
+        </div>
+      </div>
+    </section>
+  `;
+}
 
-  if (!Array.isArray(parsed)) {
-    showStatus("Custom import expects a JSON array.", true);
-    showDataStatus("Custom import expects a JSON array.", true);
-    return;
-  }
-
-  const items = parsed
-    .map((entry) => {
-      if (typeof entry === "string") {
-        return { slug: entry };
-      }
-      if (entry && typeof entry === "object" && typeof (entry as { slug?: unknown }).slug === "string") {
-        return entry as { slug: string; title?: string; difficulty?: "Easy" | "Medium" | "Hard" | "Unknown"; tags?: string[] };
-      }
-      return null;
-    })
-    .filter(Boolean) as Array<{
-    slug: string;
-    title?: string;
-    difficulty?: "Easy" | "Medium" | "Hard" | "Unknown";
-    tags?: string[];
-  }>;
-
+function queueList(): string {
+  const items = state.payload?.queue.items.slice(0, 6) ?? [];
   if (items.length === 0) {
-    showStatus("No valid items found in custom import.", true);
-    showDataStatus("No valid items found in custom import.", true);
-    return;
+    return '<div class="kt-empty">No items are waiting in the queue.</div>';
   }
 
-  const response = await sendMessage("IMPORT_CUSTOM_SET", {
-    setName: setName || undefined,
-    items
-  });
-
-  if (!response.ok) {
-    showStatus(response.error ?? "Custom import failed", true);
-    showDataStatus(response.error ?? "Custom import failed", true);
-    return;
-  }
-
-  showStatus(`Imported ${items.length} custom items.`);
-  showDataStatus(`Imported ${items.length} custom items.`);
-  await loadDashboard();
+  return `
+    <ul class="kt-list">
+      ${items
+        .map(
+          (item) => `
+            <li class="kt-list-item">
+              <div class="kt-row-card-inline">
+                <div>
+                  <div class="kt-list-item-title">${escapeHtml(item.problem.title || item.slug)}</div>
+                  <div class="kt-list-item-copy">${escapeHtml(item.category.toUpperCase())} · ${escapeHtml(formatDate(item.studyState.nextReviewAt))}</div>
+                </div>
+                <div class="kt-action-row">
+                  <span class="${toneForDifficulty(item.problem.difficulty)}">${escapeHtml(item.problem.difficulty)}</span>
+                  <button
+                    class="kt-button-secondary kt-button-small"
+                    data-action="open-problem"
+                    data-slug="${escapeHtml(item.slug)}"
+                    data-url="${escapeHtml(item.problem.url)}"
+                  >Launch</button>
+                </div>
+              </div>
+            </li>
+          `
+        )
+        .join("")}
+    </ul>
+  `;
 }
 
-function validateCustomJson(): void {
-  const raw = byId<HTMLTextAreaElement>("custom-set-json").value.trim();
-  if (!raw) {
-    showDataStatus("Paste a JSON array to validate.", true);
-    return;
+function overviewView(): string {
+  const payload = state.payload;
+  const course = activeCourse();
+
+  return `
+    <div class="kt-shell-grid">
+      <div class="kt-stack">
+        ${recommendedPanel()}
+
+        <section class="kt-shell-card">
+          <div class="kt-card-stack">
+            <div>
+              <p class="kt-section-label">Signal Summary</p>
+            </div>
+            <div class="kt-stat-grid">
+              <article class="kt-metric">
+                <span class="kt-label">Due Today</span>
+                <strong class="kt-metric-value">${payload?.queue.dueCount ?? 0}</strong>
+                <span class="kt-metric-copy">Live pressure on the queue.</span>
+              </article>
+              <article class="kt-metric">
+                <span class="kt-label">Day Streak</span>
+                <strong class="kt-metric-value">${payload?.analytics.streakDays ?? 0}</strong>
+                <span class="kt-metric-copy">Consecutive review days.</span>
+              </article>
+              <article class="kt-metric">
+                <span class="kt-label">Mastered</span>
+                <strong class="kt-metric-value">${payload?.analytics.masteredCount ?? 0}</strong>
+                <span class="kt-metric-copy">Problems in stable recall territory.</span>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="kt-shell-card">
+          <div class="kt-card-stack">
+            <div class="kt-card-header">
+              <div>
+                <p class="kt-section-label">Active Course</p>
+                <h2 class="kt-card-title">${course ? escapeHtml(course.name) : "No active course"}</h2>
+              </div>
+              ${course ? `<span class="kt-pill kt-pill-accent">${course.completionPercent}%</span>` : ""}
+            </div>
+            ${
+              course
+                ? `
+                  <p class="kt-card-copy">${escapeHtml(course.description)}</p>
+                  <div class="kt-progress"><span style="width:${course.completionPercent}%"></span></div>
+                  <div class="kt-pair">
+                    <span class="kt-card-copy">${course.completedQuestions}/${course.totalQuestions} questions traversed</span>
+                    <span class="kt-inline-note">${course.activeChapterTitle ? `Current chapter: ${escapeHtml(course.activeChapterTitle)}` : "Course complete"}</span>
+                  </div>
+                  ${
+                    course.nextQuestion
+                      ? `
+                        <div class="kt-row-card">
+                          <div class="kt-card-topline">
+                            <span class="kt-section-label">Next In Course</span>
+                            <span class="${toneForQuestionStatus(course.nextQuestion.status)}">${escapeHtml(course.nextQuestion.status.replace(/_/g, " "))}</span>
+                          </div>
+                          <div class="kt-list-item-title">${escapeHtml(course.nextQuestion.title)}</div>
+                          <div class="kt-list-item-copy">${escapeHtml(course.nextQuestion.chapterTitle)} · ${escapeHtml(course.nextQuestion.difficulty)}</div>
+                          <div class="kt-action-row">
+                            <button
+                              class="kt-button"
+                              data-action="open-problem"
+                              data-slug="${escapeHtml(course.nextQuestion.slug)}"
+                              data-url="${escapeHtml(course.nextQuestion.url)}"
+                              data-course-id="${escapeHtml(course.id)}"
+                              data-chapter-id="${escapeHtml(course.nextQuestion.chapterId)}"
+                            >Continue Path</button>
+                            <button class="kt-button-secondary" data-view="courses">Open Course View</button>
+                          </div>
+                        </div>
+                      `
+                      : '<div class="kt-empty">This course is fully traversed.</div>'
+                  }
+                `
+                : '<div class="kt-empty">Set an active course to enable guided traversal.</div>'
+            }
+          </div>
+        </section>
+
+        <section class="kt-shell-card">
+          <div class="kt-card-stack">
+            <div class="kt-card-header">
+              <div>
+                <p class="kt-section-label">Today Queue</p>
+                <h2 class="kt-card-title">Live Intake</h2>
+              </div>
+              <span class="kt-pill">${payload?.queue.items.length ?? 0} items</span>
+            </div>
+            ${queueList()}
+          </div>
+        </section>
+      </div>
+
+      <aside class="kt-stack">
+        <section class="kt-sidebar-card">
+          <div class="kt-card-stack">
+            <div class="kt-card-header">
+              <div>
+                <p class="kt-section-label">Course Roster</p>
+                <h2 class="kt-card-title">Available Tracks</h2>
+              </div>
+            </div>
+            <div class="kt-course-strip">
+              ${(payload?.courses ?? []).map(courseCard).join("")}
+            </div>
+          </div>
+        </section>
+
+        <section class="kt-sidebar-card">
+          <div class="kt-card-stack">
+            <div>
+              <p class="kt-section-label">Quick Intake</p>
+              <h2 class="kt-card-title">Add Question</h2>
+            </div>
+            ${courseIngestForm()}
+          </div>
+        </section>
+
+        <section class="kt-sidebar-card">
+          <div class="kt-card-stack">
+            <div>
+              <p class="kt-section-label">Protocol</p>
+              <h2 class="kt-card-title">Review Surface</h2>
+            </div>
+            <p class="kt-card-copy">Study mode: ${escapeHtml(payload?.settings.studyMode ?? "studyPlan")} · Order: ${escapeHtml(payload?.settings.reviewOrder ?? "dueFirst")} · Auto detect: ${payload?.settings.autoDetectSolved ? "On" : "Off"}</p>
+            <div class="kt-footer-bar">
+              <button class="kt-button-secondary" data-action="toggle-mode">Toggle Study Mode</button>
+              <button class="kt-button-ghost" data-view="settings">Open Settings</button>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  `;
+}
+
+function chapterButtons(course: ActiveCourseView | null): string {
+  if (!course) {
+    return '<div class="kt-empty">No active course selected.</div>';
   }
 
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      showDataStatus("Expected a JSON array.", true);
-      return;
+  return `
+    <div class="kt-chapter-tabs">
+      ${course.chapters
+        .map(
+          (chapter) => `
+            <button
+              class="kt-button-secondary kt-chapter-tab"
+              data-action="set-chapter"
+              data-course-id="${escapeHtml(course.id)}"
+              data-chapter-id="${escapeHtml(chapter.id)}"
+              data-status="${chapter.status}"
+            >
+              ${escapeHtml(chapter.title)} · ${chapter.completedQuestions}/${chapter.totalQuestions}
+            </button>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function questionTable(course: ActiveCourseView | null): string {
+  if (!course) {
+    return '<div class="kt-empty">No course data loaded.</div>';
+  }
+
+  const questions = course.chapters.flatMap((chapter) => chapter.questions);
+  return `
+    <div class="kt-table-wrap">
+      <table class="kt-table">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Chapter</th>
+            <th>Difficulty</th>
+            <th>Status</th>
+            <th>Next Review</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${questions
+            .map(
+              (question) => `
+                <tr>
+                  <td>
+                    <strong>${escapeHtml(question.title)}</strong>
+                    <div class="kt-list-item-copy">${escapeHtml(question.slug)}</div>
+                  </td>
+                  <td>${escapeHtml(question.chapterTitle)}</td>
+                  <td><span class="${toneForDifficulty(question.difficulty)}">${escapeHtml(question.difficulty)}</span></td>
+                  <td><span class="${toneForQuestionStatus(question.status)}">${escapeHtml(question.status.replace(/_/g, " "))}</span></td>
+                  <td>${escapeHtml(formatDate(question.nextReviewAt))}</td>
+                  <td>
+                    <button
+                      class="kt-button-secondary kt-button-small"
+                      data-action="open-problem"
+                      data-slug="${escapeHtml(question.slug)}"
+                      data-url="${escapeHtml(question.url)}"
+                      data-course-id="${escapeHtml(course.id)}"
+                      data-chapter-id="${escapeHtml(question.chapterId)}"
+                    >Launch</button>
+                  </td>
+                </tr>
+              `
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function courseIngestForm(): string {
+  return `
+    <form id="course-ingest-form" class="kt-card-stack">
+      <div class="kt-form-field">
+        <label class="kt-label" for="course-form-course">Course</label>
+        <select id="course-form-course" class="kt-select"></select>
+      </div>
+      <div class="kt-form-field">
+        <label class="kt-label" for="course-form-chapter">Chapter</label>
+        <select id="course-form-chapter" class="kt-select"></select>
+      </div>
+      <div class="kt-form-field">
+        <label class="kt-label" for="course-form-input">LeetCode Slug or URL</label>
+        <input id="course-form-input" class="kt-input" placeholder="https://leetcode.com/problems/..." />
+      </div>
+      <div class="kt-footer-bar">
+        <button class="kt-button" type="submit">Add To Protocol</button>
+        <label class="kt-inline-note">
+          <input id="course-form-started" type="checkbox" />
+          Mark as started
+        </label>
+      </div>
+    </form>
+  `;
+}
+
+function coursesView(): string {
+  const course = activeCourse();
+  return `
+    <div class="kt-shell-grid-single">
+      <div class="kt-hero">
+        <section class="kt-shell-card">
+          <div class="kt-hero-copy">
+            <div>
+              <p class="kt-section-label">${course ? escapeHtml(course.sourceSet) : "No active course"}</p>
+              <h1 class="kt-hero-title">${course ? escapeHtml(course.name) : "Course Offline"}</h1>
+            </div>
+            <p class="kt-hero-subtitle">${course ? escapeHtml(course.description) : "Set an active course to restore the curated path."}</p>
+            ${
+              course
+                ? `
+                  <div class="kt-stat-grid">
+                    <article class="kt-metric">
+                      <span class="kt-label">Chapters</span>
+                      <strong class="kt-metric-value">${course.totalChapters}</strong>
+                      <span class="kt-metric-copy">${course.completedChapters} completed</span>
+                    </article>
+                    <article class="kt-metric">
+                      <span class="kt-label">Questions</span>
+                      <strong class="kt-metric-value">${course.totalQuestions}</strong>
+                      <span class="kt-metric-copy">${course.completedQuestions} traversed</span>
+                    </article>
+                    <article class="kt-metric">
+                      <span class="kt-label">Due In Track</span>
+                      <strong class="kt-metric-value">${course.dueCount}</strong>
+                      <span class="kt-metric-copy">Pending review cards</span>
+                    </article>
+                  </div>
+                  <div class="kt-progress"><span style="width:${course.completionPercent}%"></span></div>
+                  <div class="kt-footer-bar">
+                    ${
+                      course.nextQuestion
+                        ? `
+                          <button
+                            class="kt-button"
+                            data-action="open-problem"
+                            data-slug="${escapeHtml(course.nextQuestion.slug)}"
+                            data-url="${escapeHtml(course.nextQuestion.url)}"
+                            data-course-id="${escapeHtml(course.id)}"
+                            data-chapter-id="${escapeHtml(course.nextQuestion.chapterId)}"
+                          >Continue Path</button>
+                        `
+                        : '<button class="kt-button-secondary" disabled>Path Complete</button>'
+                    }
+                    <button class="kt-button-secondary" data-action="toggle-mode">Toggle Study Mode</button>
+                  </div>
+                `
+                : ""
+            }
+          </div>
+        </section>
+
+        <aside class="kt-shell-card">
+          <div class="kt-card-stack">
+            <div>
+              <p class="kt-section-label">Ingest Question</p>
+              <h2 class="kt-card-title">Append To Active Chapter</h2>
+            </div>
+            ${courseIngestForm()}
+          </div>
+        </aside>
+      </div>
+
+      <section class="kt-shell-card">
+        <div class="kt-card-stack">
+          <div class="kt-card-header">
+            <div>
+              <p class="kt-section-label">Course Roster</p>
+              <h2 class="kt-card-title">Switch Active Track</h2>
+            </div>
+          </div>
+          <div class="kt-course-strip">
+            ${(state.payload?.courses ?? []).map(courseCard).join("")}
+          </div>
+        </div>
+      </section>
+
+      <section class="kt-shell-card">
+        <div class="kt-card-stack">
+          <div class="kt-card-header">
+            <div>
+              <p class="kt-section-label">Chapter Map</p>
+              <h2 class="kt-card-title">Operational Sequence</h2>
+            </div>
+          </div>
+          ${chapterButtons(course)}
+        </div>
+      </section>
+
+      <section class="kt-shell-card">
+        <div class="kt-card-stack">
+          <div class="kt-card-header">
+            <div>
+              <p class="kt-section-label">Question Matrix</p>
+              <h2 class="kt-card-title">Current Path State</h2>
+            </div>
+          </div>
+          ${questionTable(course)}
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function analyticsForecast(): string {
+  const points = state.payload?.analytics.dueByDay ?? [];
+  const max = Math.max(1, ...points.map((point) => point.count));
+  return `
+    <div class="kt-grid-2">
+      ${points
+        .map(
+          (point) => `
+            <article class="kt-row-card">
+              <div class="kt-pair">
+                <span class="kt-label">${escapeHtml(point.date)}</span>
+                <strong>${point.count}</strong>
+              </div>
+              <div class="kt-progress"><span style="width:${(point.count / max) * 100}%"></span></div>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function analyticsView(): string {
+  const payload = state.payload;
+  return `
+    <div class="kt-shell-grid-single">
+      <section class="kt-shell-card">
+        <div class="kt-card-stack">
+          <div class="kt-stat-grid">
+            <article class="kt-metric">
+              <span class="kt-label">Streak</span>
+              <strong class="kt-metric-value">${payload?.analytics.streakDays ?? 0}</strong>
+              <span class="kt-metric-copy">Consecutive active review days.</span>
+            </article>
+            <article class="kt-metric">
+              <span class="kt-label">Total Reviews</span>
+              <strong class="kt-metric-value">${payload?.analytics.totalReviews ?? 0}</strong>
+              <span class="kt-metric-copy">Scheduler events logged across the library.</span>
+            </article>
+            <article class="kt-metric">
+              <span class="kt-label">Retention Proxy</span>
+              <strong class="kt-metric-value">${Math.round((payload?.analytics.retentionProxy ?? 0) * 100)}%</strong>
+              <span class="kt-metric-copy">Recent ratings at Good or Easy.</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="kt-shell-card">
+        <div class="kt-card-stack">
+          <div>
+            <p class="kt-section-label">Due Forecast</p>
+            <h2 class="kt-card-title">Next 14 Days</h2>
+          </div>
+          ${analyticsForecast()}
+        </div>
+      </section>
+
+      <div class="kt-shell-grid">
+        <section class="kt-shell-card">
+          <div class="kt-card-stack">
+            <div>
+              <p class="kt-section-label">Weakest Problems</p>
+              <h2 class="kt-card-title">Highest Lapse Pressure</h2>
+            </div>
+            <div class="kt-table-wrap">
+              <table class="kt-table">
+                <thead>
+                  <tr>
+                    <th>Problem</th>
+                    <th>Lapses</th>
+                    <th>Ease</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(payload?.analytics.weakestProblems ?? [])
+                    .map(
+                      (problem) => `
+                        <tr>
+                          <td>${escapeHtml(problem.title)}</td>
+                          <td>${problem.lapses}</td>
+                          <td>${problem.ease.toFixed(2)}</td>
+                        </tr>
+                      `
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <aside class="kt-sidebar-card">
+          <div class="kt-card-stack">
+            <div>
+              <p class="kt-section-label">Course Completion</p>
+              <h2 class="kt-card-title">Track Status</h2>
+            </div>
+            <div class="kt-course-strip">
+              ${(payload?.courses ?? []).map(courseCard).join("")}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  `;
+}
+
+function settingsView(): string {
+  const settings = state.payload?.settings;
+  const sets = Object.entries(settings?.setsEnabled ?? {});
+  return `
+    <div class="kt-shell-grid-single">
+      <form id="settings-form" class="kt-shell-card">
+        <div class="kt-card-stack">
+          <div>
+            <p class="kt-section-label">Study Settings</p>
+            <h2 class="kt-card-title">Daily Cadence</h2>
+          </div>
+          <div class="kt-settings-grid">
+            <label class="kt-settings-field">
+              <span class="kt-label">Daily New</span>
+              <input id="settings-daily-new" class="kt-input" type="number" min="0" value="${settings?.dailyNewLimit ?? 0}" />
+            </label>
+            <label class="kt-settings-field">
+              <span class="kt-label">Daily Review</span>
+              <input id="settings-daily-review" class="kt-input" type="number" min="0" value="${settings?.dailyReviewLimit ?? 0}" />
+            </label>
+            <label class="kt-settings-field">
+              <span class="kt-label">Study Mode</span>
+              <select id="settings-study-mode" class="kt-select">
+                <option value="studyPlan" ${settings?.studyMode === "studyPlan" ? "selected" : ""}>Study plan</option>
+                <option value="freestyle" ${settings?.studyMode === "freestyle" ? "selected" : ""}>Freestyle</option>
+              </select>
+            </label>
+            <label class="kt-settings-field">
+              <span class="kt-label">Active Course</span>
+              <select id="settings-active-course" class="kt-select">
+                ${(state.payload?.courses ?? [])
+                  .map(
+                    (course) => `
+                      <option value="${escapeHtml(course.id)}" ${settings?.activeCourseId === course.id ? "selected" : ""}>
+                        ${escapeHtml(course.name)}
+                      </option>
+                    `
+                  )
+                  .join("")}
+              </select>
+            </label>
+            <label class="kt-settings-field">
+              <span class="kt-label">Review Order</span>
+              <select id="settings-review-order" class="kt-select">
+                <option value="dueFirst" ${settings?.reviewOrder === "dueFirst" ? "selected" : ""}>Due First</option>
+                <option value="mixByDifficulty" ${settings?.reviewOrder === "mixByDifficulty" ? "selected" : ""}>Mix By Difficulty</option>
+                <option value="weakestFirst" ${settings?.reviewOrder === "weakestFirst" ? "selected" : ""}>Weakest First</option>
+              </select>
+            </label>
+            <label class="kt-settings-field">
+              <span class="kt-label">Intensity</span>
+              <select id="settings-intensity" class="kt-select">
+                <option value="chill" ${settings?.scheduleIntensity === "chill" ? "selected" : ""}>Chill</option>
+                <option value="normal" ${settings?.scheduleIntensity === "normal" ? "selected" : ""}>Normal</option>
+                <option value="aggressive" ${settings?.scheduleIntensity === "aggressive" ? "selected" : ""}>Aggressive</option>
+              </select>
+            </label>
+          </div>
+
+          <div>
+            <p class="kt-section-label">Review Behavior</p>
+            <div class="kt-settings-grid">
+              <label class="kt-row-card">
+                <span class="kt-label">Require solve time</span>
+                <input id="settings-require-time" type="checkbox" ${settings?.requireSolveTime ? "checked" : ""} />
+              </label>
+              <label class="kt-row-card">
+                <span class="kt-label">Auto detect solved</span>
+                <input id="settings-auto-detect" type="checkbox" ${settings?.autoDetectSolved ? "checked" : ""} />
+              </label>
+              <label class="kt-row-card">
+                <span class="kt-label">Slow solve downgrade</span>
+                <input id="settings-slow-downgrade" type="checkbox" ${settings?.slowSolveDowngradeEnabled ? "checked" : ""} />
+              </label>
+              <label class="kt-settings-field">
+                <span class="kt-label">Slow threshold (minutes)</span>
+                <input id="settings-slow-threshold" class="kt-input" type="number" min="1" value="${Math.round((settings?.slowSolveThresholdMs ?? 0) / 60000)}" />
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p class="kt-section-label">Alerts</p>
+            <div class="kt-settings-grid">
+              <label class="kt-row-card">
+                <span class="kt-label">Notifications</span>
+                <input id="settings-notifications" type="checkbox" ${settings?.notifications ? "checked" : ""} />
+              </label>
+              <label class="kt-settings-field">
+                <span class="kt-label">Quiet start</span>
+                <input id="settings-quiet-start" class="kt-input" type="number" min="0" max="23" value="${settings?.quietHours.startHour ?? 22}" />
+              </label>
+              <label class="kt-settings-field">
+                <span class="kt-label">Quiet end</span>
+                <input id="settings-quiet-end" class="kt-input" type="number" min="0" max="23" value="${settings?.quietHours.endHour ?? 8}" />
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p class="kt-section-label">Enabled Sets</p>
+            <div class="kt-course-strip">
+              ${sets
+                .map(
+                  ([name, enabled]) => `
+                    <label class="kt-row-card">
+                      <span class="kt-label">${escapeHtml(name)}</span>
+                      <input type="checkbox" data-set-toggle="${escapeHtml(name)}" ${enabled ? "checked" : ""} />
+                    </label>
+                  `
+                )
+                .join("")}
+            </div>
+          </div>
+
+          <div class="kt-footer-bar">
+            <button class="kt-button" type="submit">Save Settings</button>
+            <button class="kt-button-secondary" type="button" data-action="refresh">Reset View</button>
+          </div>
+        </div>
+      </form>
+
+      <section class="kt-shell-card">
+        <div class="kt-card-stack">
+          <div>
+            <p class="kt-section-label">Data</p>
+            <h2 class="kt-card-title">Import / Export</h2>
+          </div>
+          <div class="kt-footer-bar">
+            <button class="kt-button-secondary" type="button" data-action="export-data">Export Backup JSON</button>
+            <input id="import-file" class="kt-input" type="file" accept="application/json" />
+            <button class="kt-button" type="button" data-action="import-data">Import Backup</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function libraryFilters(): string {
+  return `
+    <div class="kt-filter-row">
+      <input id="library-filter-query" class="kt-input" placeholder="Search title or slug" />
+      <select id="library-filter-course" class="kt-select">
+        <option value="all">All courses</option>
+        ${(state.payload?.courses ?? [])
+          .map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`)
+          .join("")}
+      </select>
+      <select id="library-filter-difficulty" class="kt-select">
+        <option value="all">All difficulty</option>
+        <option value="Easy">Easy</option>
+        <option value="Medium">Medium</option>
+        <option value="Hard">Hard</option>
+        <option value="Unknown">Unknown</option>
+      </select>
+      <select id="library-filter-status" class="kt-select">
+        <option value="all">All status</option>
+        <option value="due">Due now</option>
+        <option value="new">New</option>
+        <option value="learning">Learning</option>
+        <option value="reviewing">Reviewing</option>
+        <option value="mastered">Mastered</option>
+        <option value="suspended">Suspended</option>
+      </select>
+    </div>
+  `;
+}
+
+function libraryView(): string {
+  return `
+    <section class="kt-shell-card">
+      <div class="kt-card-stack">
+        <div class="kt-card-header">
+          <div>
+            <p class="kt-section-label">Library</p>
+            <h2 class="kt-card-title">All Tracked Problems</h2>
+          </div>
+        </div>
+        ${libraryFilters()}
+        <div class="kt-table-wrap">
+          <table class="kt-table">
+            <thead>
+              <tr>
+                <th>Problem</th>
+                <th>Difficulty</th>
+                <th>Course</th>
+                <th>Status</th>
+                <th>Next Review</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="library-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function viewMarkup(): string {
+  switch (state.view) {
+    case "courses":
+      return coursesView();
+    case "library":
+      return libraryView();
+    case "analytics":
+      return analyticsView();
+    case "settings":
+      return settingsView();
+    default:
+      return overviewView();
+  }
+}
+
+function render(): void {
+  const app = byId<HTMLDivElement>("app-shell");
+  const title = shellTitle(state.view);
+
+  app.innerHTML = `
+    <div class="kt-shell">
+      <aside class="kt-rail">
+        <div class="kt-rail-brand">
+          <div class="kt-rail-mark">KT</div>
+          <div class="kt-rail-subtitle">v1.0.4</div>
+        </div>
+        <nav class="kt-rail-nav">
+          ${navButton("dashboard", "▣", "Dashboard")}
+          ${navButton("courses", "▤", "Courses")}
+          ${navButton("library", "⌘", "Library")}
+          ${navButton("analytics", "◫", "Analytics")}
+          ${navButton("settings", "⚙", "Settings")}
+        </nav>
+        <div class="kt-rail-footer">
+          <span class="kt-footer-note">Kinetic Terminal</span>
+          <span class="kt-rail-subtitle">Spaced repetition control plane</span>
+        </div>
+      </aside>
+
+      <div class="kt-shell-main">
+        <header class="kt-topbar">
+          <div class="kt-topbar-title">
+            <p class="kt-eyebrow">${escapeHtml(title.title.toUpperCase())}</p>
+            <h1 class="kt-view-title">${escapeHtml(title.title)}</h1>
+            <p class="kt-topbar-copy">${escapeHtml(title.copy)}</p>
+          </div>
+          <div class="kt-topbar-actions">
+            ${statusMarkup()}
+            <button class="kt-icon-button" data-action="refresh" title="Refresh">↻</button>
+            <button class="kt-icon-button" data-view="settings" title="Settings">⚙</button>
+          </div>
+        </header>
+        <section class="kt-shell-content">
+          ${viewMarkup()}
+        </section>
+      </div>
+    </div>
+  `;
+
+  afterRender();
+}
+
+function filterLibraryRows(rows: LibraryProblemRow[]): LibraryProblemRow[] {
+  const query = (document.getElementById("library-filter-query") as HTMLInputElement | null)?.value.trim().toLowerCase() ?? "";
+  const courseId = (document.getElementById("library-filter-course") as HTMLSelectElement | null)?.value ?? "all";
+  const difficulty = (document.getElementById("library-filter-difficulty") as HTMLSelectElement | null)?.value ?? "all";
+  const status = (document.getElementById("library-filter-status") as HTMLSelectElement | null)?.value ?? "all";
+
+  return rows.filter((row) => {
+    if (query) {
+      const haystack = `${row.problem.title} ${row.problem.leetcodeSlug}`.toLowerCase();
+      if (!haystack.includes(query)) {
+        return false;
+      }
     }
-    const validCount = parsed.filter((entry) =>
-      typeof entry === "string" || (entry && typeof entry === "object" && typeof (entry as { slug?: unknown }).slug === "string")
-    ).length;
-    showDataStatus(`Valid JSON. ${validCount} item${validCount === 1 ? "" : "s"} detected.`);
-  } catch {
-    showDataStatus("Invalid JSON payload.", true);
-  }
-}
 
-async function exportData(): Promise<void> {
-  const response = await sendMessage("EXPORT_DATA", {});
-  if (!response.ok) {
-    showStatus(response.error ?? "Export failed", true);
-    showDataStatus(response.error ?? "Export failed", true);
-    return;
-  }
+    if (courseId !== "all" && !row.courses.some((course) => course.courseId === courseId)) {
+      return false;
+    }
 
-  const blob = new Blob([JSON.stringify(response.data, null, 2)], {
-    type: "application/json"
+    if (difficulty !== "all" && row.problem.difficulty !== difficulty) {
+      return false;
+    }
+
+    if (status !== "all") {
+      const nextReviewTs = row.studyState?.nextReviewAt ? new Date(row.studyState.nextReviewAt).getTime() : Number.POSITIVE_INFINITY;
+      if (status === "due" && nextReviewTs > Date.now()) {
+        return false;
+      }
+      if (status === "new" && row.studyState && row.studyState.reviewCount > 0) {
+        return false;
+      }
+      if (status === "mastered" && row.studyState?.status !== "MASTERED") {
+        return false;
+      }
+      if (status === "suspended" && row.studyState?.status !== "SUSPENDED") {
+        return false;
+      }
+      if (status === "learning" && row.studyState?.status !== "LEARNING") {
+        return false;
+      }
+      if (status === "reviewing" && row.studyState?.status !== "REVIEWING") {
+        return false;
+      }
+    }
+
+    return true;
   });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "leetcode-spaced-repetition-export.json";
-  link.click();
-  URL.revokeObjectURL(url);
-
-  showStatus("Export downloaded.");
-  showDataStatus("Export downloaded.");
 }
 
-async function importFullData(file: File): Promise<void> {
-  const text = await file.text();
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    showStatus("Invalid JSON file.", true);
-    showDataStatus("Invalid JSON file.", true);
+function renderLibraryTable(): void {
+  const rows = filterLibraryRows(state.payload?.library ?? []);
+  const body = document.getElementById("library-table-body");
+  if (!body) {
     return;
   }
 
-  const response = await sendMessage("IMPORT_DATA", parsed as never);
-  if (!response.ok) {
-    showStatus(response.error ?? "Import failed", true);
-    showDataStatus(response.error ?? "Import failed", true);
+  body.innerHTML = rows
+    .map((row) => {
+      const primaryCourse = row.courses[0];
+      return `
+        <tr>
+          <td>
+            <strong>${escapeHtml(row.problem.title)}</strong>
+            <div class="kt-list-item-copy">${escapeHtml(row.problem.leetcodeSlug)}</div>
+          </td>
+          <td><span class="${toneForDifficulty(row.problem.difficulty)}">${escapeHtml(row.problem.difficulty)}</span></td>
+          <td>${primaryCourse ? escapeHtml(primaryCourse.courseName) : "Independent"}</td>
+          <td>${row.studyState ? escapeHtml(row.studyState.status) : "NEW"}</td>
+          <td>${escapeHtml(formatDate(row.studyState?.nextReviewAt))}</td>
+          <td>
+            <button
+              class="kt-button-secondary kt-button-small"
+              data-action="open-problem"
+              data-slug="${escapeHtml(row.problem.leetcodeSlug)}"
+              data-url="${escapeHtml(row.problem.url)}"
+            >Open</button>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+function populateCourseChapters(): void {
+  const courseSelect = document.getElementById("course-form-course") as HTMLSelectElement | null;
+  const chapterSelect = document.getElementById("course-form-chapter") as HTMLSelectElement | null;
+  if (!courseSelect || !chapterSelect) {
     return;
   }
 
-  showStatus("Full data imported.");
-  showDataStatus("Full data imported.");
-  await loadDashboard();
+  const options = state.payload?.courseOptions ?? [];
+  if (courseSelect.options.length === 0) {
+    courseSelect.innerHTML = options
+      .map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`)
+      .join("");
+  }
+
+  const selectedCourse = options.find((course) => course.id === courseSelect.value) ?? options[0];
+  if (!selectedCourse) {
+    chapterSelect.innerHTML = "";
+    return;
+  }
+
+  courseSelect.value = selectedCourse.id;
+  chapterSelect.innerHTML = selectedCourse.chapterOptions
+    .map((chapter) => `<option value="${escapeHtml(chapter.id)}">${escapeHtml(chapter.title)}</option>`)
+    .join("");
+}
+
+async function openProblem(target: {
+  slug: string;
+  url: string;
+  courseId?: string;
+  chapterId?: string;
+}): Promise<void> {
+  await sendMessage("QUEUE_AUTO_TIMER_START", { slug: target.slug });
+  if (target.courseId || target.chapterId) {
+    await sendMessage("TRACK_COURSE_QUESTION_LAUNCH", {
+      slug: target.slug,
+      courseId: target.courseId,
+      chapterId: target.chapterId
+    });
+  }
+  chrome.tabs.create({ url: target.url });
 }
 
 async function saveSettings(): Promise<void> {
   const setsEnabled: Record<string, boolean> = {};
   document.querySelectorAll<HTMLInputElement>("[data-set-toggle]").forEach((input) => {
-    const name = input.getAttribute("data-set-toggle");
-    if (name) {
-      setsEnabled[name] = input.checked;
+    const key = input.dataset.setToggle;
+    if (key) {
+      setsEnabled[key] = input.checked;
     }
   });
 
-  const payload = {
-    dailyNewLimit: Number(byId<HTMLInputElement>("settings-daily-new").value) || 0,
-    dailyReviewLimit: Number(byId<HTMLInputElement>("settings-daily-review").value) || 0,
-    studyMode: byId<HTMLSelectElement>("settings-study-mode").value,
-    activeStudyPlanId: byId<HTMLSelectElement>("settings-active-plan").value,
-    reviewOrder: byId<HTMLSelectElement>("settings-order").value,
-    scheduleIntensity: byId<HTMLSelectElement>("settings-intensity").value,
-    requireSolveTime: byId<HTMLInputElement>("settings-require-time").checked,
-    autoDetectSolved: byId<HTMLInputElement>("settings-autodetect").checked,
-    notifications: byId<HTMLInputElement>("settings-notifications").checked,
-    slowSolveDowngradeEnabled: byId<HTMLInputElement>("settings-slow-downgrade").checked,
+  const response = await sendMessage("UPDATE_SETTINGS", {
+    dailyNewLimit: Number((document.getElementById("settings-daily-new") as HTMLInputElement).value) || 0,
+    dailyReviewLimit: Number((document.getElementById("settings-daily-review") as HTMLInputElement).value) || 0,
+    studyMode: (document.getElementById("settings-study-mode") as HTMLSelectElement).value as StudyMode,
+    activeCourseId: (document.getElementById("settings-active-course") as HTMLSelectElement).value,
+    reviewOrder: (document.getElementById("settings-review-order") as HTMLSelectElement).value as ReviewOrder,
+    scheduleIntensity: (document.getElementById("settings-intensity") as HTMLSelectElement)
+      .value as ScheduleIntensity,
+    requireSolveTime: (document.getElementById("settings-require-time") as HTMLInputElement).checked,
+    autoDetectSolved: (document.getElementById("settings-auto-detect") as HTMLInputElement).checked,
+    notifications: (document.getElementById("settings-notifications") as HTMLInputElement).checked,
+    slowSolveDowngradeEnabled: (document.getElementById("settings-slow-downgrade") as HTMLInputElement).checked,
     slowSolveThresholdMs:
-      (Number(byId<HTMLInputElement>("settings-slow-threshold").value) || 0) * 60 * 1000,
-    setsEnabled,
+      (Number((document.getElementById("settings-slow-threshold") as HTMLInputElement).value) || 0) * 60000,
     quietHours: {
-      startHour: Number(byId<HTMLInputElement>("settings-quiet-start").value) || 0,
-      endHour: Number(byId<HTMLInputElement>("settings-quiet-end").value) || 0
-    }
-  };
+      startHour: Number((document.getElementById("settings-quiet-start") as HTMLInputElement).value) || 0,
+      endHour: Number((document.getElementById("settings-quiet-end") as HTMLInputElement).value) || 0
+    },
+    setsEnabled
+  });
 
-  const response = await sendMessage("UPDATE_SETTINGS", payload as never);
   if (!response.ok) {
-    showStatus(response.error ?? "Failed to save settings", true);
+    state.status = response.error ?? "Failed to save settings.";
+    state.statusIsError = true;
+    render();
     return;
   }
 
-  showStatus("Settings saved.");
-  await loadDashboard({ preserveSavedState: true });
-  setSavedState(true);
+  state.status = "Settings saved.";
+  state.statusIsError = false;
+  await loadShellData();
 }
 
-async function loadDashboard(options: { preserveSavedState?: boolean } = {}): Promise<void> {
-  const response = await sendMessage("GET_DASHBOARD_DATA", {});
+async function exportData(): Promise<void> {
+  const response = await sendMessage("EXPORT_DATA", {});
   if (!response.ok) {
-    showStatus(response.error ?? "Failed to load dashboard", true);
+    state.status = response.error ?? "Failed to export data.";
+    state.statusIsError = true;
+    render();
     return;
   }
 
-  const payload = response.data as DashboardPayload;
-  lastPayload = payload;
-  settings = payload.settings;
-  studyPlans = payload.studyPlans ?? [];
-  sessionQueue = buildSessionQueue(payload);
+  const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "kinetic-terminal-backup.json";
+  link.click();
+  URL.revokeObjectURL(url);
 
-  populateCuratedSetOptions(payload);
-  renderToday(payload.queue);
-  const recallRows = renderRecallFocus(payload);
-  renderTopicsCard(payload, recallRows);
+  state.status = "Backup exported.";
+  state.statusIsError = false;
+  render();
 }
 
-function bindEvents(): void {
-  byId<HTMLButtonElement>("curated-import-btn").onclick = () => {
-    void importCuratedSet();
-  };
+async function importData(): Promise<void> {
+  const fileInput = document.getElementById("import-file") as HTMLInputElement | null;
+  const file = fileInput?.files?.[0];
+  if (!file) {
+    state.status = "Choose a backup file first.";
+    state.statusIsError = true;
+    render();
+    return;
+  }
 
-  byId<HTMLButtonElement>("custom-validate-btn").onclick = () => {
-    validateCustomJson();
-  };
+  const text = await file.text();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    state.status = "Invalid JSON backup file.";
+    state.statusIsError = true;
+    render();
+    return;
+  }
 
-  byId<HTMLButtonElement>("custom-import-btn").onclick = () => {
-    void importCustomSet();
-  };
+  const response = await sendMessage("IMPORT_DATA", parsed as never);
+  if (!response.ok) {
+    state.status = response.error ?? "Failed to import backup.";
+    state.statusIsError = true;
+    render();
+    return;
+  }
 
-  byId<HTMLButtonElement>("export-btn").onclick = () => {
+  state.status = "Backup imported.";
+  state.statusIsError = false;
+  await loadShellData();
+}
+
+async function loadShellData(): Promise<void> {
+  const response = await sendMessage("GET_APP_SHELL_DATA", {});
+  if (!response.ok) {
+    state.status = response.error ?? "Failed to load app shell.";
+    state.statusIsError = true;
+    render();
+    return;
+  }
+
+  state.payload = response.data as AppShellPayload;
+  render();
+}
+
+function afterRender(): void {
+  if (state.view === "library") {
+    renderLibraryTable();
+  }
+  if (state.view === "courses" || state.view === "dashboard") {
+    populateCourseChapters();
+  }
+}
+
+const app = byId<HTMLDivElement>("app-shell");
+
+app.addEventListener("click", (event) => {
+  const target = event.target as HTMLElement | null;
+  const viewButton = target?.closest<HTMLElement>("[data-view]");
+  if (viewButton?.dataset.view) {
+    setView(viewButton.dataset.view as AppView);
+    return;
+  }
+
+  const actionButton = target?.closest<HTMLElement>("[data-action]");
+  if (!actionButton) {
+    return;
+  }
+
+  const action = actionButton.dataset.action;
+  if (action === "refresh") {
+    void loadShellData();
+    return;
+  }
+  if (action === "switch-course" && actionButton.dataset.courseId) {
+    void sendMessage("SWITCH_ACTIVE_COURSE", { courseId: actionButton.dataset.courseId }).then(() => loadShellData());
+    return;
+  }
+  if (action === "set-chapter" && actionButton.dataset.courseId && actionButton.dataset.chapterId) {
+    void sendMessage("SET_ACTIVE_COURSE_CHAPTER", {
+      courseId: actionButton.dataset.courseId,
+      chapterId: actionButton.dataset.chapterId
+    }).then(() => loadShellData());
+    return;
+  }
+  if (action === "open-problem" && actionButton.dataset.slug && actionButton.dataset.url) {
+    void openProblem({
+      slug: actionButton.dataset.slug,
+      url: actionButton.dataset.url,
+      courseId: actionButton.dataset.courseId,
+      chapterId: actionButton.dataset.chapterId
+    });
+    return;
+  }
+  if (action === "toggle-mode") {
+    const nextMode = state.payload?.settings.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
+    void sendMessage("UPDATE_SETTINGS", { studyMode: nextMode }).then(() => loadShellData());
+    return;
+  }
+  if (action === "export-data") {
     void exportData();
-  };
+    return;
+  }
+  if (action === "import-data") {
+    void importData();
+  }
+});
 
-  let pendingImportFile: File | null = null;
-  const importConfirmBtn = byId<HTMLButtonElement>("import-confirm-btn");
-  byId<HTMLInputElement>("full-import-file").addEventListener("change", (event) => {
-    const input = event.target as HTMLInputElement;
-    pendingImportFile = input.files?.[0] ?? null;
-    importConfirmBtn.disabled = !pendingImportFile;
-    if (pendingImportFile) {
-      showDataStatus(`Selected ${pendingImportFile.name}. Ready to import.`);
-    }
-  });
-  importConfirmBtn.onclick = () => {
-    if (!pendingImportFile) {
-      showDataStatus("Pick a backup file before confirming.", true);
+app.addEventListener("submit", (event) => {
+  const target = event.target as HTMLElement;
+  if (target.id === "course-ingest-form") {
+    event.preventDefault();
+    const courseId = (document.getElementById("course-form-course") as HTMLSelectElement).value;
+    const chapterId = (document.getElementById("course-form-chapter") as HTMLSelectElement).value;
+    const input = (document.getElementById("course-form-input") as HTMLInputElement).value.trim();
+    const markAsStarted = (document.getElementById("course-form-started") as HTMLInputElement).checked;
+    if (!input) {
+      state.status = "Provide a LeetCode slug or URL.";
+      state.statusIsError = true;
+      render();
       return;
     }
-    void importFullData(pendingImportFile);
-    pendingImportFile = null;
-    importConfirmBtn.disabled = true;
-    byId<HTMLInputElement>("full-import-file").value = "";
-  };
-
-  byId<HTMLButtonElement>("recall-add-two-btn").onclick = () => {
-    if (!lastPayload) {
-      return;
-    }
-    const rows = buildRecallRows(lastPayload).filter((row) => !manualAdds.has(row.slug)).slice(0, 2);
-    rows.forEach((row) => manualAdds.add(row.slug));
-    void loadDashboard();
-  };
-
-  byId<HTMLTableSectionElement>("recall-table-body").addEventListener("click", (event) => {
-    const target = event.target as HTMLElement;
-    const button = target.closest<HTMLButtonElement>("[data-add-slug]");
-    if (!button) {
-      return;
-    }
-    const slug = button.dataset.addSlug;
-    if (!slug) {
-      return;
-    }
-    manualAdds.add(slug);
-    void loadDashboard();
-  });
-
-  byId<HTMLUListElement>("topics-list").addEventListener("click", (event) => {
-    const target = event.target as HTMLElement;
-    const item = target.closest<HTMLElement>(".topic-item");
-    if (!item) {
-      return;
-    }
-    const topic = item.dataset.topic;
-    if (!topic) {
-      return;
-    }
-    const url = chrome.runtime.getURL(`database.html?topic=${encodeURIComponent(topic)}&sort=dueFirst`);
-    chrome.tabs.create({ url });
-  });
-
-  byId<HTMLButtonElement>("refresh-btn").onclick = () => {
-    void loadDashboard();
-  };
-
-  byId<HTMLButtonElement>("open-database-btn").onclick = () => {
-    window.location.href = chrome.runtime.getURL("database.html");
-  };
-
-  byId<HTMLButtonElement>("start-session-btn").onclick = () => {
-    if (sessionQueue.length === 0) {
-      showStatus("No due or new items in today's queue yet.");
-      return;
-    }
-    sessionIndex = 0;
-    sessionStartMs = Date.now();
-    sessionRatings = { 0: 0, 1: 0, 2: 0, 3: 0 };
-    sessionTimeMs = 0;
-    resetSessionSummary();
-    renderSessionList();
-    renderSessionFocus();
-    setSessionModalOpen(true);
-  };
-
-  byId<HTMLButtonElement>("data-btn").onclick = () => {
-    setModalOpen(true);
-  };
-
-  byId<HTMLButtonElement>("data-modal-close").onclick = () => {
-    setModalOpen(false);
-  };
-
-  const modal = byId<HTMLElement>("data-modal");
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal) {
-      setModalOpen(false);
-    }
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && modal.dataset.open === "true") {
-      setModalOpen(false);
-    }
-  });
-
-  showDataStatus("");
-
-  const sessionModal = byId<HTMLElement>("session-modal");
-  byId<HTMLButtonElement>("session-close").onclick = () => {
-    setSessionModalOpen(false);
-  };
-  byId<HTMLButtonElement>("session-close-summary").onclick = () => {
-    setSessionModalOpen(false);
-  };
-  sessionModal.addEventListener("click", (event) => {
-    if (event.target === sessionModal) {
-      setSessionModalOpen(false);
-    }
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && sessionModal.dataset.open === "true") {
-      setSessionModalOpen(false);
-    }
-  });
-
-  document.querySelectorAll<HTMLButtonElement>("[data-rating]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const value = Number(button.dataset.rating);
-      if (Number.isNaN(value)) {
+    void sendMessage("ADD_PROBLEM_TO_COURSE", {
+      courseId,
+      chapterId,
+      input,
+      markAsStarted
+    }).then((response) => {
+      if (!response.ok) {
+        state.status = response.error ?? "Failed to append question to course.";
+        state.statusIsError = true;
+        render();
         return;
       }
-      void rateSessionItem(value);
+      state.status = "Question appended to the course.";
+      state.statusIsError = false;
+      void loadShellData();
     });
-  });
+    return;
+  }
 
-  byId<HTMLButtonElement>("session-open-link").onclick = () => {
-    const item = sessionQueue[sessionIndex];
-    if (!item) {
-      return;
-    }
-    chrome.tabs.create({ url: item.url });
-  };
+  if (target.id === "settings-form") {
+    event.preventDefault();
+    void saveSettings();
+  }
+});
 
-}
+app.addEventListener("change", (event) => {
+  const target = event.target as HTMLElement;
+  if (target.id === "course-form-course") {
+    populateCourseChapters();
+    return;
+  }
 
-bindEvents();
-void loadDashboard();
+  if (
+    target.id === "library-filter-query" ||
+    target.id === "library-filter-course" ||
+    target.id === "library-filter-difficulty" ||
+    target.id === "library-filter-status"
+  ) {
+    renderLibraryTable();
+  }
+});
+
+app.addEventListener("input", (event) => {
+  const target = event.target as HTMLElement;
+  if (target.id === "library-filter-query") {
+    renderLibraryTable();
+  }
+});
+
+window.addEventListener("popstate", () => {
+  state.view = readViewFromLocation();
+  render();
+});
+
+void loadShellData();

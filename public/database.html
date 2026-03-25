@@ -2,65 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0; url=dashboard.html?view=library" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LeetCode Problem Database</title>
-    <link rel="stylesheet" href="dashboard.css" />
+    <title>Redirecting…</title>
+    <link rel="stylesheet" href="app.css" />
   </head>
-  <body>
-    <main class="dashboard">
-      <header class="topbar">
-        <h1>Problem Database</h1>
-        <div class="topbar-actions">
-          <button id="open-dashboard-btn" class="secondary">Back to Dashboard</button>
-          <button id="refresh-btn" class="secondary">Refresh</button>
-        </div>
-      </header>
-
-      <div id="status" class="status"></div>
-
-      <section class="panel">
-        <h2>All Problems <span id="table-count">0</span></h2>
-        <div class="filters-grid">
-          <input id="filter-query" placeholder="Search title or slug" />
-          <input id="filter-topic" placeholder="Topic/tag" />
-          <select id="filter-set"><option value="all">All sets</option></select>
-          <select id="filter-difficulty">
-            <option value="all">All difficulty</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-            <option value="Unknown">Unknown</option>
-          </select>
-          <select id="filter-due">
-            <option value="all">All status</option>
-            <option value="due">Due now</option>
-            <option value="new">New</option>
-            <option value="learning">Learning</option>
-            <option value="reviewing">Reviewing</option>
-            <option value="mastered">Mastered</option>
-            <option value="suspended">Suspended</option>
-          </select>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Problem</th>
-                <th>Difficulty</th>
-                <th>Sets</th>
-                <th>Status</th>
-                <th>Next Review</th>
-                <th>Lapses</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="problems-body"></tbody>
-          </table>
-        </div>
+  <body class="kt-page kt-dashboard-body">
+    <main class="kt-shell-content">
+      <section class="kt-card">
+        <p class="kt-card-copy">Redirecting to the Library view…</p>
       </section>
     </main>
-
     <script src="database.js"></script>
   </body>
 </html>

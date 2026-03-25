@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LeetCode Reviews - Terminal v1.0</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0e0e0e; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #353534; }
+        .glass-panel {
+            background: rgba(57, 57, 57, 0.6);
+            backdrop-filter: blur(12px);
+        }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary": "#94dbff",
+                        "on-secondary": "#482900",
+                        "on-primary": "#482900",
+                        "primary-fixed-dim": "#ffb867",
+                        "error": "#ffb4ab",
+                        "background": "#131313",
+                        "surface-container-highest": "#353534",
+                        "surface-bright": "#393939",
+                        "on-surface-variant": "#d9c3ad",
+                        "secondary": "#f2bc82",
+                        "surface": "#131313",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-tertiary": "#003547",
+                        "on-primary-container": "#683e00",
+                        "surface-container-high": "#2a2a2a",
+                        "on-error-container": "#ffdad6",
+                        "outline": "#a18d7a",
+                        "secondary-container": "#664112",
+                        "surface-container": "#201f1f",
+                        "primary": "#ffc78b",
+                        "outline-variant": "#544434",
+                        "tertiary-container": "#02c4ff",
+                        "on-surface": "#e5e2e1",
+                        "primary-container": "#ffa116",
+                        "surface-container-low": "#1c1b1b",
+                        "on-background": "#e5e2e1"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background selection:bg-primary/30">
+<!-- TopNavBar Implementation from JSON -->
+<header class="bg-[#131313] border-b border-[#e5e2e1]/10 flex justify-between items-center w-full px-4 py-3 max-w-full docked full-width top-0 z-50 sticky">
+<div class="flex items-center gap-4">
+<span class="text-lg font-bold tracking-tighter text-[#ffc78b] uppercase font-headline">LeetCode Reviews</span>
+<nav class="hidden md:flex gap-6 ml-8">
+<a class="text-[#ffc78b] border-b-2 border-[#ffc78b] pb-1 text-sm font-medium font-['Inter']" href="#">Dashboard</a>
+<a class="text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors duration-200 text-sm font-medium font-['Inter']" href="#">Courses</a>
+<a class="text-[#e5e2e1]/60 hover:text-[#e5e2e1] transition-colors duration-200 text-sm font-medium font-['Inter']" href="#">Stats</a>
+</nav>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-[#e5e2e1]/60 hover:bg-[#ffc78b]/10 hover:text-[#ffc78b] transition-colors duration-200 active:scale-95">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+</button>
+<button class="p-2 text-[#e5e2e1]/60 hover:bg-[#ffc78b]/10 hover:text-[#ffc78b] transition-colors duration-200 active:scale-95">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+</button>
+<button class="p-2 text-[#e5e2e1]/60 hover:bg-[#ffc78b]/10 hover:text-[#ffc78b] transition-colors duration-200 active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<div class="flex h-[calc(100vh-57px)] overflow-hidden">
+<!-- SideNavBar Implementation from JSON (Left Column Logic) -->
+<aside class="bg-[#131313] border-r border-[#e5e2e1]/5 flex flex-col w-20 md:w-64 h-full py-6 hidden md:flex flex-shrink-0">
+<div class="px-6 mb-8">
+<div class="text-xs font-mono text-[#94dbff]">Terminal v1.0</div>
+<div class="text-[10px] opacity-40 uppercase tracking-widest font-bold">User: Developer</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-[#ffa116] bg-[#ffa116]/5 border-r-2 border-[#ffa116] active:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[11px] font-bold font-['Inter'] uppercase tracking-widest">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-[#e5e2e1]/40 hover:text-[#e5e2e1]/80 hover:bg-[#e5e2e1]/5 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="text-[11px] font-bold font-['Inter'] uppercase tracking-widest">Active Course</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-[#e5e2e1]/40 hover:text-[#e5e2e1]/80 hover:bg-[#e5e2e1]/5 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="text-[11px] font-bold font-['Inter'] uppercase tracking-widest">Library</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-[#e5e2e1]/40 hover:text-[#e5e2e1]/80 hover:bg-[#e5e2e1]/5 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="reorder">reorder</span>
+<span class="text-[11px] font-bold font-['Inter'] uppercase tracking-widest">Queue</span>
+</a>
+</nav>
+<!-- Review Pressure / Queue Section (Integrated into Left Column) -->
+<div class="mt-auto px-4 pb-4">
+<div class="p-3 bg-surface-container-low rounded">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[10px] font-bold uppercase tracking-widest opacity-40">Queue</span>
+<span class="bg-error/20 text-error text-[10px] px-1.5 py-0.5 rounded font-bold">4 DUE</span>
+</div>
+<div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+<div class="group flex items-center justify-between p-2 bg-surface-container-high rounded hover:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="flex flex-col min-w-0">
+<span class="text-[11px] font-semibold truncate">Group Anagrams</span>
+<span class="text-[9px] text-error uppercase font-bold tracking-tight">Overdue</span>
+</div>
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 text-primary" data-icon="open_in_new">open_in_new</span>
+</div>
+<div class="group flex items-center justify-between p-2 bg-surface-container-high rounded hover:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="flex flex-col min-w-0">
+<span class="text-[11px] font-semibold truncate">Valid Parentheses</span>
+<span class="text-[9px] text-primary uppercase font-bold tracking-tight">Due Now</span>
+</div>
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 text-primary" data-icon="open_in_new">open_in_new</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto custom-scrollbar bg-surface flex flex-col md:flex-row gap-4 p-4">
+<!-- Center Column: Overview & Active Path -->
+<div class="flex-1 flex flex-col gap-4 min-w-0">
+<!-- Today Overview -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-surface-container-high p-4 flex flex-col justify-between aspect-video md:aspect-auto">
+<div class="flex justify-between items-start">
+<h2 class="font-headline text-lg font-bold leading-tight uppercase tracking-tighter">Recommended</h2>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="shuffle">shuffle</span>
+</div>
+<div class="mt-4">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-2xl font-headline font-bold">2Sum</span>
+<span class="bg-surface-container-highest text-tertiary text-[10px] px-2 py-0.5 rounded-full font-bold tracking-widest uppercase">Easy</span>
+<span class="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold tracking-widest uppercase">Due Now</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-4">Last reviewed 4 days ago. High decay risk.</p>
+<button class="w-full bg-primary-container text-on-primary font-bold py-2 rounded text-xs uppercase tracking-widest active:scale-[0.98] transition-transform">
+                                Open Problem
+                            </button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-surface-container-low p-4 flex flex-col items-center justify-center text-center">
+<span class="text-4xl font-headline font-bold text-primary tabular-nums">03</span>
+<span class="text-[10px] font-bold uppercase tracking-widest opacity-40 mt-1">Due Today</span>
+</div>
+<div class="bg-surface-container-low p-4 flex flex-col items-center justify-center text-center">
+<span class="text-4xl font-headline font-bold text-tertiary tabular-nums">12</span>
+<span class="text-[10px] font-bold uppercase tracking-widest opacity-40 mt-1">Day Streak</span>
+</div>
+</div>
+</section>
+<!-- Active Course Panel -->
+<section class="bg-surface-container-high p-5 border-l-4 border-primary">
+<div class="flex justify-between items-start mb-6">
+<div>
+<span class="text-[10px] font-bold text-primary uppercase tracking-widest">Active Course</span>
+<h3 class="text-xl font-headline font-bold tracking-tight">Blind 75</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-tertiary font-medium">Arrays &amp; Hashing</span>
+<span class="text-[10px] text-on-surface-variant opacity-50">•</span>
+<span class="text-xs text-on-surface-variant">Module 1 of 8</span>
+</div>
+</div>
+<div class="text-right">
+<div class="text-2xl font-headline font-bold tabular-nums">45%</div>
+<div class="text-[9px] font-bold opacity-40 uppercase tracking-tighter">Progress</div>
+</div>
+</div>
+<div class="h-1 bg-surface-container-low w-full mb-6">
+<div class="h-full bg-primary" style="width: 45%"></div>
+</div>
+<div class="bg-surface-container-lowest p-3 flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+</div>
+<div>
+<div class="text-[10px] font-bold opacity-40 uppercase tracking-widest">Next Up</div>
+<div class="text-xs font-semibold">3Sum <span class="text-secondary ml-1">• Medium</span></div>
+</div>
+</div>
+<button class="bg-primary/10 text-primary hover:bg-primary hover:text-on-primary px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest transition-all">
+                            Continue Path
+                        </button>
+</div>
+</section>
+<!-- Chapter Detail (Asymmetric List) -->
+<section class="flex-1 min-h-[300px] flex flex-col">
+<div class="flex justify-between items-center mb-3">
+<h4 class="text-xs font-bold uppercase tracking-widest opacity-60">Arrays &amp; Hashing Syllabus</h4>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant cursor-pointer" data-icon="filter_list">filter_list</span>
+</div>
+</div>
+<div class="space-y-1 overflow-y-auto custom-scrollbar flex-1">
+<!-- List Item 1 -->
+<div class="flex items-center p-2 bg-surface-container-low hover:bg-surface-container-high transition-colors group">
+<div class="w-6 flex justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex-1 px-3">
+<span class="text-xs font-medium">Contains Duplicate</span>
+</div>
+<div class="px-3">
+<span class="text-[9px] font-bold text-tertiary bg-tertiary/10 px-1.5 py-0.5 rounded uppercase">Easy</span>
+</div>
+<div class="w-16 text-right">
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 cursor-pointer" data-icon="open_in_new">open_in_new</span>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="flex items-center p-2 bg-surface-container-low hover:bg-surface-container-high transition-colors group">
+<div class="w-6 flex justify-center">
+<span class="material-symbols-outlined text-on-surface-variant/30 text-sm" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+</div>
+<div class="flex-1 px-3">
+<span class="text-xs font-medium">Valid Anagram</span>
+</div>
+<div class="px-3">
+<span class="text-[9px] font-bold text-tertiary bg-tertiary/10 px-1.5 py-0.5 rounded uppercase">Easy</span>
+</div>
+<div class="w-16 text-right">
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 cursor-pointer" data-icon="open_in_new">open_in_new</span>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="flex items-center p-2 bg-primary/5 border-l-2 border-primary group">
+<div class="w-6 flex justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<div class="flex-1 px-3">
+<span class="text-xs font-bold text-primary">Two Sum</span>
+</div>
+<div class="px-3">
+<span class="text-[9px] font-bold text-tertiary bg-tertiary/10 px-1.5 py-0.5 rounded uppercase">Easy</span>
+</div>
+<div class="w-16 text-right">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="open_in_new">open_in_new</span>
+</div>
+</div>
+<!-- List Item 4 -->
+<div class="flex items-center p-2 bg-surface-container-low hover:bg-surface-container-high transition-colors group">
+<div class="w-6 flex justify-center">
+<span class="material-symbols-outlined text-on-surface-variant/30 text-sm" data-icon="lock">lock</span>
+</div>
+<div class="flex-1 px-3">
+<span class="text-xs font-medium opacity-50">Group Anagrams</span>
+</div>
+<div class="px-3">
+<span class="text-[9px] font-bold text-secondary bg-secondary/10 px-1.5 py-0.5 rounded uppercase opacity-50">Medium</span>
+</div>
+<div class="w-16 text-right">
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 cursor-pointer" data-icon="lock">lock</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Management & Add -->
+<div class="w-full md:w-80 flex flex-col gap-4">
+<!-- Course Management -->
+<section class="bg-surface-container-low p-4 flex flex-col flex-1">
+<h2 class="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-4">Course Management</h2>
+<div class="space-y-3 overflow-y-auto custom-scrollbar flex-1">
+<!-- Course 1 -->
+<div class="p-3 bg-surface-container-high relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-1">
+<span class="bg-primary text-on-primary text-[8px] font-black px-1 rounded-sm uppercase tracking-tighter">Active</span>
+</div>
+<h4 class="text-sm font-bold font-headline">Blind 75</h4>
+<div class="flex justify-between items-end mt-4">
+<div>
+<div class="text-[10px] font-bold opacity-40 uppercase tracking-tighter">Completion</div>
+<div class="text-xs font-mono font-bold text-primary">45%</div>
+</div>
+<button class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">View</button>
+</div>
+</div>
+<!-- Course 2 -->
+<div class="p-3 bg-surface-container-low border border-outline-variant/10 hover:border-outline-variant/30 transition-all group">
+<h4 class="text-sm font-bold font-headline">NeetCode 150</h4>
+<div class="flex justify-between items-end mt-4">
+<div>
+<div class="text-[10px] font-bold opacity-40 uppercase tracking-tighter">Completion</div>
+<div class="text-xs font-mono font-bold text-on-surface-variant">12%</div>
+</div>
+<button class="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">Set Active</button>
+</div>
+</div>
+<!-- Course 3 -->
+<div class="p-3 bg-surface-container-low border border-outline-variant/10 group opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+<h4 class="text-sm font-bold font-headline">Top Interview 150</h4>
+<div class="flex justify-between items-end mt-4">
+<div>
+<div class="text-[10px] font-bold opacity-40 uppercase tracking-tighter">Completion</div>
+<div class="text-xs font-mono font-bold text-on-surface-variant">0%</div>
+</div>
+<button class="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">Set Active</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Add Question Panel -->
+<section class="bg-surface-container-high p-4">
+<h2 class="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-4">Quick Add Question</h2>
+<div class="space-y-3">
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border-none border-b border-outline-variant/30 focus:border-primary focus:ring-0 text-xs py-2 px-0 placeholder:text-on-surface-variant/30 transition-all" placeholder="LeetCode Slug or URL" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<select class="bg-surface-container-lowest border-none text-[10px] font-bold uppercase tracking-widest p-2 focus:ring-1 focus:ring-primary rounded">
+<option>Blind 75</option>
+<option>Custom</option>
+</select>
+<select class="bg-surface-container-lowest border-none text-[10px] font-bold uppercase tracking-widest p-2 focus:ring-1 focus:ring-primary rounded">
+<option>Arrays</option>
+<option>Stack</option>
+<option>Trees</option>
+</select>
+</div>
+<button class="w-full bg-primary-container text-on-primary font-bold py-2 rounded text-xs uppercase tracking-widest active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                            Add Question
+                        </button>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- BottomNavBar for Mobile (Rule Pivot) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#131313] border-t border-[#e5e2e1]/5 flex justify-around py-3 z-50">
+<button class="flex flex-col items-center gap-1 text-[#ffa116]">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[9px] font-bold uppercase">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#e5e2e1]/40">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="text-[9px] font-bold uppercase">Course</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#e5e2e1]/40">
+<span class="material-symbols-outlined" data-icon="reorder">reorder</span>
+<span class="text-[9px] font-bold uppercase">Queue</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#e5e2e1]/40">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[9px] font-bold uppercase">Profile</span>
+</button>
+</nav>
+</body></html>
