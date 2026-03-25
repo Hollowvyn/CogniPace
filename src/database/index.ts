@@ -11,6 +11,7 @@ interface DatabasePayload {
 }
 
 let rows: ProblemRow[] = [];
+let sortMode: "none" | "dueFirst" = "none";
 
 function byId<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -105,6 +106,20 @@ function renderTable(): void {
     return true;
   });
 
+  if (sortMode === "dueFirst") {
+    const now = Date.now();
+    filtered.sort((a, b) => {
+      const aDueAt = a.studyState?.nextReviewAt ? new Date(a.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
+      const bDueAt = b.studyState?.nextReviewAt ? new Date(b.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
+      const aBucket = aDueAt <= now ? 0 : 1;
+      const bBucket = bDueAt <= now ? 0 : 1;
+      if (aBucket !== bBucket) {
+        return aBucket - bBucket;
+      }
+      return aDueAt - bDueAt;
+    });
+  }
+
   byId<HTMLElement>("table-count").textContent = `${filtered.length} / ${rows.length}`;
 
   for (const row of filtered) {
@@ -197,6 +212,18 @@ function populateFilters(payload: DatabasePayload): void {
   }
 }
 
+function applyQueryFilters(): void {
+  const params = new URLSearchParams(window.location.search);
+  const topic = params.get("topic");
+  const sort = params.get("sort");
+  if (topic) {
+    byId<HTMLInputElement>("filter-topic").value = topic;
+  }
+  if (sort === "dueFirst") {
+    sortMode = "dueFirst";
+  }
+}
+
 async function loadDatabase(): Promise<void> {
   const response = await sendMessage("GET_DASHBOARD_DATA", {});
   if (!response.ok) {
@@ -207,6 +234,7 @@ async function loadDatabase(): Promise<void> {
   const payload = response.data as DatabasePayload;
   rows = payload.problems;
   populateFilters(payload);
+  applyQueryFilters();
   renderTable();
   showStatus(`Loaded ${rows.length} problems.`);
 }
