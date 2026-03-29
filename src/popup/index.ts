@@ -1,4 +1,5 @@
 import { sendMessage } from "../shared/runtime";
+import { getStudyPhaseLabel } from "../shared/studyState";
 import { AppShellPayload, CourseQuestionView, RecommendedProblemView } from "../shared/types";
 
 let payload: AppShellPayload | null = null;
@@ -41,6 +42,19 @@ function reasonBadge(reason: RecommendedProblemView["reason"]): string {
     return "kt-pill kt-pill-blue";
   }
   return "kt-pill kt-pill-accent";
+}
+
+function formatReviewDate(iso?: string): string {
+  if (!iso) {
+    return "Not scheduled";
+  }
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return "Not scheduled";
+  }
+
+  return date.toLocaleDateString();
 }
 
 function currentRecommended(): RecommendedProblemView | null {
@@ -91,7 +105,7 @@ function recommendedCard(view: RecommendedProblemView | null): string {
         <p class="kt-card-copy">
           ${
             view.nextReviewAt
-              ? `Next review window: ${escapeHtml(new Date(view.nextReviewAt).toLocaleString())}`
+              ? `Next review day: ${escapeHtml(formatReviewDate(view.nextReviewAt))}`
               : "Best retention move right now."
           }
         </p>
@@ -144,7 +158,10 @@ function courseCard(view: CourseQuestionView | null): string {
           <span class="kt-pill">${escapeHtml(view.chapterTitle)}</span>
           <span class="${difficultyBadge(view.difficulty)}">${escapeHtml(view.difficulty)}</span>
         </div>
-        <p class="kt-card-copy">Status: ${escapeHtml(view.status.replace(/_/g, " "))}</p>
+        <p class="kt-card-copy">
+          Path: ${escapeHtml(view.status.replace(/_/g, " "))}
+          ${view.reviewPhase ? ` · FSRS: ${escapeHtml(getStudyPhaseLabel(view.reviewPhase))}` : ""}
+        </p>
         <button id="open-course-next" class="kt-button-secondary kt-button-block">Continue Path</button>
       </div>
     </section>
@@ -246,7 +263,6 @@ async function openProblem(
   target: { slug: string; url: string },
   courseContext?: { courseId?: string; chapterId?: string }
 ): Promise<void> {
-  await sendMessage("QUEUE_AUTO_TIMER_START", { slug: target.slug });
   if (courseContext?.courseId || courseContext?.chapterId) {
     await sendMessage("TRACK_COURSE_QUESTION_LAUNCH", {
       slug: target.slug,

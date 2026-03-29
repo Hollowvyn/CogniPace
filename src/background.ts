@@ -23,6 +23,7 @@ import {
 import { buildRecommendedCandidates } from "./shared/recommendations";
 import { RuntimeResponse } from "./shared/runtime";
 import { applyReview, resetSchedule } from "./shared/scheduler";
+import { getStudyStateSummary, normalizeStudyState } from "./shared/studyState";
 import { getAppData, mergeSettings, mutateAppData } from "./shared/storage";
 import {
   AppShellPayload,
@@ -43,90 +44,14 @@ function fail(error: unknown): RuntimeResponse<never> {
   return { ok: false, error: message };
 }
 
-const AUTO_TIMER_QUEUE_KEY = "lcsr_auto_timer_queue_v1";
-const AUTO_TIMER_TTL_MS = 15 * 60 * 1000;
-
-type AutoTimerQueue = Record<string, number[]>;
-
-async function getAutoTimerQueue(): Promise<AutoTimerQueue> {
-  const result = await chrome.storage.local.get(AUTO_TIMER_QUEUE_KEY);
-  return (result[AUTO_TIMER_QUEUE_KEY] as AutoTimerQueue | undefined) ?? {};
-}
-
-async function saveAutoTimerQueue(queue: AutoTimerQueue): Promise<void> {
-  await chrome.storage.local.set({ [AUTO_TIMER_QUEUE_KEY]: queue });
-}
-
-function pruneAutoTimerQueue(queue: AutoTimerQueue, nowMs: number): AutoTimerQueue {
-  const next: AutoTimerQueue = {};
-
-  for (const [slug, timestamps] of Object.entries(queue)) {
-    const valid = timestamps.filter((ts) => nowMs - ts <= AUTO_TIMER_TTL_MS);
-    if (valid.length > 0) {
-      next[slug] = valid;
-    }
-  }
-
-  return next;
-}
-
-async function queueAutoTimerStart(payload: { slug: string }): Promise<RuntimeResponse> {
-  const slug = normalizeSlug(payload.slug);
-  if (!slug) {
-    throw new Error("Invalid slug for timer queue.");
-  }
-
-  const nowMs = Date.now();
-  const queue = pruneAutoTimerQueue(await getAutoTimerQueue(), nowMs);
-  queue[slug] = [...(queue[slug] ?? []), nowMs];
-  await saveAutoTimerQueue(queue);
-
-  return ok({ queued: true, slug });
-}
-
-async function consumeAutoTimerStart(payload: { slug: string }): Promise<RuntimeResponse> {
-  const slug = normalizeSlug(payload.slug);
-  if (!slug) {
-    return ok({ autoStart: false });
-  }
-
-  const nowMs = Date.now();
-  const queue = pruneAutoTimerQueue(await getAutoTimerQueue(), nowMs);
-  const entries = [...(queue[slug] ?? [])];
-  const autoStart = entries.length > 0;
-
-  if (autoStart) {
-    entries.shift();
-  }
-
-  if (entries.length > 0) {
-    queue[slug] = entries;
-  } else {
-    delete queue[slug];
-  }
-
-  await saveAutoTimerQueue(queue);
-  return ok({ autoStart });
-}
-
-function normalizeImportedState(state: StudyState): StudyState {
-  return {
-    ...state,
-    tags: Array.isArray(state.tags) ? state.tags : [],
-    attemptHistory: Array.isArray(state.attemptHistory) ? state.attemptHistory : [],
-    reviewCount: Number.isFinite(state.reviewCount) ? state.reviewCount : 0,
-    lapses: Number.isFinite(state.lapses) ? state.lapses : 0,
-    ease: Number.isFinite(state.ease) ? state.ease : 2.5,
-    intervalDays: Number.isFinite(state.intervalDays) ? state.intervalDays : 0,
-    status: state.status ?? "NEW"
-  };
-}
-
 function libraryRows(payload: Awaited<ReturnType<typeof getAppData>>): LibraryProblemRow[] {
   return Object.values(payload.problemsBySlug)
     .map((problem) => ({
       problem,
       studyState: payload.studyStatesBySlug[problem.leetcodeSlug] ?? null,
+      studyStateSummary: payload.studyStatesBySlug[problem.leetcodeSlug]
+        ? getStudyStateSummary(payload.studyStatesBySlug[problem.leetcodeSlug])
+        : null,
       courses: getCourseMemberships(payload, problem.leetcodeSlug)
     }))
     .sort((a, b) => a.problem.title.localeCompare(b.problem.title));
@@ -158,6 +83,16 @@ async function getAppShellData(): Promise<RuntimeResponse<AppShellPayload>> {
     library: libraryRows(data),
     courseOptions: buildCourseOptions(data)
   });
+}
+
+async function openExtensionPage(payload: { path: string }): Promise<RuntimeResponse> {
+  const path = typeof payload.path === "string" ? payload.path.trim() : "";
+  if (!path) {
+    throw new Error("Missing extension path.");
+  }
+
+  await chrome.tabs.create({ url: chrome.runtime.getURL(path) });
+  return ok({ opened: true });
 }
 
 async function upsertFromPage(payload: {
@@ -257,10 +192,11 @@ async function saveReviewResult(payload: {
   });
 
   const nextState = updated.studyStatesBySlug[normalized];
+  const studyStateSummary = getStudyStateSummary(nextState);
   return ok({
     studyState: nextState,
-    nextReviewAt: nextState.nextReviewAt,
-    status: nextState.status,
+    nextReviewAt: studyStateSummary.nextReviewAt,
+    phase: studyStateSummary.phase,
     lastRating: nextState.lastRating
   });
 }
@@ -382,7 +318,7 @@ async function importCustom(payload: {
 async function exportData(): Promise<RuntimeResponse<ExportPayload>> {
   const data = await getAppData();
   return ok({
-    version: 2,
+    version: 3,
     problems: Object.values(data.problemsBySlug),
     studyStatesBySlug: data.studyStatesBySlug,
     settings: data.settings,
@@ -426,7 +362,7 @@ async function importData(payload: ExportPayload): Promise<RuntimeResponse> {
     }
 
     for (const [slug, state] of Object.entries(payload.studyStatesBySlug ?? {})) {
-      data.studyStatesBySlug[slug.toLowerCase()] = normalizeImportedState(state);
+      data.studyStatesBySlug[slug.toLowerCase()] = normalizeStudyState(state as StudyState);
     }
 
     data.settings = mergeSettings(data.settings, payload.settings ?? {});
@@ -464,10 +400,6 @@ async function addProblemByInput(payload: {
       topics: payload.topics
     });
     const state = ensureStudyState(data, parsed.slug);
-    if (payload.markAsStarted && state.reviewCount === 0 && state.status === "NEW") {
-      state.status = "LEARNING";
-      state.lastReviewedAt = nowIso();
-    }
     syncCourseProgress(data);
 
     return {
@@ -511,10 +443,6 @@ async function addProblemToCourse(payload: {
       topics: [chapter.title]
     });
     const state = ensureStudyState(data, parsed.slug);
-    if (payload.markAsStarted && state.reviewCount === 0 && state.status === "NEW") {
-      state.status = "LEARNING";
-      state.lastReviewedAt = nowIso();
-    }
 
     ensureProblemInCourse(course, payload.chapterId, problem);
     markCourseQuestionLaunched(data, problem.leetcodeSlug, nowIso(), payload.courseId, payload.chapterId);
@@ -582,7 +510,7 @@ async function suspendProblem(payload: { slug: string; suspend: boolean }): Prom
   const updated = await mutateAppData((data) => {
     ensureProblem(data, { slug: normalized });
     const state = ensureStudyState(data, normalized);
-    state.status = payload.suspend ? "SUSPENDED" : "LEARNING";
+    state.suspended = payload.suspend;
     data.studyStatesBySlug[normalized] = state;
     syncCourseProgress(data);
     return data;
@@ -618,6 +546,8 @@ async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> 
       return rateProblem(message.payload as Parameters<typeof rateProblem>[0]);
     case "SAVE_REVIEW_RESULT":
       return saveReviewResult(message.payload as Parameters<typeof saveReviewResult>[0]);
+    case "OPEN_EXTENSION_PAGE":
+      return openExtensionPage(message.payload as Parameters<typeof openExtensionPage>[0]);
     case "UPDATE_NOTES":
       return updateNotes(message.payload as Parameters<typeof updateNotes>[0]);
     case "UPDATE_TAGS":
@@ -633,10 +563,6 @@ async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> 
       return activateCourseChapter(message.payload as Parameters<typeof activateCourseChapter>[0]);
     case "TRACK_COURSE_QUESTION_LAUNCH":
       return trackCourseQuestionLaunch(message.payload as Parameters<typeof trackCourseQuestionLaunch>[0]);
-    case "QUEUE_AUTO_TIMER_START":
-      return queueAutoTimerStart(message.payload as Parameters<typeof queueAutoTimerStart>[0]);
-    case "CONSUME_AUTO_TIMER_START":
-      return consumeAutoTimerStart(message.payload as Parameters<typeof consumeAutoTimerStart>[0]);
     case "IMPORT_CURATED_SET":
       return importCurated(message.payload as Parameters<typeof importCurated>[0]);
     case "IMPORT_CUSTOM_SET":

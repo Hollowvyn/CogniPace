@@ -24,25 +24,18 @@ export const DEFAULT_SETTINGS: UserSettings = {
     LeetCode150: true,
     Custom: true
   },
-  scheduleIntensity: "normal",
   requireSolveTime: false,
-  autoDetectSolved: true,
+  autoDetectSolved: false,
   notifications: false,
   quietHours: {
     startHour: 22,
     endHour: 8
-  },
-  slowSolveDowngradeEnabled: false,
-  slowSolveThresholdMs: 40 * 60 * 1000
+  }
 };
 
 export function createDefaultStudyState(): StudyState {
   return {
-    status: "NEW",
-    reviewCount: 0,
-    lapses: 0,
-    ease: 2.5,
-    intervalDays: 0,
+    suspended: false,
     tags: [],
     attemptHistory: []
   };
