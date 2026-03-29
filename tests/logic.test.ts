@@ -80,7 +80,7 @@ function testLegacyStorageMigrationRebuildsHistoryIntoFsrsCard(): void {
       "two-sum": makeLegacyReviewedFixture("2026-03-12T00:00:00.000Z", true)
     },
     settings: {
-      activeStudyPlanId: "Blind75",
+      activeCourseId: "Blind75",
       dailyNewLimit: 5
     }
   });
@@ -126,7 +126,7 @@ function testLegacyFallbackConvertsWithoutHistory(): void {
 function testCourseProgressionSelection(): void {
   const data = normalizeStoredAppData({
     settings: {
-      activeStudyPlanId: "Blind75"
+      activeCourseId: "Blind75"
     }
   });
 
@@ -150,7 +150,7 @@ function testCourseProgressionSelection(): void {
 function testRecommendedAndCourseNextStaySeparate(): void {
   const data = normalizeStoredAppData({
     settings: {
-      activeStudyPlanId: "Blind75"
+      activeCourseId: "Blind75"
     }
   });
 
