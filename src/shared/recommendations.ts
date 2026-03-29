@@ -9,9 +9,7 @@ export function buildRecommendedCandidates(
     .filter((item, index) => item.category === "due" || item.category === "reinforcement" || index === 0)
     .slice(0, 12)
     .map((item) => {
-      const dueAt = item.studyState.nextReviewAt ? new Date(item.studyState.nextReviewAt).getTime() : null;
-      const overdueDays =
-        dueAt !== null && dueAt < nowMs ? Math.floor((nowMs - dueAt) / (24 * 60 * 60 * 1000)) : 0;
+      const overdueDays = item.studyStateSummary.isDue ? item.studyStateSummary.overdueDays : 0;
       const reason: RecommendedProblemView["reason"] =
         item.category === "due"
           ? overdueDays >= 1
@@ -25,7 +23,7 @@ export function buildRecommendedCandidates(
         url: item.problem.url,
         difficulty: item.problem.difficulty,
         reason,
-        nextReviewAt: item.studyState.nextReviewAt,
+        nextReviewAt: item.studyStateSummary.nextReviewAt,
         daysOverdue: overdueDays > 0 ? overdueDays : undefined,
         alsoCourseNext: activeCourseNextSlug === item.slug
       } satisfies RecommendedProblemView;

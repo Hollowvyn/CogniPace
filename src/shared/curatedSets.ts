@@ -1,3 +1,4 @@
+import { getStudyStateSummary } from "./studyState";
 import { AppData, CuratedProblemInput, Difficulty, StudyState } from "./types";
 import { slugToTitle, slugToUrl, uniqueStrings } from "./utils";
 
@@ -1425,16 +1426,7 @@ for (const runtime of PLAN_RUNTIME.values()) {
 }
 
 function hasStartedStep(state?: StudyState): boolean {
-  if (!state) {
-    return false;
-  }
-
-  return (
-    state.reviewCount > 0 ||
-    (state.attemptHistory?.length ?? 0) > 0 ||
-    state.lastRating !== undefined ||
-    !!state.lastReviewedAt
-  );
+  return getStudyStateSummary(state).isStarted;
 }
 
 function resolvePlan(planId?: string): PlanRuntime {

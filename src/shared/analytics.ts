@@ -1,4 +1,5 @@
 import { AppData, AnalyticsSummary, StudyState } from "./types";
+import { getStudyStateSummary } from "./studyState";
 import { startOfDay, ymd } from "./utils";
 
 function collectAllStates(data: AppData): Array<[string, StudyState]> {
@@ -57,11 +58,12 @@ function dueByDay(data: AppData, days = 14): Array<{ date: string; count: number
   }
 
   for (const [, state] of collectAllStates(data)) {
-    if (!state.nextReviewAt || state.status === "SUSPENDED") {
+    const summary = getStudyStateSummary(state, now);
+    if (!summary.nextReviewAt || summary.suspended) {
       continue;
     }
 
-    const key = ymd(new Date(state.nextReviewAt));
+    const key = ymd(new Date(summary.nextReviewAt));
     if (!map.has(key)) {
       continue;
     }
@@ -74,32 +76,45 @@ function dueByDay(data: AppData, days = 14): Array<{ date: string; count: number
 
 export function summarizeAnalytics(data: AppData): AnalyticsSummary {
   const states = collectAllStates(data);
-  const totalReviews = states.reduce((sum, [, state]) => sum + state.reviewCount, 0);
-
-  const masteredCount = states.reduce(
-    (sum, [, state]) => sum + (state.status === "MASTERED" ? 1 : 0),
-    0
+  const summaries = states.map(([slug, studyState]) => ({
+    slug,
+    studyState,
+    summary: getStudyStateSummary(studyState)
+  }));
+  const totalReviews = summaries.reduce((sum, item) => sum + item.summary.reviewCount, 0);
+  const phaseCounts = summaries.reduce<AnalyticsSummary["phaseCounts"]>(
+    (counts, item) => {
+      counts[item.summary.phase] += 1;
+      return counts;
+    },
+    {
+      New: 0,
+      Learning: 0,
+      Review: 0,
+      Relearning: 0,
+      Suspended: 0
+    }
   );
 
-  const weakestProblems = states
-    .map(([slug, state]) => ({
+  const weakestProblems = summaries
+    .map(({ slug, summary }) => ({
       slug,
       title: data.problemsBySlug[slug]?.title ?? slug,
-      lapses: state.lapses,
-      ease: state.ease
+      lapses: summary.lapses,
+      difficulty: summary.difficulty ?? 0
     }))
     .sort((a, b) => {
       if (b.lapses !== a.lapses) {
         return b.lapses - a.lapses;
       }
-      return a.ease - b.ease;
+      return b.difficulty - a.difficulty;
     })
     .slice(0, 10);
 
   return {
     streakDays: computeStreak(data),
     totalReviews,
-    masteredCount,
+    phaseCounts,
     retentionProxy: computeRetentionProxy(data),
     weakestProblems,
     dueByDay: dueByDay(data)

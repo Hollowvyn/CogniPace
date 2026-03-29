@@ -1,21 +1,10 @@
 import { sendMessage } from "./shared/runtime";
-import { Difficulty, Rating, StudyState } from "./shared/types";
+import { getStudyPhaseLabel, getStudyStateSummary } from "./shared/studyState";
+import { Difficulty, Rating, ReviewMode, StudyState } from "./shared/types";
 import { difficultyGoalMs, formatClock, normalizeSlug, parseDifficulty, slugToTitle } from "./shared/utils";
 
 const OVERLAY_ID = "lcsr-overlay-root";
-const AUTO_START_DELAY_MS = 5000;
 const TIMER_TICK_MS = 250;
-const JUDGE_TIMEOUT_MS = 2 * 60 * 1000;
-
-const SUBMISSION_FAIL_TOKENS = [
-  "wrong answer",
-  "runtime error",
-  "time limit exceeded",
-  "memory limit exceeded",
-  "output limit exceeded",
-  "compile error",
-  "presentation error"
-];
 
 let activeSlug = "";
 let currentState: StudyState | null = null;
@@ -26,11 +15,7 @@ let timerGoalMs = difficultyGoalMs("Unknown");
 let timerStartedAtMs: number | null = null;
 let pausedElapsedMs = 0;
 let timerTickHandle: number | null = null;
-let autoStartHandle: number | null = null;
-let judgeTimeoutHandle: number | null = null;
-let awaitingJudgeResult = false;
-let latestSubmitAtMs = 0;
-let overlayCollapsed = false;
+let overlayCollapsed = true;
 let selectedRating: Rating = 2;
 let draftNotes = "";
 let draftContextSlug = "";
@@ -40,6 +25,7 @@ function getProblemSlugFromUrl(url = window.location.href): string | null {
   if (!match?.[1]) {
     return null;
   }
+
   const normalized = normalizeSlug(match[1]);
   return normalized || null;
 }
@@ -64,11 +50,6 @@ function detectTitle(slug: string): string {
   return title || slugToTitle(slug);
 }
 
-function detectSolvedState(): boolean {
-  const textBlob = document.body.innerText || "";
-  return /\bsolved\b/i.test(textBlob) || /\baccepted\b/i.test(textBlob);
-}
-
 function ensureOverlay(): HTMLElement {
   const existing = document.getElementById(OVERLAY_ID);
   if (existing) {
@@ -79,9 +60,9 @@ function ensureOverlay(): HTMLElement {
   root.id = OVERLAY_ID;
   root.style.position = "fixed";
   root.style.right = "20px";
-  root.style.bottom = "20px";
+  root.style.bottom = "10px";
   root.style.zIndex = "2147483647";
-  root.style.maxWidth = "360px";
+  root.style.maxWidth = "340px";
   root.style.fontFamily = '"Inter", "Segoe UI", sans-serif';
   root.style.fontSize = "12px";
   root.style.lineHeight = "1.45";
@@ -89,15 +70,14 @@ function ensureOverlay(): HTMLElement {
   return root;
 }
 
-function statusColor(status: StudyState["status"] | undefined): string {
-  switch (status) {
-    case "MASTERED":
-      return "#22c55e";
-    case "REVIEWING":
+function statusColor(phase: ReturnType<typeof getStudyStateSummary>["phase"] | undefined): string {
+  switch (phase) {
+    case "Review":
       return "#38bdf8";
-    case "LEARNING":
+    case "Learning":
+    case "Relearning":
       return "#f59e0b";
-    case "SUSPENDED":
+    case "Suspended":
       return "#94a3b8";
     default:
       return "#a78bfa";
@@ -114,7 +94,16 @@ function formatDate(iso?: string): string {
     return "-";
   }
 
-  return date.toLocaleString();
+  return date.toLocaleDateString();
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function isTimerRunning(): boolean {
@@ -142,29 +131,60 @@ function ensureTimerTick(): void {
   }, TIMER_TICK_MS);
 }
 
-function clearAutoStartTimer(): void {
-  if (autoStartHandle !== null) {
-    window.clearTimeout(autoStartHandle);
-    autoStartHandle = null;
-  }
-}
-
-function clearJudgeTimeout(): void {
-  if (judgeTimeoutHandle !== null) {
-    window.clearTimeout(judgeTimeoutHandle);
-    judgeTimeoutHandle = null;
-  }
-}
-
 function setFeedback(message: string, isError = false): void {
-  const root = document.getElementById(OVERLAY_ID);
-  const feedback = root?.querySelector<HTMLElement>("#lcsr-feedback");
+  const feedback = document.getElementById(OVERLAY_ID)?.querySelector<HTMLElement>("#lcsr-feedback");
   if (!feedback) {
     return;
   }
 
   feedback.textContent = message;
-  feedback.style.color = isError ? "#f87171" : "#93c5fd";
+  feedback.style.color = isError ? "#f87171" : "#8f857d";
+}
+
+function defaultMode(state: StudyState | null = currentState): ReviewMode {
+  return getStudyStateSummary(state).reviewCount > 0 ? "RECALL" : "FULL_SOLVE";
+}
+
+function deriveQuickRating(elapsedMs?: number): Rating {
+  if (!elapsedMs || elapsedMs <= 0) {
+    return 2;
+  }
+
+  if (elapsedMs <= timerGoalMs) {
+    return 2;
+  }
+
+  if (elapsedMs <= timerGoalMs * 1.5) {
+    return 1;
+  }
+
+  return 0;
+}
+
+function ratingLabel(rating: Rating): string {
+  switch (rating) {
+    case 0:
+      return "Again";
+    case 1:
+      return "Hard";
+    case 2:
+      return "Good";
+    default:
+      return "Easy";
+  }
+}
+
+function timerHintCopy(elapsedMs: number): string {
+  if (isTimerRunning()) {
+    return "Timer running. Submit logs with the conservative protocol unless you open details and override it.";
+  }
+
+  if (elapsedMs > 0) {
+    const quickRating = deriveQuickRating(elapsedMs);
+    return `Paused at ${formatClock(elapsedMs)}. Quick submit will log ${ratingLabel(quickRating)} based on that run.`;
+  }
+
+  return "Quick submit logs Good by default. Start the timer if you want solve time to drive the default rating.";
 }
 
 function updateTimerUi(): void {
@@ -172,6 +192,7 @@ function updateTimerUi(): void {
   const timerValue = root?.querySelector<HTMLElement>("#lcsr-timer-value");
   const goalValue = root?.querySelector<HTMLElement>("#lcsr-goal-value");
   const timerHint = root?.querySelector<HTMLElement>("#lcsr-timer-hint");
+  const quickRating = root?.querySelector<HTMLElement>("#lcsr-quick-rating");
   const startBtn = root?.querySelector<HTMLButtonElement>("#lcsr-timer-start");
   const pauseBtn = root?.querySelector<HTMLButtonElement>("#lcsr-timer-pause");
   const resetBtn = root?.querySelector<HTMLButtonElement>("#lcsr-timer-reset");
@@ -181,25 +202,15 @@ function updateTimerUi(): void {
   }
 
   const elapsedMs = getElapsedMs();
-  const remainingMs = timerGoalMs - elapsedMs;
+  const withinGoal = elapsedMs <= timerGoalMs || elapsedMs <= 0;
 
-  goalValue.textContent = formatClock(timerGoalMs);
-  timerValue.textContent = remainingMs >= 0 ? formatClock(remainingMs) : `-${formatClock(-remainingMs)}`;
-  timerValue.style.color = remainingMs >= 0 ? "#38bdf8" : "#f87171";
+  goalValue.textContent = `Goal ${formatClock(timerGoalMs)}`;
+  timerValue.textContent = formatClock(elapsedMs);
+  timerValue.style.color = elapsedMs <= 0 ? "#e5e2e1" : withinGoal ? "#94dbff" : "#f87171";
+  timerHint.textContent = timerHintCopy(elapsedMs);
 
-  if (awaitingJudgeResult) {
-    timerHint.textContent = "Waiting for judge result...";
-  } else if (autoStartHandle !== null && !isTimerRunning() && elapsedMs <= 0) {
-    timerHint.textContent = "Opened from extension. Timer auto-starts in 5 seconds.";
-  } else if (isTimerRunning()) {
-    timerHint.textContent =
-      remainingMs >= 0
-        ? "Timer running. Submit and get Accepted before the goal."
-        : "Over goal. Accepted still counts, but mastery requires under-goal solve.";
-  } else if (elapsedMs > 0) {
-    timerHint.textContent = "Timer paused. Resume or reset before your next submit.";
-  } else {
-    timerHint.textContent = "Start timer, submit, and get Accepted to log timed review.";
+  if (quickRating) {
+    quickRating.textContent = `Default ${ratingLabel(deriveQuickRating(elapsedMs))}`;
   }
 
   startBtn.disabled = isTimerRunning();
@@ -208,7 +219,6 @@ function updateTimerUi(): void {
 }
 
 function startTimer(showFeedback = true): void {
-  clearAutoStartTimer();
   if (isTimerRunning()) {
     return;
   }
@@ -218,7 +228,7 @@ function startTimer(showFeedback = true): void {
   updateTimerUi();
 
   if (showFeedback) {
-    setFeedback("Timer started. Submit and get Accepted to log a timed review.");
+    setFeedback("Timer started.");
   }
 }
 
@@ -240,8 +250,6 @@ function pauseTimer(showFeedback = false): void {
 function resetTimer(showFeedback = false): void {
   timerStartedAtMs = null;
   pausedElapsedMs = 0;
-  awaitingJudgeResult = false;
-  clearJudgeTimeout();
   clearTimerTick();
   updateTimerUi();
 
@@ -251,35 +259,14 @@ function resetTimer(showFeedback = false): void {
 }
 
 function resetRuntimeStateForNavigation(): void {
-  clearAutoStartTimer();
-  clearJudgeTimeout();
   clearTimerTick();
   timerStartedAtMs = null;
   pausedElapsedMs = 0;
-  awaitingJudgeResult = false;
-  latestSubmitAtMs = 0;
   draftContextSlug = "";
 }
 
-function scheduleAutoStartTimer(): void {
-  clearAutoStartTimer();
-  autoStartHandle = window.setTimeout(() => {
-    autoStartHandle = null;
-    if (!activeSlug || isTimerRunning() || getElapsedMs() > 0) {
-      updateTimerUi();
-      return;
-    }
-
-    startTimer(false);
-    setFeedback("Timer auto-started. Submit and get Accepted to log this run.");
-  }, AUTO_START_DELAY_MS);
-
-  updateTimerUi();
-  setFeedback("Opened from extension. Timer will auto-start in 5 seconds.");
-}
-
 function modeBadge(state: StudyState | null): string {
-  return state?.reviewCount ? "REPEAT_REVIEW" : "FIRST_SOLVE";
+  return getStudyStateSummary(state).reviewCount > 0 ? "REPEAT_REVIEW" : "FIRST_SOLVE";
 }
 
 function renderRatingButton(rating: Rating, label: string): string {
@@ -288,7 +275,7 @@ function renderRatingButton(rating: Rating, label: string): string {
     <button
       data-rating="${rating}"
       style="
-        min-height:64px;
+        min-height:58px;
         border-radius:4px;
         border:${active ? "1px solid #ffa116" : "1px solid rgba(161,141,122,0.12)"};
         background:${active ? "rgba(255,161,22,0.18)" : "rgba(255,255,255,0.04)"};
@@ -304,13 +291,15 @@ function renderRatingButton(rating: Rating, label: string): string {
     >
       <span>${label}</span>
       <span style="font-size:10px;color:${active ? "#ffc78b" : "#8f857d"};">${
-        rating === 0 ? "<1m" : rating === 1 ? "2d" : rating === 2 ? "4d" : "7d"
+        rating === 0 ? "Reset" : rating === 1 ? "Lagging" : rating === 2 ? "Stable" : "Fast"
       }</span>
     </button>
   `;
 }
 
 function renderCollapsedOverlay(title: string, state: StudyState | null): string {
+  const studyStateSummary = getStudyStateSummary(state);
+  const phaseLabel = getStudyPhaseLabel(studyStateSummary.phase);
   return `
     <style>
       #${OVERLAY_ID} * { box-sizing: border-box; }
@@ -318,9 +307,9 @@ function renderCollapsedOverlay(title: string, state: StudyState | null): string
     </style>
     <section
       style="
-        min-width:320px;
+        width:332px;
         border-radius:6px;
-        background:rgba(19,19,19,0.9);
+        background:rgba(19,19,19,0.92);
         color:#e5e2e1;
         box-shadow:0 24px 64px rgba(0,0,0,0.45);
         backdrop-filter:blur(14px);
@@ -328,49 +317,96 @@ function renderCollapsedOverlay(title: string, state: StudyState | null): string
         border:1px solid rgba(161,141,122,0.18);
       "
     >
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(161,141,122,0.08);">
-        <div style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-weight:700;letter-spacing:0.08em;color:#ffa116;">TRACKING_SOLVE</div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#8f857d;">${escapeHtml(
-            state?.status ?? "ACTIVE"
-          )}</span>
-          <button id="lcsr-expand-chip" style="width:28px;height:28px;border-radius:4px;background:rgba(255,161,22,0.1);color:#ffc78b;border:0;cursor:pointer;">▢</button>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(161,141,122,0.08);background:rgba(0,0,0,0.18);">
+        <div style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-weight:700;letter-spacing:0.08em;color:#ffa116;">KINETIC_TERMINAL</div>
+        <button id="lcsr-expand-chip" style="width:28px;height:28px;border-radius:4px;background:rgba(255,255,255,0.04);color:#a99f96;border:0;cursor:pointer;">▢</button>
       </div>
-      <div style="display:grid;gap:6px;padding:12px 14px;">
-        <div style="font-size:20px;font-weight:700;letter-spacing:-0.03em;">${escapeHtml(title)}</div>
-        <div style="display:flex;justify-content:space-between;gap:8px;color:#a99f96;">
-          <span>${escapeHtml(currentDifficulty)}</span>
-          <span>${formatClock(timerGoalMs)}</span>
+      <div style="display:grid;gap:10px;padding:12px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+          <div style="min-width:0;">
+            <div style="font-size:18px;font-weight:700;letter-spacing:-0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(
+              title
+            )}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+              <span style="padding:4px 8px;border-radius:999px;background:rgba(255,161,22,0.16);color:#ffc78b;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">${modeBadge(
+                state
+              )}</span>
+              <span style="padding:4px 8px;border-radius:999px;background:${statusColor(
+                studyStateSummary.phase
+              )}22;color:${statusColor(studyStateSummary.phase)};font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">${escapeHtml(
+                phaseLabel
+              )}</span>
+              ${
+                studyStateSummary.isDue
+                  ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(56,189,248,0.16);color:#94dbff;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">DUE NOW</span>'
+                  : ""
+              }
+            </div>
+          </div>
+          <div style="padding-top:2px;color:#a99f96;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">${escapeHtml(
+            currentDifficulty
+          )}</div>
         </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;">
+          <div style="min-width:0;">
+            <div id="lcsr-timer-value" style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-size:24px;font-weight:700;color:#e5e2e1;">00:00</div>
+            <div id="lcsr-goal-value" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8f857d;">Goal ${formatClock(
+              timerGoalMs
+            )}</div>
+          </div>
+          <button id="lcsr-quick-submit" style="min-width:98px;min-height:34px;padding:0 12px;border-radius:4px;background:linear-gradient(180deg,#ffc78b,#ffa116);color:#2b1700;border:0;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Submit</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;">
+          <button id="lcsr-timer-start" style="min-height:28px;border-radius:4px;background:rgba(255,255,255,0.05);color:#e5e2e1;border:0;cursor:pointer;">Start</button>
+          <button id="lcsr-timer-pause" style="min-height:28px;border-radius:4px;background:rgba(255,255,255,0.05);color:#e5e2e1;border:0;cursor:pointer;">Pause</button>
+          <button id="lcsr-timer-reset" style="min-height:28px;border-radius:4px;background:rgba(255,255,255,0.05);color:#e5e2e1;border:0;cursor:pointer;">Reset</button>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;color:#8f857d;font-size:11px;">
+          <span id="lcsr-quick-rating">Default Good</span>
+          <span>${studyStateSummary.lastReviewedAt ? `Last ${escapeHtml(formatDate(studyStateSummary.lastReviewedAt))}` : "No logged review yet"}</span>
+        </div>
+
+        <div id="lcsr-timer-hint" style="font-size:11px;color:#8f857d;">Quick submit logs Good by default. Start the timer if you want solve time to drive the default rating.</div>
+        <div id="lcsr-feedback" style="min-height:16px;color:#8f857d;font-size:11px;">${studyStateSummary.nextReviewAt ? `Next review ${escapeHtml(
+          formatDate(studyStateSummary.nextReviewAt)
+        )}` : "Open details to adjust recalibration or add notes."}</div>
       </div>
     </section>
   `;
 }
 
-function renderOverlay(slug: string, title: string, state: StudyState | null, solvedDetected: boolean): void {
+function renderOverlay(slug: string, title: string, state: StudyState | null): void {
   const root = ensureOverlay();
   currentState = state;
   currentTitle = title;
+
   if (draftContextSlug !== slug) {
     draftNotes = state?.notes ?? "";
     selectedRating = (state?.lastRating ?? 2) as Rating;
     draftContextSlug = slug;
   }
 
-  const status = state?.status ?? "NEW";
-  const nextReview = state?.nextReviewAt ? formatDate(state.nextReviewAt) : "Not scheduled";
-  const saveButtonLabel = state?.reviewCount ? "Save Review" : "Save First Solve";
+  const studyStateSummary = getStudyStateSummary(state);
+  const phaseLabel = getStudyPhaseLabel(studyStateSummary.phase);
+  const nextReview = studyStateSummary.nextReviewAt ? formatDate(studyStateSummary.nextReviewAt) : "Not scheduled";
+  const saveButtonLabel = studyStateSummary.reviewCount ? "Save Override" : "Save First Solve";
 
   if (overlayCollapsed) {
     root.innerHTML = renderCollapsedOverlay(title, state);
+
     const expand = root.querySelector<HTMLButtonElement>("#lcsr-expand-chip");
     if (expand) {
       expand.onclick = () => {
         overlayCollapsed = false;
-        renderOverlay(slug, title, state, solvedDetected);
+        renderOverlay(slug, title, state);
       };
     }
+
+    bindTimerButtons(slug);
+    updateTimerUi();
     return;
   }
 
@@ -416,9 +452,14 @@ function renderOverlay(slug: string, title: string, state: StudyState | null, so
                 <span style="padding:4px 8px;border-radius:999px;background:rgba(255,161,22,0.16);color:#ffc78b;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">${modeBadge(
                   state
                 )}</span>
-                <span style="padding:4px 8px;border-radius:999px;background:${statusColor(status)}22;color:${statusColor(
-                  status
-                )};font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">${status}</span>
+                <span style="padding:4px 8px;border-radius:999px;background:${statusColor(studyStateSummary.phase)}22;color:${statusColor(
+                  studyStateSummary.phase
+                )};font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">${phaseLabel}</span>
+                ${
+                  studyStateSummary.isDue
+                    ? '<span style="padding:4px 8px;border-radius:999px;background:rgba(56,189,248,0.16);color:#94dbff;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">DUE NOW</span>'
+                    : ""
+                }
               </div>
             </div>
             <div style="display:grid;gap:8px;justify-items:end;">
@@ -428,25 +469,22 @@ function renderOverlay(slug: string, title: string, state: StudyState | null, so
               <span style="color:#a99f96;font-size:11px;">Next: ${escapeHtml(nextReview)}</span>
             </div>
           </div>
-          <div style="color:#8f857d;font-size:12px;">Solved detected: ${solvedDetected ? "Yes" : "No"} · ${state?.lastReviewedAt ? `Last reviewed ${escapeHtml(
-            formatDate(state.lastReviewedAt)
-          )}` : "Awaiting first logged solve."}</div>
+          <div style="color:#8f857d;font-size:12px;">Quick submit is conservative: Good under goal, Hard if you drift past it, Again if the run blows through the target. Use recalibration below to override.</div>
         </section>
 
         <section style="display:grid;gap:10px;padding:14px;border-radius:4px;background:rgba(255,255,255,0.03);box-shadow:inset 0 0 0 1px rgba(161,141,122,0.08);">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#a99f96;">Timer Goal</span>
-            <strong id="lcsr-goal-value" style="color:#e5e2e1;">${formatClock(timerGoalMs)}</strong>
+            <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#a99f96;">Solve Timer</span>
+            <strong id="lcsr-goal-value" style="color:#e5e2e1;">Goal ${formatClock(timerGoalMs)}</strong>
           </div>
-          <div id="lcsr-timer-value" style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-size:28px;font-weight:700;color:#94dbff;">${formatClock(
-            timerGoalMs
-          )}</div>
-          <div id="lcsr-timer-hint" style="font-size:12px;color:#8f857d;">Start timer, submit, and get Accepted to log a timed review.</div>
+          <div id="lcsr-timer-value" style="font-family:'Space Grotesk','Segoe UI',sans-serif;font-size:28px;font-weight:700;color:#e5e2e1;">00:00</div>
+          <div id="lcsr-timer-hint" style="font-size:12px;color:#8f857d;">Quick submit logs Good by default. Start the timer if you want solve time to drive the default rating.</div>
           <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
             <button id="lcsr-timer-start" style="min-height:34px;border-radius:4px;background:#ffc78b;color:#2b1700;border:0;font-weight:700;cursor:pointer;">Start</button>
             <button id="lcsr-timer-pause" style="min-height:34px;border-radius:4px;background:rgba(255,255,255,0.05);color:#e5e2e1;border:0;cursor:pointer;">Pause</button>
             <button id="lcsr-timer-reset" style="min-height:34px;border-radius:4px;background:rgba(255,255,255,0.05);color:#e5e2e1;border:0;cursor:pointer;">Reset</button>
           </div>
+          <div id="lcsr-quick-rating" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#8f857d;">Default Good</div>
         </section>
 
         <section style="display:grid;gap:10px;">
@@ -477,12 +515,15 @@ function renderOverlay(slug: string, title: string, state: StudyState | null, so
 
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <button id="lcsr-refresh-btn" style="min-height:36px;padding:0 14px;border-radius:4px;background:rgba(255,255,255,0.05);color:#a99f96;border:0;cursor:pointer;">Refresh</button>
-          <button id="lcsr-save-review" style="min-height:42px;padding:0 18px;border-radius:4px;background:linear-gradient(180deg,#ffc78b,#ffa116);color:#2b1700;border:0;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">${saveButtonLabel}</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button id="lcsr-quick-submit" style="min-height:40px;padding:0 14px;border-radius:4px;background:rgba(255,255,255,0.05);color:#e5e2e1;border:0;font-weight:700;cursor:pointer;">Quick Submit</button>
+            <button id="lcsr-save-review" style="min-height:42px;padding:0 18px;border-radius:4px;background:linear-gradient(180deg,#ffc78b,#ffa116);color:#2b1700;border:0;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">${saveButtonLabel}</button>
+          </div>
         </div>
 
-        <div id="lcsr-feedback" style="min-height:18px;color:#8f857d;font-size:12px;">${state?.lastReviewedAt ? `Last reviewed: ${escapeHtml(
-          formatDate(state.lastReviewedAt)
-        )}` : "Submit Accepted under the goal to progress toward mastery."}</div>
+        <div id="lcsr-feedback" style="min-height:18px;color:#8f857d;font-size:12px;">${studyStateSummary.lastReviewedAt ? `Last reviewed: ${escapeHtml(
+          formatDate(studyStateSummary.lastReviewedAt)
+        )}` : "Quick submit logs with default protocol. Open recalibration to override the rating or mode."}</div>
       </div>
     </section>
   `;
@@ -490,7 +531,7 @@ function renderOverlay(slug: string, title: string, state: StudyState | null, so
   root.querySelectorAll<HTMLButtonElement>("[data-rating]").forEach((button) => {
     button.onclick = () => {
       selectedRating = Number(button.dataset.rating) as Rating;
-      renderOverlay(slug, title, state, solvedDetected);
+      renderOverlay(slug, title, state);
     };
   });
 
@@ -498,14 +539,14 @@ function renderOverlay(slug: string, title: string, state: StudyState | null, so
   if (collapseButton) {
     collapseButton.onclick = () => {
       overlayCollapsed = true;
-      renderOverlay(slug, title, state, solvedDetected);
+      renderOverlay(slug, title, state);
     };
   }
 
   const settingsButton = root.querySelector<HTMLButtonElement>("#lcsr-open-settings");
   if (settingsButton) {
     settingsButton.onclick = () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html?view=settings") });
+      void sendMessage("OPEN_EXTENSION_PAGE", { path: "dashboard.html?view=settings" });
     };
   }
 
@@ -519,7 +560,7 @@ function renderOverlay(slug: string, title: string, state: StudyState | null, so
 
   const modeSelect = root.querySelector<HTMLSelectElement>("#lcsr-mode");
   if (modeSelect) {
-    modeSelect.value = state?.reviewCount ? "RECALL" : "FULL_SOLVE";
+    modeSelect.value = defaultMode(state);
   }
 
   const refreshButton = root.querySelector<HTMLButtonElement>("#lcsr-refresh-btn");
@@ -536,224 +577,116 @@ function renderOverlay(slug: string, title: string, state: StudyState | null, so
     };
   }
 
-  const startButton = root.querySelector<HTMLButtonElement>("#lcsr-timer-start");
+  bindTimerButtons(slug);
+  updateTimerUi();
+}
+
+function bindTimerButtons(slug: string): void {
+  const root = document.getElementById(OVERLAY_ID);
+  const quickSubmitButton = root?.querySelector<HTMLButtonElement>("#lcsr-quick-submit");
+  if (quickSubmitButton) {
+    quickSubmitButton.onclick = () => {
+      void onQuickSubmit(slug);
+    };
+  }
+
+  const startButton = root?.querySelector<HTMLButtonElement>("#lcsr-timer-start");
   if (startButton) {
     startButton.onclick = () => {
       startTimer(true);
     };
   }
 
-  const pauseButton = root.querySelector<HTMLButtonElement>("#lcsr-timer-pause");
+  const pauseButton = root?.querySelector<HTMLButtonElement>("#lcsr-timer-pause");
   if (pauseButton) {
     pauseButton.onclick = () => {
       pauseTimer(true);
     };
   }
 
-  const resetButton = root.querySelector<HTMLButtonElement>("#lcsr-timer-reset");
+  const resetButton = root?.querySelector<HTMLButtonElement>("#lcsr-timer-reset");
   if (resetButton) {
     resetButton.onclick = () => {
       resetTimer(true);
     };
   }
-
-  updateTimerUi();
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function getMode(): ReviewMode {
+  const select = document.getElementById(OVERLAY_ID)?.querySelector<HTMLSelectElement>("#lcsr-mode");
+  return select?.value === "RECALL" ? "RECALL" : defaultMode();
 }
 
-function getMode(): "RECALL" | "FULL_SOLVE" {
-  const root = document.getElementById(OVERLAY_ID);
-  const select = root?.querySelector<HTMLSelectElement>("#lcsr-mode");
-  return select?.value === "RECALL" ? "RECALL" : "FULL_SOLVE";
-}
-
-async function onSaveReview(slug: string): Promise<void> {
-  setFeedback("Saving review...");
-  const elapsedMs = getElapsedMs();
-  const solveTimeMs = elapsedMs > 0 ? elapsedMs : undefined;
-
+async function persistReview(
+  slug: string,
+  rating: Rating,
+  mode: ReviewMode,
+  solveTimeMs?: number
+): Promise<boolean> {
   const response = await sendMessage("SAVE_REVIEW_RESULT", {
     slug,
-    rating: selectedRating,
-    mode: getMode(),
+    rating,
+    mode,
     solveTimeMs,
     notes: draftNotes,
     source: "overlay"
   });
 
   if (!response.ok) {
-    setFeedback(response.error ?? "Failed to save rating.", true);
-    return;
-  }
-
-  setFeedback("Saved. Recomputing status...");
-  await refreshCurrentPage();
-}
-
-function onSubmitDetected(): void {
-  if (!activeSlug) {
-    return;
-  }
-
-  if (!isTimerRunning() && getElapsedMs() <= 0) {
-    setFeedback("Submit detected. Start timer before submitting to track timed mastery.");
-    return;
-  }
-
-  awaitingJudgeResult = true;
-  latestSubmitAtMs = Date.now();
-  clearJudgeTimeout();
-  judgeTimeoutHandle = window.setTimeout(() => {
-    judgeTimeoutHandle = null;
-    if (!awaitingJudgeResult) {
-      return;
-    }
-    awaitingJudgeResult = false;
-    updateTimerUi();
-    setFeedback("No judge result detected yet. Submit again after timer is running.", true);
-  }, JUDGE_TIMEOUT_MS);
-
-  updateTimerUi();
-  setFeedback("Submission detected. Waiting for judge result...");
-}
-
-function isSubmitControl(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) {
+    setFeedback(response.error ?? "Failed to save review.", true);
     return false;
   }
 
-  const control = target.closest("button,[role='button']");
-  if (!control) {
-    return false;
-  }
-
-  const label = `${control.textContent ?? ""} ${control.getAttribute("aria-label") ?? ""} ${
-    control.getAttribute("data-e2e-locator") ?? ""
-  }`
-    .trim()
-    .toLowerCase();
-
-  return /\bsubmit\b/.test(label);
+  return true;
 }
 
-function extractVerdictFromText(raw: string): "accepted" | "failed" | null {
-  const text = raw.toLowerCase().trim();
-  if (!text) {
-    return null;
-  }
-
-  const hasFailure = SUBMISSION_FAIL_TOKENS.some((token) => text.includes(token));
-  if (hasFailure) {
-    return "failed";
-  }
-
-  if (text.includes("accepted solutions")) {
-    return null;
-  }
-
-  if (/\baccepted\b/.test(text)) {
-    return "accepted";
-  }
-
-  return null;
-}
-
-function detectVerdictFromMutations(mutations: MutationRecord[]): "accepted" | "failed" | null {
-  for (const mutation of mutations) {
-    const snippets: string[] = [];
-
-    if (mutation.target?.textContent) {
-      snippets.push(mutation.target.textContent.slice(0, 500));
-    }
-
-    for (const node of Array.from(mutation.addedNodes)) {
-      if (node.textContent) {
-        snippets.push(node.textContent.slice(0, 500));
-      }
-    }
-
-    for (const snippet of snippets) {
-      const verdict = extractVerdictFromText(snippet);
-      if (verdict) {
-        return verdict;
-      }
-    }
-  }
-
-  return null;
-}
-
-async function onAcceptedDetected(): Promise<void> {
-  if (!awaitingJudgeResult) {
-    return;
-  }
-
-  awaitingJudgeResult = false;
-  clearJudgeTimeout();
-
-  if (!isTimerRunning() && getElapsedMs() <= 0) {
-    updateTimerUi();
-    setFeedback("Accepted detected, but timer was not running. Start timer before submitting.", true);
-    return;
-  }
+async function onQuickSubmit(slug: string): Promise<void> {
+  setFeedback("Logging quick submit...");
 
   if (isTimerRunning()) {
     pauseTimer(false);
   }
 
   const elapsedMs = getElapsedMs();
-  const withinGoal = elapsedMs <= timerGoalMs;
-  const rating: 0 | 1 | 2 | 3 = withinGoal ? 3 : 2;
+  const solveTimeMs = elapsedMs > 0 ? elapsedMs : undefined;
+  const rating = deriveQuickRating(solveTimeMs);
   selectedRating = rating;
 
-  setFeedback("Accepted detected. Logging timed review...");
-
-  const response = await sendMessage("SAVE_REVIEW_RESULT", {
-    slug: activeSlug,
-    rating,
-    mode: getMode(),
-    solveTimeMs: elapsedMs,
-    notes: draftNotes,
-    source: "overlay"
-  });
-
-  if (!response.ok) {
-    setFeedback(response.error ?? "Failed to save accepted attempt.", true);
+  const saved = await persistReview(slug, rating, defaultMode(), solveTimeMs);
+  if (!saved) {
     updateTimerUi();
     return;
   }
 
-  const elapsedClock = formatClock(elapsedMs);
-  const goalClock = formatClock(timerGoalMs);
-  if (withinGoal) {
-    setFeedback(`Accepted in ${elapsedClock} (goal ${goalClock}). Logged as Easy.`);
+  resetTimer(false);
+
+  if (solveTimeMs) {
+    setFeedback(`Logged ${ratingLabel(rating)} from ${formatClock(solveTimeMs)} against a ${formatClock(timerGoalMs)} goal.`);
   } else {
-    setFeedback(
-      `Accepted in ${elapsedClock}, over goal ${goalClock}. Logged as Good. Mastery requires under-goal Accepted runs.`
-    );
+    setFeedback("Logged Good with default settings. Expand the panel if you want to override the recalibration.");
   }
 
-  resetTimer(false);
   await refreshCurrentPage();
 }
 
-function onFailedDetected(): void {
-  if (!awaitingJudgeResult) {
+async function onSaveReview(slug: string): Promise<void> {
+  setFeedback("Saving recalibration...");
+
+  if (isTimerRunning()) {
+    pauseTimer(false);
+  }
+
+  const elapsedMs = getElapsedMs();
+  const solveTimeMs = elapsedMs > 0 ? elapsedMs : undefined;
+  const saved = await persistReview(slug, selectedRating, getMode(), solveTimeMs);
+  if (!saved) {
+    updateTimerUi();
     return;
   }
 
-  awaitingJudgeResult = false;
-  clearJudgeTimeout();
-  updateTimerUi();
-  setFeedback("Submission result was not Accepted. Keep going.", true);
+  setFeedback("Saved. Recomputing status...");
+  resetTimer(false);
+  await refreshCurrentPage();
 }
 
 async function refreshCurrentPage(): Promise<void> {
@@ -764,14 +697,12 @@ async function refreshCurrentPage(): Promise<void> {
 
   const title = detectTitle(slug);
   const detectedDifficulty = detectDifficulty();
-  const solvedDetected = detectSolvedState();
 
   const upsert = await sendMessage("UPSERT_PROBLEM_FROM_PAGE", {
     slug,
     title,
     difficulty: detectedDifficulty,
-    url: `https://leetcode.com/problems/${slug}/`,
-    solvedDetected
+    url: `https://leetcode.com/problems/${slug}/`
   });
 
   if (!upsert.ok) {
@@ -793,19 +724,20 @@ async function refreshCurrentPage(): Promise<void> {
   currentDifficulty = payload.problem?.difficulty ?? detectedDifficulty;
   timerGoalMs = difficultyGoalMs(currentDifficulty);
 
-  renderOverlay(slug, payload.problem?.title ?? title, payload.studyState ?? null, solvedDetected);
+  renderOverlay(slug, payload.problem?.title ?? title, payload.studyState ?? null);
 }
 
-async function maybeScheduleAutoStart(slug: string): Promise<void> {
-  const response = await sendMessage("CONSUME_AUTO_TIMER_START", { slug });
-  if (!response.ok) {
-    return;
-  }
+function scheduleWarmRefreshes(slug: string): void {
+  const refreshLater = (delayMs: number) => {
+    window.setTimeout(() => {
+      if (activeSlug === slug) {
+        void refreshCurrentPage();
+      }
+    }, delayMs);
+  };
 
-  const autoStart = Boolean((response.data as { autoStart?: boolean } | undefined)?.autoStart);
-  if (autoStart) {
-    scheduleAutoStartTimer();
-  }
+  refreshLater(600);
+  refreshLater(1800);
 }
 
 async function bootstrap(): Promise<void> {
@@ -834,37 +766,12 @@ async function bootstrap(): Promise<void> {
   currentTitle = "";
 
   await refreshCurrentPage();
-  await maybeScheduleAutoStart(slug);
+  scheduleWarmRefreshes(slug);
 }
 
 let lastHref = window.location.href;
 
 void bootstrap();
-
-document.addEventListener(
-  "click",
-  (event) => {
-    if (activeSlug && isSubmitControl(event.target)) {
-      onSubmitDetected();
-    }
-  },
-  true
-);
-
-document.addEventListener(
-  "keydown",
-  (event) => {
-    if (!activeSlug) {
-      return;
-    }
-
-    const keyboardSubmit = event.key === "Enter" && (event.metaKey || event.ctrlKey);
-    if (keyboardSubmit) {
-      onSubmitDetected();
-    }
-  },
-  true
-);
 
 setInterval(() => {
   if (window.location.href !== lastHref) {
@@ -872,31 +779,3 @@ setInterval(() => {
     void bootstrap();
   }
 }, 1000);
-
-const observer = new MutationObserver((mutations) => {
-  const slug = getProblemSlugFromUrl();
-
-  if (slug && slug === activeSlug && !currentTitle) {
-    void refreshCurrentPage();
-  }
-
-  if (!slug || slug !== activeSlug || !awaitingJudgeResult) {
-    return;
-  }
-
-  if (Date.now() - latestSubmitAtMs < 800) {
-    return;
-  }
-
-  const verdict = detectVerdictFromMutations(mutations);
-  if (verdict === "accepted") {
-    void onAcceptedDetected();
-    return;
-  }
-
-  if (verdict === "failed") {
-    onFailedDetected();
-  }
-});
-
-observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });

@@ -1,5 +1,6 @@
 import { DEFAULT_COURSE_ID } from "./constants";
 import { getDefaultCurriculumSteps, listStudyPlans } from "./curatedSets";
+import { getLastReviewedAt, getStudyStateSummary } from "./studyState";
 import {
   ActiveCourseView,
   AppData,
@@ -191,16 +192,11 @@ function mergeCourseDefinition(
 }
 
 function isStarted(state?: StudyState | null): boolean {
-  return Boolean(state && (state.reviewCount > 0 || state.status !== "NEW"));
+  return getStudyStateSummary(state).isStarted;
 }
 
 function isDue(state?: StudyState | null): boolean {
-  return Boolean(
-    state &&
-      state.nextReviewAt &&
-      state.status !== "SUSPENDED" &&
-      new Date(state.nextReviewAt).getTime() <= Date.now()
-  );
+  return getStudyStateSummary(state).isDue;
 }
 
 function firstIncompleteChapterId(data: AppData, course: CourseDefinition): string | null {
@@ -233,12 +229,8 @@ function courseQuestionStatus(
     return "DUE_NOW";
   }
 
-  if (state?.status === "MASTERED") {
-    return "MASTERED";
-  }
-
   if (isStarted(state)) {
-    return "REVIEWING";
+    return "QUEUED";
   }
 
   if (chapterStatus === "UPCOMING") {
@@ -347,12 +339,13 @@ export function syncCourseProgress(data: AppData, now = nowIso()): void {
           questionProgress.addedToLibraryAt = problem.createdAt || now;
         }
 
-        if (state?.lastReviewedAt) {
-          questionProgress.lastReviewedAt = state.lastReviewedAt;
+        const lastReviewedAt = getLastReviewedAt(state);
+        if (lastReviewedAt) {
+          questionProgress.lastReviewedAt = lastReviewedAt;
         }
 
         if (isStarted(state)) {
-          questionProgress.completedAt = questionProgress.completedAt ?? state?.lastReviewedAt ?? now;
+          questionProgress.completedAt = questionProgress.completedAt ?? lastReviewedAt ?? now;
         } else {
           chapterComplete = false;
           delete questionProgress.completedAt;
@@ -558,6 +551,7 @@ export function buildActiveCourseView(data: AppData, courseId = data.settings.ac
       const problem = data.problemsBySlug[slug];
       const ref = course.questionRefsBySlug[slug];
       const state = data.studyStatesBySlug[slug];
+      const studyStateSummary = getStudyStateSummary(state);
       const questionStatus = courseQuestionStatus(data, chapter, slug, status);
       const view: CourseQuestionView = {
         slug,
@@ -567,7 +561,8 @@ export function buildActiveCourseView(data: AppData, courseId = data.settings.ac
         chapterId: chapterIdValue,
         chapterTitle: chapter.title,
         status: questionStatus,
-        nextReviewAt: state?.nextReviewAt,
+        reviewPhase: studyStateSummary.phase,
+        nextReviewAt: studyStateSummary.nextReviewAt,
         inLibrary: Boolean(problem),
         isCurrent: questionStatus === "CURRENT" || questionStatus === "READY"
       };

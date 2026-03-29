@@ -1,11 +1,11 @@
 import { sendMessage } from "../shared/runtime";
+import { getStudyPhaseLabel } from "../shared/studyState";
 import {
   ActiveCourseView,
   AppShellPayload,
   CourseCardView,
   LibraryProblemRow,
   ReviewOrder,
-  ScheduleIntensity,
   StudyMode
 } from "../shared/types";
 
@@ -62,7 +62,7 @@ function formatDate(iso?: string): string {
   if (!iso) {
     return "Not scheduled";
   }
-  return new Date(iso).toLocaleString();
+  return new Date(iso).toLocaleDateString();
 }
 
 function toneForDifficulty(difficulty: string): string {
@@ -76,7 +76,7 @@ function toneForDifficulty(difficulty: string): string {
 }
 
 function toneForQuestionStatus(status: string): string {
-  if (status === "MASTERED" || status === "COMPLETE") {
+  if (status === "COMPLETE") {
     return "kt-pill kt-pill-success";
   }
   if (status === "DUE_NOW" || status === "CURRENT" || status === "READY") {
@@ -86,6 +86,13 @@ function toneForQuestionStatus(status: string): string {
     return "kt-pill";
   }
   return "kt-pill kt-pill-blue";
+}
+
+function formatStudyPhase(phase?: string | null): string {
+  if (!phase) {
+    return "NEW";
+  }
+  return getStudyPhaseLabel(phase as Parameters<typeof getStudyPhaseLabel>[0]);
 }
 
 function currentRecommended(): AppShellPayload["popup"]["recommended"] {
@@ -202,7 +209,7 @@ function recommendedPanel(): string {
         <p class="kt-card-copy">
           ${
             recommended.nextReviewAt
-              ? `Next review window: ${escapeHtml(formatDate(recommended.nextReviewAt))}`
+              ? `Next review day: ${escapeHtml(formatDate(recommended.nextReviewAt))}`
               : "Highest leverage problem in the queue."
           }
         </p>
@@ -235,7 +242,7 @@ function queueList(): string {
               <div class="kt-row-card-inline">
                 <div>
                   <div class="kt-list-item-title">${escapeHtml(item.problem.title || item.slug)}</div>
-                  <div class="kt-list-item-copy">${escapeHtml(item.category.toUpperCase())} · ${escapeHtml(formatDate(item.studyState.nextReviewAt))}</div>
+                  <div class="kt-list-item-copy">${escapeHtml(item.category.toUpperCase())} · ${escapeHtml(formatDate(item.studyStateSummary.nextReviewAt))}</div>
                 </div>
                 <div class="kt-action-row">
                   <span class="${toneForDifficulty(item.problem.difficulty)}">${escapeHtml(item.problem.difficulty)}</span>
@@ -281,9 +288,9 @@ function overviewView(): string {
                 <span class="kt-metric-copy">Consecutive review days.</span>
               </article>
               <article class="kt-metric">
-                <span class="kt-label">Mastered</span>
-                <strong class="kt-metric-value">${payload?.analytics.masteredCount ?? 0}</strong>
-                <span class="kt-metric-copy">Problems in stable recall territory.</span>
+                <span class="kt-label">Review Cards</span>
+                <strong class="kt-metric-value">${payload?.analytics.phaseCounts.Review ?? 0}</strong>
+                <span class="kt-metric-copy">Cards currently scheduled in FSRS review state.</span>
               </article>
             </div>
           </div>
@@ -316,7 +323,10 @@ function overviewView(): string {
                             <span class="${toneForQuestionStatus(course.nextQuestion.status)}">${escapeHtml(course.nextQuestion.status.replace(/_/g, " "))}</span>
                           </div>
                           <div class="kt-list-item-title">${escapeHtml(course.nextQuestion.title)}</div>
-                          <div class="kt-list-item-copy">${escapeHtml(course.nextQuestion.chapterTitle)} · ${escapeHtml(course.nextQuestion.difficulty)}</div>
+                          <div class="kt-list-item-copy">
+                            ${escapeHtml(course.nextQuestion.chapterTitle)} · ${escapeHtml(course.nextQuestion.difficulty)}
+                            ${course.nextQuestion.reviewPhase ? ` · FSRS ${escapeHtml(formatStudyPhase(course.nextQuestion.reviewPhase))}` : ""}
+                          </div>
                           <div class="kt-action-row">
                             <button
                               class="kt-button"
@@ -383,7 +393,7 @@ function overviewView(): string {
               <p class="kt-section-label">Protocol</p>
               <h2 class="kt-card-title">Review Surface</h2>
             </div>
-            <p class="kt-card-copy">Study mode: ${escapeHtml(payload?.settings.studyMode ?? "studyPlan")} · Order: ${escapeHtml(payload?.settings.reviewOrder ?? "dueFirst")} · Auto detect: ${payload?.settings.autoDetectSolved ? "On" : "Off"}</p>
+            <p class="kt-card-copy">Study mode: ${escapeHtml(payload?.settings.studyMode ?? "studyPlan")} · Order: ${escapeHtml(payload?.settings.reviewOrder ?? "dueFirst")} · Timer + submit is fully manual.</p>
             <div class="kt-footer-bar">
               <button class="kt-button-secondary" data-action="toggle-mode">Toggle Study Mode</button>
               <button class="kt-button-ghost" data-view="settings">Open Settings</button>
@@ -451,7 +461,10 @@ function questionTable(course: ActiveCourseView | null): string {
                   </td>
                   <td>${escapeHtml(question.chapterTitle)}</td>
                   <td><span class="${toneForDifficulty(question.difficulty)}">${escapeHtml(question.difficulty)}</span></td>
-                  <td><span class="${toneForQuestionStatus(question.status)}">${escapeHtml(question.status.replace(/_/g, " "))}</span></td>
+                  <td>
+                    <span class="${toneForQuestionStatus(question.status)}">${escapeHtml(question.status.replace(/_/g, " "))}</span>
+                    ${question.reviewPhase ? `<div class="kt-list-item-copy">FSRS ${escapeHtml(formatStudyPhase(question.reviewPhase))}</div>` : ""}
+                  </td>
                   <td>${escapeHtml(formatDate(question.nextReviewAt))}</td>
                   <td>
                     <button
@@ -678,7 +691,7 @@ function analyticsView(): string {
                   <tr>
                     <th>Problem</th>
                     <th>Lapses</th>
-                    <th>Ease</th>
+                    <th>FSRS Difficulty</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -688,7 +701,7 @@ function analyticsView(): string {
                         <tr>
                           <td>${escapeHtml(problem.title)}</td>
                           <td>${problem.lapses}</td>
-                          <td>${problem.ease.toFixed(2)}</td>
+                          <td>${problem.difficulty.toFixed(2)}</td>
                         </tr>
                       `
                     )
@@ -764,14 +777,6 @@ function settingsView(): string {
                 <option value="weakestFirst" ${settings?.reviewOrder === "weakestFirst" ? "selected" : ""}>Weakest First</option>
               </select>
             </label>
-            <label class="kt-settings-field">
-              <span class="kt-label">Intensity</span>
-              <select id="settings-intensity" class="kt-select">
-                <option value="chill" ${settings?.scheduleIntensity === "chill" ? "selected" : ""}>Chill</option>
-                <option value="normal" ${settings?.scheduleIntensity === "normal" ? "selected" : ""}>Normal</option>
-                <option value="aggressive" ${settings?.scheduleIntensity === "aggressive" ? "selected" : ""}>Aggressive</option>
-              </select>
-            </label>
           </div>
 
           <div>
@@ -780,18 +785,6 @@ function settingsView(): string {
               <label class="kt-row-card">
                 <span class="kt-label">Require solve time</span>
                 <input id="settings-require-time" type="checkbox" ${settings?.requireSolveTime ? "checked" : ""} />
-              </label>
-              <label class="kt-row-card">
-                <span class="kt-label">Auto detect solved</span>
-                <input id="settings-auto-detect" type="checkbox" ${settings?.autoDetectSolved ? "checked" : ""} />
-              </label>
-              <label class="kt-row-card">
-                <span class="kt-label">Slow solve downgrade</span>
-                <input id="settings-slow-downgrade" type="checkbox" ${settings?.slowSolveDowngradeEnabled ? "checked" : ""} />
-              </label>
-              <label class="kt-settings-field">
-                <span class="kt-label">Slow threshold (minutes)</span>
-                <input id="settings-slow-threshold" class="kt-input" type="number" min="1" value="${Math.round((settings?.slowSolveThresholdMs ?? 0) / 60000)}" />
               </label>
             </div>
           </div>
@@ -875,9 +868,9 @@ function libraryFilters(): string {
         <option value="all">All status</option>
         <option value="due">Due now</option>
         <option value="new">New</option>
+        <option value="review">Review</option>
         <option value="learning">Learning</option>
-        <option value="reviewing">Reviewing</option>
-        <option value="mastered">Mastered</option>
+        <option value="relearning">Relearning</option>
         <option value="suspended">Suspended</option>
       </select>
     </div>
@@ -1000,23 +993,23 @@ function filterLibraryRows(rows: LibraryProblemRow[]): LibraryProblemRow[] {
     }
 
     if (status !== "all") {
-      const nextReviewTs = row.studyState?.nextReviewAt ? new Date(row.studyState.nextReviewAt).getTime() : Number.POSITIVE_INFINITY;
-      if (status === "due" && nextReviewTs > Date.now()) {
+      const summary = row.studyStateSummary;
+      if (status === "due" && !summary?.isDue) {
         return false;
       }
-      if (status === "new" && row.studyState && row.studyState.reviewCount > 0) {
+      if (status === "new" && summary?.isStarted) {
         return false;
       }
-      if (status === "mastered" && row.studyState?.status !== "MASTERED") {
+      if (status === "review" && summary?.phase !== "Review") {
         return false;
       }
-      if (status === "suspended" && row.studyState?.status !== "SUSPENDED") {
+      if (status === "suspended" && summary?.phase !== "Suspended") {
         return false;
       }
-      if (status === "learning" && row.studyState?.status !== "LEARNING") {
+      if (status === "learning" && summary?.phase !== "Learning") {
         return false;
       }
-      if (status === "reviewing" && row.studyState?.status !== "REVIEWING") {
+      if (status === "relearning" && summary?.phase !== "Relearning") {
         return false;
       }
     }
@@ -1035,6 +1028,9 @@ function renderLibraryTable(): void {
   body.innerHTML = rows
     .map((row) => {
       const primaryCourse = row.courses[0];
+      const studyStateSummary = row.studyStateSummary;
+      const phaseLabel = studyStateSummary ? formatStudyPhase(studyStateSummary.phase) : "NEW";
+      const statusLabel = studyStateSummary?.isDue ? `${phaseLabel} · DUE NOW` : phaseLabel;
       return `
         <tr>
           <td>
@@ -1043,8 +1039,8 @@ function renderLibraryTable(): void {
           </td>
           <td><span class="${toneForDifficulty(row.problem.difficulty)}">${escapeHtml(row.problem.difficulty)}</span></td>
           <td>${primaryCourse ? escapeHtml(primaryCourse.courseName) : "Independent"}</td>
-          <td>${row.studyState ? escapeHtml(row.studyState.status) : "NEW"}</td>
-          <td>${escapeHtml(formatDate(row.studyState?.nextReviewAt))}</td>
+          <td>${escapeHtml(statusLabel)}</td>
+          <td>${escapeHtml(formatDate(studyStateSummary?.nextReviewAt))}</td>
           <td>
             <button
               class="kt-button-secondary kt-button-small"
@@ -1091,7 +1087,6 @@ async function openProblem(target: {
   courseId?: string;
   chapterId?: string;
 }): Promise<void> {
-  await sendMessage("QUEUE_AUTO_TIMER_START", { slug: target.slug });
   if (target.courseId || target.chapterId) {
     await sendMessage("TRACK_COURSE_QUESTION_LAUNCH", {
       slug: target.slug,
@@ -1117,14 +1112,8 @@ async function saveSettings(): Promise<void> {
     studyMode: (document.getElementById("settings-study-mode") as HTMLSelectElement).value as StudyMode,
     activeCourseId: (document.getElementById("settings-active-course") as HTMLSelectElement).value,
     reviewOrder: (document.getElementById("settings-review-order") as HTMLSelectElement).value as ReviewOrder,
-    scheduleIntensity: (document.getElementById("settings-intensity") as HTMLSelectElement)
-      .value as ScheduleIntensity,
     requireSolveTime: (document.getElementById("settings-require-time") as HTMLInputElement).checked,
-    autoDetectSolved: (document.getElementById("settings-auto-detect") as HTMLInputElement).checked,
     notifications: (document.getElementById("settings-notifications") as HTMLInputElement).checked,
-    slowSolveDowngradeEnabled: (document.getElementById("settings-slow-downgrade") as HTMLInputElement).checked,
-    slowSolveThresholdMs:
-      (Number((document.getElementById("settings-slow-threshold") as HTMLInputElement).value) || 0) * 60000,
     quietHours: {
       startHour: Number((document.getElementById("settings-quiet-start") as HTMLInputElement).value) || 0,
       endHour: Number((document.getElementById("settings-quiet-end") as HTMLInputElement).value) || 0

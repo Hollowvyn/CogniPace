@@ -1,4 +1,5 @@
 import { createDefaultStudyState } from "./constants";
+import { getStudyStateSummary } from "./studyState";
 import { AppData, Problem, QueueItem, StudyState } from "./types";
 
 function cloneStateOrDefault(state?: StudyState): StudyState {
@@ -15,22 +16,30 @@ function isSetEnabled(problem: Problem, setsEnabled: Record<string, boolean>): b
 
 function sortByDueDateAsc(items: QueueItem[]): QueueItem[] {
   return [...items].sort((a, b) => {
-    const aTs = a.studyState.nextReviewAt ? new Date(a.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
-    const bTs = b.studyState.nextReviewAt ? new Date(b.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
+    const aTs = a.studyStateSummary.nextReviewAt
+      ? new Date(a.studyStateSummary.nextReviewAt).getTime()
+      : Number.MAX_SAFE_INTEGER;
+    const bTs = b.studyStateSummary.nextReviewAt
+      ? new Date(b.studyStateSummary.nextReviewAt).getTime()
+      : Number.MAX_SAFE_INTEGER;
     return aTs - bTs;
   });
 }
 
 function sortWeakest(items: QueueItem[]): QueueItem[] {
   return [...items].sort((a, b) => {
-    if (b.studyState.lapses !== a.studyState.lapses) {
-      return b.studyState.lapses - a.studyState.lapses;
+    if (b.studyStateSummary.lapses !== a.studyStateSummary.lapses) {
+      return b.studyStateSummary.lapses - a.studyStateSummary.lapses;
     }
-    if (a.studyState.ease !== b.studyState.ease) {
-      return a.studyState.ease - b.studyState.ease;
+    if ((b.studyStateSummary.difficulty ?? 0) !== (a.studyStateSummary.difficulty ?? 0)) {
+      return (b.studyStateSummary.difficulty ?? 0) - (a.studyStateSummary.difficulty ?? 0);
     }
-    const aTs = a.studyState.nextReviewAt ? new Date(a.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
-    const bTs = b.studyState.nextReviewAt ? new Date(b.studyState.nextReviewAt).getTime() : Number.MAX_SAFE_INTEGER;
+    const aTs = a.studyStateSummary.nextReviewAt
+      ? new Date(a.studyStateSummary.nextReviewAt).getTime()
+      : Number.MAX_SAFE_INTEGER;
+    const bTs = b.studyStateSummary.nextReviewAt
+      ? new Date(b.studyStateSummary.nextReviewAt).getTime()
+      : Number.MAX_SAFE_INTEGER;
     return aTs - bTs;
   });
 }
@@ -92,29 +101,29 @@ export function buildTodayQueue(data: AppData, now = new Date()): {
 
   for (const problem of problems) {
     const state = cloneStateOrDefault(data.studyStatesBySlug[problem.leetcodeSlug]);
-    if (state.status === "SUSPENDED") {
+    const studyStateSummary = getStudyStateSummary(state, now);
+    if (studyStateSummary.suspended) {
       continue;
     }
 
-    const dueAt = state.nextReviewAt ? new Date(state.nextReviewAt).getTime() : Number.POSITIVE_INFINITY;
-    const isDue = state.reviewCount > 0 && dueAt <= now.getTime();
-
-    if (isDue) {
+    if (studyStateSummary.isDue) {
       due.push({
         slug: problem.leetcodeSlug,
         problem,
         studyState: state,
+        studyStateSummary,
         due: true,
         category: "due"
       });
       continue;
     }
 
-    if (state.reviewCount === 0 || state.status === "NEW") {
+    if (!studyStateSummary.isStarted) {
       newCandidates.push({
         slug: problem.leetcodeSlug,
         problem,
         studyState: state,
+        studyStateSummary,
         due: false,
         category: "new"
       });
@@ -125,6 +134,7 @@ export function buildTodayQueue(data: AppData, now = new Date()): {
       slug: problem.leetcodeSlug,
       problem,
       studyState: state,
+      studyStateSummary,
       due: false,
       category: "reinforcement"
     });

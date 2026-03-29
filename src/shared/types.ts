@@ -1,15 +1,8 @@
-export const STORAGE_SCHEMA_VERSION = 2;
+export const STORAGE_SCHEMA_VERSION = 3;
 
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
 
-export type StudyStatus =
-  | "NEW"
-  | "LEARNING"
-  | "REVIEWING"
-  | "MASTERED"
-  | "SUSPENDED";
-
-export type ScheduleIntensity = "chill" | "normal" | "aggressive";
+export type StudyPhase = "New" | "Learning" | "Review" | "Relearning" | "Suspended";
 
 export type ReviewOrder = "dueFirst" | "mixByDifficulty" | "weakestFirst";
 
@@ -50,14 +43,23 @@ export interface AttemptHistoryEntry {
   notesSnapshot?: string;
 }
 
-export interface StudyState {
-  status: StudyStatus;
-  lastReviewedAt?: string;
-  nextReviewAt?: string;
-  reviewCount: number;
+export type FsrsCardState = "New" | "Learning" | "Review" | "Relearning";
+
+export interface FsrsCardSnapshot {
+  due: string;
+  stability: number;
+  difficulty: number;
+  elapsedDays: number;
+  scheduledDays: number;
+  learningSteps: number;
+  reps: number;
   lapses: number;
-  ease: number;
-  intervalDays: number;
+  state: FsrsCardState;
+  lastReview?: string;
+}
+
+export interface StudyState {
+  suspended: boolean;
   bestTimeMs?: number;
   lastSolveTimeMs?: number;
   lastRating?: Rating;
@@ -65,6 +67,7 @@ export interface StudyState {
   notes?: string;
   tags: string[];
   attemptHistory: AttemptHistoryEntry[];
+  fsrsCard?: FsrsCardSnapshot;
 }
 
 export interface QuietHours {
@@ -79,13 +82,10 @@ export interface UserSettings {
   studyMode: StudyMode;
   activeCourseId: string;
   setsEnabled: Record<string, boolean>;
-  scheduleIntensity: ScheduleIntensity;
   requireSolveTime: boolean;
   autoDetectSolved: boolean;
   notifications: boolean;
   quietHours: QuietHours;
-  slowSolveDowngradeEnabled: boolean;
-  slowSolveThresholdMs: number;
 }
 
 export interface CourseQuestionRef {
@@ -154,6 +154,7 @@ export interface QueueItem {
   slug: string;
   problem: Problem;
   studyState: StudyState;
+  studyStateSummary: StudyStateSummary;
   due: boolean;
   category: "due" | "new" | "reinforcement";
 }
@@ -169,18 +170,34 @@ export interface TodayQueue {
 export interface AnalyticsSummary {
   streakDays: number;
   totalReviews: number;
-  masteredCount: number;
+  phaseCounts: Record<StudyPhase, number>;
   retentionProxy: number;
   weakestProblems: Array<{
     slug: string;
     title: string;
     lapses: number;
-    ease: number;
+    difficulty: number;
   }>;
   dueByDay: Array<{
     date: string;
     count: number;
   }>;
+}
+
+export interface StudyStateSummary {
+  phase: StudyPhase;
+  nextReviewAt?: string;
+  lastReviewedAt?: string;
+  reviewCount: number;
+  lapses: number;
+  difficulty?: number;
+  stability?: number;
+  scheduledDays?: number;
+  suspended: boolean;
+  isStarted: boolean;
+  isDue: boolean;
+  isOverdue: boolean;
+  overdueDays: number;
 }
 
 export interface CuratedProblemInput {
@@ -225,9 +242,7 @@ export type CourseQuestionStatusView =
   | "LOCKED"
   | "QUEUED"
   | "READY"
-  | "REVIEWING"
-  | "DUE_NOW"
-  | "MASTERED";
+  | "DUE_NOW";
 
 export interface CourseQuestionView {
   slug: string;
@@ -237,6 +252,7 @@ export interface CourseQuestionView {
   chapterId: string;
   chapterTitle: string;
   status: CourseQuestionStatusView;
+  reviewPhase?: StudyPhase;
   nextReviewAt?: string;
   inLibrary: boolean;
   isCurrent: boolean;
@@ -287,6 +303,7 @@ export interface LibraryCourseReference {
 export interface LibraryProblemRow {
   problem: Problem;
   studyState: StudyState | null;
+  studyStateSummary: StudyStateSummary | null;
   courses: LibraryCourseReference[];
 }
 
@@ -349,6 +366,9 @@ export interface MessageRequestMap {
     chapterId?: string;
     source?: "overlay" | "dashboard";
   };
+  OPEN_EXTENSION_PAGE: {
+    path: string;
+  };
   UPDATE_NOTES: {
     slug: string;
     notes: string;
@@ -371,12 +391,6 @@ export interface MessageRequestMap {
     slug: string;
     courseId?: string;
     chapterId?: string;
-  };
-  QUEUE_AUTO_TIMER_START: {
-    slug: string;
-  };
-  CONSUME_AUTO_TIMER_START: {
-    slug: string;
   };
   IMPORT_CURATED_SET: {
     setName: string;

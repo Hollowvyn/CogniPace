@@ -7,25 +7,19 @@ import {
   STORAGE_KEY
 } from "./constants";
 import { ensureCourseData } from "./courses";
+import { normalizeStudyState } from "./studyState";
 import { AppData, UserSettings } from "./types";
 
 export type LegacySettingsPatch = Partial<UserSettings> & {
   activeStudyPlanId?: string;
+  scheduleIntensity?: "chill" | "normal" | "aggressive";
+  slowSolveDowngradeEnabled?: boolean;
+  slowSolveThresholdMs?: number;
 };
 
 export type StoredAppData = Partial<AppData> & {
   settings?: LegacySettingsPatch;
   schemaVersion?: number;
-};
-
-const EMPTY_DATA: AppData = {
-  schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
-  problemsBySlug: {},
-  studyStatesBySlug: {},
-  coursesById: {},
-  courseOrder: [],
-  courseProgressById: {},
-  settings: DEFAULT_SETTINGS
 };
 
 function normalizeSettings(input?: LegacySettingsPatch): UserSettings {
@@ -73,7 +67,12 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
   const data: AppData = {
     schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
     problemsBySlug: stored?.problemsBySlug ?? {},
-    studyStatesBySlug: stored?.studyStatesBySlug ?? {},
+    studyStatesBySlug: Object.fromEntries(
+      Object.entries(stored?.studyStatesBySlug ?? {}).map(([slug, state]) => [
+        slug,
+        normalizeStudyState(state)
+      ])
+    ),
     coursesById: stored?.coursesById ?? {},
     courseOrder: Array.isArray(stored?.courseOrder) ? stored!.courseOrder! : [],
     courseProgressById: stored?.courseProgressById ?? {},
