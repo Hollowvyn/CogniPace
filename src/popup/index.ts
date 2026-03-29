@@ -1,6 +1,10 @@
 import { sendMessage } from "../shared/runtime";
 import { getStudyPhaseLabel } from "../shared/studyState";
-import { AppShellPayload, CourseQuestionView, RecommendedProblemView } from "../shared/types";
+import {
+  AppShellPayload,
+  CourseQuestionView,
+  RecommendedProblemView,
+} from "../shared/types";
 
 let payload: AppShellPayload | null = null;
 let recommendedIndex = 0;
@@ -267,7 +271,7 @@ async function openProblem(
     await sendMessage("TRACK_COURSE_QUESTION_LAUNCH", {
       slug: target.slug,
       courseId: courseContext.courseId,
-      chapterId: courseContext.chapterId
+      chapterId: courseContext.chapterId,
     });
   }
   chrome.tabs.create({ url: target.url });
@@ -278,8 +282,11 @@ async function toggleStudyMode(): Promise<void> {
     return;
   }
 
-  const nextMode = payload.settings.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
-  const response = await sendMessage("UPDATE_SETTINGS", { studyMode: nextMode });
+  const nextMode =
+    payload.settings.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
+  const response = await sendMessage("UPDATE_SETTINGS", {
+    studyMode: nextMode,
+  });
   if (!response.ok) {
     statusMessage = response.error ?? "Failed to update study mode.";
     statusIsError = true;
@@ -315,11 +322,13 @@ function bindEvents(): void {
     openDashboard();
   };
 
-  document.querySelectorAll<HTMLElement>("[data-open-dashboard='true']").forEach((button) => {
-    button.onclick = () => {
-      openDashboard();
-    };
-  });
+  document
+    .querySelectorAll<HTMLElement>("[data-open-dashboard='true']")
+    .forEach((button) => {
+      button.onclick = () => {
+        openDashboard();
+      };
+    });
 
   const shuffle = document.getElementById("shuffle-recommended");
   if (shuffle) {
@@ -350,7 +359,7 @@ function bindEvents(): void {
     openCourseButton.onclick = () => {
       void openProblem(courseNext, {
         courseId: currentPayload.popup.activeCourse?.id,
-        chapterId: courseNext.chapterId
+        chapterId: courseNext.chapterId,
       });
     };
   }

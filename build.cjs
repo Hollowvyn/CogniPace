@@ -1,8 +1,9 @@
-const esbuild = require('esbuild');
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const outdir = path.join(__dirname, 'dist');
+const esbuild = require("esbuild");
+
+const outdir = path.join(__dirname, "dist");
 
 function copyRecursive(src, dest) {
   if (!fs.existsSync(src)) {
@@ -27,23 +28,23 @@ async function build() {
 
   await esbuild.build({
     entryPoints: {
-      background: 'src/background.ts',
-      content: 'src/content.ts',
-      popup: 'src/popup/index.ts',
-      dashboard: 'src/dashboard/index.ts',
-      database: 'src/database/index.ts'
+      background: "src/background.ts",
+      content: "src/content.ts",
+      popup: "src/popup/index.ts",
+      dashboard: "src/dashboard/index.ts",
+      database: "src/database/index.ts",
     },
     outdir,
     bundle: true,
-    format: 'iife',
-    target: 'chrome114',
+    format: "iife",
+    target: "chrome114",
     sourcemap: false,
     minify: false,
-    logLevel: 'info'
+    logLevel: "info",
   });
 
-  copyRecursive(path.join(__dirname, 'public'), outdir);
-  console.log('Build complete. Load ./dist as unpacked extension.');
+  copyRecursive(path.join(__dirname, "public"), outdir);
+  console.log("Build complete. Load ./dist as unpacked extension.");
 }
 
 build().catch((error) => {

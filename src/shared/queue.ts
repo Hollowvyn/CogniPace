@@ -6,7 +6,10 @@ function cloneStateOrDefault(state?: StudyState): StudyState {
   return state ? { ...state } : createDefaultStudyState();
 }
 
-function isSetEnabled(problem: Problem, setsEnabled: Record<string, boolean>): boolean {
+function isSetEnabled(
+  problem: Problem,
+  setsEnabled: Record<string, boolean>
+): boolean {
   if (problem.sourceSet.length === 0) {
     return setsEnabled.Custom !== false;
   }
@@ -31,8 +34,14 @@ function sortWeakest(items: QueueItem[]): QueueItem[] {
     if (b.studyStateSummary.lapses !== a.studyStateSummary.lapses) {
       return b.studyStateSummary.lapses - a.studyStateSummary.lapses;
     }
-    if ((b.studyStateSummary.difficulty ?? 0) !== (a.studyStateSummary.difficulty ?? 0)) {
-      return (b.studyStateSummary.difficulty ?? 0) - (a.studyStateSummary.difficulty ?? 0);
+    if (
+      (b.studyStateSummary.difficulty ?? 0) !==
+      (a.studyStateSummary.difficulty ?? 0)
+    ) {
+      return (
+        (b.studyStateSummary.difficulty ?? 0) -
+        (a.studyStateSummary.difficulty ?? 0)
+      );
     }
     const aTs = a.studyStateSummary.nextReviewAt
       ? new Date(a.studyStateSummary.nextReviewAt).getTime()
@@ -49,14 +58,19 @@ function interleaveByDifficulty(items: QueueItem[]): QueueItem[] {
     Easy: [],
     Medium: [],
     Hard: [],
-    Unknown: []
+    Unknown: [],
   };
 
   for (const item of sortByDueDateAsc(items)) {
     buckets[item.problem.difficulty].push(item);
   }
 
-  const order: Array<keyof typeof buckets> = ["Easy", "Medium", "Hard", "Unknown"];
+  const order: Array<keyof typeof buckets> = [
+    "Easy",
+    "Medium",
+    "Hard",
+    "Unknown",
+  ];
   const result: QueueItem[] = [];
   let added = true;
 
@@ -74,7 +88,10 @@ function interleaveByDifficulty(items: QueueItem[]): QueueItem[] {
   return result;
 }
 
-function orderItems(items: QueueItem[], strategy: AppData["settings"]["reviewOrder"]): QueueItem[] {
+function orderItems(
+  items: QueueItem[],
+  strategy: AppData["settings"]["reviewOrder"]
+): QueueItem[] {
   if (strategy === "weakestFirst") {
     return sortWeakest(items);
   }
@@ -84,7 +101,10 @@ function orderItems(items: QueueItem[], strategy: AppData["settings"]["reviewOrd
   return sortByDueDateAsc(items);
 }
 
-export function buildTodayQueue(data: AppData, now = new Date()): {
+export function buildTodayQueue(
+  data: AppData,
+  now = new Date()
+): {
   generatedAt: string;
   dueCount: number;
   newCount: number;
@@ -100,7 +120,9 @@ export function buildTodayQueue(data: AppData, now = new Date()): {
   const reinforcementCandidates: QueueItem[] = [];
 
   for (const problem of problems) {
-    const state = cloneStateOrDefault(data.studyStatesBySlug[problem.leetcodeSlug]);
+    const state = cloneStateOrDefault(
+      data.studyStatesBySlug[problem.leetcodeSlug]
+    );
     const studyStateSummary = getStudyStateSummary(state, now);
     if (studyStateSummary.suspended) {
       continue;
@@ -113,7 +135,7 @@ export function buildTodayQueue(data: AppData, now = new Date()): {
         studyState: state,
         studyStateSummary,
         due: true,
-        category: "due"
+        category: "due",
       });
       continue;
     }
@@ -125,7 +147,7 @@ export function buildTodayQueue(data: AppData, now = new Date()): {
         studyState: state,
         studyStateSummary,
         due: false,
-        category: "new"
+        category: "new",
       });
       continue;
     }
@@ -136,7 +158,7 @@ export function buildTodayQueue(data: AppData, now = new Date()): {
       studyState: state,
       studyStateSummary,
       due: false,
-      category: "reinforcement"
+      category: "reinforcement",
     });
   }
 
@@ -146,17 +168,20 @@ export function buildTodayQueue(data: AppData, now = new Date()): {
     data.settings.dailyNewLimit
   );
 
-  const reinforcementSlots = Math.max(0, data.settings.dailyReviewLimit - dueOrdered.length);
-  const reinforcementOrdered = orderItems(reinforcementCandidates, data.settings.reviewOrder).slice(
+  const reinforcementSlots = Math.max(
     0,
-    reinforcementSlots
+    data.settings.dailyReviewLimit - dueOrdered.length
   );
+  const reinforcementOrdered = orderItems(
+    reinforcementCandidates,
+    data.settings.reviewOrder
+  ).slice(0, reinforcementSlots);
 
   return {
     generatedAt: now.toISOString(),
     dueCount: dueOrdered.length,
     newCount: newOrdered.length,
     reinforcementCount: reinforcementOrdered.length,
-    items: [...dueOrdered, ...newOrdered, ...reinforcementOrdered]
+    items: [...dueOrdered, ...newOrdered, ...reinforcementOrdered],
   };
 }

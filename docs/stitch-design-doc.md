@@ -5,6 +5,7 @@
 This is a Chrome extension MVP.
 
 Do not design:
+
 - a landing page
 - a sign-in flow
 - an account system
@@ -37,6 +38,7 @@ There are two key ideas in the MVP:
    The extension should show the next question in the current course/chapter path.
 
 The popup should make both visible at the same time:
+
 - what should I review now
 - what is the next course question
 
@@ -47,6 +49,7 @@ The primary surface is the extension popup.
 This is the only screen that must be designed first for MVP.
 
 Optional secondary surface:
+
 - lightweight full-page extension dashboard later
 
 But the popup is the product.
@@ -69,11 +72,13 @@ The popup must support these actions:
 The recommended question is the best question to study right now.
 
 It can come from:
+
 - due review items
 - overdue items
 - current review focus
 
 The UI should explain why it is being shown, using short labels like:
+
 - Due now
 - Overdue
 - Review focus
@@ -83,11 +88,13 @@ The UI should explain why it is being shown, using short labels like:
 The course question is the next item in the active course path.
 
 Rules:
+
 - courses contain chapters
 - chapters contain questions
 - the popup should show the next course question separately from the recommended question
 
 The course question card should also show:
+
 - course name
 - chapter name
 - question title
@@ -97,6 +104,7 @@ The course question card should also show:
 The user should be able to shuffle the recommended question.
 
 Shuffle behavior:
+
 - rotates to another valid recommended question
 - should not change the course-next question
 - should feel like a quick action, not a heavy workflow
@@ -106,18 +114,21 @@ Shuffle behavior:
 Stitch should generate a compact popup UI.
 
 The popup should feel like:
+
 - a browser tool
 - compact
 - direct
 - utility-first
 
 Do not generate:
+
 - large hero banners
 - marketing copy
 - multi-section homepage storytelling
 - desktop app sidebars inside the popup
 
 Use:
+
 - compact cards
 - short labels
 - clear buttons
@@ -128,12 +139,15 @@ Use:
 ## Screen 1: Extension Popup - MVP
 
 Surface:
+
 - Chrome extension popup
 
 Goal:
+
 - let the user immediately open the best next LeetCode problem
 
 Layout:
+
 - narrow popup layout
 - single-column
 - strong hierarchy
@@ -175,29 +189,35 @@ Sections:
 ### 8.1 Recommended Question Card
 
 Must show:
+
 - problem title
 - difficulty
 - why it is recommended now
 
 Actions:
+
 - clicking the title or open button opens LeetCode
 - clicking shuffle changes the recommendation
 
 If no recommended question exists:
+
 - show a compact empty state
 - if a course question exists, emphasize that instead
 
 ### 8.2 Course Next Card
 
 Must show:
+
 - course name
 - chapter name
 - next question title
 
 Actions:
+
 - clicking opens the LeetCode page for that question
 
 If there is no active course:
+
 - show “No active course”
 - optional CTA: choose course in dashboard
 
@@ -206,13 +226,16 @@ If there is no active course:
 These are separate concepts and should not be merged.
 
 Recommended question:
+
 - best question to do now for retention
 
 Course next question:
+
 - next question in structured learning path
 
 Sometimes they may be the same question.
 If they are the same, the UI can show a small label like:
+
 - Also your next course question
 
 ## 9. Suggested Visual Direction
@@ -220,6 +243,7 @@ If they are the same, the UI can show a small label like:
 Use a clean, technical extension aesthetic.
 
 Recommended style:
+
 - dark or neutral popup background
 - one accent color for action
 - compact problem cards
@@ -228,9 +252,11 @@ Recommended style:
 - secondary icon/button for shuffle
 
 The popup should feel more like:
+
 - a sharp developer utility
 
 and less like:
+
 - a consumer mobile product
 
 ## 10. Optional Future Surfaces
@@ -253,5 +279,4 @@ Do not let these future screens dominate the MVP prompt.
 
 Use this prompt with Stitch:
 
-"Design a Chrome extension popup for a LeetCode spaced repetition tool. This is not a landing page or web app. The popup should be compact and utility-first. It must show: (1) the next recommended question to do right now, based on spaced repetition, with a shuffle action; and (2) the next question in the active course, where courses contain chapters. Each card should open the LeetCode page when clicked. The recommended question and the course-next question are separate UI elements and should both be visible. Include a small summary row and an optional footer action to open a larger dashboard. Keep the design tight, technical, and appropriate for a browser extension popup." 
-
+"Design a Chrome extension popup for a LeetCode spaced repetition tool. This is not a landing page or web app. The popup should be compact and utility-first. It must show: (1) the next recommended question to do right now, based on spaced repetition, with a shuffle action; and (2) the next question in the active course, where courses contain chapters. Each card should open the LeetCode page when clicked. The recommended question and the course-next question are separate UI elements and should both be visible. Include a small summary row and an optional footer action to open a larger dashboard. Keep the design tight, technical, and appropriate for a browser extension popup."

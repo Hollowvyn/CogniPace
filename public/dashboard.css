@@ -16,7 +16,12 @@
 
 body {
   margin: 0;
-  background: radial-gradient(circle at top, #0b1120 0%, #020617 45%, #0b1220 100%);
+  background: radial-gradient(
+    circle at top,
+    #0b1120 0%,
+    #020617 45%,
+    #0b1220 100%
+  );
   color: var(--text);
   font-family: "JetBrains Mono", "Fira Code", monospace;
 }
@@ -629,7 +634,9 @@ body {
   height: 18px;
   border-radius: 50%;
   background: #94a3b8;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
 }
 
 .toggle-input:checked + .toggle-track {

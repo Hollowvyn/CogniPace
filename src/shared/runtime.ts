@@ -12,7 +12,7 @@ export function sendMessage<T extends MessageType, R = unknown>(
 ): Promise<RuntimeResponse<R>> {
   const message: RuntimeMessage<T> = {
     type,
-    payload
+    payload,
   };
 
   return chrome.runtime.sendMessage(message) as Promise<RuntimeResponse<R>>;

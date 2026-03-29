@@ -4,20 +4,25 @@ import {
   State as FsrsState,
   createEmptyCard,
   fsrs,
-  generatorParameters
+  generatorParameters,
 } from "ts-fsrs";
 
-import { uniqueStrings } from "./utils";
 import {
   AttemptHistoryEntry,
   FsrsCardSnapshot,
   Rating,
   StudyPhase,
   StudyState,
-  StudyStateSummary
+  StudyStateSummary,
 } from "./types";
+import { uniqueStrings } from "./utils";
 
-type LegacyStudyStatus = "NEW" | "LEARNING" | "REVIEWING" | "MASTERED" | "SUSPENDED";
+type LegacyStudyStatus =
+  | "NEW"
+  | "LEARNING"
+  | "REVIEWING"
+  | "MASTERED"
+  | "SUSPENDED";
 
 export interface LegacyStudyStateInput extends Partial<StudyState> {
   status?: LegacyStudyStatus;
@@ -48,7 +53,11 @@ function difficultyFromEase(ease: number): number {
   return clamp(1 + ((3.05 - normalized) / 1.75) * 9, 1, 10);
 }
 
-function legacyStateFromStatus(status?: LegacyStudyStatus, lastRating?: Rating, reviewCount?: number): FsrsState {
+function legacyStateFromStatus(
+  status?: LegacyStudyStatus,
+  lastRating?: Rating,
+  reviewCount?: number
+): FsrsState {
   if (!reviewCount || reviewCount <= 0) {
     return FsrsState.New;
   }
@@ -74,7 +83,9 @@ function toFsrsState(state: FsrsCardSnapshot["state"]): FsrsState {
   }
 }
 
-function phaseFromFsrsState(state: FsrsState): Exclude<StudyPhase, "Suspended"> {
+function phaseFromFsrsState(
+  state: FsrsState
+): Exclude<StudyPhase, "Suspended"> {
   switch (state) {
     case FsrsState.Learning:
       return "Learning";
@@ -101,13 +112,21 @@ export function toFsrsRating(rating: Rating): FsrsGrade {
 }
 
 function daysBetween(later: Date, earlier: Date): number {
-  return Math.max(0, Math.round((later.getTime() - earlier.getTime()) / DAY_MS));
+  return Math.max(
+    0,
+    Math.round((later.getTime() - earlier.getTime()) / DAY_MS)
+  );
 }
 
-function bestTimeFromHistory(history: AttemptHistoryEntry[]): number | undefined {
+function bestTimeFromHistory(
+  history: AttemptHistoryEntry[]
+): number | undefined {
   const values = history
     .map((entry) => entry.solveTimeMs)
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0);
+    .filter(
+      (value): value is number =>
+        typeof value === "number" && Number.isFinite(value) && value > 0
+    );
 
   if (values.length === 0) {
     return undefined;
@@ -128,9 +147,13 @@ function normalizeAttemptHistory(history: unknown): AttemptHistoryEntry[] {
       }
 
       const candidate = entry as Partial<AttemptHistoryEntry>;
-      const reviewedAt = typeof candidate.reviewedAt === "string" ? candidate.reviewedAt : undefined;
+      const reviewedAt =
+        typeof candidate.reviewedAt === "string"
+          ? candidate.reviewedAt
+          : undefined;
       const reviewedAtDate = reviewedAt ? new Date(reviewedAt) : null;
-      const rating = typeof candidate.rating === "number" ? candidate.rating : undefined;
+      const rating =
+        typeof candidate.rating === "number" ? candidate.rating : undefined;
 
       if (
         !reviewedAt ||
@@ -147,17 +170,22 @@ function normalizeAttemptHistory(history: unknown): AttemptHistoryEntry[] {
         reviewedAt: reviewedAtDate.toISOString(),
         rating: rating as Rating,
         solveTimeMs:
-          typeof candidate.solveTimeMs === "number" && Number.isFinite(candidate.solveTimeMs)
+          typeof candidate.solveTimeMs === "number" &&
+          Number.isFinite(candidate.solveTimeMs)
             ? candidate.solveTimeMs
             : undefined,
         mode: candidate.mode === "RECALL" ? "RECALL" : "FULL_SOLVE",
-        notesSnapshot: typeof candidate.notesSnapshot === "string" ? candidate.notesSnapshot : undefined
+        notesSnapshot:
+          typeof candidate.notesSnapshot === "string"
+            ? candidate.notesSnapshot
+            : undefined,
       } as AttemptHistoryEntry;
     })
     .filter((entry): entry is AttemptHistoryEntry => entry !== null);
 
   return normalized.sort(
-    (left, right) => new Date(left.reviewedAt).getTime() - new Date(right.reviewedAt).getTime()
+    (left, right) =>
+      new Date(left.reviewedAt).getTime() - new Date(right.reviewedAt).getTime()
   );
 }
 
@@ -167,12 +195,16 @@ export function serializeFsrsCard(card: Card): FsrsCardSnapshot {
     stability: Number.isFinite(card.stability) ? card.stability : 0,
     difficulty: Number.isFinite(card.difficulty) ? card.difficulty : 5,
     elapsedDays: Number.isFinite(card.elapsed_days) ? card.elapsed_days : 0,
-    scheduledDays: Number.isFinite(card.scheduled_days) ? card.scheduled_days : 0,
-    learningSteps: Number.isFinite(card.learning_steps) ? card.learning_steps : 0,
+    scheduledDays: Number.isFinite(card.scheduled_days)
+      ? card.scheduled_days
+      : 0,
+    learningSteps: Number.isFinite(card.learning_steps)
+      ? card.learning_steps
+      : 0,
     reps: Number.isFinite(card.reps) ? card.reps : 0,
     lapses: Number.isFinite(card.lapses) ? card.lapses : 0,
     state: FsrsState[card.state] as FsrsCardSnapshot["state"],
-    lastReview: card.last_review?.toISOString()
+    lastReview: card.last_review?.toISOString(),
   };
 }
 
@@ -186,33 +218,49 @@ export function deserializeFsrsCard(snapshot?: FsrsCardSnapshot): Card | null {
     return null;
   }
 
-  const lastReview = snapshot.lastReview ? new Date(snapshot.lastReview) : undefined;
-  if (snapshot.lastReview && (!lastReview || Number.isNaN(lastReview.getTime()))) {
+  const lastReview = snapshot.lastReview
+    ? new Date(snapshot.lastReview)
+    : undefined;
+  if (
+    snapshot.lastReview &&
+    (!lastReview || Number.isNaN(lastReview.getTime()))
+  ) {
     return null;
   }
 
   return {
     due,
-    stability: Math.max(0.1, Number.isFinite(snapshot.stability) ? snapshot.stability : 0.1),
-    difficulty: clamp(Number.isFinite(snapshot.difficulty) ? snapshot.difficulty : 5, 1, 10),
+    stability: Math.max(
+      0.1,
+      Number.isFinite(snapshot.stability) ? snapshot.stability : 0.1
+    ),
+    difficulty: clamp(
+      Number.isFinite(snapshot.difficulty) ? snapshot.difficulty : 5,
+      1,
+      10
+    ),
     elapsed_days: Math.max(0, Math.round(snapshot.elapsedDays || 0)),
     scheduled_days: Math.max(0, Math.round(snapshot.scheduledDays || 0)),
     learning_steps: Math.max(0, Math.round(snapshot.learningSteps || 0)),
     reps: Math.max(0, Math.round(snapshot.reps || 0)),
     lapses: Math.max(0, Math.round(snapshot.lapses || 0)),
     state: toFsrsState(snapshot.state),
-    last_review: lastReview
+    last_review: lastReview,
   };
 }
 
-function rebuildFsrsCardFromHistory(history: AttemptHistoryEntry[]): Card | null {
+function rebuildFsrsCardFromHistory(
+  history: AttemptHistoryEntry[]
+): Card | null {
   if (history.length === 0) {
     return null;
   }
 
   let card = createEmptyCard(new Date(history[0].reviewedAt));
   for (const entry of history) {
-    card = scheduler.repeat(card, new Date(entry.reviewedAt))[toFsrsRating(entry.rating)].card;
+    card = scheduler.repeat(card, new Date(entry.reviewedAt))[
+      toFsrsRating(entry.rating)
+    ].card;
   }
 
   return card;
@@ -225,35 +273,48 @@ function hasLegacyScheduleData(state?: LegacyStudyStateInput): boolean {
 
   return Boolean(
     state.nextReviewAt ||
-      state.lastReviewedAt ||
-      state.reviewCount ||
-      state.intervalDays ||
-      state.status ||
-      state.lapses
+    state.lastReviewedAt ||
+    state.reviewCount ||
+    state.intervalDays ||
+    state.status ||
+    state.lapses
   );
 }
 
 function buildLegacyFsrsCard(state: LegacyStudyStateInput, now: string): Card {
-  const reviewDate = state.lastReviewedAt ? new Date(state.lastReviewedAt) : new Date(now);
-  const dueDate = state.nextReviewAt ? new Date(state.nextReviewAt) : new Date(now);
+  const reviewDate = state.lastReviewedAt
+    ? new Date(state.lastReviewedAt)
+    : new Date(now);
+  const dueDate = state.nextReviewAt
+    ? new Date(state.nextReviewAt)
+    : new Date(now);
 
   return {
     due: Number.isNaN(dueDate.getTime()) ? new Date(now) : dueDate,
     stability: Math.max(0.1, state.intervalDays || 0.1),
     difficulty: difficultyFromEase(
-      Number.isFinite(state.ease as number) ? (state.ease as number) : DEFAULT_EASE
+      Number.isFinite(state.ease as number)
+        ? (state.ease as number)
+        : DEFAULT_EASE
     ),
     elapsed_days: daysBetween(new Date(now), reviewDate),
     scheduled_days: Math.max(0, Math.round(state.intervalDays || 0)),
     learning_steps: state.status === "LEARNING" ? 1 : 0,
     reps: Math.max(0, Math.round(state.reviewCount || 0)),
     lapses: Math.max(0, Math.round(state.lapses || 0)),
-    state: legacyStateFromStatus(state.status, state.lastRating, state.reviewCount),
-    last_review: Number.isNaN(reviewDate.getTime()) ? undefined : reviewDate
+    state: legacyStateFromStatus(
+      state.status,
+      state.lastRating,
+      state.reviewCount
+    ),
+    last_review: Number.isNaN(reviewDate.getTime()) ? undefined : reviewDate,
   };
 }
 
-function latestReviewedAt(history: AttemptHistoryEntry[], fallback?: string): string | undefined {
+function latestReviewedAt(
+  history: AttemptHistoryEntry[],
+  fallback?: string
+): string | undefined {
   const latest = history[history.length - 1]?.reviewedAt;
   if (latest) {
     return latest;
@@ -267,13 +328,18 @@ function latestReviewedAt(history: AttemptHistoryEntry[], fallback?: string): st
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
-export function normalizeStudyState(input?: LegacyStudyStateInput, now = new Date().toISOString()): StudyState {
+export function normalizeStudyState(
+  input?: LegacyStudyStateInput,
+  now = new Date().toISOString()
+): StudyState {
   const attemptHistory = normalizeAttemptHistory(input?.attemptHistory);
   const normalizedFsrsCard =
     attemptHistory.length > 0
       ? rebuildFsrsCardFromHistory(attemptHistory)
-      : deserializeFsrsCard(input?.fsrsCard) ??
-        (hasLegacyScheduleData(input) ? buildLegacyFsrsCard(input ?? {}, now) : null);
+      : (deserializeFsrsCard(input?.fsrsCard) ??
+        (hasLegacyScheduleData(input)
+          ? buildLegacyFsrsCard(input ?? {}, now)
+          : null));
 
   return {
     suspended: input?.suspended === true || input?.status === "SUSPENDED",
@@ -282,7 +348,8 @@ export function normalizeStudyState(input?: LegacyStudyStateInput, now = new Dat
         ? input.bestTimeMs
         : bestTimeFromHistory(attemptHistory),
     lastSolveTimeMs:
-      typeof input?.lastSolveTimeMs === "number" && Number.isFinite(input.lastSolveTimeMs)
+      typeof input?.lastSolveTimeMs === "number" &&
+      Number.isFinite(input.lastSolveTimeMs)
         ? input.lastSolveTimeMs
         : attemptHistory[attemptHistory.length - 1]?.solveTimeMs,
     lastRating:
@@ -296,16 +363,25 @@ export function normalizeStudyState(input?: LegacyStudyStateInput, now = new Dat
     notes: typeof input?.notes === "string" ? input.notes : undefined,
     tags: uniqueStrings(Array.isArray(input?.tags) ? input!.tags : []),
     attemptHistory,
-    fsrsCard: normalizedFsrsCard ? serializeFsrsCard(normalizedFsrsCard) : undefined
+    fsrsCard: normalizedFsrsCard
+      ? serializeFsrsCard(normalizedFsrsCard)
+      : undefined,
   };
 }
 
-export function getFsrsCard(state: LegacyStudyStateInput | undefined, now = new Date().toISOString()): Card {
+export function getFsrsCard(
+  state: LegacyStudyStateInput | undefined,
+  now = new Date().toISOString()
+): Card {
   const normalized = normalizeStudyState(state, now);
-  return deserializeFsrsCard(normalized.fsrsCard) ?? createEmptyCard(new Date(now));
+  return (
+    deserializeFsrsCard(normalized.fsrsCard) ?? createEmptyCard(new Date(now))
+  );
 }
 
-export function getLastReviewedAt(state?: StudyState | null): string | undefined {
+export function getLastReviewedAt(
+  state?: StudyState | null
+): string | undefined {
   if (!state) {
     return undefined;
   }
@@ -326,23 +402,36 @@ export function getStudyStateSummary(
       isStarted: false,
       isDue: false,
       isOverdue: false,
-      overdueDays: 0
+      overdueDays: 0,
     };
   }
 
   const card = deserializeFsrsCard(state.fsrsCard);
   const nextReviewAt = card?.due.toISOString();
   const reviewCount = card?.reps ?? 0;
-  const lastReviewedAt = latestReviewedAt(state.attemptHistory, card?.last_review?.toISOString());
-  const lapses = card?.lapses ?? state.attemptHistory.filter((entry) => entry.rating === 0).length;
+  const lastReviewedAt = latestReviewedAt(
+    state.attemptHistory,
+    card?.last_review?.toISOString()
+  );
+  const lapses =
+    card?.lapses ??
+    state.attemptHistory.filter((entry) => entry.rating === 0).length;
   const nowMs = now.getTime();
-  const dueMs = nextReviewAt ? new Date(nextReviewAt).getTime() : Number.POSITIVE_INFINITY;
+  const dueMs = nextReviewAt
+    ? new Date(nextReviewAt).getTime()
+    : Number.POSITIVE_INFINITY;
   const isStarted = reviewCount > 0 || Boolean(lastReviewedAt);
   const isDue = !state.suspended && isStarted && dueMs <= nowMs;
-  const overdueDays = isDue ? Math.max(0, Math.floor((nowMs - dueMs) / DAY_MS)) : 0;
+  const overdueDays = isDue
+    ? Math.max(0, Math.floor((nowMs - dueMs) / DAY_MS))
+    : 0;
 
   return {
-    phase: state.suspended ? "Suspended" : card ? phaseFromFsrsState(card.state) : "New",
+    phase: state.suspended
+      ? "Suspended"
+      : card
+        ? phaseFromFsrsState(card.state)
+        : "New",
     nextReviewAt,
     lastReviewedAt,
     reviewCount,
@@ -354,7 +443,7 @@ export function getStudyStateSummary(
     isStarted,
     isDue,
     isOverdue: overdueDays > 0,
-    overdueDays
+    overdueDays,
   };
 }
 

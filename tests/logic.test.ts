@@ -1,16 +1,26 @@
 import assert from "node:assert/strict";
 
-import { createDefaultStudyState, DEFAULT_SETTINGS } from "../src/shared/constants";
+import {
+  createDefaultStudyState,
+  DEFAULT_SETTINGS,
+} from "../src/shared/constants";
+import {
+  buildActiveCourseView,
+  syncCourseProgress,
+} from "../src/shared/courses";
 import { listStudyPlans } from "../src/shared/curatedSets";
-import { buildActiveCourseView, syncCourseProgress } from "../src/shared/courses";
 import { buildTodayQueue } from "../src/shared/queue";
 import { buildRecommendedCandidates } from "../src/shared/recommendations";
 import { applyReview } from "../src/shared/scheduler";
-import { getStudyStateSummary } from "../src/shared/studyState";
 import { normalizeStoredAppData } from "../src/shared/storage";
+import { getStudyStateSummary } from "../src/shared/studyState";
 import { Problem, StudyState } from "../src/shared/types";
 
-function makeProblem(slug: string, title: string, difficulty: Problem["difficulty"] = "Medium"): Problem {
+function makeProblem(
+  slug: string,
+  title: string,
+  difficulty: Problem["difficulty"] = "Medium"
+): Problem {
   return {
     id: slug,
     leetcodeSlug: slug,
@@ -20,7 +30,7 @@ function makeProblem(slug: string, title: string, difficulty: Problem["difficult
     topics: [],
     sourceSet: ["Blind75"],
     createdAt: "2026-03-01T00:00:00.000Z",
-    updatedAt: "2026-03-01T00:00:00.000Z"
+    updatedAt: "2026-03-01T00:00:00.000Z",
   };
 }
 
@@ -32,8 +42,8 @@ function makeScheduledState(nextReviewAt: string): StudyState {
       {
         reviewedAt: "2026-03-10T00:00:00.000Z",
         rating: 2,
-        mode: "FULL_SOLVE"
-      }
+        mode: "FULL_SOLVE",
+      },
     ],
     fsrsCard: {
       due: nextReviewAt,
@@ -45,12 +55,15 @@ function makeScheduledState(nextReviewAt: string): StudyState {
       reps: 1,
       lapses: 0,
       state: "Review",
-      lastReview: "2026-03-10T00:00:00.000Z"
-    }
+      lastReview: "2026-03-10T00:00:00.000Z",
+    },
   };
 }
 
-function makeLegacyReviewedFixture(nextReviewAt: string, withHistory = true): StudyState {
+function makeLegacyReviewedFixture(
+  nextReviewAt: string,
+  withHistory = true
+): StudyState {
   return {
     ...createDefaultStudyState(),
     attemptHistory: withHistory
@@ -58,8 +71,8 @@ function makeLegacyReviewedFixture(nextReviewAt: string, withHistory = true): St
           {
             reviewedAt: "2026-03-10T00:00:00.000Z",
             rating: 2,
-            mode: "FULL_SOLVE"
-          }
+            mode: "FULL_SOLVE",
+          },
         ]
       : [],
     lastRating: 2,
@@ -67,22 +80,22 @@ function makeLegacyReviewedFixture(nextReviewAt: string, withHistory = true): St
     reviewCount: 1,
     lastReviewedAt: "2026-03-10T00:00:00.000Z",
     nextReviewAt,
-    intervalDays: 4
+    intervalDays: 4,
   } as unknown as StudyState;
 }
 
 function testLegacyStorageMigrationRebuildsHistoryIntoFsrsCard(): void {
   const migrated = normalizeStoredAppData({
     problemsBySlug: {
-      "two-sum": makeProblem("two-sum", "Two Sum", "Easy")
+      "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
     },
     studyStatesBySlug: {
-      "two-sum": makeLegacyReviewedFixture("2026-03-12T00:00:00.000Z", true)
+      "two-sum": makeLegacyReviewedFixture("2026-03-12T00:00:00.000Z", true),
     },
     settings: {
       activeCourseId: "Blind75",
-      dailyNewLimit: 5
-    }
+      dailyNewLimit: 5,
+    },
   });
 
   assert.equal(migrated.settings.activeCourseId, "Blind75");
@@ -101,9 +114,9 @@ function testStorageMigrationPreservesExistingFsrsCardWithoutHistory(): void {
     studyStatesBySlug: {
       "two-sum": {
         ...scheduled,
-        attemptHistory: []
-      }
-    }
+        attemptHistory: [],
+      },
+    },
   });
 
   const summary = getStudyStateSummary(migrated.studyStatesBySlug["two-sum"]);
@@ -114,8 +127,8 @@ function testStorageMigrationPreservesExistingFsrsCardWithoutHistory(): void {
 function testLegacyFallbackConvertsWithoutHistory(): void {
   const migrated = normalizeStoredAppData({
     studyStatesBySlug: {
-      "two-sum": makeLegacyReviewedFixture("2026-03-12T00:00:00.000Z", false)
-    }
+      "two-sum": makeLegacyReviewedFixture("2026-03-12T00:00:00.000Z", false),
+    },
   });
 
   const summary = getStudyStateSummary(migrated.studyStatesBySlug["two-sum"]);
@@ -126,8 +139,8 @@ function testLegacyFallbackConvertsWithoutHistory(): void {
 function testCourseProgressionSelection(): void {
   const data = normalizeStoredAppData({
     settings: {
-      activeCourseId: "Blind75"
-    }
+      activeCourseId: "Blind75",
+    },
   });
 
   data.problemsBySlug["two-sum"] = makeProblem("two-sum", "Two Sum", "Easy");
@@ -136,8 +149,11 @@ function testCourseProgressionSelection(): void {
     "Best Time To Buy And Sell Stock",
     "Easy"
   );
-  data.studyStatesBySlug["two-sum"] = makeScheduledState("2026-03-11T00:00:00.000Z");
-  data.studyStatesBySlug["best-time-to-buy-and-sell-stock"] = makeScheduledState("2026-03-14T00:00:00.000Z");
+  data.studyStatesBySlug["two-sum"] = makeScheduledState(
+    "2026-03-11T00:00:00.000Z"
+  );
+  data.studyStatesBySlug["best-time-to-buy-and-sell-stock"] =
+    makeScheduledState("2026-03-14T00:00:00.000Z");
 
   syncCourseProgress(data, "2026-03-15T00:00:00.000Z");
   const active = buildActiveCourseView(data, "Blind75");
@@ -150,8 +166,8 @@ function testCourseProgressionSelection(): void {
 function testRecommendedAndCourseNextStaySeparate(): void {
   const data = normalizeStoredAppData({
     settings: {
-      activeCourseId: "Blind75"
-    }
+      activeCourseId: "Blind75",
+    },
   });
 
   data.problemsBySlug["two-sum"] = makeProblem("two-sum", "Two Sum", "Easy");
@@ -160,16 +176,18 @@ function testRecommendedAndCourseNextStaySeparate(): void {
     "Best Time To Buy And Sell Stock",
     "Easy"
   );
-  data.studyStatesBySlug["two-sum"] = makeScheduledState("2026-03-01T00:00:00.000Z");
-  data.studyStatesBySlug["best-time-to-buy-and-sell-stock"] = makeScheduledState("2026-04-01T00:00:00.000Z");
+  data.studyStatesBySlug["two-sum"] = makeScheduledState(
+    "2026-03-01T00:00:00.000Z"
+  );
+  data.studyStatesBySlug["best-time-to-buy-and-sell-stock"] =
+    makeScheduledState("2026-04-01T00:00:00.000Z");
 
   syncCourseProgress(data, "2026-03-15T00:00:00.000Z");
   const queue = buildTodayQueue(data, new Date("2026-03-15T00:00:00.000Z"));
   const active = buildActiveCourseView(data, "Blind75");
   const recommended = buildRecommendedCandidates(
     queue,
-    active?.nextQuestion?.slug,
-    new Date("2026-03-15T00:00:00.000Z").getTime()
+    active?.nextQuestion?.slug
   );
 
   assert.ok(active?.nextQuestion);
@@ -201,10 +219,13 @@ function testFsrsReviewUsesExactIntervals(): void {
     rating: 2,
     difficulty: "Medium",
     settings: DEFAULT_SETTINGS,
-    now: "2026-03-01T15:00:00.000Z"
+    now: "2026-03-01T15:00:00.000Z",
   });
 
-  const summary = getStudyStateSummary(reviewed, new Date("2026-03-01T15:00:00.000Z"));
+  const summary = getStudyStateSummary(
+    reviewed,
+    new Date("2026-03-01T15:00:00.000Z")
+  );
   assert.equal(summary.reviewCount, 1);
   assert.equal(summary.phase, "Review");
   assert.equal(summary.nextReviewAt, "2026-03-04T15:00:00.000Z");
@@ -216,7 +237,7 @@ function testEarlyRepeatFollowsRawFsrsOutput(): void {
     rating: 2,
     difficulty: "Medium",
     settings: DEFAULT_SETTINGS,
-    now: "2026-03-25T15:00:00.000Z"
+    now: "2026-03-25T15:00:00.000Z",
   });
 
   const second = applyReview({
@@ -224,7 +245,7 @@ function testEarlyRepeatFollowsRawFsrsOutput(): void {
     rating: 2,
     difficulty: "Medium",
     settings: DEFAULT_SETTINGS,
-    now: "2026-03-25T18:00:00.000Z"
+    now: "2026-03-25T18:00:00.000Z",
   });
 
   const firstDue = new Date(getStudyStateSummary(first).nextReviewAt!);

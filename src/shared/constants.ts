@@ -6,7 +6,14 @@ export const CURRENT_STORAGE_SCHEMA_VERSION = STORAGE_SCHEMA_VERSION;
 
 export const DEFAULT_COURSE_ID = "Blind75";
 
-export const BUILT_IN_SETS = ["Blind75", "ByteByteGo101", "NeetCode150", "NeetCode250", "Grind75", "LeetCode75"];
+export const BUILT_IN_SETS = [
+  "Blind75",
+  "ByteByteGo101",
+  "NeetCode150",
+  "NeetCode250",
+  "Grind75",
+  "LeetCode75",
+];
 
 export const DEFAULT_SETTINGS: UserSettings = {
   dailyNewLimit: 3,
@@ -22,21 +29,21 @@ export const DEFAULT_SETTINGS: UserSettings = {
     Grind75: true,
     LeetCode75: true,
     LeetCode150: true,
-    Custom: true
+    Custom: true,
   },
   requireSolveTime: false,
   autoDetectSolved: false,
   notifications: false,
   quietHours: {
     startHour: 22,
-    endHour: 8
-  }
+    endHour: 8,
+  },
 };
 
 export function createDefaultStudyState(): StudyState {
   return {
     suspended: false,
     tags: [],
-    attemptHistory: []
+    attemptHistory: [],
   };
 }

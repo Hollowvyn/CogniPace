@@ -16,9 +16,15 @@ import {
   CourseQuestionView,
   LibraryCourseReference,
   Problem,
-  StudyState
+  StudyState,
 } from "./types";
-import { normalizeSlug, nowIso, slugToTitle, slugToUrl, uniqueStrings } from "./utils";
+import {
+  normalizeSlug,
+  nowIso,
+  slugToTitle,
+  slugToUrl,
+  uniqueStrings,
+} from "./utils";
 
 function slugifySegment(value: string): string {
   return value
@@ -46,14 +52,19 @@ function createChapterProgress(chapter: CourseChapter): CourseChapterProgress {
   return {
     chapterId: chapter.id,
     currentQuestionSlug: chapter.questionSlugs[0],
-    questionProgressBySlug
+    questionProgressBySlug,
   };
 }
 
-function createCourseProgress(course: CourseDefinition, now: string): CourseProgress {
+function createCourseProgress(
+  course: CourseDefinition,
+  now: string
+): CourseProgress {
   const chapterProgressById: Record<string, CourseChapterProgress> = {};
   for (const chapterIdValue of course.chapterIds) {
-    chapterProgressById[chapterIdValue] = createChapterProgress(course.chaptersById[chapterIdValue]);
+    chapterProgressById[chapterIdValue] = createChapterProgress(
+      course.chaptersById[chapterIdValue]
+    );
   }
 
   return {
@@ -61,7 +72,7 @@ function createCourseProgress(course: CourseDefinition, now: string): CourseProg
     activeChapterId: course.chapterIds[0] ?? "",
     startedAt: now,
     lastInteractedAt: now,
-    chapterProgressById
+    chapterProgressById,
   };
 }
 
@@ -87,7 +98,7 @@ function buildCuratedCourseDefinition(
       difficulty: step.difficulty,
       chapterId: "",
       chapterTitle: step.topic,
-      order: current.length - 1
+      order: current.length - 1,
     };
   }
 
@@ -98,7 +109,7 @@ function buildCuratedCourseDefinition(
       id,
       title,
       order,
-      questionSlugs
+      questionSlugs,
     };
 
     questionSlugs.forEach((slug, index) => {
@@ -106,7 +117,7 @@ function buildCuratedCourseDefinition(
         ...questionRefsBySlug[slug],
         chapterId: id,
         chapterTitle: title,
-        order: index
+        order: index,
       };
     });
   });
@@ -120,7 +131,7 @@ function buildCuratedCourseDefinition(
     chaptersById,
     questionRefsBySlug,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   };
 }
 
@@ -157,12 +168,15 @@ function mergeCourseDefinition(
     const curatedChapter = curated.chaptersById[chapterIdValue];
     const existingChapter = existing.chaptersById[chapterIdValue];
     const questionSlugs = existingChapter
-      ? uniqueStrings([...curatedChapter.questionSlugs, ...existingChapter.questionSlugs])
+      ? uniqueStrings([
+          ...curatedChapter.questionSlugs,
+          ...existingChapter.questionSlugs,
+        ])
       : curatedChapter.questionSlugs;
 
     mergedChaptersById[chapterIdValue] = {
       ...curatedChapter,
-      questionSlugs
+      questionSlugs,
     };
   }
 
@@ -187,7 +201,7 @@ function mergeCourseDefinition(
     chaptersById: mergedChaptersById,
     questionRefsBySlug: mergedQuestionRefsBySlug,
     createdAt: existing.createdAt || curated.createdAt,
-    updatedAt: now
+    updatedAt: now,
   };
 }
 
@@ -199,10 +213,15 @@ function isDue(state?: StudyState | null): boolean {
   return getStudyStateSummary(state).isDue;
 }
 
-function firstIncompleteChapterId(data: AppData, course: CourseDefinition): string | null {
+function firstIncompleteChapterId(
+  data: AppData,
+  course: CourseDefinition
+): string | null {
   for (const chapterIdValue of course.chapterIds) {
     const chapter = course.chaptersById[chapterIdValue];
-    const complete = chapter.questionSlugs.every((slug) => isStarted(data.studyStatesBySlug[slug]));
+    const complete = chapter.questionSlugs.every((slug) =>
+      isStarted(data.studyStatesBySlug[slug])
+    );
     if (!complete) {
       return chapterIdValue;
     }
@@ -210,8 +229,13 @@ function firstIncompleteChapterId(data: AppData, course: CourseDefinition): stri
   return course.chapterIds[course.chapterIds.length - 1] ?? null;
 }
 
-function findCurrentQuestionSlug(data: AppData, chapter: CourseChapter): string | null {
-  const current = chapter.questionSlugs.find((slug) => !isStarted(data.studyStatesBySlug[slug]));
+function findCurrentQuestionSlug(
+  data: AppData,
+  chapter: CourseChapter
+): string | null {
+  const current = chapter.questionSlugs.find(
+    (slug) => !isStarted(data.studyStatesBySlug[slug])
+  );
   return current ?? null;
 }
 
@@ -244,7 +268,10 @@ function courseQuestionStatus(
   return "LOCKED";
 }
 
-function libraryReference(course: CourseDefinition, slug: string): LibraryCourseReference | null {
+function libraryReference(
+  course: CourseDefinition,
+  slug: string
+): LibraryCourseReference | null {
   const ref = course.questionRefsBySlug[slug];
   if (!ref) {
     return null;
@@ -254,7 +281,7 @@ function libraryReference(course: CourseDefinition, slug: string): LibraryCourse
     courseId: course.id,
     courseName: course.name,
     chapterId: ref.chapterId,
-    chapterTitle: ref.chapterTitle
+    chapterTitle: ref.chapterTitle,
   };
 }
 
@@ -278,7 +305,10 @@ export function ensureCourseData(data: AppData, now = nowIso()): void {
   }
 
   data.coursesById = mergedCoursesById;
-  data.courseOrder = uniqueStrings([...curated.courseOrder, ...data.courseOrder]);
+  data.courseOrder = uniqueStrings([
+    ...curated.courseOrder,
+    ...data.courseOrder,
+  ]);
 
   for (const courseIdValue of data.courseOrder) {
     const course = data.coursesById[courseIdValue];
@@ -286,15 +316,19 @@ export function ensureCourseData(data: AppData, now = nowIso()): void {
       continue;
     }
 
-    const existing = data.courseProgressById[courseIdValue] ?? createCourseProgress(course, now);
+    const existing =
+      data.courseProgressById[courseIdValue] ??
+      createCourseProgress(course, now);
     for (const chapterIdValue of course.chapterIds) {
       const chapter = course.chaptersById[chapterIdValue];
       const chapterProgress =
-        existing.chapterProgressById[chapterIdValue] ?? createChapterProgress(chapter);
+        existing.chapterProgressById[chapterIdValue] ??
+        createChapterProgress(chapter);
 
       for (const slug of chapter.questionSlugs) {
         chapterProgress.questionProgressBySlug[slug] =
-          chapterProgress.questionProgressBySlug[slug] ?? createQuestionProgress(slug);
+          chapterProgress.questionProgressBySlug[slug] ??
+          createQuestionProgress(slug);
       }
 
       existing.chapterProgressById[chapterIdValue] = chapterProgress;
@@ -303,7 +337,10 @@ export function ensureCourseData(data: AppData, now = nowIso()): void {
     data.courseProgressById[courseIdValue] = existing;
   }
 
-  if (!data.settings.activeCourseId || !data.coursesById[data.settings.activeCourseId]) {
+  if (
+    !data.settings.activeCourseId ||
+    !data.coursesById[data.settings.activeCourseId]
+  ) {
     data.settings.activeCourseId = data.courseOrder[0] ?? DEFAULT_COURSE_ID;
   }
 
@@ -317,21 +354,27 @@ export function syncCourseProgress(data: AppData, now = nowIso()): void {
       continue;
     }
 
-    const progress = data.courseProgressById[courseIdValue] ?? createCourseProgress(course, now);
+    const progress =
+      data.courseProgressById[courseIdValue] ??
+      createCourseProgress(course, now);
     const firstIncomplete = firstIncompleteChapterId(data, course);
 
     for (const chapterIdValue of course.chapterIds) {
       const chapter = course.chaptersById[chapterIdValue];
       const chapterProgress =
-        progress.chapterProgressById[chapterIdValue] ?? createChapterProgress(chapter);
+        progress.chapterProgressById[chapterIdValue] ??
+        createChapterProgress(chapter);
       const currentQuestionSlug = findCurrentQuestionSlug(data, chapter);
 
-      chapterProgress.currentQuestionSlug = currentQuestionSlug ?? chapter.questionSlugs[chapter.questionSlugs.length - 1];
+      chapterProgress.currentQuestionSlug =
+        currentQuestionSlug ??
+        chapter.questionSlugs[chapter.questionSlugs.length - 1];
 
       let chapterComplete = true;
       for (const slug of chapter.questionSlugs) {
         const questionProgress =
-          chapterProgress.questionProgressBySlug[slug] ?? createQuestionProgress(slug);
+          chapterProgress.questionProgressBySlug[slug] ??
+          createQuestionProgress(slug);
         const state = data.studyStatesBySlug[slug];
         const problem = data.problemsBySlug[slug];
 
@@ -345,7 +388,8 @@ export function syncCourseProgress(data: AppData, now = nowIso()): void {
         }
 
         if (isStarted(state)) {
-          questionProgress.completedAt = questionProgress.completedAt ?? lastReviewedAt ?? now;
+          questionProgress.completedAt =
+            questionProgress.completedAt ?? lastReviewedAt ?? now;
         } else {
           chapterComplete = false;
           delete questionProgress.completedAt;
@@ -363,14 +407,19 @@ export function syncCourseProgress(data: AppData, now = nowIso()): void {
       progress.chapterProgressById[chapterIdValue] = chapterProgress;
     }
 
-    progress.activeChapterId = firstIncomplete ?? course.chapterIds[0] ?? progress.activeChapterId;
+    progress.activeChapterId =
+      firstIncomplete ?? course.chapterIds[0] ?? progress.activeChapterId;
     progress.lastInteractedAt = progress.lastInteractedAt || now;
     progress.startedAt = progress.startedAt || now;
     data.courseProgressById[courseIdValue] = progress;
   }
 }
 
-export function setActiveCourse(data: AppData, courseId: string, now = nowIso()): void {
+export function setActiveCourse(
+  data: AppData,
+  courseId: string,
+  now = nowIso()
+): void {
   if (!data.coursesById[courseId]) {
     return;
   }
@@ -393,7 +442,8 @@ export function setActiveCourseChapter(
     return;
   }
 
-  const progress = data.courseProgressById[courseId] ?? createCourseProgress(course, now);
+  const progress =
+    data.courseProgressById[courseId] ?? createCourseProgress(course, now);
   progress.activeChapterId = chapterIdValue;
   progress.lastInteractedAt = now;
   data.courseProgressById[courseId] = progress;
@@ -426,14 +476,16 @@ export function markCourseQuestionLaunched(
 
     const progress = data.courseProgressById[currentCourseId];
     const chapterProgress = progress?.chapterProgressById[ref.chapterId];
-    const questionProgress = chapterProgress?.questionProgressBySlug[normalized];
+    const questionProgress =
+      chapterProgress?.questionProgressBySlug[normalized];
     if (!progress || !chapterProgress || !questionProgress) {
       continue;
     }
 
     questionProgress.lastOpenedAt = now;
     if (data.problemsBySlug[normalized] && !questionProgress.addedToLibraryAt) {
-      questionProgress.addedToLibraryAt = data.problemsBySlug[normalized].createdAt || now;
+      questionProgress.addedToLibraryAt =
+        data.problemsBySlug[normalized].createdAt || now;
     }
     progress.lastInteractedAt = now;
   }
@@ -462,7 +514,7 @@ export function ensureProblemInCourse(
     difficulty: problem.difficulty,
     chapterId: chapterIdValue,
     chapterTitle: chapter.title,
-    order: chapter.questionSlugs.indexOf(normalized)
+    order: chapter.questionSlugs.indexOf(normalized),
   };
   course.updatedAt = now;
 }
@@ -485,7 +537,9 @@ export function buildCourseCards(data: AppData): CourseCardView[] {
 
     for (const chapterIdValue of course.chapterIds) {
       const chapter = course.chaptersById[chapterIdValue];
-      const chapterComplete = chapter.questionSlugs.every((slug) => isStarted(data.studyStatesBySlug[slug]));
+      const chapterComplete = chapter.questionSlugs.every((slug) =>
+        isStarted(data.studyStatesBySlug[slug])
+      );
       if (chapterComplete) {
         completedChapters += 1;
       }
@@ -495,7 +549,8 @@ export function buildCourseCards(data: AppData): CourseCardView[] {
         if (isStarted(data.studyStatesBySlug[slug])) {
           completedQuestions += 1;
         } else if (!nextQuestionTitle) {
-          nextQuestionTitle = course.questionRefsBySlug[slug]?.title ?? slugToTitle(slug);
+          nextQuestionTitle =
+            course.questionRefsBySlug[slug]?.title ?? slugToTitle(slug);
           nextChapterTitle = chapter.title;
         }
 
@@ -513,19 +568,25 @@ export function buildCourseCards(data: AppData): CourseCardView[] {
       active: data.settings.activeCourseId === course.id,
       totalQuestions,
       completedQuestions,
-      completionPercent: totalQuestions === 0 ? 0 : Math.round((completedQuestions / totalQuestions) * 100),
+      completionPercent:
+        totalQuestions === 0
+          ? 0
+          : Math.round((completedQuestions / totalQuestions) * 100),
       dueCount,
       totalChapters: course.chapterIds.length,
       completedChapters,
       nextQuestionTitle,
-      nextChapterTitle
+      nextChapterTitle,
     });
   }
 
   return cards;
 }
 
-export function buildActiveCourseView(data: AppData, courseId = data.settings.activeCourseId): ActiveCourseView | null {
+export function buildActiveCourseView(
+  data: AppData,
+  courseId = data.settings.activeCourseId
+): ActiveCourseView | null {
   const course = data.coursesById[courseId];
   if (!course) {
     return null;
@@ -534,56 +595,67 @@ export function buildActiveCourseView(data: AppData, courseId = data.settings.ac
   const card = buildCourseCards(data).find((entry) => entry.id === courseId);
   const firstIncomplete = firstIncompleteChapterId(data, course);
   const activeChapterIdValue = firstIncomplete ?? course.chapterIds[0] ?? null;
-  const activeChapterTitle = activeChapterIdValue ? course.chaptersById[activeChapterIdValue]?.title ?? null : null;
+  const activeChapterTitle = activeChapterIdValue
+    ? (course.chaptersById[activeChapterIdValue]?.title ?? null)
+    : null;
 
   let nextQuestion: CourseQuestionView | null = null;
-  const chapters: CourseChapterView[] = course.chapterIds.map((chapterIdValue) => {
-    const chapter = course.chaptersById[chapterIdValue];
-    const completedQuestions = chapter.questionSlugs.filter((slug) => isStarted(data.studyStatesBySlug[slug])).length;
-    const status: CourseChapterView["status"] =
-      completedQuestions === chapter.questionSlugs.length
-        ? "COMPLETE"
-        : chapterIdValue === activeChapterIdValue
-          ? "CURRENT"
-          : "UPCOMING";
+  const chapters: CourseChapterView[] = course.chapterIds.map(
+    (chapterIdValue) => {
+      const chapter = course.chaptersById[chapterIdValue];
+      const completedQuestions = chapter.questionSlugs.filter((slug) =>
+        isStarted(data.studyStatesBySlug[slug])
+      ).length;
+      const status: CourseChapterView["status"] =
+        completedQuestions === chapter.questionSlugs.length
+          ? "COMPLETE"
+          : chapterIdValue === activeChapterIdValue
+            ? "CURRENT"
+            : "UPCOMING";
 
-    const questions = chapter.questionSlugs.map((slug) => {
-      const problem = data.problemsBySlug[slug];
-      const ref = course.questionRefsBySlug[slug];
-      const state = data.studyStatesBySlug[slug];
-      const studyStateSummary = getStudyStateSummary(state);
-      const questionStatus = courseQuestionStatus(data, chapter, slug, status);
-      const view: CourseQuestionView = {
-        slug,
-        title: ref?.title || problem?.title || slugToTitle(slug),
-        url: problem?.url || ref?.url || slugToUrl(slug),
-        difficulty: problem?.difficulty || ref?.difficulty || "Unknown",
-        chapterId: chapterIdValue,
-        chapterTitle: chapter.title,
-        status: questionStatus,
-        reviewPhase: studyStateSummary.phase,
-        nextReviewAt: studyStateSummary.nextReviewAt,
-        inLibrary: Boolean(problem),
-        isCurrent: questionStatus === "CURRENT" || questionStatus === "READY"
+      const questions = chapter.questionSlugs.map((slug) => {
+        const problem = data.problemsBySlug[slug];
+        const ref = course.questionRefsBySlug[slug];
+        const state = data.studyStatesBySlug[slug];
+        const studyStateSummary = getStudyStateSummary(state);
+        const questionStatus = courseQuestionStatus(
+          data,
+          chapter,
+          slug,
+          status
+        );
+        const view: CourseQuestionView = {
+          slug,
+          title: ref?.title || problem?.title || slugToTitle(slug),
+          url: problem?.url || ref?.url || slugToUrl(slug),
+          difficulty: problem?.difficulty || ref?.difficulty || "Unknown",
+          chapterId: chapterIdValue,
+          chapterTitle: chapter.title,
+          status: questionStatus,
+          reviewPhase: studyStateSummary.phase,
+          nextReviewAt: studyStateSummary.nextReviewAt,
+          inLibrary: Boolean(problem),
+          isCurrent: questionStatus === "CURRENT" || questionStatus === "READY",
+        };
+
+        if (!nextQuestion && view.isCurrent) {
+          nextQuestion = view;
+        }
+
+        return view;
+      });
+
+      return {
+        id: chapterIdValue,
+        title: chapter.title,
+        order: chapter.order,
+        status,
+        totalQuestions: chapter.questionSlugs.length,
+        completedQuestions,
+        questions,
       };
-
-      if (!nextQuestion && view.isCurrent) {
-        nextQuestion = view;
-      }
-
-      return view;
-    });
-
-    return {
-      id: chapterIdValue,
-      title: chapter.title,
-      order: chapter.order,
-      status,
-      totalQuestions: chapter.questionSlugs.length,
-      completedQuestions,
-      questions
-    };
-  });
+    }
+  );
 
   return {
     ...(card ?? {
@@ -597,12 +669,12 @@ export function buildActiveCourseView(data: AppData, courseId = data.settings.ac
       completionPercent: 0,
       dueCount: 0,
       totalChapters: course.chapterIds.length,
-      completedChapters: 0
+      completedChapters: 0,
     }),
     activeChapterId: activeChapterIdValue,
     activeChapterTitle,
     nextQuestion,
-    chapters
+    chapters,
   };
 }
 
@@ -619,14 +691,17 @@ export function buildCourseOptions(data: AppData): CourseOption[] {
         name: course.name,
         chapterOptions: course.chapterIds.map((chapterIdValue) => ({
           id: chapterIdValue,
-          title: course.chaptersById[chapterIdValue]?.title ?? "Chapter"
-        }))
+          title: course.chaptersById[chapterIdValue]?.title ?? "Chapter",
+        })),
       } satisfies CourseOption;
     })
     .filter((option): option is CourseOption => Boolean(option));
 }
 
-export function getCourseMemberships(data: AppData, slug: string): LibraryCourseReference[] {
+export function getCourseMemberships(
+  data: AppData,
+  slug: string
+): LibraryCourseReference[] {
   const normalized = normalizeSlug(slug);
   if (!normalized) {
     return [];

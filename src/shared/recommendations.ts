@@ -2,14 +2,20 @@ import { RecommendedProblemView, TodayQueue } from "./types";
 
 export function buildRecommendedCandidates(
   queue: TodayQueue,
-  activeCourseNextSlug?: string | null,
-  nowMs = Date.now()
+  activeCourseNextSlug?: string | null
 ): RecommendedProblemView[] {
   const candidates = queue.items
-    .filter((item, index) => item.category === "due" || item.category === "reinforcement" || index === 0)
+    .filter(
+      (item, index) =>
+        item.category === "due" ||
+        item.category === "reinforcement" ||
+        index === 0
+    )
     .slice(0, 12)
     .map((item) => {
-      const overdueDays = item.studyStateSummary.isDue ? item.studyStateSummary.overdueDays : 0;
+      const overdueDays = item.studyStateSummary.isDue
+        ? item.studyStateSummary.overdueDays
+        : 0;
       const reason: RecommendedProblemView["reason"] =
         item.category === "due"
           ? overdueDays >= 1
@@ -25,7 +31,7 @@ export function buildRecommendedCandidates(
         reason,
         nextReviewAt: item.studyStateSummary.nextReviewAt,
         daysOverdue: overdueDays > 0 ? overdueDays : undefined,
-        alsoCourseNext: activeCourseNextSlug === item.slug
+        alsoCourseNext: activeCourseNextSlug === item.slug,
       } satisfies RecommendedProblemView;
     });
 

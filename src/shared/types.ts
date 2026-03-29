@@ -2,7 +2,12 @@ export const STORAGE_SCHEMA_VERSION = 3;
 
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
 
-export type StudyPhase = "New" | "Learning" | "Review" | "Relearning" | "Suspended";
+export type StudyPhase =
+  | "New"
+  | "Learning"
+  | "Review"
+  | "Relearning"
+  | "Suspended";
 
 export type ReviewOrder = "dueFirst" | "mixByDifficulty" | "weakestFirst";
 

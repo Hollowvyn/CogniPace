@@ -1,14 +1,19 @@
 import { sendMessage } from "./shared/runtime";
 import { getStudyPhaseLabel, getStudyStateSummary } from "./shared/studyState";
 import { Difficulty, Rating, ReviewMode, StudyState } from "./shared/types";
-import { difficultyGoalMs, formatClock, normalizeSlug, parseDifficulty, slugToTitle } from "./shared/utils";
+import {
+  difficultyGoalMs,
+  formatClock,
+  normalizeSlug,
+  parseDifficulty,
+  slugToTitle,
+} from "./shared/utils";
 
 const OVERLAY_ID = "lcsr-overlay-root";
 const TIMER_TICK_MS = 250;
 
 let activeSlug = "";
 let currentState: StudyState | null = null;
-let currentTitle = "";
 let currentDifficulty: Difficulty = "Unknown";
 let timerGoalMs = difficultyGoalMs("Unknown");
 
@@ -70,7 +75,9 @@ function ensureOverlay(): HTMLElement {
   return root;
 }
 
-function statusColor(phase: ReturnType<typeof getStudyStateSummary>["phase"] | undefined): string {
+function statusColor(
+  phase: ReturnType<typeof getStudyStateSummary>["phase"] | undefined
+): string {
   switch (phase) {
     case "Review":
       return "#38bdf8";
@@ -132,7 +139,9 @@ function ensureTimerTick(): void {
 }
 
 function setFeedback(message: string, isError = false): void {
-  const feedback = document.getElementById(OVERLAY_ID)?.querySelector<HTMLElement>("#lcsr-feedback");
+  const feedback = document
+    .getElementById(OVERLAY_ID)
+    ?.querySelector<HTMLElement>("#lcsr-feedback");
   if (!feedback) {
     return;
   }
@@ -197,7 +206,14 @@ function updateTimerUi(): void {
   const pauseBtn = root?.querySelector<HTMLButtonElement>("#lcsr-timer-pause");
   const resetBtn = root?.querySelector<HTMLButtonElement>("#lcsr-timer-reset");
 
-  if (!timerValue || !goalValue || !timerHint || !startBtn || !pauseBtn || !resetBtn) {
+  if (
+    !timerValue ||
+    !goalValue ||
+    !timerHint ||
+    !startBtn ||
+    !pauseBtn ||
+    !resetBtn
+  ) {
     return;
   }
 
@@ -206,7 +222,8 @@ function updateTimerUi(): void {
 
   goalValue.textContent = `Goal ${formatClock(timerGoalMs)}`;
   timerValue.textContent = formatClock(elapsedMs);
-  timerValue.style.color = elapsedMs <= 0 ? "#e5e2e1" : withinGoal ? "#94dbff" : "#f87171";
+  timerValue.style.color =
+    elapsedMs <= 0 ? "#e5e2e1" : withinGoal ? "#94dbff" : "#f87171";
   timerHint.textContent = timerHintCopy(elapsedMs);
 
   if (quickRating) {
@@ -266,7 +283,9 @@ function resetRuntimeStateForNavigation(): void {
 }
 
 function modeBadge(state: StudyState | null): string {
-  return getStudyStateSummary(state).reviewCount > 0 ? "REPEAT_REVIEW" : "FIRST_SOLVE";
+  return getStudyStateSummary(state).reviewCount > 0
+    ? "REPEAT_REVIEW"
+    : "FIRST_SOLVE";
 }
 
 function renderRatingButton(rating: Rating, label: string): string {
@@ -291,13 +310,22 @@ function renderRatingButton(rating: Rating, label: string): string {
     >
       <span>${label}</span>
       <span style="font-size:10px;color:${active ? "#ffc78b" : "#8f857d"};">${
-        rating === 0 ? "Reset" : rating === 1 ? "Lagging" : rating === 2 ? "Stable" : "Fast"
+        rating === 0
+          ? "Reset"
+          : rating === 1
+            ? "Lagging"
+            : rating === 2
+              ? "Stable"
+              : "Fast"
       }</span>
     </button>
   `;
 }
 
-function renderCollapsedOverlay(title: string, state: StudyState | null): string {
+function renderCollapsedOverlay(
+  title: string,
+  state: StudyState | null
+): string {
   const studyStateSummary = getStudyStateSummary(state);
   const phaseLabel = getStudyPhaseLabel(studyStateSummary.phase);
   return `
@@ -370,18 +398,25 @@ function renderCollapsedOverlay(title: string, state: StudyState | null): string
         </div>
 
         <div id="lcsr-timer-hint" style="font-size:11px;color:#8f857d;">Quick submit logs Good by default. Start the timer if you want solve time to drive the default rating.</div>
-        <div id="lcsr-feedback" style="min-height:16px;color:#8f857d;font-size:11px;">${studyStateSummary.nextReviewAt ? `Next review ${escapeHtml(
-          formatDate(studyStateSummary.nextReviewAt)
-        )}` : "Open details to adjust recalibration or add notes."}</div>
+        <div id="lcsr-feedback" style="min-height:16px;color:#8f857d;font-size:11px;">${
+          studyStateSummary.nextReviewAt
+            ? `Next review ${escapeHtml(
+                formatDate(studyStateSummary.nextReviewAt)
+              )}`
+            : "Open details to adjust recalibration or add notes."
+        }</div>
       </div>
     </section>
   `;
 }
 
-function renderOverlay(slug: string, title: string, state: StudyState | null): void {
+function renderOverlay(
+  slug: string,
+  title: string,
+  state: StudyState | null
+): void {
   const root = ensureOverlay();
   currentState = state;
-  currentTitle = title;
 
   if (draftContextSlug !== slug) {
     draftNotes = state?.notes ?? "";
@@ -391,8 +426,12 @@ function renderOverlay(slug: string, title: string, state: StudyState | null): v
 
   const studyStateSummary = getStudyStateSummary(state);
   const phaseLabel = getStudyPhaseLabel(studyStateSummary.phase);
-  const nextReview = studyStateSummary.nextReviewAt ? formatDate(studyStateSummary.nextReviewAt) : "Not scheduled";
-  const saveButtonLabel = studyStateSummary.reviewCount ? "Save Override" : "Save First Solve";
+  const nextReview = studyStateSummary.nextReviewAt
+    ? formatDate(studyStateSummary.nextReviewAt)
+    : "Not scheduled";
+  const saveButtonLabel = studyStateSummary.reviewCount
+    ? "Save Override"
+    : "Save First Solve";
 
   if (overlayCollapsed) {
     root.innerHTML = renderCollapsedOverlay(title, state);
@@ -521,21 +560,28 @@ function renderOverlay(slug: string, title: string, state: StudyState | null): v
           </div>
         </div>
 
-        <div id="lcsr-feedback" style="min-height:18px;color:#8f857d;font-size:12px;">${studyStateSummary.lastReviewedAt ? `Last reviewed: ${escapeHtml(
-          formatDate(studyStateSummary.lastReviewedAt)
-        )}` : "Quick submit logs with default protocol. Open recalibration to override the rating or mode."}</div>
+        <div id="lcsr-feedback" style="min-height:18px;color:#8f857d;font-size:12px;">${
+          studyStateSummary.lastReviewedAt
+            ? `Last reviewed: ${escapeHtml(
+                formatDate(studyStateSummary.lastReviewedAt)
+              )}`
+            : "Quick submit logs with default protocol. Open recalibration to override the rating or mode."
+        }</div>
       </div>
     </section>
   `;
 
-  root.querySelectorAll<HTMLButtonElement>("[data-rating]").forEach((button) => {
-    button.onclick = () => {
-      selectedRating = Number(button.dataset.rating) as Rating;
-      renderOverlay(slug, title, state);
-    };
-  });
+  root
+    .querySelectorAll<HTMLButtonElement>("[data-rating]")
+    .forEach((button) => {
+      button.onclick = () => {
+        selectedRating = Number(button.dataset.rating) as Rating;
+        renderOverlay(slug, title, state);
+      };
+    });
 
-  const collapseButton = root.querySelector<HTMLButtonElement>("#lcsr-collapse");
+  const collapseButton =
+    root.querySelector<HTMLButtonElement>("#lcsr-collapse");
   if (collapseButton) {
     collapseButton.onclick = () => {
       overlayCollapsed = true;
@@ -543,10 +589,14 @@ function renderOverlay(slug: string, title: string, state: StudyState | null): v
     };
   }
 
-  const settingsButton = root.querySelector<HTMLButtonElement>("#lcsr-open-settings");
+  const settingsButton = root.querySelector<HTMLButtonElement>(
+    "#lcsr-open-settings"
+  );
   if (settingsButton) {
     settingsButton.onclick = () => {
-      void sendMessage("OPEN_EXTENSION_PAGE", { path: "dashboard.html?view=settings" });
+      void sendMessage("OPEN_EXTENSION_PAGE", {
+        path: "dashboard.html?view=settings",
+      });
     };
   }
 
@@ -563,7 +613,8 @@ function renderOverlay(slug: string, title: string, state: StudyState | null): v
     modeSelect.value = defaultMode(state);
   }
 
-  const refreshButton = root.querySelector<HTMLButtonElement>("#lcsr-refresh-btn");
+  const refreshButton =
+    root.querySelector<HTMLButtonElement>("#lcsr-refresh-btn");
   if (refreshButton) {
     refreshButton.onclick = () => {
       void refreshCurrentPage();
@@ -583,28 +634,32 @@ function renderOverlay(slug: string, title: string, state: StudyState | null): v
 
 function bindTimerButtons(slug: string): void {
   const root = document.getElementById(OVERLAY_ID);
-  const quickSubmitButton = root?.querySelector<HTMLButtonElement>("#lcsr-quick-submit");
+  const quickSubmitButton =
+    root?.querySelector<HTMLButtonElement>("#lcsr-quick-submit");
   if (quickSubmitButton) {
     quickSubmitButton.onclick = () => {
       void onQuickSubmit(slug);
     };
   }
 
-  const startButton = root?.querySelector<HTMLButtonElement>("#lcsr-timer-start");
+  const startButton =
+    root?.querySelector<HTMLButtonElement>("#lcsr-timer-start");
   if (startButton) {
     startButton.onclick = () => {
       startTimer(true);
     };
   }
 
-  const pauseButton = root?.querySelector<HTMLButtonElement>("#lcsr-timer-pause");
+  const pauseButton =
+    root?.querySelector<HTMLButtonElement>("#lcsr-timer-pause");
   if (pauseButton) {
     pauseButton.onclick = () => {
       pauseTimer(true);
     };
   }
 
-  const resetButton = root?.querySelector<HTMLButtonElement>("#lcsr-timer-reset");
+  const resetButton =
+    root?.querySelector<HTMLButtonElement>("#lcsr-timer-reset");
   if (resetButton) {
     resetButton.onclick = () => {
       resetTimer(true);
@@ -613,7 +668,9 @@ function bindTimerButtons(slug: string): void {
 }
 
 function getMode(): ReviewMode {
-  const select = document.getElementById(OVERLAY_ID)?.querySelector<HTMLSelectElement>("#lcsr-mode");
+  const select = document
+    .getElementById(OVERLAY_ID)
+    ?.querySelector<HTMLSelectElement>("#lcsr-mode");
   return select?.value === "RECALL" ? "RECALL" : defaultMode();
 }
 
@@ -629,7 +686,7 @@ async function persistReview(
     mode,
     solveTimeMs,
     notes: draftNotes,
-    source: "overlay"
+    source: "overlay",
   });
 
   if (!response.ok) {
@@ -661,9 +718,13 @@ async function onQuickSubmit(slug: string): Promise<void> {
   resetTimer(false);
 
   if (solveTimeMs) {
-    setFeedback(`Logged ${ratingLabel(rating)} from ${formatClock(solveTimeMs)} against a ${formatClock(timerGoalMs)} goal.`);
+    setFeedback(
+      `Logged ${ratingLabel(rating)} from ${formatClock(solveTimeMs)} against a ${formatClock(timerGoalMs)} goal.`
+    );
   } else {
-    setFeedback("Logged Good with default settings. Expand the panel if you want to override the recalibration.");
+    setFeedback(
+      "Logged Good with default settings. Expand the panel if you want to override the recalibration."
+    );
   }
 
   await refreshCurrentPage();
@@ -678,7 +739,12 @@ async function onSaveReview(slug: string): Promise<void> {
 
   const elapsedMs = getElapsedMs();
   const solveTimeMs = elapsedMs > 0 ? elapsedMs : undefined;
-  const saved = await persistReview(slug, selectedRating, getMode(), solveTimeMs);
+  const saved = await persistReview(
+    slug,
+    selectedRating,
+    getMode(),
+    solveTimeMs
+  );
   if (!saved) {
     updateTimerUi();
     return;
@@ -702,7 +768,7 @@ async function refreshCurrentPage(): Promise<void> {
     slug,
     title,
     difficulty: detectedDifficulty,
-    url: `https://leetcode.com/problems/${slug}/`
+    url: `https://leetcode.com/problems/${slug}/`,
   });
 
   if (!upsert.ok) {
@@ -724,7 +790,11 @@ async function refreshCurrentPage(): Promise<void> {
   currentDifficulty = payload.problem?.difficulty ?? detectedDifficulty;
   timerGoalMs = difficultyGoalMs(currentDifficulty);
 
-  renderOverlay(slug, payload.problem?.title ?? title, payload.studyState ?? null);
+  renderOverlay(
+    slug,
+    payload.problem?.title ?? title,
+    payload.studyState ?? null
+  );
 }
 
 function scheduleWarmRefreshes(slug: string): void {
@@ -750,7 +820,6 @@ async function bootstrap(): Promise<void> {
 
     activeSlug = "";
     currentState = null;
-    currentTitle = "";
     currentDifficulty = "Unknown";
     timerGoalMs = difficultyGoalMs("Unknown");
     resetRuntimeStateForNavigation();
@@ -763,7 +832,6 @@ async function bootstrap(): Promise<void> {
 
   resetRuntimeStateForNavigation();
   activeSlug = slug;
-  currentTitle = "";
 
   await refreshCurrentPage();
   scheduleWarmRefreshes(slug);

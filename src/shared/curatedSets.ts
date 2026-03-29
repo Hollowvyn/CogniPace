@@ -58,16 +58,23 @@ interface PlanRuntime {
   problems: CuratedProblemInput[];
 }
 
-function courseProblem(slug: string, displayTitle: string, difficulty: Difficulty, tags?: string[]): TopicPathProblemInput {
+function courseProblem(
+  slug: string,
+  displayTitle: string,
+  difficulty: Difficulty,
+  tags?: string[]
+): TopicPathProblemInput {
   return {
     slug,
     displayTitle,
     difficulty,
-    tags
+    tags,
   };
 }
 
-function normalizeTopicPathProblem(input: TopicPathProblem): Required<Pick<TopicPathProblemInput, "slug">> & {
+function normalizeTopicPathProblem(input: TopicPathProblem): Required<
+  Pick<TopicPathProblemInput, "slug">
+> & {
   displayTitle: string;
   title: string;
   difficulty?: Difficulty;
@@ -79,7 +86,7 @@ function normalizeTopicPathProblem(input: TopicPathProblem): Required<Pick<Topic
       slug: input,
       displayTitle: title,
       title,
-      tags: []
+      tags: [],
     };
   }
 
@@ -89,7 +96,7 @@ function normalizeTopicPathProblem(input: TopicPathProblem): Required<Pick<Topic
     displayTitle: input.displayTitle?.trim() || title,
     title,
     difficulty: input.difficulty,
-    tags: uniqueStrings(input.tags ?? [])
+    tags: uniqueStrings(input.tags ?? []),
   };
 }
 
@@ -106,8 +113,8 @@ const blind75TopicPath: TopicPathSection[] = [
       "find-minimum-in-rotated-sorted-array",
       "search-in-rotated-sorted-array",
       "3sum",
-      "container-with-most-water"
-    ]
+      "container-with-most-water",
+    ],
   },
   {
     topic: "Binary",
@@ -116,8 +123,8 @@ const blind75TopicPath: TopicPathSection[] = [
       "number-of-1-bits",
       "counting-bits",
       "missing-number",
-      "reverse-bits"
-    ]
+      "reverse-bits",
+    ],
   },
   {
     topic: "Dynamic Programming",
@@ -132,8 +139,8 @@ const blind75TopicPath: TopicPathSection[] = [
       "house-robber-ii",
       "decode-ways",
       "unique-paths",
-      "jump-game"
-    ]
+      "jump-game",
+    ],
   },
   {
     topic: "Graph",
@@ -145,8 +152,8 @@ const blind75TopicPath: TopicPathSection[] = [
       "longest-consecutive-sequence",
       "alien-dictionary",
       "graph-valid-tree",
-      "number-of-connected-components-in-an-undirected-graph"
-    ]
+      "number-of-connected-components-in-an-undirected-graph",
+    ],
   },
   {
     topic: "Interval",
@@ -155,8 +162,8 @@ const blind75TopicPath: TopicPathSection[] = [
       "merge-intervals",
       "non-overlapping-intervals",
       "meeting-rooms",
-      "meeting-rooms-ii"
-    ]
+      "meeting-rooms-ii",
+    ],
   },
   {
     topic: "Linked List",
@@ -166,8 +173,8 @@ const blind75TopicPath: TopicPathSection[] = [
       "merge-two-sorted-lists",
       "merge-k-sorted-lists",
       "remove-nth-node-from-end-of-list",
-      "reorder-list"
-    ]
+      "reorder-list",
+    ],
   },
   {
     topic: "Matrix",
@@ -175,8 +182,8 @@ const blind75TopicPath: TopicPathSection[] = [
       "set-matrix-zeroes",
       "spiral-matrix",
       "rotate-image",
-      "word-search"
-    ]
+      "word-search",
+    ],
   },
   {
     topic: "String",
@@ -190,8 +197,8 @@ const blind75TopicPath: TopicPathSection[] = [
       "valid-palindrome",
       "longest-palindromic-substring",
       "palindromic-substrings",
-      "encode-and-decode-strings"
-    ]
+      "encode-and-decode-strings",
+    ],
   },
   {
     topic: "Tree",
@@ -209,17 +216,17 @@ const blind75TopicPath: TopicPathSection[] = [
       "lowest-common-ancestor-of-a-binary-search-tree",
       "implement-trie-prefix-tree",
       "add-and-search-word-data-structure-design",
-      "word-search-ii"
-    ]
+      "word-search-ii",
+    ],
   },
   {
     topic: "Heap",
     slugs: [
       "merge-k-sorted-lists",
       "top-k-frequent-elements",
-      "find-median-from-data-stream"
-    ]
-  }
+      "find-median-from-data-stream",
+    ],
+  },
 ];
 
 const leetcode75TopicPath: TopicPathSection[] = [
@@ -234,8 +241,8 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "reverse-words-in-a-string",
       "product-of-array-except-self",
       "increasing-triplet-subsequence",
-      "string-compression"
-    ]
+      "string-compression",
+    ],
   },
   {
     topic: "Two Pointers",
@@ -243,8 +250,8 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "move-zeroes",
       "is-subsequence",
       "container-with-most-water",
-      "max-number-of-k-sum-pairs"
-    ]
+      "max-number-of-k-sum-pairs",
+    ],
   },
   {
     topic: "Sliding Window",
@@ -252,15 +259,12 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "maximum-average-subarray-i",
       "maximum-number-of-vowels-in-a-substring-of-given-length",
       "max-consecutive-ones-iii",
-      "longest-subarray-of-1s-after-deleting-one-element"
-    ]
+      "longest-subarray-of-1s-after-deleting-one-element",
+    ],
   },
   {
     topic: "Prefix Sum",
-    slugs: [
-      "find-the-highest-altitude",
-      "find-pivot-index"
-    ]
+    slugs: ["find-the-highest-altitude", "find-pivot-index"],
   },
   {
     topic: "Hash Map / Set",
@@ -268,23 +272,20 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "find-the-difference-of-two-arrays",
       "unique-number-of-occurrences",
       "determine-if-two-strings-are-close",
-      "equal-row-and-column-pairs"
-    ]
+      "equal-row-and-column-pairs",
+    ],
   },
   {
     topic: "Stack",
     slugs: [
       "removing-stars-from-a-string",
       "asteroid-collision",
-      "decode-string"
-    ]
+      "decode-string",
+    ],
   },
   {
     topic: "Queue",
-    slugs: [
-      "number-of-recent-calls",
-      "dota2-senate"
-    ]
+    slugs: ["number-of-recent-calls", "dota2-senate"],
   },
   {
     topic: "Linked List",
@@ -292,8 +293,8 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "delete-the-middle-node-of-a-linked-list",
       "odd-even-linked-list",
       "reverse-linked-list",
-      "maximum-twin-sum-of-a-linked-list"
-    ]
+      "maximum-twin-sum-of-a-linked-list",
+    ],
   },
   {
     topic: "Binary Tree - DFS",
@@ -303,22 +304,19 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "count-good-nodes-in-binary-tree",
       "path-sum-iii",
       "longest-zigzag-path-in-a-binary-tree",
-      "lowest-common-ancestor-of-a-binary-tree"
-    ]
+      "lowest-common-ancestor-of-a-binary-tree",
+    ],
   },
   {
     topic: "Binary Tree - BFS",
     slugs: [
       "binary-tree-right-side-view",
-      "maximum-level-sum-of-a-binary-tree"
-    ]
+      "maximum-level-sum-of-a-binary-tree",
+    ],
   },
   {
     topic: "Binary Search Tree",
-    slugs: [
-      "search-in-a-binary-search-tree",
-      "delete-node-in-a-bst"
-    ]
+    slugs: ["search-in-a-binary-search-tree", "delete-node-in-a-bst"],
   },
   {
     topic: "Graphs - DFS",
@@ -326,15 +324,12 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "keys-and-rooms",
       "number-of-provinces",
       "reorder-routes-to-make-all-paths-lead-to-the-city-zero",
-      "evaluate-division"
-    ]
+      "evaluate-division",
+    ],
   },
   {
     topic: "Graphs - BFS",
-    slugs: [
-      "nearest-exit-from-entrance-in-maze",
-      "rotting-oranges"
-    ]
+    slugs: ["nearest-exit-from-entrance-in-maze", "rotting-oranges"],
   },
   {
     topic: "Heap / Priority Queue",
@@ -342,8 +337,8 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "kth-largest-element-in-an-array",
       "smallest-number-in-infinite-set",
       "maximum-subsequence-score",
-      "total-cost-to-hire-k-workers"
-    ]
+      "total-cost-to-hire-k-workers",
+    ],
   },
   {
     topic: "Binary Search",
@@ -351,15 +346,12 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "guess-number-higher-or-lower",
       "successful-pairs-of-spells-and-potions",
       "find-peak-element",
-      "koko-eating-bananas"
-    ]
+      "koko-eating-bananas",
+    ],
   },
   {
     topic: "Backtracking",
-    slugs: [
-      "letter-combinations-of-a-phone-number",
-      "combination-sum-iii"
-    ]
+    slugs: ["letter-combinations-of-a-phone-number", "combination-sum-iii"],
   },
   {
     topic: "DP - 1D",
@@ -367,8 +359,8 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "n-th-tribonacci-number",
       "min-cost-climbing-stairs",
       "house-robber",
-      "domino-and-tromino-tiling"
-    ]
+      "domino-and-tromino-tiling",
+    ],
   },
   {
     topic: "DP - Multidimensional",
@@ -376,38 +368,32 @@ const leetcode75TopicPath: TopicPathSection[] = [
       "unique-paths",
       "longest-common-subsequence",
       "best-time-to-buy-and-sell-stock-with-transaction-fee",
-      "edit-distance"
-    ]
+      "edit-distance",
+    ],
   },
   {
     topic: "Bit Manipulation",
     slugs: [
       "counting-bits",
       "single-number",
-      "minimum-flips-to-make-a-or-b-equal-to-c"
-    ]
+      "minimum-flips-to-make-a-or-b-equal-to-c",
+    ],
   },
   {
     topic: "Trie",
-    slugs: [
-      "implement-trie-prefix-tree",
-      "search-suggestions-system"
-    ]
+    slugs: ["implement-trie-prefix-tree", "search-suggestions-system"],
   },
   {
     topic: "Intervals",
     slugs: [
       "non-overlapping-intervals",
-      "minimum-number-of-arrows-to-burst-balloons"
-    ]
+      "minimum-number-of-arrows-to-burst-balloons",
+    ],
   },
   {
     topic: "Monotonic Stack",
-    slugs: [
-      "daily-temperatures",
-      "online-stock-span"
-    ]
-  }
+    slugs: ["daily-temperatures", "online-stock-span"],
+  },
 ];
 
 const grind75Slugs = [
@@ -486,7 +472,7 @@ const grind75Slugs = [
   "n-queens",
   "find-k-pairs-with-smallest-sums",
   "lfu-cache",
-  "minimum-window-substring"
+  "minimum-window-substring",
 ];
 
 const neetCode150TopicPath: TopicPathSection[] = [
@@ -501,8 +487,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "top-k-frequent-elements",
       "encode-and-decode-strings",
       "product-of-array-except-self",
-      "valid-sudoku"
-    ]
+      "valid-sudoku",
+    ],
   },
   {
     topic: "Sequence",
@@ -511,8 +497,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "two-sum-ii-input-array-is-sorted",
       "3sum",
       "container-with-most-water",
-      "trapping-rain-water"
-    ]
+      "trapping-rain-water",
+    ],
   },
   {
     topic: "Sliding Window",
@@ -522,8 +508,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "longest-repeating-character-replacement",
       "permutation-in-string",
       "minimum-window-substring",
-      "sliding-window-maximum"
-    ]
+      "sliding-window-maximum",
+    ],
   },
   {
     topic: "Stack",
@@ -533,8 +519,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "evaluate-reverse-polish-notation",
       "daily-temperatures",
       "car-fleet",
-      "largest-rectangle-in-histogram"
-    ]
+      "largest-rectangle-in-histogram",
+    ],
   },
   {
     topic: "Binary Search",
@@ -544,8 +530,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "koko-eating-bananas",
       "find-minimum-in-rotated-sorted-array",
       "search-in-rotated-sorted-array",
-      "median-of-two-sorted-arrays"
-    ]
+      "median-of-two-sorted-arrays",
+    ],
   },
   {
     topic: "Linked List",
@@ -560,8 +546,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "find-the-duplicate-number",
       "lru-cache",
       "reverse-nodes-in-k-group",
-      "merge-k-sorted-lists"
-    ]
+      "merge-k-sorted-lists",
+    ],
   },
   {
     topic: "Trees",
@@ -580,8 +566,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "kth-smallest-element-in-a-bst",
       "construct-binary-tree-from-preorder-and-inorder-traversal",
       "serialize-and-deserialize-binary-tree",
-      "maximum-path-sum"
-    ]
+      "maximum-path-sum",
+    ],
   },
   {
     topic: "Heap / Priority Queue",
@@ -592,8 +578,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "kth-largest-element-in-an-array",
       "task-scheduler",
       "design-twitter",
-      "find-median-from-data-stream"
-    ]
+      "find-median-from-data-stream",
+    ],
   },
   {
     topic: "Backtracking",
@@ -607,16 +593,16 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "word-search",
       "palindrome-partitioning",
       "letter-combinations-of-a-phone-number",
-      "n-queens"
-    ]
+      "n-queens",
+    ],
   },
   {
     topic: "Tries",
     slugs: [
       "implement-trie-prefix-tree",
       "design-add-and-search-words-data-structure",
-      "word-search-ii"
-    ]
+      "word-search-ii",
+    ],
   },
   {
     topic: "Graphs",
@@ -639,8 +625,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "reconstruct-itinerary",
       "min-cost-to-connect-all-points",
       "swim-in-rising-water",
-      "cheapest-flights-within-k-stops"
-    ]
+      "cheapest-flights-within-k-stops",
+    ],
   },
   {
     topic: "1-D Dynamic Programming",
@@ -655,8 +641,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "coin-change",
       "maximum-product-subarray",
       "word-break",
-      "longest-increasing-subsequence"
-    ]
+      "longest-increasing-subsequence",
+    ],
   },
   {
     topic: "2-D Dynamic Programming",
@@ -668,8 +654,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "edit-distance",
       "coin-change-ii",
       "target-sum",
-      "integer-break"
-    ]
+      "integer-break",
+    ],
   },
   {
     topic: "Greedy",
@@ -680,8 +666,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "gas-station",
       "hand-of-straights",
       "merge-triplets-to-form-target",
-      "partition-labels"
-    ]
+      "partition-labels",
+    ],
   },
   {
     topic: "Intervals",
@@ -691,8 +677,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "non-overlapping-intervals",
       "meeting-rooms",
       "meeting-rooms-ii",
-      "minimum-number-of-arrows-to-burst-balloons"
-    ]
+      "minimum-number-of-arrows-to-burst-balloons",
+    ],
   },
   {
     topic: "Math & Geometry",
@@ -704,8 +690,8 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "plus-one",
       "powx-n",
       "multiply-strings",
-      "detect-squares"
-    ]
+      "detect-squares",
+    ],
   },
   {
     topic: "Bit Manipulation",
@@ -716,9 +702,9 @@ const neetCode150TopicPath: TopicPathSection[] = [
       "reverse-bits",
       "missing-number",
       "sum-of-two-integers",
-      "reverse-integer"
-    ]
-  }
+      "reverse-integer",
+    ],
+  },
 ];
 
 const neetCode250TopicPath: TopicPathSection[] = [
@@ -742,8 +728,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "range-sum-query-2d-immutable",
       "product-of-array-except-self",
       "valid-sudoku",
-      "longest-consecutive-sequence"
-    ]
+      "longest-consecutive-sequence",
+    ],
   },
   {
     topic: "Two Pointers",
@@ -760,8 +746,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "rotate-array",
       "container-with-most-water",
       "boats-to-save-people",
-      "trapping-rain-water"
-    ]
+      "trapping-rain-water",
+    ],
   },
   {
     topic: "Sliding Window",
@@ -774,8 +760,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "minimum-size-subarray-sum",
       "find-k-closest-elements",
       "minimum-window-substring",
-      "sliding-window-maximum"
-    ]
+      "sliding-window-maximum",
+    ],
   },
   {
     topic: "Stack",
@@ -792,8 +778,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "car-fleet",
       "simplify-path",
       "decode-string",
-      "maximum-frequency-stack"
-    ]
+      "maximum-frequency-stack",
+    ],
   },
   {
     topic: "Binary Search",
@@ -811,8 +797,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "time-based-key-value-store",
       "split-array-largest-sum",
       "find-in-mountain-array",
-      "median-of-two-sorted-arrays"
-    ]
+      "median-of-two-sorted-arrays",
+    ],
   },
   {
     topic: "Linked List",
@@ -830,8 +816,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "lfu-cache",
       "merge-k-sorted-lists",
       "reverse-nodes-in-k-group",
-      "palindrome-linked-list"
-    ]
+      "palindrome-linked-list",
+    ],
   },
   {
     topic: "Trees",
@@ -856,7 +842,7 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "delete-node-in-a-bst",
       "insert-into-a-binary-search-tree",
       "construct-quad-tree",
-    ]
+    ],
   },
   {
     topic: "Heap / Priority Queue",
@@ -872,8 +858,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "longest-happy-string",
       "car-pooling",
       "find-median-from-data-stream",
-      "ipo"
-    ]
+      "ipo",
+    ],
   },
   {
     topic: "Backtracking",
@@ -894,8 +880,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "partition-to-k-equal-sum-subsets",
       "n-queens",
       "n-queens-ii",
-      "word-break-ii"
-    ]
+      "word-break-ii",
+    ],
   },
   {
     topic: "Tries",
@@ -903,8 +889,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "implement-trie-prefix-tree",
       "design-add-and-search-words-data-structure",
       "word-search-ii",
-      "extra-characters-in-a-string"
-    ]
+      "extra-characters-in-a-string",
+    ],
   },
   {
     topic: "Graphs",
@@ -937,8 +923,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "alien-dictionary",
       "cheapest-flights-within-k-stops",
       "find-critical-and-pseudo-critical-edges",
-      "build-a-matrix-with-conditions"
-    ]
+      "build-a-matrix-with-conditions",
+    ],
   },
   {
     topic: "Advanced Graphs",
@@ -952,8 +938,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "cheapest-flights-within-k-stops",
       "find-critical-and-pseudo-critical-edges",
       "build-a-matrix-with-conditions",
-      "greatest-common-divisor-traversal"
-    ]
+      "greatest-common-divisor-traversal",
+    ],
   },
   {
     topic: "1-D Dynamic Programming",
@@ -974,8 +960,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "jump-game",
       "jump-game-ii",
       "gas-station",
-      "hand-of-straights"
-    ]
+      "hand-of-straights",
+    ],
   },
   {
     topic: "2-D Dynamic Programming",
@@ -995,8 +981,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "distinct-subsequences",
       "edit-distance",
       "burst-balloons",
-      "regular-expression-matching"
-    ]
+      "regular-expression-matching",
+    ],
   },
   {
     topic: "Greedy",
@@ -1009,8 +995,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "jump-game-vii",
       "gas-station",
       "hand-of-straights",
-      "dota2-senate"
-    ]
+      "dota2-senate",
+    ],
   },
   {
     topic: "Intervals",
@@ -1021,8 +1007,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "meeting-rooms",
       "meeting-rooms-ii",
       "meeting-rooms-iii",
-      "minimum-number-of-arrows-to-burst-balloons"
-    ]
+      "minimum-number-of-arrows-to-burst-balloons",
+    ],
   },
   {
     topic: "Math & Geometry",
@@ -1039,8 +1025,8 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "roman-to-integer",
       "powx-n",
       "multiply-strings",
-      "detect-squares"
-    ]
+      "detect-squares",
+    ],
   },
   {
     topic: "Bit Manipulation",
@@ -1053,22 +1039,30 @@ const neetCode250TopicPath: TopicPathSection[] = [
       "missing-number",
       "sum-of-two-integers",
       "reverse-integer",
-      "bitwise-and-of-numbers-range"
-    ]
-  }
+      "bitwise-and-of-numbers-range",
+    ],
+  },
 ];
 
 const byteByteGo101TopicPath: TopicPathSection[] = [
   {
     topic: "Two Pointers",
     slugs: [
-      courseProblem("two-sum-ii-input-array-is-sorted", "Pair Sum - Sorted", "Easy"),
+      courseProblem(
+        "two-sum-ii-input-array-is-sorted",
+        "Pair Sum - Sorted",
+        "Easy"
+      ),
       courseProblem("3sum", "Triplet Sum", "Medium"),
       courseProblem("valid-palindrome", "Is Palindrome Valid", "Easy"),
       courseProblem("container-with-most-water", "Largest Container", "Medium"),
       courseProblem("move-zeroes", "Shift Zeros to the End", "Easy"),
-      courseProblem("next-permutation", "Next Lexicographical Sequence", "Medium")
-    ]
+      courseProblem(
+        "next-permutation",
+        "Next Lexicographical Sequence",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Hash Maps And Sets",
@@ -1076,114 +1070,266 @@ const byteByteGo101TopicPath: TopicPathSection[] = [
       courseProblem("two-sum", "Pair Sum - Unsorted", "Easy"),
       courseProblem("valid-sudoku", "Verify Sudoku Board", "Medium"),
       courseProblem("set-matrix-zeroes", "Zero Striping", "Medium"),
-      courseProblem("longest-consecutive-sequence", "Longest Chain of Consecutive Numbers", "Medium"),
-      courseProblem("tuple-with-same-product", "Geometric Sequence Triplets", "Medium")
-    ]
+      courseProblem(
+        "longest-consecutive-sequence",
+        "Longest Chain of Consecutive Numbers",
+        "Medium"
+      ),
+      courseProblem(
+        "tuple-with-same-product",
+        "Geometric Sequence Triplets",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Linked Lists",
     slugs: [
       courseProblem("reverse-linked-list", "Linked List Reversal", "Easy"),
-      courseProblem("remove-nth-node-from-end-of-list", "Remove the Kth Last Node From a Linked List", "Medium"),
-      courseProblem("intersection-of-two-linked-lists", "Linked List Intersection", "Easy"),
+      courseProblem(
+        "remove-nth-node-from-end-of-list",
+        "Remove the Kth Last Node From a Linked List",
+        "Medium"
+      ),
+      courseProblem(
+        "intersection-of-two-linked-lists",
+        "Linked List Intersection",
+        "Easy"
+      ),
       courseProblem("lru-cache", "LRU Cache", "Hard"),
-      courseProblem("palindrome-linked-list", "Palindromic Linked List", "Easy"),
-      courseProblem("flatten-a-multilevel-doubly-linked-list", "Flatten a Multi-Level Linked List", "Medium")
-    ]
+      courseProblem(
+        "palindrome-linked-list",
+        "Palindromic Linked List",
+        "Easy"
+      ),
+      courseProblem(
+        "flatten-a-multilevel-doubly-linked-list",
+        "Flatten a Multi-Level Linked List",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Fast And Slow Pointers",
     slugs: [
       courseProblem("linked-list-cycle", "Linked List Loop", "Easy"),
-      courseProblem("middle-of-the-linked-list", "Linked List Midpoint", "Easy"),
-      courseProblem("happy-number", "Happy Number", "Medium")
-    ]
+      courseProblem(
+        "middle-of-the-linked-list",
+        "Linked List Midpoint",
+        "Easy"
+      ),
+      courseProblem("happy-number", "Happy Number", "Medium"),
+    ],
   },
   {
     topic: "Sliding Window",
     slugs: [
-      courseProblem("find-all-anagrams-in-a-string", "Substring Anagrams", "Medium"),
-      courseProblem("longest-substring-without-repeating-characters", "Longest Substring With Unique Characters", "Medium"),
-      courseProblem("longest-repeating-character-replacement", "Longest Uniform Substring After Replacements", "Hard")
-    ]
+      courseProblem(
+        "find-all-anagrams-in-a-string",
+        "Substring Anagrams",
+        "Medium"
+      ),
+      courseProblem(
+        "longest-substring-without-repeating-characters",
+        "Longest Substring With Unique Characters",
+        "Medium"
+      ),
+      courseProblem(
+        "longest-repeating-character-replacement",
+        "Longest Uniform Substring After Replacements",
+        "Hard"
+      ),
+    ],
   },
   {
     topic: "Binary Search",
     slugs: [
-      courseProblem("search-insert-position", "Find the Insertion Index", "Easy"),
-      courseProblem("find-first-and-last-position-of-element-in-sorted-array", "First and Last Occurrences of a Number", "Medium"),
+      courseProblem(
+        "search-insert-position",
+        "Find the Insertion Index",
+        "Easy"
+      ),
+      courseProblem(
+        "find-first-and-last-position-of-element-in-sorted-array",
+        "First and Last Occurrences of a Number",
+        "Medium"
+      ),
       courseProblem("cutting-ribbons", "Cutting Wood", "Medium"),
-      courseProblem("search-in-rotated-sorted-array", "Find the Target in a Rotated Sorted Array", "Medium"),
-      courseProblem("median-of-two-sorted-arrays", "Find the Median From Two Sorted Arrays", "Hard"),
+      courseProblem(
+        "search-in-rotated-sorted-array",
+        "Find the Target in a Rotated Sorted Array",
+        "Medium"
+      ),
+      courseProblem(
+        "median-of-two-sorted-arrays",
+        "Find the Median From Two Sorted Arrays",
+        "Hard"
+      ),
       courseProblem("search-a-2d-matrix", "Matrix Search", "Medium"),
       courseProblem("find-peak-element", "Local Maxima in Array", "Medium"),
-      courseProblem("random-pick-with-weight", "Weighted Random Selection", "Medium")
-    ]
+      courseProblem(
+        "random-pick-with-weight",
+        "Weighted Random Selection",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Stacks",
     slugs: [
-      courseProblem("valid-parentheses", "Valid Parenthesis Expression", "Easy"),
-      courseProblem("next-greater-element-i", "Next Largest Number to the Right", "Medium"),
-      courseProblem("evaluate-reverse-polish-notation", "Evaluate Expression", "Hard"),
-      courseProblem("remove-all-adjacent-duplicates-in-string", "Repeated Removal of Adjacent Duplicates", "Easy"),
-      courseProblem("implement-queue-using-stacks", "Implement a Queue using Stacks", "Medium"),
-      courseProblem("sliding-window-maximum", "Maximums of Sliding Window", "Hard")
-    ]
+      courseProblem(
+        "valid-parentheses",
+        "Valid Parenthesis Expression",
+        "Easy"
+      ),
+      courseProblem(
+        "next-greater-element-i",
+        "Next Largest Number to the Right",
+        "Medium"
+      ),
+      courseProblem(
+        "evaluate-reverse-polish-notation",
+        "Evaluate Expression",
+        "Hard"
+      ),
+      courseProblem(
+        "remove-all-adjacent-duplicates-in-string",
+        "Repeated Removal of Adjacent Duplicates",
+        "Easy"
+      ),
+      courseProblem(
+        "implement-queue-using-stacks",
+        "Implement a Queue using Stacks",
+        "Medium"
+      ),
+      courseProblem(
+        "sliding-window-maximum",
+        "Maximums of Sliding Window",
+        "Hard"
+      ),
+    ],
   },
   {
     topic: "Heaps",
     slugs: [
-      courseProblem("top-k-frequent-words", "K Most Frequent Strings", "Medium"),
-      courseProblem("merge-k-sorted-lists", "Combine Sorted Linked Lists", "Medium"),
-      courseProblem("find-median-from-data-stream", "Median of an Integer Stream", "Hard"),
-      courseProblem("sort-characters-by-frequency", "Sort a K-Sorted Array", "Medium")
-    ]
+      courseProblem(
+        "top-k-frequent-words",
+        "K Most Frequent Strings",
+        "Medium"
+      ),
+      courseProblem(
+        "merge-k-sorted-lists",
+        "Combine Sorted Linked Lists",
+        "Medium"
+      ),
+      courseProblem(
+        "find-median-from-data-stream",
+        "Median of an Integer Stream",
+        "Hard"
+      ),
+      courseProblem(
+        "sort-characters-by-frequency",
+        "Sort a K-Sorted Array",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Intervals",
     slugs: [
       courseProblem("merge-intervals", "Merge Overlapping Intervals", "Medium"),
-      courseProblem("interval-list-intersections", "Identify All Interval Overlaps", "Medium"),
-      courseProblem("meeting-rooms-ii", "Largest Overlap of Intervals", "Medium")
-    ]
+      courseProblem(
+        "interval-list-intersections",
+        "Identify All Interval Overlaps",
+        "Medium"
+      ),
+      courseProblem(
+        "meeting-rooms-ii",
+        "Largest Overlap of Intervals",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Prefix Sums",
     slugs: [
       courseProblem("range-sum-query-immutable", "Sum Between Range", "Easy"),
       courseProblem("subarray-sum-equals-k", "K-Sum Subarrays", "Medium"),
-      courseProblem("product-of-array-except-self", "Product Array Without Current Element", "Medium")
-    ]
+      courseProblem(
+        "product-of-array-except-self",
+        "Product Array Without Current Element",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Trees",
     slugs: [
       courseProblem("invert-binary-tree", "Invert Binary Tree", "Easy"),
-      courseProblem("balanced-binary-tree", "Balanced Binary Tree Validation", "Easy"),
-      courseProblem("binary-tree-right-side-view", "Rightmost Nodes of a Binary Tree", "Medium"),
-      courseProblem("maximum-width-of-binary-tree", "Widest Binary Tree Level", "Medium"),
-      courseProblem("validate-binary-search-tree", "Binary Search Tree Validation", "Medium"),
-      courseProblem("lowest-common-ancestor-of-a-binary-tree", "Lowest Common Ancestor", "Medium"),
+      courseProblem(
+        "balanced-binary-tree",
+        "Balanced Binary Tree Validation",
+        "Easy"
+      ),
+      courseProblem(
+        "binary-tree-right-side-view",
+        "Rightmost Nodes of a Binary Tree",
+        "Medium"
+      ),
+      courseProblem(
+        "maximum-width-of-binary-tree",
+        "Widest Binary Tree Level",
+        "Medium"
+      ),
+      courseProblem(
+        "validate-binary-search-tree",
+        "Binary Search Tree Validation",
+        "Medium"
+      ),
+      courseProblem(
+        "lowest-common-ancestor-of-a-binary-tree",
+        "Lowest Common Ancestor",
+        "Medium"
+      ),
       courseProblem(
         "construct-binary-tree-from-preorder-and-inorder-traversal",
         "Build Binary Tree From Preorder and Inorder Traversals",
         "Medium"
       ),
-      courseProblem("binary-tree-maximum-path-sum", "Maximum Sum of a Continuous Path in a Binary Tree", "Hard"),
+      courseProblem(
+        "binary-tree-maximum-path-sum",
+        "Maximum Sum of a Continuous Path in a Binary Tree",
+        "Hard"
+      ),
       courseProblem("symmetric-tree", "Binary Tree Symmetry", "Medium"),
-      courseProblem("binary-tree-vertical-order-traversal", "Binary Tree Columns", "Medium"),
-      courseProblem("kth-smallest-element-in-a-bst", "Kth Smallest Number in a Binary Search Tree", "Medium"),
-      courseProblem("serialize-and-deserialize-binary-tree", "Serialize and Deserialize a Binary Tree", "Medium")
-    ]
+      courseProblem(
+        "binary-tree-vertical-order-traversal",
+        "Binary Tree Columns",
+        "Medium"
+      ),
+      courseProblem(
+        "kth-smallest-element-in-a-bst",
+        "Kth Smallest Number in a Binary Search Tree",
+        "Medium"
+      ),
+      courseProblem(
+        "serialize-and-deserialize-binary-tree",
+        "Serialize and Deserialize a Binary Tree",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Tries",
     slugs: [
       courseProblem("implement-trie-prefix-tree", "Design a Trie", "Medium"),
-      courseProblem("design-add-and-search-words-data-structure", "Insert and Search Words with Wildcards", "Medium"),
-      courseProblem("word-search-ii", "Find All Words on a Board", "Hard")
-    ]
+      courseProblem(
+        "design-add-and-search-words-data-structure",
+        "Insert and Search Words with Wildcards",
+        "Medium"
+      ),
+      courseProblem("word-search-ii", "Find All Words on a Board", "Hard"),
+    ],
   },
   {
     topic: "Graphs",
@@ -1191,14 +1337,26 @@ const byteByteGo101TopicPath: TopicPathSection[] = [
       courseProblem("clone-graph", "Graph Deep Copy", "Medium"),
       courseProblem("number-of-islands", "Count Islands", "Medium"),
       courseProblem("rotting-oranges", "Matrix Infection", "Medium"),
-      courseProblem("is-graph-bipartite", "Bipartite Graph Validation", "Medium"),
-      courseProblem("longest-increasing-path-in-a-matrix", "Longest Increasing Path", "Medium"),
+      courseProblem(
+        "is-graph-bipartite",
+        "Bipartite Graph Validation",
+        "Medium"
+      ),
+      courseProblem(
+        "longest-increasing-path-in-a-matrix",
+        "Longest Increasing Path",
+        "Medium"
+      ),
       courseProblem("word-ladder", "Shortest Transformation Sequence", "Hard"),
       courseProblem("accounts-merge", "Merging Communities", "Hard"),
       courseProblem("course-schedule", "Prerequisites", "Medium"),
       courseProblem("network-delay-time", "Shortest Path", "Hard"),
-      courseProblem("number-of-connected-components-in-an-undirected-graph", "Connect the Dots", "Medium")
-    ]
+      courseProblem(
+        "number-of-connected-components-in-an-undirected-graph",
+        "Connect the Dots",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Backtracking",
@@ -1207,8 +1365,12 @@ const byteByteGo101TopicPath: TopicPathSection[] = [
       courseProblem("subsets", "Find All Subsets", "Medium"),
       courseProblem("n-queens", "N Queens", "Hard"),
       courseProblem("combination-sum", "Combinations of a Sum", "Medium"),
-      courseProblem("letter-combinations-of-a-phone-number", "Phone Keypad Combinations", "Medium")
-    ]
+      courseProblem(
+        "letter-combinations-of-a-phone-number",
+        "Phone Keypad Combinations",
+        "Medium"
+      ),
+    ],
   },
   {
     topic: "Dynamic Programming",
@@ -1217,37 +1379,49 @@ const byteByteGo101TopicPath: TopicPathSection[] = [
       courseProblem("coin-change", "Minimum Coin Combination", "Medium"),
       courseProblem("unique-paths", "Matrix Pathways", "Medium"),
       courseProblem("house-robber", "Neighborhood Burglary", "Medium"),
-      courseProblem("longest-common-subsequence", "Longest Common Subsequence", "Hard"),
-      courseProblem("longest-palindromic-substring", "Longest Palindrome in a String", "Medium"),
+      courseProblem(
+        "longest-common-subsequence",
+        "Longest Common Subsequence",
+        "Hard"
+      ),
+      courseProblem(
+        "longest-palindromic-substring",
+        "Longest Palindrome in a String",
+        "Medium"
+      ),
       courseProblem("maximum-subarray", "Maximum Subarray Sum", "Medium"),
       courseProblem("ones-and-zeroes", "0/1 Knapsack", "Hard"),
-      courseProblem("maximal-square", "Largest Square in a Matrix", "Medium")
-    ]
+      courseProblem("maximal-square", "Largest Square in a Matrix", "Medium"),
+    ],
   },
   {
     topic: "Greedy",
     slugs: [
       courseProblem("jump-game", "Jump to the End", "Medium"),
       courseProblem("gas-station", "Gas Stations", "Hard"),
-      courseProblem("candy", "Candies", "Medium")
-    ]
+      courseProblem("candy", "Candies", "Medium"),
+    ],
   },
   {
     topic: "Sort And Search",
     slugs: [
       courseProblem("sort-list", "Sort Linked List", "Medium"),
       courseProblem("sort-an-array", "Sort Array", "Medium"),
-      courseProblem("kth-largest-element-in-an-array", "Kth Largest Integer", "Medium"),
-      courseProblem("sort-colors", "Dutch National Flag", "Medium")
-    ]
+      courseProblem(
+        "kth-largest-element-in-an-array",
+        "Kth Largest Integer",
+        "Medium"
+      ),
+      courseProblem("sort-colors", "Dutch National Flag", "Medium"),
+    ],
   },
   {
     topic: "Bit Manipulation",
     slugs: [
       courseProblem("number-of-1-bits", "Hamming Weights of Integers", "Easy"),
       courseProblem("single-number", "Lonely Integer", "Easy"),
-      courseProblem("reverse-bits", "Swap Odd and Even Bits", "Medium")
-    ]
+      courseProblem("reverse-bits", "Swap Odd and Even Bits", "Medium"),
+    ],
   },
   {
     topic: "Math And Geometry",
@@ -1255,24 +1429,29 @@ const byteByteGo101TopicPath: TopicPathSection[] = [
       courseProblem("spiral-matrix", "Spiral Traversal", "Medium"),
       courseProblem("reverse-integer", "Reverse 32-Bit Integer", "Medium"),
       courseProblem("max-points-on-a-line", "Maximum Collinear Points", "Hard"),
-      courseProblem("find-the-winner-of-the-circular-game", "The Josephus Problem", "Medium"),
-      courseProblem("valid-triangle-number", "Triangle Numbers", "Medium")
-    ]
-  }
+      courseProblem(
+        "find-the-winner-of-the-circular-game",
+        "The Josephus Problem",
+        "Medium"
+      ),
+      courseProblem("valid-triangle-number", "Triangle Numbers", "Medium"),
+    ],
+  },
 ];
 
-function flattenSections(sections: TopicPathSection[]): string[] {
-  return sections.flatMap((section) => section.slugs.map((item) => normalizeTopicPathProblem(item).slug));
-}
-
-function mergeCuratedLists(...lists: CuratedProblemInput[][]): CuratedProblemInput[] {
+function mergeCuratedLists(
+  ...lists: CuratedProblemInput[][]
+): CuratedProblemInput[] {
   const bySlug = new Map<string, CuratedProblemInput>();
 
   for (const list of lists) {
     for (const item of list) {
       const existing = bySlug.get(item.slug);
       if (existing) {
-        existing.tags = uniqueStrings([...(existing.tags ?? []), ...(item.tags ?? [])]);
+        existing.tags = uniqueStrings([
+          ...(existing.tags ?? []),
+          ...(item.tags ?? []),
+        ]);
         continue;
       }
 
@@ -1280,7 +1459,7 @@ function mergeCuratedLists(...lists: CuratedProblemInput[][]): CuratedProblemInp
         slug: item.slug,
         title: item.title ?? slugToTitle(item.slug),
         difficulty: item.difficulty,
-        tags: uniqueStrings(item.tags ?? [])
+        tags: uniqueStrings(item.tags ?? []),
       });
     }
   }
@@ -1298,14 +1477,18 @@ function buildPlanRuntime(plan: StudyPlanInput): PlanRuntime {
       const item = normalizeTopicPathProblem(rawItem);
       const existing = bySlug.get(item.slug);
       if (existing) {
-        existing.tags = uniqueStrings([...(existing.tags ?? []), section.topic, ...item.tags]);
+        existing.tags = uniqueStrings([
+          ...(existing.tags ?? []),
+          section.topic,
+          ...item.tags,
+        ]);
         existing.difficulty = existing.difficulty ?? item.difficulty;
       } else {
         bySlug.set(item.slug, {
           slug: item.slug,
           title: item.title,
           difficulty: item.difficulty,
-          tags: uniqueStrings([section.topic, ...item.tags])
+          tags: uniqueStrings([section.topic, ...item.tags]),
         });
       }
 
@@ -1322,7 +1505,7 @@ function buildPlanRuntime(plan: StudyPlanInput): PlanRuntime {
         slug: item.slug,
         title: item.displayTitle,
         url: slugToUrl(item.slug),
-        difficulty: item.difficulty
+        difficulty: item.difficulty,
       });
     }
   }
@@ -1336,10 +1519,10 @@ function buildPlanRuntime(plan: StudyPlanInput): PlanRuntime {
       description: plan.description,
       sourceSet: plan.sourceSet,
       topicCount: plan.sections.length,
-      problemCount: problems.length
+      problemCount: problems.length,
     },
     steps,
-    problems
+    problems,
   };
 }
 
@@ -1349,43 +1532,44 @@ const STUDY_PLAN_INPUTS: StudyPlanInput[] = [
     name: "Blind 75",
     description: "Core interview patterns, topic by topic.",
     sourceSet: "Blind75",
-    sections: blind75TopicPath
+    sections: blind75TopicPath,
   },
   {
     id: "ByteByteGo101",
     name: "ByteByteGo Coding Patterns 101",
-    description: "ByteByteGo's coding patterns path, organized by interview pattern.",
+    description:
+      "ByteByteGo's coding patterns path, organized by interview pattern.",
     sourceSet: "ByteByteGo101",
-    sections: byteByteGo101TopicPath
+    sections: byteByteGo101TopicPath,
   },
   {
     id: "LeetCode75",
     name: "LeetCode 75",
     description: "LeetCode 75 path grouped by official topics.",
     sourceSet: "LeetCode75",
-    sections: leetcode75TopicPath
+    sections: leetcode75TopicPath,
   },
   {
     id: "Grind75",
     name: "Grind 75",
     description: "Grind 75 sequence for timed interview prep.",
     sourceSet: "Grind75",
-    sections: [{ topic: "Grind 75 Path", slugs: grind75Slugs }]
+    sections: [{ topic: "Grind 75 Path", slugs: grind75Slugs }],
   },
   {
     id: "NeetCode150",
     name: "NeetCode 150",
     description: "NeetCode 150 curated problems.",
     sourceSet: "NeetCode150",
-    sections: neetCode150TopicPath
+    sections: neetCode150TopicPath,
   },
   {
     id: "NeetCode250",
     name: "NeetCode 250",
     description: "Complete beginner study plan from NeetCode.",
     sourceSet: "NeetCode250",
-    sections: neetCode250TopicPath
-  }
+    sections: neetCode250TopicPath,
+  },
 ];
 
 const PLAN_RUNTIME = new Map<string, PlanRuntime>(
@@ -1400,10 +1584,14 @@ const DEFAULT_PLAN_ID = STUDY_PLAN_INPUTS[0]?.id ?? "Blind75";
 const curatedBySet = new Map<string, CuratedProblemInput[]>();
 for (const runtime of PLAN_RUNTIME.values()) {
   const existing = curatedBySet.get(runtime.summary.sourceSet) ?? [];
-  curatedBySet.set(runtime.summary.sourceSet, mergeCuratedLists(existing, runtime.problems));
+  curatedBySet.set(
+    runtime.summary.sourceSet,
+    mergeCuratedLists(existing, runtime.problems)
+  );
 }
 
-export const CURATED_SETS: Record<string, CuratedProblemInput[]> = Object.fromEntries(curatedBySet.entries());
+export const CURATED_SETS: Record<string, CuratedProblemInput[]> =
+  Object.fromEntries(curatedBySet.entries());
 
 const problemCatalog = new Map<string, ProblemCatalogEntry>();
 for (const runtime of PLAN_RUNTIME.values()) {
@@ -1415,13 +1603,19 @@ for (const runtime of PLAN_RUNTIME.values()) {
         title: problem.title ?? slugToTitle(problem.slug),
         url: slugToUrl(problem.slug),
         sourceSets: [runtime.summary.sourceSet],
-        topics: uniqueStrings(problem.tags ?? [])
+        topics: uniqueStrings(problem.tags ?? []),
       });
       continue;
     }
 
-    existing.sourceSets = uniqueStrings([...existing.sourceSets, runtime.summary.sourceSet]);
-    existing.topics = uniqueStrings([...existing.topics, ...(problem.tags ?? [])]);
+    existing.sourceSets = uniqueStrings([
+      ...existing.sourceSets,
+      runtime.summary.sourceSet,
+    ]);
+    existing.topics = uniqueStrings([
+      ...existing.topics,
+      ...(problem.tags ?? []),
+    ]);
   }
 }
 
@@ -1455,7 +1649,9 @@ export function listStudyPlans(): StudyPlanSummary[] {
 }
 
 export function getProblemCatalog(): ProblemCatalogEntry[] {
-  return Array.from(problemCatalog.values()).sort((a, b) => a.title.localeCompare(b.title));
+  return Array.from(problemCatalog.values()).sort((a, b) =>
+    a.title.localeCompare(b.title)
+  );
 }
 
 export function getDefaultCurriculumSteps(planId?: string): CurriculumStep[] {
@@ -1484,12 +1680,14 @@ export function getCurriculumRecommendations(
       sourceSet: summary.sourceSet,
       topic: null,
       items: [],
-      completed: false
+      completed: false,
     };
   }
 
   const limit = Math.max(1, Math.floor(maxItems));
-  const firstPendingIndex = steps.findIndex((step) => !hasStartedStep(data.studyStatesBySlug[step.slug]));
+  const firstPendingIndex = steps.findIndex(
+    (step) => !hasStartedStep(data.studyStatesBySlug[step.slug])
+  );
 
   if (firstPendingIndex < 0) {
     return {
@@ -1498,7 +1696,7 @@ export function getCurriculumRecommendations(
       sourceSet: summary.sourceSet,
       topic: null,
       items: [],
-      completed: true
+      completed: true,
     };
   }
 
@@ -1527,6 +1725,6 @@ export function getCurriculumRecommendations(
     sourceSet: summary.sourceSet,
     topic,
     items,
-    completed: false
+    completed: false,
   };
 }

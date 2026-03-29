@@ -81,7 +81,9 @@ export function formatClock(totalMs: number): string {
 }
 
 export function uniqueStrings(values: string[]): string[] {
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter(Boolean))
+  );
 }
 
 export function startOfDay(date: Date): Date {
@@ -97,7 +99,10 @@ export function ymd(date: Date): string {
 export function isProblemPage(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return /(^|\.)leetcode\.com$/.test(parsed.hostname) && /\/problems\/.+/.test(parsed.pathname);
+    return (
+      /(^|\.)leetcode\.com$/.test(parsed.hostname) &&
+      /\/problems\/.+/.test(parsed.pathname)
+    );
   } catch {
     return false;
   }

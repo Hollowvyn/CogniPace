@@ -1,6 +1,20 @@
 import { createDefaultStudyState } from "./constants";
-import { AppData, CuratedProblemInput, Difficulty, Problem, StudyState } from "./types";
-import { isProblemPage, normalizeSlug, nowIso, parseDifficulty, slugToTitle, slugToUrl, uniqueStrings } from "./utils";
+import {
+  AppData,
+  CuratedProblemInput,
+  Difficulty,
+  Problem,
+  StudyState,
+} from "./types";
+import {
+  isProblemPage,
+  normalizeSlug,
+  nowIso,
+  parseDifficulty,
+  slugToTitle,
+  slugToUrl,
+  uniqueStrings,
+} from "./utils";
 
 export interface UpsertProblemInput {
   slug: string;
@@ -11,7 +25,10 @@ export interface UpsertProblemInput {
   sourceSet?: string;
 }
 
-export function ensureProblem(data: AppData, input: UpsertProblemInput): Problem {
+export function ensureProblem(
+  data: AppData,
+  input: UpsertProblemInput
+): Problem {
   const slug = normalizeSlug(input.slug);
   if (!slug) {
     throw new Error("Invalid LeetCode slug.");
@@ -30,7 +47,7 @@ export function ensureProblem(data: AppData, input: UpsertProblemInput): Problem
       topics: uniqueStrings(input.topics ?? []),
       sourceSet: input.sourceSet ? [input.sourceSet] : [],
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
 
     data.problemsBySlug[slug] = created;
@@ -40,11 +57,20 @@ export function ensureProblem(data: AppData, input: UpsertProblemInput): Problem
   const merged: Problem = {
     ...existing,
     title: input.title?.trim() || existing.title,
-    difficulty: input.difficulty && input.difficulty !== "Unknown" ? input.difficulty : existing.difficulty,
+    difficulty:
+      input.difficulty && input.difficulty !== "Unknown"
+        ? input.difficulty
+        : existing.difficulty,
     url: input.url?.trim() || existing.url,
-    topics: uniqueStrings([...(existing.topics ?? []), ...(input.topics ?? [])]),
-    sourceSet: uniqueStrings([...(existing.sourceSet ?? []), ...(input.sourceSet ? [input.sourceSet] : [])]),
-    updatedAt: now
+    topics: uniqueStrings([
+      ...(existing.topics ?? []),
+      ...(input.topics ?? []),
+    ]),
+    sourceSet: uniqueStrings([
+      ...(existing.sourceSet ?? []),
+      ...(input.sourceSet ? [input.sourceSet] : []),
+    ]),
+    updatedAt: now,
   };
 
   data.problemsBySlug[slug] = merged;
@@ -83,7 +109,7 @@ export function importProblemsIntoSet(
       title: item.title,
       difficulty: item.difficulty,
       topics: item.tags,
-      sourceSet: setName
+      sourceSet: setName,
     });
 
     ensureStudyState(data, slug);
@@ -98,7 +124,10 @@ export function importProblemsIntoSet(
   return { added, updated };
 }
 
-export function parseProblemInput(input: string): { slug: string; url?: string } {
+export function parseProblemInput(input: string): {
+  slug: string;
+  url?: string;
+} {
   const trimmed = input.trim();
   if (!trimmed) {
     throw new Error("Enter a LeetCode URL or slug.");
@@ -134,7 +163,7 @@ export function parseProblemInput(input: string): { slug: string; url?: string }
 
   return {
     slug,
-    url: `https://leetcode.com/problems/${slug}/`
+    url: `https://leetcode.com/problems/${slug}/`,
   };
 }
 

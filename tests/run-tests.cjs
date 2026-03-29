@@ -1,9 +1,10 @@
-const esbuild = require("esbuild");
+const { spawnSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
-const { spawnSync } = require("child_process");
 
-const outdir = path.join(__dirname, ".tmp");
+const esbuild = require("esbuild");
+
+const outdir = path.join(__dirname, "..", ".tmp", "tests");
 const outfile = path.join(outdir, "logic.test.cjs");
 
 fs.rmSync(outdir, { recursive: true, force: true });
@@ -14,9 +15,9 @@ esbuild.buildSync({
   outfile,
   bundle: true,
   platform: "node",
-  target: "node18",
+  target: "node24",
   format: "cjs",
-  logLevel: "silent"
+  logLevel: "silent",
 });
 
 const result = spawnSync(process.execPath, [outfile], { stdio: "inherit" });

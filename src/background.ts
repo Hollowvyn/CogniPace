@@ -9,31 +9,37 @@ import {
   markCourseQuestionLaunched,
   setActiveCourse,
   setActiveCourseChapter,
-  syncCourseProgress
+  syncCourseProgress,
 } from "./shared/courses";
-import { getCuratedSet, listCuratedSetNames } from "./shared/curatedSets";
+import { getCuratedSet } from "./shared/curatedSets";
 import { buildTodayQueue } from "./shared/queue";
+import { buildRecommendedCandidates } from "./shared/recommendations";
 import {
   ensureProblem,
   ensureStudyState,
   importProblemsIntoSet,
   normalizeDifficulty,
-  parseProblemInput
+  parseProblemInput,
 } from "./shared/repository";
-import { buildRecommendedCandidates } from "./shared/recommendations";
 import { RuntimeResponse } from "./shared/runtime";
 import { applyReview, resetSchedule } from "./shared/scheduler";
-import { getStudyStateSummary, normalizeStudyState } from "./shared/studyState";
 import { getAppData, mergeSettings, mutateAppData } from "./shared/storage";
+import { getStudyStateSummary, normalizeStudyState } from "./shared/studyState";
 import {
   AppShellPayload,
   ExportPayload,
   LibraryProblemRow,
   MessageType,
   RuntimeMessage,
-  StudyState
+  StudyState,
 } from "./shared/types";
-import { normalizeSlug, nowIso, slugToTitle, slugToUrl, uniqueStrings } from "./shared/utils";
+import {
+  normalizeSlug,
+  nowIso,
+  slugToTitle,
+  slugToUrl,
+  uniqueStrings,
+} from "./shared/utils";
 
 function ok<T>(data: T): RuntimeResponse<T> {
   return { ok: true, data };
@@ -44,7 +50,9 @@ function fail(error: unknown): RuntimeResponse<never> {
   return { ok: false, error: message };
 }
 
-function libraryRows(payload: Awaited<ReturnType<typeof getAppData>>): LibraryProblemRow[] {
+function libraryRows(
+  payload: Awaited<ReturnType<typeof getAppData>>
+): LibraryProblemRow[] {
   return Object.values(payload.problemsBySlug)
     .map((problem) => ({
       problem,
@@ -52,7 +60,7 @@ function libraryRows(payload: Awaited<ReturnType<typeof getAppData>>): LibraryPr
       studyStateSummary: payload.studyStatesBySlug[problem.leetcodeSlug]
         ? getStudyStateSummary(payload.studyStatesBySlug[problem.leetcodeSlug])
         : null,
-      courses: getCourseMemberships(payload, problem.leetcodeSlug)
+      courses: getCourseMemberships(payload, problem.leetcodeSlug),
     }))
     .sort((a, b) => a.problem.title.localeCompare(b.problem.title));
 }
@@ -63,7 +71,10 @@ async function getAppShellData(): Promise<RuntimeResponse<AppShellPayload>> {
   const analytics = summarizeAnalytics(data);
   const courses = buildCourseCards(data);
   const activeCourse = buildActiveCourseView(data);
-  const candidates = buildRecommendedCandidates(queue, activeCourse?.nextQuestion?.slug);
+  const candidates = buildRecommendedCandidates(
+    queue,
+    activeCourse?.nextQuestion?.slug
+  );
 
   return ok({
     queue,
@@ -75,17 +86,21 @@ async function getAppShellData(): Promise<RuntimeResponse<AppShellPayload>> {
       recommended: candidates[0] ?? null,
       recommendedCandidates: candidates,
       courseNext: activeCourse?.nextQuestion ?? null,
-      activeCourse: courses.find((course) => course.id === data.settings.activeCourseId) ?? null
+      activeCourse:
+        courses.find((course) => course.id === data.settings.activeCourseId) ??
+        null,
     },
     recommendedCandidates: candidates,
     courses,
     activeCourse,
     library: libraryRows(data),
-    courseOptions: buildCourseOptions(data)
+    courseOptions: buildCourseOptions(data),
   });
 }
 
-async function openExtensionPage(payload: { path: string }): Promise<RuntimeResponse> {
+async function openExtensionPage(payload: {
+  path: string;
+}): Promise<RuntimeResponse> {
   const path = typeof payload.path === "string" ? payload.path.trim() : "";
   if (!path) {
     throw new Error("Missing extension path.");
@@ -108,7 +123,7 @@ async function upsertFromPage(payload: {
       title: payload.title,
       difficulty: normalizeDifficulty(payload.difficulty),
       url: payload.url,
-      topics: payload.topics
+      topics: payload.topics,
     });
 
     const state = ensureStudyState(data, payload.slug);
@@ -118,12 +133,12 @@ async function upsertFromPage(payload: {
       ...data,
       problemsBySlug: {
         ...data.problemsBySlug,
-        [problem.leetcodeSlug]: problem
+        [problem.leetcodeSlug]: problem,
       },
       studyStatesBySlug: {
         ...data.studyStatesBySlug,
-        [problem.leetcodeSlug]: state
-      }
+        [problem.leetcodeSlug]: state,
+      },
     };
   });
 
@@ -134,11 +149,13 @@ async function upsertFromPage(payload: {
 
   return ok({
     problem: updated.problemsBySlug[slug],
-    studyState: updated.studyStatesBySlug[slug]
+    studyState: updated.studyStatesBySlug[slug],
   });
 }
 
-async function getProblemContext(payload: { slug: string }): Promise<RuntimeResponse> {
+async function getProblemContext(payload: {
+  slug: string;
+}): Promise<RuntimeResponse> {
   const data = await getAppData();
   const slug = normalizeSlug(payload.slug);
   if (!slug) {
@@ -147,7 +164,7 @@ async function getProblemContext(payload: { slug: string }): Promise<RuntimeResp
 
   return ok({
     problem: data.problemsBySlug[slug] ?? null,
-    studyState: data.studyStatesBySlug[slug] ?? null
+    studyState: data.studyStatesBySlug[slug] ?? null,
   });
 }
 
@@ -178,7 +195,7 @@ async function saveReviewResult(payload: {
       mode: payload.mode,
       notesSnapshot: payload.notes ?? current.notes,
       settings: data.settings,
-      now
+      now,
     });
 
     if (typeof payload.notes === "string") {
@@ -186,7 +203,13 @@ async function saveReviewResult(payload: {
     }
 
     data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
-    markCourseQuestionLaunched(data, normalized, now, payload.courseId, payload.chapterId);
+    markCourseQuestionLaunched(
+      data,
+      normalized,
+      now,
+      payload.courseId,
+      payload.chapterId
+    );
     syncCourseProgress(data, now);
     return data;
   });
@@ -197,7 +220,7 @@ async function saveReviewResult(payload: {
     studyState: nextState,
     nextReviewAt: studyStateSummary.nextReviewAt,
     phase: studyStateSummary.phase,
-    lastRating: nextState.lastRating
+    lastRating: nextState.lastRating,
   });
 }
 
@@ -213,11 +236,14 @@ async function rateProblem(payload: {
     rating: payload.rating,
     solveTimeMs: payload.solveTimeMs,
     mode: payload.mode,
-    notes: payload.notesSnapshot
+    notes: payload.notesSnapshot,
   });
 }
 
-async function updateNotes(payload: { slug: string; notes: string }): Promise<RuntimeResponse> {
+async function updateNotes(payload: {
+  slug: string;
+  notes: string;
+}): Promise<RuntimeResponse> {
   const normalized = normalizeSlug(payload.slug);
   if (!normalized) {
     throw new Error("Invalid slug.");
@@ -234,7 +260,10 @@ async function updateNotes(payload: { slug: string; notes: string }): Promise<Ru
   return ok({ studyState: updated.studyStatesBySlug[normalized] });
 }
 
-async function updateTags(payload: { slug: string; tags: string[] }): Promise<RuntimeResponse> {
+async function updateTags(payload: {
+  slug: string;
+  tags: string[];
+}): Promise<RuntimeResponse> {
   const normalized = normalizeSlug(payload.slug);
   if (!normalized) {
     throw new Error("Invalid slug.");
@@ -256,7 +285,9 @@ async function getQueue(): Promise<RuntimeResponse> {
   return ok(buildTodayQueue(data));
 }
 
-async function importCurated(payload: { setName: string }): Promise<RuntimeResponse> {
+async function importCurated(payload: {
+  setName: string;
+}): Promise<RuntimeResponse> {
   const setProblems = getCuratedSet(payload.setName);
   if (setProblems.length === 0) {
     throw new Error(`Unknown curated set: ${payload.setName}`);
@@ -268,8 +299,8 @@ async function importCurated(payload: { setName: string }): Promise<RuntimeRespo
     data.settings = mergeSettings(data.settings, {
       setsEnabled: {
         ...data.settings.setsEnabled,
-        [payload.setName]: true
-      }
+        [payload.setName]: true,
+      },
     });
     syncCourseProgress(data);
     return data;
@@ -279,13 +310,18 @@ async function importCurated(payload: { setName: string }): Promise<RuntimeRespo
     setName: payload.setName,
     count: setProblems.length,
     added: importResult.added,
-    updated: importResult.updated
+    updated: importResult.updated,
   });
 }
 
 async function importCustom(payload: {
   setName?: string;
-  items: Array<{ slug: string; title?: string; difficulty?: "Easy" | "Medium" | "Hard" | "Unknown"; tags?: string[] }>;
+  items: Array<{
+    slug: string;
+    title?: string;
+    difficulty?: "Easy" | "Medium" | "Hard" | "Unknown";
+    tags?: string[];
+  }>;
 }): Promise<RuntimeResponse> {
   if (!Array.isArray(payload.items) || payload.items.length === 0) {
     throw new Error("Custom set import requires at least one item.");
@@ -300,8 +336,8 @@ async function importCustom(payload: {
       setsEnabled: {
         ...data.settings.setsEnabled,
         [normalizedName]: true,
-        Custom: true
-      }
+        Custom: true,
+      },
     });
     syncCourseProgress(data);
     return data;
@@ -311,7 +347,7 @@ async function importCustom(payload: {
     setName: normalizedName,
     count: payload.items.length,
     added: importResult.added,
-    updated: importResult.updated
+    updated: importResult.updated,
   });
 }
 
@@ -324,7 +360,7 @@ async function exportData(): Promise<RuntimeResponse<ExportPayload>> {
     settings: data.settings,
     coursesById: data.coursesById,
     courseOrder: data.courseOrder,
-    courseProgressById: data.courseProgressById
+    courseProgressById: data.courseProgressById,
   });
 }
 
@@ -357,12 +393,16 @@ async function importData(payload: ExportPayload): Promise<RuntimeResponse> {
         topics: uniqueStrings(problem.topics ?? []),
         sourceSet: uniqueStrings(problem.sourceSet ?? []),
         createdAt: problem.createdAt || now,
-        updatedAt: problem.updatedAt || now
+        updatedAt: problem.updatedAt || now,
       };
     }
 
-    for (const [slug, state] of Object.entries(payload.studyStatesBySlug ?? {})) {
-      data.studyStatesBySlug[slug.toLowerCase()] = normalizeStudyState(state as StudyState);
+    for (const [slug, state] of Object.entries(
+      payload.studyStatesBySlug ?? {}
+    )) {
+      data.studyStatesBySlug[slug.toLowerCase()] = normalizeStudyState(
+        state as StudyState
+      );
     }
 
     data.settings = mergeSettings(data.settings, payload.settings ?? {});
@@ -374,7 +414,9 @@ async function importData(payload: ExportPayload): Promise<RuntimeResponse> {
   return ok({ imported: true });
 }
 
-async function updateSettings(payload: Record<string, unknown>): Promise<RuntimeResponse> {
+async function updateSettings(
+  payload: Record<string, unknown>
+): Promise<RuntimeResponse> {
   const updated = await mutateAppData((data) => {
     data.settings = mergeSettings(data.settings, payload);
     ensureCourseData(data);
@@ -397,7 +439,7 @@ async function addProblemByInput(payload: {
       slug: parsed.slug,
       url: parsed.url,
       sourceSet: payload.sourceSet,
-      topics: payload.topics
+      topics: payload.topics,
     });
     const state = ensureStudyState(data, parsed.slug);
     syncCourseProgress(data);
@@ -406,19 +448,19 @@ async function addProblemByInput(payload: {
       ...data,
       problemsBySlug: {
         ...data.problemsBySlug,
-        [problem.leetcodeSlug]: problem
+        [problem.leetcodeSlug]: problem,
       },
       studyStatesBySlug: {
         ...data.studyStatesBySlug,
-        [problem.leetcodeSlug]: state
-      }
+        [problem.leetcodeSlug]: state,
+      },
     };
   });
 
   return ok({
     slug: parsed.slug,
     problem: updated.problemsBySlug[parsed.slug],
-    studyState: updated.studyStatesBySlug[parsed.slug]
+    studyState: updated.studyStatesBySlug[parsed.slug],
   });
 }
 
@@ -440,12 +482,18 @@ async function addProblemToCourse(payload: {
       slug: parsed.slug,
       url: parsed.url,
       sourceSet: course.sourceSet,
-      topics: [chapter.title]
+      topics: [chapter.title],
     });
-    const state = ensureStudyState(data, parsed.slug);
+    ensureStudyState(data, parsed.slug);
 
     ensureProblemInCourse(course, payload.chapterId, problem);
-    markCourseQuestionLaunched(data, problem.leetcodeSlug, nowIso(), payload.courseId, payload.chapterId);
+    markCourseQuestionLaunched(
+      data,
+      problem.leetcodeSlug,
+      nowIso(),
+      payload.courseId,
+      payload.chapterId
+    );
     syncCourseProgress(data);
     return data;
   });
@@ -458,11 +506,13 @@ async function addProblemToCourse(payload: {
   return ok({
     problem: updated.problemsBySlug[normalized],
     studyState: updated.studyStatesBySlug[normalized],
-    course: buildActiveCourseView(updated, payload.courseId)
+    course: buildActiveCourseView(updated, payload.courseId),
   });
 }
 
-async function switchActiveCourse(payload: { courseId: string }): Promise<RuntimeResponse> {
+async function switchActiveCourse(payload: {
+  courseId: string;
+}): Promise<RuntimeResponse> {
   const updated = await mutateAppData((data) => {
     setActiveCourse(data, payload.courseId);
     return data;
@@ -470,18 +520,24 @@ async function switchActiveCourse(payload: { courseId: string }): Promise<Runtim
 
   return ok({
     activeCourseId: updated.settings.activeCourseId,
-    activeCourse: buildActiveCourseView(updated, updated.settings.activeCourseId)
+    activeCourse: buildActiveCourseView(
+      updated,
+      updated.settings.activeCourseId
+    ),
   });
 }
 
-async function activateCourseChapter(payload: { courseId: string; chapterId: string }): Promise<RuntimeResponse> {
+async function activateCourseChapter(payload: {
+  courseId: string;
+  chapterId: string;
+}): Promise<RuntimeResponse> {
   const updated = await mutateAppData((data) => {
     setActiveCourseChapter(data, payload.courseId, payload.chapterId);
     return data;
   });
 
   return ok({
-    activeCourse: buildActiveCourseView(updated, payload.courseId)
+    activeCourse: buildActiveCourseView(updated, payload.courseId),
   });
 }
 
@@ -491,17 +547,29 @@ async function trackCourseQuestionLaunch(payload: {
   chapterId?: string;
 }): Promise<RuntimeResponse> {
   const updated = await mutateAppData((data) => {
-    markCourseQuestionLaunched(data, payload.slug, nowIso(), payload.courseId, payload.chapterId);
+    markCourseQuestionLaunched(
+      data,
+      payload.slug,
+      nowIso(),
+      payload.courseId,
+      payload.chapterId
+    );
     return data;
   });
 
   return ok({
     tracked: true,
-    activeCourse: buildActiveCourseView(updated, payload.courseId ?? updated.settings.activeCourseId)
+    activeCourse: buildActiveCourseView(
+      updated,
+      payload.courseId ?? updated.settings.activeCourseId
+    ),
   });
 }
 
-async function suspendProblem(payload: { slug: string; suspend: boolean }): Promise<RuntimeResponse> {
+async function suspendProblem(payload: {
+  slug: string;
+  suspend: boolean;
+}): Promise<RuntimeResponse> {
   const normalized = normalizeSlug(payload.slug);
   if (!normalized) {
     throw new Error("Invalid slug.");
@@ -519,7 +587,10 @@ async function suspendProblem(payload: { slug: string; suspend: boolean }): Prom
   return ok({ studyState: updated.studyStatesBySlug[normalized] });
 }
 
-async function resetProblem(payload: { slug: string; keepNotes?: boolean }): Promise<RuntimeResponse> {
+async function resetProblem(payload: {
+  slug: string;
+  keepNotes?: boolean;
+}): Promise<RuntimeResponse> {
   const normalized = normalizeSlug(payload.slug);
   if (!normalized) {
     throw new Error("Invalid slug.");
@@ -528,7 +599,10 @@ async function resetProblem(payload: { slug: string; keepNotes?: boolean }): Pro
   const updated = await mutateAppData((data) => {
     ensureProblem(data, { slug: normalized });
     const state = data.studyStatesBySlug[normalized];
-    data.studyStatesBySlug[normalized] = resetSchedule(state, payload.keepNotes ?? true);
+    data.studyStatesBySlug[normalized] = resetSchedule(
+      state,
+      payload.keepNotes ?? true
+    );
     syncCourseProgress(data);
     return data;
   });
@@ -536,18 +610,28 @@ async function resetProblem(payload: { slug: string; keepNotes?: boolean }): Pro
   return ok({ studyState: updated.studyStatesBySlug[normalized] });
 }
 
-async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> {
+async function handleMessage(
+  message: RuntimeMessage
+): Promise<RuntimeResponse> {
   switch (message.type as MessageType) {
     case "UPSERT_PROBLEM_FROM_PAGE":
-      return upsertFromPage(message.payload as Parameters<typeof upsertFromPage>[0]);
+      return upsertFromPage(
+        message.payload as Parameters<typeof upsertFromPage>[0]
+      );
     case "GET_PROBLEM_CONTEXT":
-      return getProblemContext(message.payload as Parameters<typeof getProblemContext>[0]);
+      return getProblemContext(
+        message.payload as Parameters<typeof getProblemContext>[0]
+      );
     case "RATE_PROBLEM":
       return rateProblem(message.payload as Parameters<typeof rateProblem>[0]);
     case "SAVE_REVIEW_RESULT":
-      return saveReviewResult(message.payload as Parameters<typeof saveReviewResult>[0]);
+      return saveReviewResult(
+        message.payload as Parameters<typeof saveReviewResult>[0]
+      );
     case "OPEN_EXTENSION_PAGE":
-      return openExtensionPage(message.payload as Parameters<typeof openExtensionPage>[0]);
+      return openExtensionPage(
+        message.payload as Parameters<typeof openExtensionPage>[0]
+      );
     case "UPDATE_NOTES":
       return updateNotes(message.payload as Parameters<typeof updateNotes>[0]);
     case "UPDATE_TAGS":
@@ -558,15 +642,25 @@ async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> 
     case "GET_APP_SHELL_DATA":
       return getAppShellData();
     case "SWITCH_ACTIVE_COURSE":
-      return switchActiveCourse(message.payload as Parameters<typeof switchActiveCourse>[0]);
+      return switchActiveCourse(
+        message.payload as Parameters<typeof switchActiveCourse>[0]
+      );
     case "SET_ACTIVE_COURSE_CHAPTER":
-      return activateCourseChapter(message.payload as Parameters<typeof activateCourseChapter>[0]);
+      return activateCourseChapter(
+        message.payload as Parameters<typeof activateCourseChapter>[0]
+      );
     case "TRACK_COURSE_QUESTION_LAUNCH":
-      return trackCourseQuestionLaunch(message.payload as Parameters<typeof trackCourseQuestionLaunch>[0]);
+      return trackCourseQuestionLaunch(
+        message.payload as Parameters<typeof trackCourseQuestionLaunch>[0]
+      );
     case "IMPORT_CURATED_SET":
-      return importCurated(message.payload as Parameters<typeof importCurated>[0]);
+      return importCurated(
+        message.payload as Parameters<typeof importCurated>[0]
+      );
     case "IMPORT_CUSTOM_SET":
-      return importCustom(message.payload as Parameters<typeof importCustom>[0]);
+      return importCustom(
+        message.payload as Parameters<typeof importCustom>[0]
+      );
     case "EXPORT_DATA":
       return exportData();
     case "IMPORT_DATA":
@@ -574,19 +668,31 @@ async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> 
     case "UPDATE_SETTINGS":
       return updateSettings(message.payload as Record<string, unknown>);
     case "ADD_PROBLEM_BY_INPUT":
-      return addProblemByInput(message.payload as Parameters<typeof addProblemByInput>[0]);
+      return addProblemByInput(
+        message.payload as Parameters<typeof addProblemByInput>[0]
+      );
     case "ADD_PROBLEM_TO_COURSE":
-      return addProblemToCourse(message.payload as Parameters<typeof addProblemToCourse>[0]);
+      return addProblemToCourse(
+        message.payload as Parameters<typeof addProblemToCourse>[0]
+      );
     case "SUSPEND_PROBLEM":
-      return suspendProblem(message.payload as Parameters<typeof suspendProblem>[0]);
+      return suspendProblem(
+        message.payload as Parameters<typeof suspendProblem>[0]
+      );
     case "RESET_PROBLEM_SCHEDULE":
-      return resetProblem(message.payload as Parameters<typeof resetProblem>[0]);
+      return resetProblem(
+        message.payload as Parameters<typeof resetProblem>[0]
+      );
     default:
       return fail(`Unknown message type: ${(message as RuntimeMessage).type}`);
   }
 }
 
-function inQuietHours(startHour: number, endHour: number, currentHour: number): boolean {
+function inQuietHours(
+  startHour: number,
+  endHour: number,
+  currentHour: number
+): boolean {
   if (startHour === endHour) {
     return false;
   }
@@ -606,7 +712,13 @@ async function maybeNotifyDueQueue(): Promise<void> {
 
   const now = new Date();
   const hour = now.getHours();
-  if (inQuietHours(data.settings.quietHours.startHour, data.settings.quietHours.endHour, hour)) {
+  if (
+    inQuietHours(
+      data.settings.quietHours.startHour,
+      data.settings.quietHours.endHour,
+      hour
+    )
+  ) {
     return;
   }
 
@@ -619,7 +731,7 @@ async function maybeNotifyDueQueue(): Promise<void> {
     type: "basic",
     iconUrl: "icons/icon-128.png",
     title: "LeetCode reviews due",
-    message: `You have ${queue.dueCount} review${queue.dueCount === 1 ? "" : "s"} due today.`
+    message: `You have ${queue.dueCount} review${queue.dueCount === 1 ? "" : "s"} due today.`,
   });
 }
 
@@ -641,9 +753,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
-  void handleMessage(message)
-    .then((response) => sendResponse(response))
-    .catch((error) => sendResponse(fail(error)));
-  return true;
-});
+chrome.runtime.onMessage.addListener(
+  (message: RuntimeMessage, _sender, sendResponse) => {
+    void handleMessage(message)
+      .then((response) => sendResponse(response))
+      .catch((error) => sendResponse(fail(error)));
+    return true;
+  }
+);

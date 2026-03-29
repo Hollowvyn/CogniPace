@@ -40,7 +40,11 @@ body {
   margin: 0;
   background:
     radial-gradient(circle at top, rgba(255, 161, 22, 0.08), transparent 28%),
-    radial-gradient(circle at 20% 20%, rgba(148, 219, 255, 0.06), transparent 22%),
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(148, 219, 255, 0.06),
+      transparent 22%
+    ),
     linear-gradient(180deg, #131313 0%, #111111 100%);
   color: var(--kt-text);
   font-family: var(--kt-font-body);
@@ -51,7 +55,10 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 0.7px, transparent 0.7px);
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.05) 0.7px,
+    transparent 0.7px
+  );
   background-size: 20px 20px;
   opacity: 0.2;
   pointer-events: none;
@@ -117,7 +124,11 @@ a {
   width: 28px;
   height: 28px;
   border-radius: var(--kt-radius);
-  background: linear-gradient(135deg, rgba(255, 161, 22, 0.22), rgba(255, 199, 139, 0.08));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 161, 22, 0.22),
+    rgba(255, 199, 139, 0.08)
+  );
   color: var(--kt-accent);
   box-shadow: inset 0 0 0 1px rgba(255, 199, 139, 0.12);
 }
@@ -176,7 +187,11 @@ a {
 }
 
 .kt-button {
-  background: linear-gradient(180deg, var(--kt-accent), var(--kt-accent-strong));
+  background: linear-gradient(
+    180deg,
+    var(--kt-accent),
+    var(--kt-accent-strong)
+  );
   color: #2b1700;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -653,7 +668,11 @@ a {
   min-height: 220px;
   border-radius: var(--kt-radius-lg);
   background:
-    radial-gradient(circle at center, rgba(255, 199, 139, 0.14) 0%, transparent 58%),
+    radial-gradient(
+      circle at center,
+      rgba(255, 199, 139, 0.14) 0%,
+      transparent 58%
+    ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
 }
 
@@ -663,11 +682,10 @@ a {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background:
-    conic-gradient(
-      var(--kt-accent) calc(var(--progress, 0) * 1%),
-      rgba(255, 255, 255, 0.08) 0
-    );
+  background: conic-gradient(
+    var(--kt-accent) calc(var(--progress, 0) * 1%),
+    rgba(255, 255, 255, 0.08) 0
+  );
 }
 
 .kt-hero-ring::before {
@@ -799,7 +817,11 @@ a {
 }
 
 .kt-course-card[data-active="true"] {
-  background: linear-gradient(180deg, rgba(255, 161, 22, 0.1), rgba(255, 255, 255, 0.03));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 161, 22, 0.1),
+    rgba(255, 255, 255, 0.03)
+  );
   box-shadow:
     inset 0 0 0 1px rgba(255, 199, 139, 0.18),
     0 18px 32px rgba(0, 0, 0, 0.2);
@@ -1113,9 +1135,11 @@ a {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   border: 1px solid var(--border-1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 100;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .kt-tooltip-text::after {
@@ -1161,7 +1185,7 @@ a {
   white-space: normal;
   width: 220px;
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.15s ease;

@@ -22,6 +22,7 @@ Thanks for your interest in contributing! Here's how to get started.
 ## Getting a Review
 
 Once your PR is up:
+
 1. Send a message in the groupchat
 2. Tag a reviewer if you know who should look at it
 3. Be open to feedback and questions

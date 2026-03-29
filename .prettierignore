@@ -1,0 +1,5 @@
+dist/
+node_modules/
+.tmp/
+.idea/
+stitch_leetcode_reviews_mvp_popup 2/

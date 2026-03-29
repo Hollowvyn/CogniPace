@@ -1,3 +1,4 @@
+import { DEFAULT_SETTINGS } from "../shared/constants";
 import { sendMessage } from "../shared/runtime";
 import { getStudyPhaseLabel } from "../shared/studyState";
 import {
@@ -6,7 +7,7 @@ import {
   CourseCardView,
   LibraryProblemRow,
   ReviewOrder,
-  StudyMode
+  StudyMode,
 } from "../shared/types";
 
 type AppView = "dashboard" | "courses" | "library" | "analytics" | "settings";
@@ -22,7 +23,7 @@ const state: ViewState = {
   view: readViewFromLocation(),
   payload: null,
   status: "",
-  statusIsError: false
+  statusIsError: false,
 };
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -35,7 +36,13 @@ function byId<T extends HTMLElement>(id: string): T {
 
 function readViewFromLocation(): AppView {
   const value = new URLSearchParams(window.location.search).get("view");
-  if (value === "dashboard" || value === "courses" || value === "library" || value === "analytics" || value === "settings") {
+  if (
+    value === "dashboard" ||
+    value === "courses" ||
+    value === "library" ||
+    value === "analytics" ||
+    value === "settings"
+  ) {
     return value;
   }
   return "dashboard";
@@ -108,27 +115,27 @@ function shellTitle(view: AppView): { title: string; copy: string } {
     case "courses":
       return {
         title: "Course Management",
-        copy: "Curated-first traversal, chapter progression, and intake control."
+        copy: "Curated-first traversal, chapter progression, and intake control.",
       };
     case "library":
       return {
         title: "Library",
-        copy: "Inspect every tracked problem, its review state, and course membership."
+        copy: "Inspect every tracked problem, its review state, and course membership.",
       };
     case "analytics":
       return {
         title: "Analytics",
-        copy: "Retention, due load, weakest items, and course completion signals."
+        copy: "Retention, due load, weakest items, and course completion signals.",
       };
     case "settings":
       return {
         title: "Control Center",
-        copy: "Global configuration for review cadence, automation behavior, and alerts."
+        copy: "Global configuration for review cadence, automation behavior, and alerts.",
       };
     default:
       return {
         title: "Dashboard",
-        copy: "The best next move for retention and the live state of your active path."
+        copy: "The best next move for retention and the live state of your active path.",
       };
   }
 }
@@ -682,15 +689,22 @@ function fsrsVisualization(): string {
           </h3>
         </div>
         <div class="kt-difficulty-bars">
-          ${weakest.slice(0, 5).map(p => `
+          ${
+            weakest
+              .slice(0, 5)
+              .map(
+                (p) => `
             <div class="kt-diff-row">
-              <span class="kt-diff-label">${escapeHtml(p.title.slice(0, 20))}${p.title.length > 20 ? '...' : ''}</span>
+              <span class="kt-diff-label">${escapeHtml(p.title.slice(0, 20))}${p.title.length > 20 ? "..." : ""}</span>
               <div class="kt-diff-bar">
                 <span style="width:${(p.difficulty / 10) * 100}%"></span>
               </div>
               <span class="kt-diff-value">${p.difficulty.toFixed(1)}</span>
             </div>
-          `).join("") || '<p class="kt-fsrs-note">No problem data yet</p>'}
+          `
+              )
+              .join("") || '<p class="kt-fsrs-note">No problem data yet</p>'
+          }
         </div>
       </div>
     </div>
@@ -910,7 +924,10 @@ function libraryFilters(): string {
       <select id="library-filter-course" class="kt-select">
         <option value="all">All courses</option>
         ${(state.payload?.courses ?? [])
-          .map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`)
+          .map(
+            (course) =>
+              `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`
+          )
           .join("")}
       </select>
       <select id="library-filter-difficulty" class="kt-select">
@@ -1027,20 +1044,44 @@ function render(): void {
 }
 
 function filterLibraryRows(rows: LibraryProblemRow[]): LibraryProblemRow[] {
-  const query = (document.getElementById("library-filter-query") as HTMLInputElement | null)?.value.trim().toLowerCase() ?? "";
-  const courseId = (document.getElementById("library-filter-course") as HTMLSelectElement | null)?.value ?? "all";
-  const difficulty = (document.getElementById("library-filter-difficulty") as HTMLSelectElement | null)?.value ?? "all";
-  const status = (document.getElementById("library-filter-status") as HTMLSelectElement | null)?.value ?? "all";
+  const query =
+    (
+      document.getElementById("library-filter-query") as HTMLInputElement | null
+    )?.value
+      .trim()
+      .toLowerCase() ?? "";
+  const courseId =
+    (
+      document.getElementById(
+        "library-filter-course"
+      ) as HTMLSelectElement | null
+    )?.value ?? "all";
+  const difficulty =
+    (
+      document.getElementById(
+        "library-filter-difficulty"
+      ) as HTMLSelectElement | null
+    )?.value ?? "all";
+  const status =
+    (
+      document.getElementById(
+        "library-filter-status"
+      ) as HTMLSelectElement | null
+    )?.value ?? "all";
 
   return rows.filter((row) => {
     if (query) {
-      const haystack = `${row.problem.title} ${row.problem.leetcodeSlug}`.toLowerCase();
+      const haystack =
+        `${row.problem.title} ${row.problem.leetcodeSlug}`.toLowerCase();
       if (!haystack.includes(query)) {
         return false;
       }
     }
 
-    if (courseId !== "all" && !row.courses.some((course) => course.courseId === courseId)) {
+    if (
+      courseId !== "all" &&
+      !row.courses.some((course) => course.courseId === courseId)
+    ) {
       return false;
     }
 
@@ -1085,8 +1126,12 @@ function renderLibraryTable(): void {
     .map((row) => {
       const primaryCourse = row.courses[0];
       const studyStateSummary = row.studyStateSummary;
-      const phaseLabel = studyStateSummary ? formatStudyPhase(studyStateSummary.phase) : "NEW";
-      const statusLabel = studyStateSummary?.isDue ? `${phaseLabel} · DUE NOW` : phaseLabel;
+      const phaseLabel = studyStateSummary
+        ? formatStudyPhase(studyStateSummary.phase)
+        : "NEW";
+      const statusLabel = studyStateSummary?.isDue
+        ? `${phaseLabel} · DUE NOW`
+        : phaseLabel;
       return `
         <tr>
           <td>
@@ -1112,8 +1157,12 @@ function renderLibraryTable(): void {
 }
 
 function populateCourseChapters(): void {
-  const courseSelect = document.getElementById("course-form-course") as HTMLSelectElement | null;
-  const chapterSelect = document.getElementById("course-form-chapter") as HTMLSelectElement | null;
+  const courseSelect = document.getElementById(
+    "course-form-course"
+  ) as HTMLSelectElement | null;
+  const chapterSelect = document.getElementById(
+    "course-form-chapter"
+  ) as HTMLSelectElement | null;
   if (!courseSelect || !chapterSelect) {
     return;
   }
@@ -1121,11 +1170,15 @@ function populateCourseChapters(): void {
   const options = state.payload?.courseOptions ?? [];
   if (courseSelect.options.length === 0) {
     courseSelect.innerHTML = options
-      .map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`)
+      .map(
+        (course) =>
+          `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`
+      )
       .join("");
   }
 
-  const selectedCourse = options.find((course) => course.id === courseSelect.value) ?? options[0];
+  const selectedCourse =
+    options.find((course) => course.id === courseSelect.value) ?? options[0];
   if (!selectedCourse) {
     chapterSelect.innerHTML = "";
     return;
@@ -1133,7 +1186,10 @@ function populateCourseChapters(): void {
 
   courseSelect.value = selectedCourse.id;
   chapterSelect.innerHTML = selectedCourse.chapterOptions
-    .map((chapter) => `<option value="${escapeHtml(chapter.id)}">${escapeHtml(chapter.title)}</option>`)
+    .map(
+      (chapter) =>
+        `<option value="${escapeHtml(chapter.id)}">${escapeHtml(chapter.title)}</option>`
+    )
     .join("");
 }
 
@@ -1147,7 +1203,7 @@ async function openProblem(target: {
     await sendMessage("TRACK_COURSE_QUESTION_LAUNCH", {
       slug: target.slug,
       courseId: target.courseId,
-      chapterId: target.chapterId
+      chapterId: target.chapterId,
     });
   }
   chrome.tabs.create({ url: target.url });
@@ -1155,26 +1211,54 @@ async function openProblem(target: {
 
 async function saveSettings(): Promise<void> {
   const setsEnabled: Record<string, boolean> = {};
-  document.querySelectorAll<HTMLInputElement>("[data-set-toggle]").forEach((input) => {
-    const key = input.dataset.setToggle;
-    if (key) {
-      setsEnabled[key] = input.checked;
-    }
-  });
+  document
+    .querySelectorAll<HTMLInputElement>("[data-set-toggle]")
+    .forEach((input) => {
+      const key = input.dataset.setToggle;
+      if (key) {
+        setsEnabled[key] = input.checked;
+      }
+    });
 
   const response = await sendMessage("UPDATE_SETTINGS", {
-    dailyNewLimit: Number((document.getElementById("settings-daily-new") as HTMLInputElement).value) || 0,
-    dailyReviewLimit: Number((document.getElementById("settings-daily-review") as HTMLInputElement).value) || 0,
-    studyMode: (document.getElementById("settings-study-mode") as HTMLSelectElement).value as StudyMode,
-    activeCourseId: (document.getElementById("settings-active-course") as HTMLSelectElement).value,
-    reviewOrder: (document.getElementById("settings-review-order") as HTMLSelectElement).value as ReviewOrder,
-    requireSolveTime: (document.getElementById("settings-require-time") as HTMLInputElement).checked,
-    notifications: (document.getElementById("settings-notifications") as HTMLInputElement).checked,
+    dailyNewLimit:
+      Number(
+        (document.getElementById("settings-daily-new") as HTMLInputElement)
+          .value
+      ) || 0,
+    dailyReviewLimit:
+      Number(
+        (document.getElementById("settings-daily-review") as HTMLInputElement)
+          .value
+      ) || 0,
+    studyMode: (
+      document.getElementById("settings-study-mode") as HTMLSelectElement
+    ).value as StudyMode,
+    activeCourseId: (
+      document.getElementById("settings-active-course") as HTMLSelectElement
+    ).value,
+    reviewOrder: (
+      document.getElementById("settings-review-order") as HTMLSelectElement
+    ).value as ReviewOrder,
+    requireSolveTime: (
+      document.getElementById("settings-require-time") as HTMLInputElement
+    ).checked,
+    notifications: (
+      document.getElementById("settings-notifications") as HTMLInputElement
+    ).checked,
     quietHours: {
-      startHour: Number((document.getElementById("settings-quiet-start") as HTMLInputElement).value) || 0,
-      endHour: Number((document.getElementById("settings-quiet-end") as HTMLInputElement).value) || 0
+      startHour:
+        Number(
+          (document.getElementById("settings-quiet-start") as HTMLInputElement)
+            .value
+        ) || 0,
+      endHour:
+        Number(
+          (document.getElementById("settings-quiet-end") as HTMLInputElement)
+            .value
+        ) || 0,
     },
-    setsEnabled
+    setsEnabled,
   });
 
   if (!response.ok) {
@@ -1198,7 +1282,9 @@ async function exportData(): Promise<void> {
     return;
   }
 
-  const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -1212,7 +1298,9 @@ async function exportData(): Promise<void> {
 }
 
 async function importData(): Promise<void> {
-  const fileInput = document.getElementById("import-file") as HTMLInputElement | null;
+  const fileInput = document.getElementById(
+    "import-file"
+  ) as HTMLInputElement | null;
   const file = fileInput?.files?.[0];
   if (!file) {
     state.status = "Choose a backup file first.";
@@ -1267,26 +1355,57 @@ async function loadShellData(): Promise<void> {
 
 function getMockData(): AppShellPayload {
   return {
-    popup: { recommended: null },
+    popup: {
+      dueCount: 5,
+      streakDays: 7,
+      recommended: null,
+      recommendedCandidates: [],
+      courseNext: null,
+      activeCourse: null,
+    },
     activeCourse: null,
-    queue: { dueCount: 5, items: [] },
+    queue: {
+      generatedAt: "2026-03-29T00:00:00.000Z",
+      dueCount: 5,
+      newCount: 3,
+      reinforcementCount: 2,
+      items: [],
+    },
     analytics: {
       streakDays: 7,
       totalReviews: 42,
       retentionProxy: 0.85,
-      phaseCounts: { New: 10, Learning: 5, Review: 20 },
+      phaseCounts: {
+        New: 10,
+        Learning: 5,
+        Review: 20,
+        Relearning: 1,
+        Suspended: 0,
+      },
       dueByDay: [
         { date: "2026-03-29", count: 3 },
         { date: "2026-03-30", count: 5 },
         { date: "2026-03-31", count: 2 },
       ],
       weakestProblems: [
-        { title: "Two Sum", lapses: 3, difficulty: 0.7 },
-        { title: "Valid Parentheses", lapses: 2, difficulty: 0.5 },
+        { slug: "two-sum", title: "Two Sum", lapses: 3, difficulty: 0.7 },
+        {
+          slug: "valid-parentheses",
+          title: "Valid Parentheses",
+          lapses: 2,
+          difficulty: 0.5,
+        },
       ],
     },
     courses: [],
-    settings: { studyMode: "studyPlan" as StudyMode, reviewOrder: "dueFirst" as ReviewOrder },
+    recommendedCandidates: [],
+    library: [],
+    courseOptions: [],
+    settings: {
+      ...DEFAULT_SETTINGS,
+      studyMode: "studyPlan" as StudyMode,
+      reviewOrder: "dueFirst" as ReviewOrder,
+    },
   };
 }
 
@@ -1320,28 +1439,43 @@ app.addEventListener("click", (event) => {
     return;
   }
   if (action === "switch-course" && actionButton.dataset.courseId) {
-    void sendMessage("SWITCH_ACTIVE_COURSE", { courseId: actionButton.dataset.courseId }).then(() => loadShellData());
-    return;
-  }
-  if (action === "set-chapter" && actionButton.dataset.courseId && actionButton.dataset.chapterId) {
-    void sendMessage("SET_ACTIVE_COURSE_CHAPTER", {
+    void sendMessage("SWITCH_ACTIVE_COURSE", {
       courseId: actionButton.dataset.courseId,
-      chapterId: actionButton.dataset.chapterId
     }).then(() => loadShellData());
     return;
   }
-  if (action === "open-problem" && actionButton.dataset.slug && actionButton.dataset.url) {
+  if (
+    action === "set-chapter" &&
+    actionButton.dataset.courseId &&
+    actionButton.dataset.chapterId
+  ) {
+    void sendMessage("SET_ACTIVE_COURSE_CHAPTER", {
+      courseId: actionButton.dataset.courseId,
+      chapterId: actionButton.dataset.chapterId,
+    }).then(() => loadShellData());
+    return;
+  }
+  if (
+    action === "open-problem" &&
+    actionButton.dataset.slug &&
+    actionButton.dataset.url
+  ) {
     void openProblem({
       slug: actionButton.dataset.slug,
       url: actionButton.dataset.url,
       courseId: actionButton.dataset.courseId,
-      chapterId: actionButton.dataset.chapterId
+      chapterId: actionButton.dataset.chapterId,
     });
     return;
   }
   if (action === "toggle-mode") {
-    const nextMode = state.payload?.settings.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
-    void sendMessage("UPDATE_SETTINGS", { studyMode: nextMode }).then(() => loadShellData());
+    const nextMode =
+      state.payload?.settings.studyMode === "studyPlan"
+        ? "freestyle"
+        : "studyPlan";
+    void sendMessage("UPDATE_SETTINGS", { studyMode: nextMode }).then(() =>
+      loadShellData()
+    );
     return;
   }
   if (action === "export-data") {
@@ -1357,10 +1491,18 @@ app.addEventListener("submit", (event) => {
   const target = event.target as HTMLElement;
   if (target.id === "course-ingest-form") {
     event.preventDefault();
-    const courseId = (document.getElementById("course-form-course") as HTMLSelectElement).value;
-    const chapterId = (document.getElementById("course-form-chapter") as HTMLSelectElement).value;
-    const input = (document.getElementById("course-form-input") as HTMLInputElement).value.trim();
-    const markAsStarted = (document.getElementById("course-form-started") as HTMLInputElement).checked;
+    const courseId = (
+      document.getElementById("course-form-course") as HTMLSelectElement
+    ).value;
+    const chapterId = (
+      document.getElementById("course-form-chapter") as HTMLSelectElement
+    ).value;
+    const input = (
+      document.getElementById("course-form-input") as HTMLInputElement
+    ).value.trim();
+    const markAsStarted = (
+      document.getElementById("course-form-started") as HTMLInputElement
+    ).checked;
     if (!input) {
       state.status = "Provide a LeetCode slug or URL.";
       state.statusIsError = true;
@@ -1371,7 +1513,7 @@ app.addEventListener("submit", (event) => {
       courseId,
       chapterId,
       input,
-      markAsStarted
+      markAsStarted,
     }).then((response) => {
       if (!response.ok) {
         state.status = response.error ?? "Failed to append question to course.";
