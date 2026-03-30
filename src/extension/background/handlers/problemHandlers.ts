@@ -16,9 +16,7 @@ import {
 import { applyReview, resetSchedule } from "../../../domain/fsrs/scheduler";
 import { getStudyStateSummary } from "../../../domain/fsrs/studyState";
 import { normalizeSlug } from "../../../domain/problem/slug";
-import {
-  canonicalProblemUrlForOpen,
-} from "../../runtime/validator";
+import { canonicalProblemUrlForOpen } from "../../runtime/validator";
 import { ok } from "../responses";
 
 import { trackCourseQuestionLaunch } from "./courseHandlers";

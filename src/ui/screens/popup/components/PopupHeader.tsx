@@ -22,10 +22,18 @@ export function PopupHeader(props: PopupHeaderProps) {
         <Typography variant="subtitle1">LeetCode Reviews</Typography>
       </Stack>
       <Stack direction="row" spacing={0.5}>
-        <IconButton aria-label="Refresh popup" onClick={props.onRefresh} size="small">
+        <IconButton
+          aria-label="Refresh popup"
+          onClick={props.onRefresh}
+          size="small"
+        >
           ↻
         </IconButton>
-        <IconButton aria-label="Open settings" onClick={props.onOpenSettings} size="small">
+        <IconButton
+          aria-label="Open settings"
+          onClick={props.onOpenSettings}
+          size="small"
+        >
           ⚙
         </IconButton>
       </Stack>

@@ -89,7 +89,11 @@ export function PopupApp() {
                 Choose an active course in the dashboard to restore the guided
                 path.
               </Typography>
-              <Button fullWidth onClick={() => controller.onOpenDashboard()} variant="outlined">
+              <Button
+                fullWidth
+                onClick={() => controller.onOpenDashboard()}
+                variant="outlined"
+              >
                 Open Dashboard
               </Button>
             </Stack>
@@ -101,10 +105,14 @@ export function PopupApp() {
           >
             <Stack spacing={1.25}>
               <Typography color="text.secondary" variant="body2">
-                This course is fully traversed. Use the dashboard to switch tracks
-                or focus on due reviews.
+                This course is fully traversed. Use the dashboard to switch
+                tracks or focus on due reviews.
               </Typography>
-              <Button fullWidth onClick={() => controller.onOpenDashboard()} variant="outlined">
+              <Button
+                fullWidth
+                onClick={() => controller.onOpenDashboard()}
+                variant="outlined"
+              >
                 Open Dashboard
               </Button>
             </Stack>

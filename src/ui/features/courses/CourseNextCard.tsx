@@ -6,10 +6,7 @@ import Typography from "@mui/material/Typography";
 import { getStudyPhaseLabel } from "../../../domain/fsrs/studyState";
 import { CourseQuestionView } from "../../../domain/views";
 import { SurfaceCard, ToneChip } from "../../components";
-import {
-  difficultyTone,
-  labelForStatus,
-} from "../../presentation/studyState";
+import { difficultyTone, labelForStatus } from "../../presentation/studyState";
 
 export interface CourseNextCardProps {
   actionLabel?: string;
@@ -35,7 +32,9 @@ export function CourseNextCard(props: CourseNextCardProps) {
     onOpenProblem,
     view,
   } = props;
-  const phaseLabel = view.reviewPhase ? getStudyPhaseLabel(view.reviewPhase) : null;
+  const phaseLabel = view.reviewPhase
+    ? getStudyPhaseLabel(view.reviewPhase)
+    : null;
 
   return (
     <SurfaceCard label={label} title={view.title}>

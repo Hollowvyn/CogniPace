@@ -1,1 +1,6 @@
-export { AppData, CuratedProblemInput, Difficulty, StudyState } from "../../domain/types";
+export {
+  AppData,
+  CuratedProblemInput,
+  Difficulty,
+  StudyState,
+} from "../../domain/types";

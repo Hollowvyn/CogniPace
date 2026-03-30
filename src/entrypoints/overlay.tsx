@@ -19,12 +19,17 @@ let overlayMount: OverlayMount | null = null;
 function createOverlayMount(): OverlayMount {
   const existingHost = document.getElementById(OVERLAY_ID);
   if (existingHost?.shadowRoot) {
-    const mountNode = existingHost.shadowRoot.querySelector("[data-overlay-mount]");
+    const mountNode = existingHost.shadowRoot.querySelector(
+      "[data-overlay-mount]"
+    );
     const styleContainer = existingHost.shadowRoot.querySelector(
       "[data-overlay-styles]"
     );
 
-    if (mountNode instanceof HTMLDivElement && styleContainer instanceof HTMLElement) {
+    if (
+      mountNode instanceof HTMLDivElement &&
+      styleContainer instanceof HTMLElement
+    ) {
       return {
         cache: createCache({
           key: "lcsr-overlay",

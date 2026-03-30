@@ -1,5 +1,11 @@
 /** Dashboard-local controller for route state, filters, settings draft, and runtime mutations. */
-import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
+import {
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   downloadBackupJson,
@@ -98,7 +104,11 @@ export function useDashboardController() {
     startTransition(() => {
       setView(nextView);
     });
-    window.history.pushState({}, "", buildDashboardUrl(window.location.href, nextView));
+    window.history.pushState(
+      {},
+      "",
+      buildDashboardUrl(window.location.href, nextView)
+    );
   }
 
   async function runMutation<T extends { ok: boolean; error?: string }>(
@@ -151,7 +161,9 @@ export function useDashboardController() {
     );
   }
 
-  function updateSettingsDraft(updater: (current: UserSettings) => UserSettings) {
+  function updateSettingsDraft(
+    updater: (current: UserSettings) => UserSettings
+  ) {
     setSettingsDraftState((current) =>
       updater(cloneSettings(current ?? payload?.settings ?? DEFAULT_SETTINGS))
     );
@@ -236,7 +248,10 @@ export function useDashboardController() {
     await runMutation(switchActiveCourse(courseId), "Active course updated.");
   }
 
-  async function onSetChapter(courseId: string, chapterId: string): Promise<void> {
+  async function onSetChapter(
+    courseId: string,
+    chapterId: string
+  ): Promise<void> {
     await runMutation(
       setActiveCourseChapter(courseId, chapterId),
       "Active chapter updated."

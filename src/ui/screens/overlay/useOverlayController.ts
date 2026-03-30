@@ -1,7 +1,12 @@
 /** Overlay controller for page detection, timer state, review state, and stale-refresh guards. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { openExtensionPage, getProblemContext, saveReviewResult, upsertProblemFromPage } from "../../../data/repositories/problemSessionRepository";
+import {
+  openExtensionPage,
+  getProblemContext,
+  saveReviewResult,
+  upsertProblemFromPage,
+} from "../../../data/repositories/problemSessionRepository";
 import { formatClock } from "../../../domain/common/time";
 import {
   defaultReviewMode,
@@ -159,15 +164,12 @@ export function useOverlayController(
     }
   }, [windowRef]);
 
-  const getElapsedMs = useCallback(
-    (nowMs = Date.now()): number => {
-      return pausedElapsedMsRef.current +
-        (timerStartedAtMsRef.current
-          ? nowMs - timerStartedAtMsRef.current
-          : 0);
-    },
-    []
-  );
+  const getElapsedMs = useCallback((nowMs = Date.now()): number => {
+    return (
+      pausedElapsedMsRef.current +
+      (timerStartedAtMsRef.current ? nowMs - timerStartedAtMsRef.current : 0)
+    );
+  }, []);
 
   const isTimerRunning = useCallback((): boolean => {
     return timerStartedAtMsRef.current !== null;
@@ -291,7 +293,8 @@ export function useOverlayController(
         problem: null,
         studyState: null,
       };
-      const currentDifficulty = problemContext.problem?.difficulty ?? detectedDifficulty;
+      const currentDifficulty =
+        problemContext.problem?.difficulty ?? detectedDifficulty;
       const currentState = problemContext.studyState ?? null;
       const currentTitle = problemContext.problem?.title ?? title;
 
@@ -304,7 +307,7 @@ export function useOverlayController(
           current.draftContextSlug !== slug ? slug : current.draftContextSlug,
         draftNotes:
           current.draftContextSlug !== slug
-            ? currentState?.notes ?? ""
+            ? (currentState?.notes ?? "")
             : current.draftNotes,
         feedbackIsError: false,
         selectedMode: defaultReviewMode(currentState),
@@ -344,7 +347,8 @@ export function useOverlayController(
   );
 
   const quickRating = useMemo(
-    () => deriveQuickRating(elapsedMs, goalForDifficulty(state.currentDifficulty)),
+    () =>
+      deriveQuickRating(elapsedMs, goalForDifficulty(state.currentDifficulty)),
     [elapsedMs, state.currentDifficulty]
   );
 
@@ -490,10 +494,10 @@ export function useOverlayController(
     }
 
     ++requestTokenRef.current;
-      activeSlugRef.current = slug;
-      clearWarmRefreshes();
-      resetTimer(false);
-      setTimerRunning(false);
+    activeSlugRef.current = slug;
+    clearWarmRefreshes();
+    resetTimer(false);
+    setTimerRunning(false);
     setState((current) => ({
       ...current,
       activeSlug: slug,

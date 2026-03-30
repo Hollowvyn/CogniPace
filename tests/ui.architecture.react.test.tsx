@@ -7,7 +7,10 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { defaultReviewMode, deriveQuickRating } from "../src/domain/fsrs/reviewPolicy";
+import {
+  defaultReviewMode,
+  deriveQuickRating,
+} from "../src/domain/fsrs/reviewPolicy";
 import { StudyState } from "../src/domain/types";
 import { CourseQuestionView } from "../src/domain/views";
 import { createMockAppShellPayload } from "../src/ui/mockData";
@@ -197,7 +200,10 @@ describe("route and selector contracts", () => {
     expect(readDashboardViewFromSearch("?view=courses")).toBe("courses");
     expect(readDashboardViewFromSearch("?view=unknown")).toBe("dashboard");
     expect(
-      buildDashboardUrl("chrome-extension://test/dashboard.html?view=settings", "library")
+      buildDashboardUrl(
+        "chrome-extension://test/dashboard.html?view=settings",
+        "library"
+      )
     ).toContain("view=library");
   });
 
@@ -246,7 +252,9 @@ describe("dashboard navigation", () => {
 
     await waitFor(() => {
       expect(pushStateSpy).toHaveBeenCalled();
-      expect(String(pushStateSpy.mock.calls.at(-1)?.[2])).toContain("view=courses");
+      expect(String(pushStateSpy.mock.calls.at(-1)?.[2])).toContain(
+        "view=courses"
+      );
     });
   });
 
@@ -279,7 +287,10 @@ describe("overlay controller", () => {
   it("ignores stale async responses after navigation changes", async () => {
     const firstContext = deferred<{
       ok: true;
-      data: { problem: { title: string; difficulty: "Easy" }; studyState: null };
+      data: {
+        problem: { title: string; difficulty: "Easy" };
+        studyState: null;
+      };
     }>();
     const secondContext = deferred<{
       ok: true;
@@ -292,43 +303,49 @@ describe("overlay controller", () => {
     const timeouts = new Map<number, () => void>();
     const intervals = new Map<number, () => void>();
 
-    sendMessageMock.mockImplementation((type: string, payload: { slug?: string }) => {
-      if (type === "UPSERT_PROBLEM_FROM_PAGE") {
-        return Promise.resolve({
-          ok: true,
-          data: {
-            problem: {
-              id: payload.slug,
-              leetcodeSlug: payload.slug,
-              title: payload.slug,
-              difficulty: "Easy",
-              url: `https://leetcode.com/problems/${payload.slug}/`,
-              topics: [],
-              sourceSet: [],
-              createdAt: "2026-03-01T00:00:00.000Z",
-              updatedAt: "2026-03-01T00:00:00.000Z",
+    sendMessageMock.mockImplementation(
+      (type: string, payload: { slug?: string }) => {
+        if (type === "UPSERT_PROBLEM_FROM_PAGE") {
+          return Promise.resolve({
+            ok: true,
+            data: {
+              problem: {
+                id: payload.slug,
+                leetcodeSlug: payload.slug,
+                title: payload.slug,
+                difficulty: "Easy",
+                url: `https://leetcode.com/problems/${payload.slug}/`,
+                topics: [],
+                sourceSet: [],
+                createdAt: "2026-03-01T00:00:00.000Z",
+                updatedAt: "2026-03-01T00:00:00.000Z",
+              },
+              studyState: null,
             },
-            studyState: null,
-          },
-        });
+          });
+        }
+
+        if (type === "GET_PROBLEM_CONTEXT" && payload.slug === "two-sum") {
+          return firstContext.promise;
+        }
+
+        if (
+          type === "GET_PROBLEM_CONTEXT" &&
+          payload.slug === "group-anagrams"
+        ) {
+          return secondContext.promise;
+        }
+
+        if (type === "OPEN_EXTENSION_PAGE") {
+          return Promise.resolve({ ok: true, data: { opened: true } });
+        }
+
+        return Promise.resolve({ ok: true, data: {} });
       }
+    );
 
-      if (type === "GET_PROBLEM_CONTEXT" && payload.slug === "two-sum") {
-        return firstContext.promise;
-      }
-
-      if (type === "GET_PROBLEM_CONTEXT" && payload.slug === "group-anagrams") {
-        return secondContext.promise;
-      }
-
-      if (type === "OPEN_EXTENSION_PAGE") {
-        return Promise.resolve({ ok: true, data: { opened: true } });
-      }
-
-      return Promise.resolve({ ok: true, data: {} });
-    });
-
-    const overlayDocument = document.implementation.createHTMLDocument("overlay");
+    const overlayDocument =
+      document.implementation.createHTMLDocument("overlay");
     overlayDocument.body.innerHTML = `
       <h1>Two Sum</h1>
       <span>Easy</span>

@@ -7,7 +7,10 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { BrandMark } from "../../../components";
-import { dashboardRoutes, DashboardView } from "../../../navigation/dashboardRoutes";
+import {
+  dashboardRoutes,
+  DashboardView,
+} from "../../../navigation/dashboardRoutes";
 
 export interface DashboardRailProps {
   activeView: DashboardView;
@@ -42,7 +45,9 @@ export function DashboardRail(props: DashboardRailProps) {
               onClick={() => {
                 props.onNavigate(route.view);
               }}
-              variant={props.activeView === route.view ? "contained" : "outlined"}
+              variant={
+                props.activeView === route.view ? "contained" : "outlined"
+              }
             >
               {route.label}
             </Button>

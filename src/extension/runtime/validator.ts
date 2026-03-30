@@ -1,6 +1,10 @@
 /** Runtime message validation and sender authorization safeguards. */
 import { assertImportPayloadShape } from "../../data/importexport/backup";
-import { isProblemPage, normalizeSlug, slugToUrl } from "../../domain/problem/slug";
+import {
+  isProblemPage,
+  normalizeSlug,
+  slugToUrl,
+} from "../../domain/problem/slug";
 
 import { MessageType, RuntimeMessage } from "./contracts";
 
@@ -190,7 +194,9 @@ function validateSetsEnabled(value: unknown): void {
   }
   for (const [key, enabled] of Object.entries(value)) {
     if (typeof enabled !== "boolean") {
-      throw new Error(`Invalid field "setsEnabled.${key}": expected a boolean.`);
+      throw new Error(
+        `Invalid field "setsEnabled.${key}": expected a boolean.`
+      );
     }
   }
 }
@@ -204,7 +210,11 @@ function validateCustomSetItems(value: unknown): void {
     if (!isRecord(item)) {
       throw new Error('Invalid field "items": expected object entries.');
     }
-    hasExactKeys(item, ["slug", "title", "difficulty", "tags"], 'Field "items[]"');
+    hasExactKeys(
+      item,
+      ["slug", "title", "difficulty", "tags"],
+      'Field "items[]"'
+    );
     requireString(item.slug, "items[].slug");
     requireOptionalString(item.title, "items[].title");
     requireOptionalDifficulty(item.difficulty, "items[].difficulty");
@@ -246,7 +256,16 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "SAVE_REVIEW_RESULT":
       hasExactKeys(
         payload,
-        ["slug", "rating", "solveTimeMs", "mode", "notes", "courseId", "chapterId", "source"],
+        [
+          "slug",
+          "rating",
+          "solveTimeMs",
+          "mode",
+          "notes",
+          "courseId",
+          "chapterId",
+          "source",
+        ],
         `Payload for ${type}`
       );
       requireString(payload.slug, "slug");
@@ -261,7 +280,9 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
         payload.source !== "overlay" &&
         payload.source !== "dashboard"
       ) {
-        throw new Error('Invalid field "source": expected "overlay" or "dashboard".');
+        throw new Error(
+          'Invalid field "source": expected "overlay" or "dashboard".'
+        );
       }
       return;
     case "OPEN_EXTENSION_PAGE":
@@ -269,7 +290,11 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.path, "path");
       return;
     case "OPEN_PROBLEM_PAGE":
-      hasExactKeys(payload, ["slug", "courseId", "chapterId"], `Payload for ${type}`);
+      hasExactKeys(
+        payload,
+        ["slug", "courseId", "chapterId"],
+        `Payload for ${type}`
+      );
       requireString(payload.slug, "slug");
       requireOptionalString(payload.courseId, "courseId");
       requireOptionalString(payload.chapterId, "chapterId");
@@ -300,7 +325,11 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.chapterId, "chapterId");
       return;
     case "TRACK_COURSE_QUESTION_LAUNCH":
-      hasExactKeys(payload, ["slug", "courseId", "chapterId"], `Payload for ${type}`);
+      hasExactKeys(
+        payload,
+        ["slug", "courseId", "chapterId"],
+        `Payload for ${type}`
+      );
       requireString(payload.slug, "slug");
       requireOptionalString(payload.courseId, "courseId");
       requireOptionalString(payload.chapterId, "chapterId");
@@ -446,7 +475,12 @@ export function validateExtensionPagePath(pathInput: string): string {
   if (!value) {
     throw new Error("Missing extension path.");
   }
-  if (/^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("/") || value.includes("\\") || value.includes("..")) {
+  if (
+    /^[a-z][a-z0-9+.-]*:/i.test(value) ||
+    value.startsWith("/") ||
+    value.includes("\\") ||
+    value.includes("..")
+  ) {
     throw new Error("Invalid extension path.");
   }
 

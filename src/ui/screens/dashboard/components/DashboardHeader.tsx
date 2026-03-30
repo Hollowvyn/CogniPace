@@ -50,7 +50,10 @@ export function DashboardHeader(props: DashboardHeaderProps) {
             </IconButton>
           </Stack>
         </Stack>
-        <StatusBanner isError={props.status.isError} message={props.status.message} />
+        <StatusBanner
+          isError={props.status.isError}
+          message={props.status.message}
+        />
       </Stack>
     </Paper>
   );

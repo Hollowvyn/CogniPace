@@ -60,12 +60,13 @@ export function AnalyticsView(props: AnalyticsViewProps) {
               <Stack spacing={1.5}>
                 <Typography variant="h6">Average Retention Rate</Typography>
                 <Typography color="text.secondary" variant="body2">
-                  Percentage of recent reviews rated Good or Easy. Target is roughly
-                  85-90%.
+                  Percentage of recent reviews rated Good or Easy. Target is
+                  roughly 85-90%.
                 </Typography>
                 <Box>
                   <Typography variant="h3">
-                    {Math.round((payload?.analytics.retentionProxy ?? 0) * 100)}%
+                    {Math.round((payload?.analytics.retentionProxy ?? 0) * 100)}
+                    %
                   </Typography>
                 </Box>
               </Stack>

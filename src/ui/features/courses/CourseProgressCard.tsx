@@ -37,7 +37,11 @@ export function CourseProgressCard(props: CourseProgressCardProps) {
 
   return (
     <SurfaceCard
-      action={action ?? <ToneChip label={`${course.completionPercent}%`} tone="accent" />}
+      action={
+        action ?? (
+          <ToneChip label={`${course.completionPercent}%`} tone="accent" />
+        )
+      }
       label={label}
       title={course.name}
     >
@@ -47,7 +51,8 @@ export function CourseProgressCard(props: CourseProgressCardProps) {
         </Typography>
         <ProgressTrack value={course.completionPercent} />
         <Typography color="text.secondary" variant="body2">
-          {course.completedQuestions}/{course.totalQuestions} questions traversed
+          {course.completedQuestions}/{course.totalQuestions} questions
+          traversed
         </Typography>
         {children}
       </Stack>
