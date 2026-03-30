@@ -2,7 +2,7 @@
 
 ## System Shape
 
-The extension now follows an explicit `ui + data + domain + extension + entrypoints` layout.
+The extension now follows an explicit `ui + data + domain + extension + entrypoints` layout built around a React 19 + MUI + Emotion UI stack.
 
 - `src/entrypoints/`
   Small mount/bootstrap files only
@@ -17,6 +17,13 @@ The extension now follows an explicit `ui + data + domain + extension + entrypoi
 
 The goal is that a new engineer can find the right change area by directory alone.
 
+Shared UI bootstrapping and theming live in:
+
+- `src/ui/providers.tsx`
+  App-level providers shared across popup, dashboard, and overlay
+- `src/ui/theme.ts`
+  MUI theme tokens and component overrides for the current UI baseline
+
 ## Runtime Surfaces
 
 ### Popup
@@ -27,6 +34,7 @@ Screen: `src/ui/screens/popup/*`
 Responsibilities:
 
 - render the compact recommendation-first surface
+- mount the shared provider stack and theme
 - show due count, streak, recommended problem, and course-next state
 - toggle study mode
 - open problems or the dashboard
@@ -39,6 +47,7 @@ Screen: `src/ui/screens/dashboard/*`
 Responsibilities:
 
 - render overview, courses, library, analytics, and settings screens
+- mount the shared provider stack and theme
 - own dashboard-local state such as filters, settings draft, and import file
 - preserve the `?view=` deep-link contract
 
@@ -50,6 +59,7 @@ Screen: `src/ui/screens/overlay/*`
 Responsibilities:
 
 - mount a shadow-root-backed React overlay on LeetCode problem pages
+- inject an Emotion cache into the overlay shadow root before rendering
 - detect page context and current problem metadata
 - manage timer, notes, rating, and review actions
 - save review results through runtime messaging
@@ -97,7 +107,9 @@ Rules:
 
 - UI does not call `sendMessage` directly
 - UI does not access `chrome.storage` directly
+- UI reads and writes through repositories in `src/data/repositories/*`
 - presentational components remain side-effect free
+- provider and theme changes should stay centralized in `src/ui/providers.tsx` and `src/ui/theme.ts`
 
 ### Data Layer
 
@@ -161,11 +173,26 @@ Rules:
 - runtime message names and payload contracts are defined here
 - background handlers coordinate repositories and domain logic
 
+## UI To Background Data Flow
+
+The intended runtime path for React surfaces is:
+
+1. A screen, controller, or shared UI hook calls a repository in `src/data/repositories/*`.
+2. The repository talks to either:
+   - a runtime client in `src/extension/runtime/client.ts`, or
+   - a datasource under `src/data/datasources/chrome/*`.
+3. The background bootstrap validates and routes runtime messages through `src/extension/background/router.ts`.
+4. Background handlers compose repositories and pure domain logic.
+5. The repository returns a typed payload back to the UI layer.
+
+This keeps React screens free of direct Chrome API calls and keeps domain logic free of UI concerns.
+
 ## Where To Change Things
 
 - Popup UI: `src/ui/screens/popup/*`
 - Dashboard UI: `src/ui/screens/dashboard/*`
 - Overlay UI: `src/ui/screens/overlay/*`
+- Shared providers and theme: `src/ui/providers.tsx`, `src/ui/theme.ts`
 - Shared cards/widgets: `src/ui/features/*`
 - Dashboard route contract: `src/ui/navigation/dashboardRoutes.ts`
 - Library filters/selectors: `src/ui/presentation/library.ts`
@@ -222,5 +249,14 @@ Export payload remains:
 - local-first storage only
 - no backend service
 - no account model
-- React + MUI UI stack
+- React 19 + MUI + Emotion UI stack
+- `esbuild` remains the bundler for TSX entrypoints
 - runtime message names and persisted JSON contracts are stable unless explicitly updated in this document
+
+## Related ADRs
+
+- `docs/decisions/0001-local-first-storage.md`
+- `docs/decisions/0002-no-account-system.md`
+- `docs/decisions/0003-react-mui-emotion-ui.md`
+- `docs/decisions/0004-no-backend-service.md`
+- `docs/decisions/0005-minimal-extension-permissions.md`

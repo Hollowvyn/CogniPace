@@ -21,7 +21,8 @@ Precedence order:
 3. `docs/architecture.md`
 4. `docs/DESIGN_GUIDELINES.md`
 5. `docs/stitch-design-doc.md`
-6. this file
+6. `docs/architecture-roadmap.md`
+7. this file
 
 Rules:
 
@@ -36,9 +37,14 @@ Rules:
 
 ### Repo Facts
 
-- Project type: TypeScript Chrome extension using Manifest V3
+- Project type: TypeScript Chrome extension using Manifest V3 with React 19 UI mounted from TSX entrypoints
+- Frontend stack: React 19 + MUI + Emotion
+- Architecture layout: `ui + data + domain + extension + entrypoints`
 - Package manager: `npm`
 - Lockfile: `package-lock.json`
+- Bundler: `esbuild`
+- TypeScript JSX mode: `react-jsx`
+- UI testing stack: `vitest` + `@testing-library/react`
 - Current scripts:
   - `build`
   - `check`
@@ -46,6 +52,7 @@ Rules:
   - `format:check`
   - `lint`
   - `test`
+  - `test:ui`
   - `typecheck`
   - `test:logic`
 - Current docs:
@@ -54,6 +61,7 @@ Rules:
   - `docs/product.md`
   - `docs/features.md`
   - `docs/architecture.md`
+  - `docs/architecture-roadmap.md`
   - `docs/DESIGN_GUIDELINES.md`
   - `docs/decisions/`
   - `docs/stitch-design-doc.md`
@@ -69,14 +77,16 @@ Rules:
 
 ### Current Health
 
-- `npm run build` passes
+- `npm run build` passes and bundles TSX entrypoints through `esbuild`
 - `npm run check` passes
-- `npm run lint` passes with warning-only `no-unsanitized` findings on current `innerHTML` paths
+- `npm run lint` passes with React hooks linting active
 - `npm run test` passes
 - `npm run test:logic` passes
-- `npm run typecheck` passes
+- `npm run test:ui` passes
+- `npm run typecheck` passes with `.tsx` included
+- React architecture tests enforce canonical entrypoints, layer boundaries, and repository usage rules
 - Local baseline now includes `Node 24 LTS`, `ESLint + Prettier`, `.editorconfig`, and ignored temp output under `.tmp/`
-- Dynamic `innerHTML` usage exists in UI code and should be tracked as a security hardening item
+- React is now the canonical UI model, not a provisional migration path
 
 ## Ordered Setup Phases
 
@@ -84,6 +94,22 @@ Important:
 
 - Completion of one phase does not authorize automatic start of the next phase.
 - Later phases should only be implemented when a human explicitly requests them.
+
+## Current Phase
+
+- Phase 1.5 is the React baseline reset that makes the checklist trustworthy again.
+- Status: completed on 2026-03-30
+- Next true setup phase: Phase 2
+
+## Recommended Execution Order From The React Baseline
+
+1. Phase 1.5
+2. Phase 2
+3. Phase 3
+4. Phase 5
+5. Phase 4
+6. Phase 6
+7. Phase 7
 
 ## Phase 0: Stabilize Local Baseline
 
@@ -146,7 +172,7 @@ Status: completed on 2026-03-29
 - [x] Add initial ADRs for:
   - no account system for now
   - local-first storage for now
-  - plain CSS for now
+  - React + MUI + Emotion UI stack
   - no backend for now
   - minimal extension permissions
 - [x] Add `docs/DESIGN_GUIDELINES.md` as a complementary design reference
@@ -159,6 +185,33 @@ Status: completed on 2026-03-29
 - [x] approved scope is clearly separated from future candidates
 - [x] implementation work can be reviewed against documented product behavior
 
+## Phase 1.5: React Baseline Realignment
+
+Status: completed on 2026-03-30
+
+### Goals
+
+- Realign setup docs to the React architecture that now exists
+- Make the React UI stack canonical in setup and architecture docs
+- Ensure later phases assume the current repo shape, not the legacy UI structure
+
+### Steps
+
+- [x] Update the baseline snapshot to reflect React 19 + MUI + Emotion
+- [x] Document the current `ui + data + domain + extension + entrypoints` layout
+- [x] Update current health to include `npm run test:ui`, React hooks linting, and React architecture tests
+- [x] Update build and tooling truth to reflect TSX entrypoints, `jsx: react-jsx`, `vitest`, and `@testing-library/react`
+- [x] Refresh `README.md` and `docs/architecture.md` for the React stack
+- [x] Replace the outdated plain CSS ADR with a React + MUI + Emotion ADR
+- [x] Mark pre-React roadmap assumptions as updated or superseded
+- [x] Adjust future phase definitions for a React repo
+
+### Done When
+
+- [x] the checklist no longer describes the repo as a pre-React codebase
+- [x] React is documented as the canonical UI model
+- [x] future phases assume the current React architecture and validation surface
+
 ## Phase 2: Collaboration And Governance Docs
 
 ### Goals
@@ -166,10 +219,19 @@ Status: completed on 2026-03-29
 - Make contribution flow explicit
 - Make ownership explicit
 - Make review and reporting paths consistent
+- Add React-specific contributor rules now that the UI architecture is layered
 
 ### Steps
 
 - [ ] Upgrade `CONTRIBUTING.md`
+- [ ] Document layer ownership for:
+  - `src/ui/*` for React screens, components, theme, and presentation
+  - `src/data/*` for repositories, datasources, and import/export helpers
+  - `src/domain/*` for pure business logic
+  - `src/extension/*` for runtime contracts, validation, and background routing
+- [ ] Require screenshots for visible popup, dashboard, or overlay changes
+- [ ] Require UI test updates when popup, dashboard, or overlay behavior changes
+- [ ] Require docs updates when architectural boundaries or runtime contracts change
 - [ ] Add `SECURITY.md`
 - [ ] Add `LICENSE` if the repo becomes public
 - [ ] Add `CODEOWNERS`
@@ -192,6 +254,7 @@ Status: completed on 2026-03-29
 - Constrain agents to documented scope
 - Separate product authority from execution authority
 - Make automation useful without allowing scope drift
+- Make agent rules explicit for the React architecture
 
 ### Steps
 
@@ -205,6 +268,12 @@ Status: completed on 2026-03-29
   - humans own roadmap, scope, releases, architecture, and permissions
   - Jules owns recurring maintenance, suggested tasks, CI repair on Jules PRs, dependency hygiene, performance, and UX polish
   - Codex and other interactive coding agents handle human-directed implementation
+- [ ] State that React is the canonical UI model
+- [ ] State that agents must not reintroduce direct DOM-rendered UI patterns into popup or dashboard surfaces
+- [ ] State that domain code must remain React-free
+- [ ] State that UI code should talk through repositories and runtime clients, not direct Chrome storage access
+- [ ] Require docs updates when agents change routes, providers, repositories, or runtime contracts
+- [ ] Require ADR or doc updates when agents change MUI theme, provider, or styling conventions
 - [ ] Explicitly block agents from:
   - new product scope without human direction
   - manifest permission changes
@@ -225,11 +294,13 @@ Status: completed on 2026-03-29
 - Move long-term ownership out of a personal-only workflow
 - Make the main branch safe for a multi-person team
 - Keep merge flow simple and enforceable
+- Stage branch protections against the React test and build surface
 
 ### Steps
 
 - [ ] Transfer the repo to a GitHub org
 - [ ] Make it public if that remains the chosen setup
+- [ ] Only enforce required status checks after the shared React baseline branch is green in CI
 - [ ] Configure:
   - default branch `main`
   - squash merge only
@@ -241,6 +312,11 @@ Status: completed on 2026-03-29
   - no direct pushes to `main`
   - no force pushes
   - no branch deletion on `main`
+- [ ] Required checks should eventually include:
+  - `lint`
+  - `typecheck`
+  - `test`
+  - `build`
 
 ### Done When
 
@@ -255,14 +331,22 @@ Status: completed on 2026-03-29
 - Make every PR validate automatically
 - Use GitHub-native tooling first
 - Phase checks in realistically instead of pretending the repo is already green
+- Validate the React stack directly, not just the old TypeScript baseline
 
 ### Steps
 
 - [ ] Add `ci.yml` for:
   - `npm ci`
+  - `npm run lint`
   - `npm run build`
   - `npm run test`
   - `npm run typecheck`
+- [ ] Keep `npm run test` as the combined logic + React UI gate
+- [ ] Optionally split workflow jobs into:
+  - logic tests
+  - UI tests
+  - build and typecheck
+- [ ] Optionally add an architecture-boundary test job
 - [ ] Add `dependabot.yml`
 - [ ] Enable:
   - dependency graph
@@ -270,6 +354,7 @@ Status: completed on 2026-03-29
   - Dependabot security updates
   - CodeQL default setup after the repo is public
 - [ ] Phase required checks:
+  - require `lint`
   - require `build` first
   - require `test` first
   - require `typecheck` only after it is green
@@ -278,7 +363,7 @@ Status: completed on 2026-03-29
 
 - [ ] every PR gets automatic validation
 - [ ] `main` has enforceable status checks
-- [ ] GitHub-native security tooling is active before optional third-party apps are added
+- [ ] the React validation surface is represented in CI before optional third-party apps are added
 
 ## Phase 6: Jules Automation
 
@@ -287,6 +372,7 @@ Status: completed on 2026-03-29
 - Make Jules part of the core operating model before optional marketplace tooling
 - Use Jules for recurring grunt work without giving it product authority
 - Let Jules keep its own PRs moving when CI breaks
+- Keep Jules inside the current React architecture instead of letting it re-architect the UI
 
 ### Steps
 
@@ -306,6 +392,16 @@ Status: completed on 2026-03-29
   - `lane:performance`
   - `lane:docs`
   - `needs-human-review`
+- [ ] Document Jules allowed React lanes:
+  - small React UI fixes
+  - MUI or Emotion theme polish
+  - component-level UX cleanup
+  - UI test fixes
+  - performance cleanup in React surfaces
+- [ ] Document Jules blocked React lanes:
+  - re-architecting the UI layer
+  - swapping styling systems
+  - moving logic across `ui`, `data`, `domain`, and `extension` boundaries without explicit human direction
 
 ### Done When
 
@@ -320,6 +416,7 @@ Status: completed on 2026-03-29
 - Add optional external tools only after the repo already has strong internal basics
 - Keep the tool stack small and complementary
 - Avoid overlapping bot noise
+- Prefer tools that help with React UI quality and test health, not only generic TypeScript checks
 
 ### Preconditions
 
@@ -412,5 +509,8 @@ These are intentionally deferred for later:
 - It lives at the repo root
 - `CLAUDE.md` is out of scope for this first pass
 - `AGENTS.md` is added only after product docs exist
+- The React architecture represented by this repo is the intended canonical baseline going forward
+- React + MUI + Emotion are intentional stack choices, not temporary migration scaffolding
+- `esbuild` remains the bundler for the current product stage unless a later explicit decision changes it
 - Public-org repo remains the target because it gives the strongest mostly-free setup
 - Jules is part of the core operating model, not an optional later add-on

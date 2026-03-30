@@ -9,6 +9,11 @@
 > - `docs/architecture.md`
 >
 > Use this document to stage incremental implementation work and track execution order. If this file conflicts with the canonical docs above, the canonical docs win until the implementation lands and those docs are updated in the same PR.
+>
+> React-baseline note:
+>
+> - This roadmap now assumes the React migration has already landed.
+> - Older assumptions about plain CSS, direct DOM-rendered UI, or deferring a framework decision are superseded by `docs/architecture.md` and ADR `0003-react-mui-emotion-ui.md`.
 
 ## Goal And Constraints
 
@@ -22,7 +27,7 @@ This roadmap is constrained by the current product brief and ADRs:
 - no account system
 - popup-first workflow with dashboard and in-page overlay as supporting surfaces
 - background service worker remains the canonical mutation boundary
-- plain CSS remains the default UI styling approach unless a later, explicit decision changes it
+- React 19 + MUI + Emotion remain the canonical UI stack unless a later, explicit decision changes it
 
 This roadmap is execution-ordered. It is intended to let future implementation happen phase by phase without re-deciding the target architecture each time.
 
@@ -34,20 +39,20 @@ The current architecture is directionally correct for the product, but several p
 - Runtime messaging has typed request names but weakly typed response handling and limited payload validation.
 - Import and open-path flows need stricter canonicalization and validation so local backup flows do not become a trust boundary gap.
 - UI surfaces duplicate formatting, escaping, and presentation mapping logic across popup, dashboard, and overlay code.
-- Rendering still relies heavily on dynamic `innerHTML`, which is acceptable for the current MVP but should be progressively hardened.
+- The React layer still needs stronger discipline around provider ownership, shared presentation helpers, and repository usage boundaries.
 - Storage normalization, migration behavior, and export versioning are coupled more loosely than they should be for long-term maintainability.
-- The dashboard and overlay both have growing local state complexity that would benefit from clearer state boundaries without requiring a framework rewrite.
+- The dashboard and overlay both have growing local state complexity that would benefit from clearer controller and query boundaries within the current React architecture.
 
 ## Target End-State Architecture
 
-The intended target architecture remains extension-native and local-first:
+The intended target architecture remains extension-native and local-first, but now assumes the current React-aligned layout:
 
-- `popup`, `dashboard`, and `content overlay` are thin UI surfaces.
-- `background` is the only mutation boundary for persisted application state.
-- `shared/domain` owns pure business logic such as queue building, FSRS scheduling, course progression, analytics, and recommendations.
-- `shared/contracts` owns typed runtime message contracts, including request and response shapes.
-- `shared/storage` becomes a thin persistence adapter with explicit migration and version handling.
-- `ui-core` provides shared presentation helpers such as formatting, safe rendering utilities, and view-model mapping.
+- `src/entrypoints/` stays as thin bootstrap code only.
+- `src/ui/` owns React screens, components, providers, theme, UI state, and presentation helpers.
+- `src/data/` owns repositories, datasources, import/export helpers, and catalog access.
+- `src/domain/` owns pure business logic such as queue building, FSRS scheduling, course progression, analytics, and recommendations.
+- `src/extension/` owns runtime contracts, validation, background routing, and notifications.
+- `background` remains the only mutation boundary for persisted application state.
 
 The target end state explicitly does not include:
 
@@ -55,7 +60,7 @@ The target end state explicitly does not include:
 - an account model
 - cross-device sync
 - a large multi-page SPA rewrite
-- a framework migration by default
+- replacing the current React + MUI + Emotion stack by default
 
 ### Planned Interface Direction
 
@@ -65,7 +70,8 @@ The following interface changes are planned and should be treated as the intende
 - Background runtime code should become a message gateway plus domain-oriented handler modules instead of a single, large orchestration file.
 - Storage should expose explicit migration and version interfaces rather than mixing normalization, migration, and persistence concerns in one place.
 - Problem opening should move behind a centralized safe helper rather than using ad hoc URL handling in multiple UI surfaces.
-- Shared UI helpers should stay limited to presentation, mapping, and safe rendering concerns. They should not own persistence or business logic.
+- Shared UI helpers should stay limited to presentation, mapping, theming, and safe rendering concerns. They should not own persistence or business logic.
+- Repositories should remain the only bridge between React surfaces and runtime/storage access.
 - No new user-facing surface should be introduced as part of this roadmap unless the product brief changes first.
 
 ## Phased Implementation Roadmap
@@ -144,20 +150,21 @@ Verification expectations:
 
 ### Phase 3: UI Architecture Hardening
 
-Improve UI structure without paying the cost of a premature framework rewrite.
+Improve UI structure within the current React architecture.
 
 Planned work:
 
-- Add a small `ui-core` layer for shared formatters, status or badge mapping, safe rendering helpers, and view-model mapping.
+- Add a small shared UI layer for formatters, status or badge mapping, theme-aware helpers, and view-model mapping.
 - Reduce duplicated escape, format, and tone logic across popup, dashboard, and overlay implementations.
 - Decompose larger popup, dashboard, and overlay renderers into smaller units with clearer responsibilities.
 - Formalize per-surface state handling, especially overlay workflow state such as timer, review controls, notes, and collapse or expand state.
+- Keep provider, theme, and repository usage patterns consistent across popup, dashboard, and overlay screens.
 
 Implementation intent:
 
 - Keep the popup compact and fast.
 - Keep the overlay isolated to the content-script runtime.
-- Improve maintainability without introducing product-scope drift or a framework migration by default.
+- Improve maintainability without introducing product-scope drift or a new frontend stack migration by default.
 
 Verification expectations:
 
@@ -232,7 +239,7 @@ Each phase should be considered complete only when both implementation and verif
 - Introducing cloud sync
 - Expanding into a large multi-page web app
 - Replacing the extension-first workflow with a general browser product
-- Committing to React or another UI framework as part of this roadmap by default
+- Swapping away from the current React + MUI + Emotion stack as part of this roadmap by default
 
 ### Revisit Triggers
 
@@ -241,7 +248,7 @@ The roadmap should be revisited if any of the following become approved product 
 - cross-device or cross-browser sync
 - server-side processing or hosted analytics
 - materially broader dashboard complexity than the current product brief supports
-- a proven need for a formal UI framework due to dashboard complexity, defect rate, or development cost
+- a proven need to replace the current React + MUI + Emotion stack due to bundle size, complexity, or extension-runtime limitations
 - Chrome platform changes that materially affect MV3 background, messaging, or permissions behavior
 
 ## Working Rules For Incremental Execution

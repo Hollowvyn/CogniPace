@@ -5,6 +5,8 @@ LeetCode Spaced Repetition is a Chrome extension for deliberate interview practi
 ## Current Status
 
 - Chrome extension MVP
+- React 19 UI mounted from TSX entrypoints
+- MUI + Emotion component and theming stack
 - Local-first data model using `chrome.storage.local`
 - No account system
 - No backend service
@@ -18,6 +20,14 @@ The product combines two ideas:
 2. Course progression for deciding what to study next.
 
 The popup is the primary surface. The LeetCode page overlay and dashboard are current supporting surfaces, not future placeholders. Product details and behavior boundaries live in the docs below.
+
+## Current Technical Baseline
+
+- `esbuild` bundles `src/entrypoints/*.tsx` for popup, dashboard, overlay, and redirects
+- TypeScript uses `jsx: react-jsx`
+- `npm run test` includes logic tests and React UI tests
+- `vitest` + `@testing-library/react` are the current UI testing tools
+- `eslint-plugin-react-hooks` is part of the lint baseline
 
 ## Quickstart
 
@@ -56,6 +66,7 @@ Load the extension in Chrome:
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
+- `npm run test:ui`
 - `npm run build`
 - `npm run check`
 
@@ -73,12 +84,14 @@ Load the extension in Chrome:
   ADR for local-first storage
 - [docs/decisions/0002-no-account-system.md](docs/decisions/0002-no-account-system.md)
   ADR for no account system
-- [docs/decisions/0003-plain-css-ui.md](docs/decisions/0003-plain-css-ui.md)
-  ADR for plain CSS UI
+- [docs/decisions/0003-react-mui-emotion-ui.md](docs/decisions/0003-react-mui-emotion-ui.md)
+  ADR for the React + MUI + Emotion UI stack
 - [docs/decisions/0004-no-backend-service.md](docs/decisions/0004-no-backend-service.md)
   ADR for no backend service
 - [docs/decisions/0005-minimal-extension-permissions.md](docs/decisions/0005-minimal-extension-permissions.md)
   ADR for minimal extension permissions
+- [docs/architecture-roadmap.md](docs/architecture-roadmap.md)
+  Non-canonical architecture hardening roadmap
 - [docs/stitch-design-doc.md](docs/stitch-design-doc.md)
   Supporting design-generation artifact for Stitch prompts
 - [requiredStepsForSetup.md](requiredStepsForSetup.md)
@@ -89,7 +102,9 @@ Load the extension in Chrome:
 - Popup UI: `src/ui/screens/popup/*`
 - Dashboard UI: `src/ui/screens/dashboard/*`
 - Overlay UI: `src/ui/screens/overlay/*`
+- React entrypoint bootstraps: `src/entrypoints/*`
 - Reusable UI widgets: `src/ui/features/*`
+- Shared providers and theme: `src/ui/providers.tsx`, `src/ui/theme.ts`
 - Dashboard route model: `src/ui/navigation/dashboardRoutes.ts`
 - UI-only selectors and labels: `src/ui/presentation/*`
 - Shared UI state hooks: `src/ui/state/*`
@@ -122,7 +137,8 @@ Precedence order:
 3. `docs/architecture.md`
 4. `docs/DESIGN_GUIDELINES.md`
 5. `docs/stitch-design-doc.md`
-6. `requiredStepsForSetup.md`
+6. `docs/architecture-roadmap.md`
+7. `requiredStepsForSetup.md`
 
 Rules:
 
