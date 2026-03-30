@@ -28,11 +28,11 @@ async function build() {
 
   await esbuild.build({
     entryPoints: {
-      background: "src/background.ts",
-      content: "src/content.ts",
-      popup: "src/popup/index.ts",
-      dashboard: "src/dashboard/index.ts",
-      database: "src/database/index.ts",
+      background: "src/extension/background/index.ts",
+      content: "src/entrypoints/overlay.tsx",
+      popup: "src/entrypoints/popup.tsx",
+      dashboard: "src/entrypoints/dashboard.tsx",
+      database: "src/entrypoints/libraryRedirect.ts",
     },
     outdir,
     bundle: true,

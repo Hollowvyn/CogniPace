@@ -1,9 +1,9 @@
-
+/** Reusable course progress summary card shared across popup and dashboard surfaces. */
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import { ActiveCourseView, CourseCardView } from "../../../shared/types";
+import { ActiveCourseView, CourseCardView } from "../../../domain/views";
 import { ProgressTrack, SurfaceCard, ToneChip } from "../../components";
 
 export interface CourseProgressCardProps {

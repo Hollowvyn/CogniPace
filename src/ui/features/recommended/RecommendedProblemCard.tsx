@@ -1,14 +1,15 @@
+/** Reusable recommendation card shared by popup and dashboard surfaces. */
 import Button, { ButtonProps } from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { RecommendedProblemView } from "../../../shared/types";
+import { RecommendedProblemView } from "../../../domain/views";
 import { SurfaceCard, ToneChip } from "../../components";
 import {
   difficultyTone,
   formatDisplayDate,
   recommendedTone,
-} from "../../view-models/studyState";
+} from "../../presentation/studyState";
 
 export interface RecommendedProblemCardProps {
   buttonFullWidth?: boolean;

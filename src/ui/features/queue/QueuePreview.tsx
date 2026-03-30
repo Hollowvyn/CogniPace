@@ -1,15 +1,16 @@
+/** Reusable queue preview list for the dashboard overview surface. */
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { AppShellPayload } from "../../../shared/types";
+import { AppShellPayload } from "../../../domain/views";
 import { ToneChip } from "../../components";
 import {
   difficultyTone,
   formatDisplayDate,
-} from "../../view-models/studyState";
+} from "../../presentation/studyState";
 
 export interface QueuePreviewProps {
   items: AppShellPayload["queue"]["items"];

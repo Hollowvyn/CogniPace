@@ -7,22 +7,23 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { defaultReviewMode, deriveQuickRating } from "../src/shared/domain/reviewPolicy";
-import { CourseQuestionView, StudyState } from "../src/shared/types";
-import { OverlayRoot } from "../src/ui/content/OverlayRoot";
+import { defaultReviewMode, deriveQuickRating } from "../src/domain/fsrs/reviewPolicy";
+import { StudyState } from "../src/domain/types";
+import { CourseQuestionView } from "../src/domain/views";
 import { createMockAppShellPayload } from "../src/ui/mockData";
-import { AppProviders } from "../src/ui/providers";
-import { DashboardApp } from "../src/ui/surfaces/dashboard/DashboardApp";
 import {
   buildDashboardUrl,
   readDashboardViewFromSearch,
-} from "../src/ui/surfaces/dashboard/routes";
-import { filterLibraryRows } from "../src/ui/view-models/library";
+} from "../src/ui/navigation/dashboardRoutes";
+import { filterLibraryRows } from "../src/ui/presentation/library";
+import { AppProviders } from "../src/ui/providers";
+import { DashboardApp } from "../src/ui/screens/dashboard/DashboardApp";
+import { OverlayRoot } from "../src/ui/screens/overlay/OverlayRoot";
 
 const sendMessageMock = vi.fn();
 const tabsCreateMock = vi.fn();
 
-vi.mock("../src/shared/runtime", () => {
+vi.mock("../src/extension/runtime/client", () => {
   return {
     sendMessage: (...args: unknown[]) => sendMessageMock(...args),
   };

@@ -84,6 +84,26 @@ Load the extension in Chrome:
 - [requiredStepsForSetup.md](requiredStepsForSetup.md)
   Ordered setup and hardening checklist
 
+## Where To Change Things
+
+- Popup UI: `src/ui/screens/popup/*`
+- Dashboard UI: `src/ui/screens/dashboard/*`
+- Overlay UI: `src/ui/screens/overlay/*`
+- Reusable UI widgets: `src/ui/features/*`
+- Dashboard route model: `src/ui/navigation/dashboardRoutes.ts`
+- UI-only selectors and labels: `src/ui/presentation/*`
+- Shared UI state hooks: `src/ui/state/*`
+- Storage and repositories: `src/data/repositories/*`
+- Raw Chrome storage access: `src/data/datasources/chrome/*`
+- Built-in study plans: `src/data/catalog/curatedSets.ts`
+- Backup import/export: `src/data/importexport/*`
+- Problem slug and difficulty rules: `src/domain/problem/*`
+- FSRS logic: `src/domain/fsrs/*`
+- Course progression: `src/domain/courses/*`
+- Queue and recommendations: `src/domain/queue/*`
+- Runtime contracts and validation: `src/extension/runtime/*`
+- Background router and handlers: `src/extension/background/*`
+
 ## Read In This Order
 
 1. `README.md`

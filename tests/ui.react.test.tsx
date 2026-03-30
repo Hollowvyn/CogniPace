@@ -7,17 +7,18 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CourseQuestionView, StudyState } from "../src/shared/types";
-import { OverlayPanel } from "../src/ui/content/OverlayPanel";
-import { DashboardApp } from "../src/ui/dashboard/DashboardApp";
+import { StudyState } from "../src/domain/types";
+import { CourseQuestionView } from "../src/domain/views";
 import { createMockAppShellPayload } from "../src/ui/mockData";
-import { PopupApp } from "../src/ui/popup/PopupApp";
 import { AppProviders } from "../src/ui/providers";
+import { DashboardApp } from "../src/ui/screens/dashboard/DashboardApp";
+import { OverlayPanel } from "../src/ui/screens/overlay/OverlayPanel";
+import { PopupApp } from "../src/ui/screens/popup/PopupApp";
 
 const sendMessageMock = vi.fn();
 const tabsCreateMock = vi.fn();
 
-vi.mock("../src/shared/runtime", () => {
+vi.mock("../src/extension/runtime/client", () => {
   return {
     sendMessage: (...args: unknown[]) => sendMessageMock(...args),
   };

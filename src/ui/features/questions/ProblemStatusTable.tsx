@@ -1,3 +1,4 @@
+/** Reusable course-question status table for dashboard course views. */
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -9,7 +10,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
-import { ActiveCourseView } from "../../../shared/types";
+import { ActiveCourseView } from "../../../domain/views";
 import { ToneChip } from "../../components";
 import {
   difficultyTone,
@@ -17,7 +18,7 @@ import {
   formatStudyPhase,
   labelForStatus,
   questionStatusTone,
-} from "../../view-models/studyState";
+} from "../../presentation/studyState";
 
 export interface ProblemStatusTableProps {
   course: ActiveCourseView | null;

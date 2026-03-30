@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import { createEmptyCard } from "ts-fsrs";
 
+import { normalizeSlug } from "../src/domain/problem/slug";
 import { sanitizeImportPayload } from "../src/shared/backup";
 import {
   createDefaultStudyState,
@@ -618,6 +619,14 @@ function testSafeOpenHelpersUseCanonicalTargets(): void {
   );
 }
 
+function testProblemSlugNormalizationAcceptsUrlsAndSlugNoise(): void {
+  assert.equal(
+    normalizeSlug(" https://leetcode.com/problems/Two-Sum/?envType=study-plan-v2 "),
+    "two-sum"
+  );
+  assert.equal(normalizeSlug("Problems/merge-intervals/"), "merge-intervals");
+}
+
 function run(): void {
   testLegacyStorageMigrationRebuildsHistoryIntoFsrsCard();
   testStorageMigrationPreservesExistingFsrsCardWithoutHistory();
@@ -642,6 +651,7 @@ function run(): void {
   testCurrentAndVersionlessImportsSucceed();
   testImportSanitizationDropsMalformedCourseStructures();
   testSafeOpenHelpersUseCanonicalTargets();
+  testProblemSlugNormalizationAcceptsUrlsAndSlugNoise();
   console.log("logic tests passed");
 }
 

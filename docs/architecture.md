@@ -1,138 +1,201 @@
 # Architecture
 
-## System Overview
+## System Shape
 
-The extension is a Manifest V3 Chrome extension with four runtime surfaces:
+The extension now follows an explicit `ui + data + domain + extension + entrypoints` layout.
 
-- popup
-- content script overlay
-- dashboard
-- background service worker
+- `src/entrypoints/`
+  Small mount/bootstrap files only
+- `src/ui/`
+  React screens, reusable UI components, navigation models, local UI state, and presentation helpers
+- `src/data/`
+  Repositories, Chrome datasources, import/export, and catalog access
+- `src/domain/`
+  Pure business logic and business types
+- `src/extension/`
+  Chrome runtime contracts, validation, background routing, and notifications
 
-The background service worker is the operational center. UI surfaces request data or mutations through runtime messages, and shared modules in `src/shared/*` keep the core logic centralized.
+The goal is that a new engineer can find the right change area by directory alone.
 
 ## Runtime Surfaces
 
 ### Popup
 
-Source: `src/popup/index.ts`
+Entrypoint: `src/entrypoints/popup.tsx`  
+Screen: `src/ui/screens/popup/*`
 
 Responsibilities:
 
-- render the compact recommendation-first UI
-- show due count, streak, recommendation, and course-next state
-- switch study mode
+- render the compact recommendation-first surface
+- show due count, streak, recommended problem, and course-next state
+- toggle study mode
 - open problems or the dashboard
-- shuffle recommendation candidates locally
-
-The popup is the main user entry point.
-
-### Content Script Overlay
-
-Source: `src/content.ts`
-
-Responsibilities:
-
-- attach UI to supported LeetCode problem pages
-- detect page context such as slug and difficulty
-- show collapsed and expanded review UI
-- manage timer state, notes, and selected rating
-- save review results through runtime messaging
-
-This surface is the in-context solving and review layer.
 
 ### Dashboard
 
-Source: `src/dashboard/index.ts`
+Entrypoint: `src/entrypoints/dashboard.tsx`  
+Screen: `src/ui/screens/dashboard/*`
 
 Responsibilities:
 
-- render overview, courses, library, analytics, and settings views
-- show broader product state than the popup
-- support settings updates, backup import/export, and course management
-- expose searchable and filterable library and analytics views
+- render overview, courses, library, analytics, and settings screens
+- own dashboard-local state such as filters, settings draft, and import file
+- preserve the `?view=` deep-link contract
 
-This is the secondary control surface.
+### Overlay
 
-### Background Service Worker
-
-Source: `src/background.ts`
+Entrypoint: `src/entrypoints/overlay.tsx`  
+Screen: `src/ui/screens/overlay/*`
 
 Responsibilities:
 
-- load and mutate application state
-- build queue, recommendation, analytics, course, and shell payloads
-- handle runtime messages
-- manage notification scheduling and quiet-hour logic
-- coordinate import/export and course-related mutations
+- mount a shadow-root-backed React overlay on LeetCode problem pages
+- detect page context and current problem metadata
+- manage timer, notes, rating, and review actions
+- save review results through runtime messaging
 
-This is the canonical runtime mutation boundary.
+### Library Redirect
 
-## Shared Modules And Responsibilities
+Entrypoint: `src/entrypoints/libraryRedirect.ts`
 
-### Queue
+Responsibilities:
 
-Source: `src/shared/queue.ts`
+- preserve the legacy `database.html` alias by redirecting to `dashboard.html?view=library`
 
-Builds the daily queue, including due, new, and reinforcement items, using the current settings and study state.
+### Background Worker
 
-### Recommendations
+Bootstrap: `src/extension/background/index.ts`
 
-Source: `src/shared/recommendations.ts`
+Responsibilities:
 
-Converts queue items into user-facing recommendation candidates and reasons such as `Due now`, `Overdue`, and `Review focus`.
+- validate runtime messages
+- dispatch messages through `src/extension/background/router.ts`
+- own alarms and due notifications
 
-### Scheduler
+## Layer Ownership
 
-Source: `src/shared/scheduler.ts`
+### UI Layer
 
-Applies review results and produces updated review scheduling state using the FSRS-backed scheduler.
+Location: `src/ui/`
 
-### Study State
+Subdirectories:
 
-Source: `src/shared/studyState.ts`
+- `screens/`
+  Screen-specific React components and screen-local controllers
+- `components/`
+  Base visual primitives only
+- `features/`
+  Reusable feature widgets shared across screens
+- `navigation/`
+  Pure route/view models such as dashboard routes
+- `presentation/`
+  UI-only selectors, formatting, and form normalization
+- `state/`
+  Reusable UI hooks such as app-shell query state
 
-Normalizes legacy and current review state, computes summaries, and bridges storage data with scheduling logic.
+Rules:
 
-### Storage
+- UI does not call `sendMessage` directly
+- UI does not access `chrome.storage` directly
+- presentational components remain side-effect free
 
-Source: `src/shared/storage.ts`
+### Data Layer
 
-Loads, normalizes, saves, and mutates the core app data stored in `chrome.storage.local`.
+Location: `src/data/`
 
-### Courses
+Subdirectories:
 
-Source: `src/shared/courses.ts`
+- `repositories/`
+  Repository-style access for app shell, courses, problem sessions, settings, backups, app data, and extension navigation
+- `datasources/chrome/`
+  Raw Chrome platform access such as `chrome.storage.local`
+- `catalog/`
+  Built-in study plans and curated sets
+- `importexport/`
+  Backup sanitization and import/export helpers
 
-Manages course definitions, chapter progression, question progression, active course selection, and course-derived views.
+Rules:
 
-### Curated Sets
+- repositories own transport and persistence access
+- datasources are platform-specific and thin
+- UI talks to repositories, not to Chrome APIs
 
-Source: `src/shared/curatedSets.ts`
+### Domain Layer
 
-Defines the built-in study plans and problem catalogs that seed the structured course experience.
+Location: `src/domain/`
 
-### Analytics
+Subdirectories:
 
-Source: `src/shared/analytics.ts`
+- `problem/`
+  Slug identity and difficulty parsing
+- `fsrs/`
+  Scheduler state, review policy, and FSRS mutations
+- `courses/`
+  Course progression and course-derived projections
+- `queue/`
+  Queue generation and recommendation building
+- `analytics/`
+  Analytics summarization
+- `common/`
+  Domain-safe shared helpers such as time and collections
 
-Builds summary metrics such as streak, retention proxy, due-by-day forecast, and weakest problems.
+Rules:
 
-### Repository Parsing And Import
+- domain code is pure
+- domain code does not import React
+- domain code does not import `chrome`, `window`, or `document`
 
-Source: `src/shared/repository.ts`
+### Extension Layer
 
-Handles problem normalization, import ingestion, parsing of user-provided slugs or URLs, and library upsert behavior.
+Location: `src/extension/`
 
-### Runtime Messaging
+Subdirectories:
 
-Source: `src/shared/runtime.ts`, `src/shared/types.ts`
+- `runtime/`
+  Runtime client, contracts, and message validation
+- `background/`
+  Background bootstrap, router, handlers, notifications, and response helpers
 
-Defines the request/response message layer used between UI surfaces and the background service worker.
+Rules:
 
-## Persisted Data Model
+- runtime message names and payload contracts are defined here
+- background handlers coordinate repositories and domain logic
 
-The core app data is represented by `AppData` and stored locally.
+## Where To Change Things
+
+- Popup UI: `src/ui/screens/popup/*`
+- Dashboard UI: `src/ui/screens/dashboard/*`
+- Overlay UI: `src/ui/screens/overlay/*`
+- Shared cards/widgets: `src/ui/features/*`
+- Dashboard route contract: `src/ui/navigation/dashboardRoutes.ts`
+- Library filters/selectors: `src/ui/presentation/library.ts`
+- Study-state labels and tones: `src/ui/presentation/studyState.ts`
+- Course ingest normalization: `src/ui/presentation/courseIngest.ts`
+- App-shell query state: `src/ui/state/useAppShellQuery.ts`
+- Runtime-backed popup/dashboard reads: `src/data/repositories/appShellRepository.ts`
+- Storage and persisted app data: `src/data/repositories/appDataRepository.ts`
+- Raw Chrome storage access: `src/data/datasources/chrome/storage.ts`
+- Backup import/export: `src/data/importexport/backup.ts`
+- Built-in study plans: `src/data/catalog/curatedSets.ts`
+- Problem slug rules: `src/domain/problem/slug.ts`
+- Difficulty parsing and solve-time goals: `src/domain/problem/difficulty.ts`
+- FSRS logic: `src/domain/fsrs/*`
+- Course progression: `src/domain/courses/courseProgress.ts`
+- Queue logic: `src/domain/queue/*`
+- Runtime contracts: `src/extension/runtime/contracts.ts`
+- Background router and handlers: `src/extension/background/*`
+
+## Runtime Message Flow
+
+1. A UI repository calls `sendMessage` through `src/extension/runtime/client.ts`.
+2. The background bootstrap validates the message with `src/extension/runtime/validator.ts`.
+3. `src/extension/background/router.ts` dispatches to a grouped handler.
+4. The handler composes domain logic and data repositories.
+5. The result is returned in the canonical runtime response envelope.
+
+## Persisted Data
+
+`AppData` remains the canonical local-first persisted model.
 
 Important persisted areas:
 
@@ -143,15 +206,7 @@ Important persisted areas:
 - `courseProgressById`
 - `settings`
 
-Key user-facing projections derived from that data include:
-
-- `TodayQueue`
-- `AnalyticsSummary`
-- `PopupViewData`
-- `ActiveCourseView`
-- `LibraryProblemRow`
-
-Current export payload includes:
+Export payload remains:
 
 - `version`
 - `problems`
@@ -161,71 +216,11 @@ Current export payload includes:
 - `courseOrder`
 - `courseProgressById`
 
-## Runtime Message Flow
-
-Message contracts are defined in `MessageRequestMap`.
-
-Major message categories:
-
-- page and review actions
-  - `UPSERT_PROBLEM_FROM_PAGE`
-  - `GET_PROBLEM_CONTEXT`
-  - `RATE_PROBLEM`
-  - `SAVE_REVIEW_RESULT`
-  - `UPDATE_NOTES`
-  - `UPDATE_TAGS`
-- app shell and queue retrieval
-  - `GET_TODAY_QUEUE`
-  - `GET_DASHBOARD_DATA`
-  - `GET_APP_SHELL_DATA`
-- course actions
-  - `SWITCH_ACTIVE_COURSE`
-  - `SET_ACTIVE_COURSE_CHAPTER`
-  - `TRACK_COURSE_QUESTION_LAUNCH`
-  - `ADD_PROBLEM_TO_COURSE`
-- import/export and settings
-  - `IMPORT_CURATED_SET`
-  - `IMPORT_CUSTOM_SET`
-  - `EXPORT_DATA`
-  - `IMPORT_DATA`
-  - `UPDATE_SETTINGS`
-  - `ADD_PROBLEM_BY_INPUT`
-- maintenance actions
-  - `SUSPEND_PROBLEM`
-  - `RESET_PROBLEM_SCHEDULE`
-  - `OPEN_EXTENSION_PAGE`
-
-UI surfaces should not bypass this messaging boundary for persisted state changes.
-
-## Current Technical Constraints
+## Constraints
 
 - Manifest V3 Chrome extension
-- local-first persistence
+- local-first storage only
 - no backend service
 - no account model
-- plain CSS UI layer
-- dynamic HTML rendering still exists and is tracked for later hardening
-
-Related ADRs:
-
-- `docs/decisions/0001-local-first-storage.md`
-- `docs/decisions/0002-no-account-system.md`
-- `docs/decisions/0003-plain-css-ui.md`
-- `docs/decisions/0004-no-backend-service.md`
-- `docs/decisions/0005-minimal-extension-permissions.md`
-
-## Where Future Work Should Go
-
-- Product behavior changes should first be reflected in `docs/product.md` and `docs/features.md`
-- Shared logic should prefer `src/shared/*` rather than duplicating logic in UI surfaces
-- State mutations should continue to flow through the background worker
-- Security hardening for DOM rendering belongs in a later implementation phase, not in the documentation layer
-
-## Canonicality Notes
-
-- This document is the technical source of truth for current structure.
-- Planned architectural changes live in `docs/architecture-roadmap.md`, which is a working plan rather than a replacement for this document.
-- ADRs under `docs/decisions/` record why major current constraints exist.
-- `docs/stitch-design-doc.md` is not an architecture document.
-- If `docs/architecture-roadmap.md` conflicts with this file, this file wins until the implementation lands and the canonical docs are updated in the same PR.
-- If runtime interfaces, message contracts, or persisted data shapes change, this file should be updated in the same PR.
+- React + MUI UI stack
+- runtime message names and persisted JSON contracts are stable unless explicitly updated in this document

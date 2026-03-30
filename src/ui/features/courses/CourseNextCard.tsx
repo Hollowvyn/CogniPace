@@ -1,14 +1,15 @@
+/** Reusable “next in course” card shared by popup and dashboard surfaces. */
 import Button, { ButtonProps } from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { getStudyPhaseLabel } from "../../../shared/studyState";
-import { CourseQuestionView } from "../../../shared/types";
+import { getStudyPhaseLabel } from "../../../domain/fsrs/studyState";
+import { CourseQuestionView } from "../../../domain/views";
 import { SurfaceCard, ToneChip } from "../../components";
 import {
   difficultyTone,
   labelForStatus,
-} from "../../view-models/studyState";
+} from "../../presentation/studyState";
 
 export interface CourseNextCardProps {
   actionLabel?: string;
