@@ -1,4 +1,1 @@
-export {
-  getLastReviewedAt,
-  getStudyStateSummary,
-} from "../fsrs/studyState";
+export { getLastReviewedAt, getStudyStateSummary } from "../fsrs/studyState";

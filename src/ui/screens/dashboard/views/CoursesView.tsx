@@ -139,7 +139,9 @@ export function CoursesView(props: CoursesViewProps) {
                   }
                 }}
                 variant={
-                  chapter.id === course.activeChapterId ? "contained" : "outlined"
+                  chapter.id === course.activeChapterId
+                    ? "contained"
+                    : "outlined"
                 }
               >
                 {chapter.title} · {chapter.completedQuestions}/
@@ -155,7 +157,10 @@ export function CoursesView(props: CoursesViewProps) {
       </SurfaceCard>
 
       <SurfaceCard label="Question Matrix" title="Current Path State">
-        <ProblemStatusTable course={course} onOpenProblem={props.onOpenProblem} />
+        <ProblemStatusTable
+          course={course}
+          onOpenProblem={props.onOpenProblem}
+        />
       </SurfaceCard>
     </Stack>
   );

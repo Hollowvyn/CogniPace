@@ -606,7 +606,8 @@ function testSafeOpenHelpersUseCanonicalTargets(): void {
     /invalid dashboard path/i
   );
   assert.throws(
-    () => validateExtensionPagePath("dashboard.html?view=settings&view=analytics"),
+    () =>
+      validateExtensionPagePath("dashboard.html?view=settings&view=analytics"),
     /invalid dashboard path/i
   );
   assert.throws(
@@ -621,7 +622,9 @@ function testSafeOpenHelpersUseCanonicalTargets(): void {
 
 function testProblemSlugNormalizationAcceptsUrlsAndSlugNoise(): void {
   assert.equal(
-    normalizeSlug(" https://leetcode.com/problems/Two-Sum/?envType=study-plan-v2 "),
+    normalizeSlug(
+      " https://leetcode.com/problems/Two-Sum/?envType=study-plan-v2 "
+    ),
     "two-sum"
   );
   assert.equal(normalizeSlug("Problems/merge-intervals/"), "merge-intervals");

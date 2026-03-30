@@ -115,7 +115,11 @@ export function OverviewView(props: OverviewViewProps) {
             />
           ) : null}
           <SurfaceCard
-            action={<ToneChip label={`${props.payload?.queue.items.length ?? 0} items`} />}
+            action={
+              <ToneChip
+                label={`${props.payload?.queue.items.length ?? 0} items`}
+              />
+            }
             label="Today Queue"
             title="Live Intake"
           >

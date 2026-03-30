@@ -14,11 +14,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ChangeEvent } from "react";
 
-import {
-  ReviewOrder,
-  StudyMode,
-  UserSettings,
-} from "../../../../domain/types";
+import { ReviewOrder, StudyMode, UserSettings } from "../../../../domain/types";
 import { AppShellPayload } from "../../../../domain/views";
 import { SurfaceCard } from "../../../components";
 

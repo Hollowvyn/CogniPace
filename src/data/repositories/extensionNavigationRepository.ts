@@ -20,7 +20,7 @@ export function openDashboardPage(
     return;
   }
 
-  windowRef.open(url.toString(), "_blank");
+  windowRef.open(url.toString(), "_blank", "noopener,noreferrer");
 }
 
 /** Opens the dashboard directly on the settings screen. */

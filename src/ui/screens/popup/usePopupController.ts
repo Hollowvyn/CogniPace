@@ -37,7 +37,11 @@ export function usePopupController() {
         payload?.popup.recommended ?? null,
         recommendedIndex
       ),
-    [payload?.popup.recommended, payload?.popup.recommendedCandidates, recommendedIndex]
+    [
+      payload?.popup.recommended,
+      payload?.popup.recommendedCandidates,
+      recommendedIndex,
+    ]
   );
 
   async function refresh(resetRecommendation = false): Promise<void> {

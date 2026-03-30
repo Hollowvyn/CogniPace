@@ -44,13 +44,12 @@ function ensureAllowedKeys(payload: UnknownRecord): void {
 }
 
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
 }
 
-function safeString(
-  value: unknown,
-  fallback: string
-): string {
+function safeString(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
@@ -106,9 +105,7 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
   };
 }
 
-function sanitizeStudyStatesBySlug(
-  value: unknown
-): Record<string, StudyState> {
+function sanitizeStudyStatesBySlug(value: unknown): Record<string, StudyState> {
   if (!isRecord(value)) {
     return {};
   }
@@ -155,9 +152,7 @@ function sanitizeCourseQuestionRef(
     return null;
   }
 
-  const slug = normalizeSlug(
-    typeof ref.slug === "string" ? ref.slug : slugKey
-  );
+  const slug = normalizeSlug(typeof ref.slug === "string" ? ref.slug : slugKey);
   if (!slug) {
     return null;
   }
@@ -282,7 +277,9 @@ function sanitizeChapterProgress(
   }
 
   const questionProgressBySlug: Record<string, CourseQuestionProgress> = {};
-  for (const [slugKey, progress] of Object.entries(value.questionProgressBySlug)) {
+  for (const [slugKey, progress] of Object.entries(
+    value.questionProgressBySlug
+  )) {
     const sanitized = sanitizeQuestionProgress(slugKey, progress);
     if (!sanitized) {
       continue;
@@ -339,7 +336,9 @@ function sanitizeCourseProgressById(
   return result;
 }
 
-export function assertImportPayloadShape(payload: unknown): asserts payload is ExportPayload {
+export function assertImportPayloadShape(
+  payload: unknown
+): asserts payload is ExportPayload {
   if (!isRecord(payload)) {
     throw new Error("Invalid import format: expected an object payload.");
   }
@@ -389,7 +388,9 @@ export function assertImportPayloadShape(payload: unknown): asserts payload is E
     payload.courseOrder !== undefined &&
     !isStringArray(payload.courseOrder)
   ) {
-    throw new Error("Invalid import format: courseOrder must be a string array.");
+    throw new Error(
+      "Invalid import format: courseOrder must be a string array."
+    );
   }
 
   if (

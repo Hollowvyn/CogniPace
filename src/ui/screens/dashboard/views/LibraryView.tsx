@@ -149,7 +149,9 @@ export function LibraryView(props: LibraryViewProps) {
               return (
                 <TableRow key={row.problem.leetcodeSlug}>
                   <TableCell>
-                    <Typography variant="subtitle2">{row.problem.title}</Typography>
+                    <Typography variant="subtitle2">
+                      {row.problem.title}
+                    </Typography>
                     <Typography color="text.secondary" variant="body2">
                       {row.problem.leetcodeSlug}
                     </Typography>

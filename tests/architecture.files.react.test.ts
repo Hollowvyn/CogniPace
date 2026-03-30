@@ -37,10 +37,14 @@ describe("architecture layout", () => {
       fs.existsSync(path.join(repoRoot, "src/ui/screens/popup/PopupApp.tsx"))
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(repoRoot, "src/ui/screens/dashboard/DashboardApp.tsx"))
+      fs.existsSync(
+        path.join(repoRoot, "src/ui/screens/dashboard/DashboardApp.tsx")
+      )
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(repoRoot, "src/ui/screens/overlay/OverlayRoot.tsx"))
+      fs.existsSync(
+        path.join(repoRoot, "src/ui/screens/overlay/OverlayRoot.tsx")
+      )
     ).toBe(true);
 
     expect(
@@ -68,8 +72,8 @@ describe("architecture layout", () => {
   });
 
   it("keeps the domain layer free of react and browser dependencies", () => {
-    const domainFiles = listFiles(path.join(repoRoot, "src/domain")).filter((file) =>
-      /\.(ts|tsx)$/.test(file)
+    const domainFiles = listFiles(path.join(repoRoot, "src/domain")).filter(
+      (file) => /\.(ts|tsx)$/.test(file)
     );
 
     for (const file of domainFiles) {

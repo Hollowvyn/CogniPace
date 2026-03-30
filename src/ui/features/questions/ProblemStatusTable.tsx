@@ -38,7 +38,9 @@ export function ProblemStatusTable(props: ProblemStatusTableProps) {
     );
   }
 
-  const questions = props.course.chapters.flatMap((chapter) => chapter.questions);
+  const questions = props.course.chapters.flatMap(
+    (chapter) => chapter.questions
+  );
 
   return (
     <TableContainer component={Paper}>

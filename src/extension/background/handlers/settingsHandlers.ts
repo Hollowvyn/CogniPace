@@ -6,9 +6,7 @@ import {
   mutateAppData,
 } from "../../../data/repositories/appDataRepository";
 import { uniqueStrings } from "../../../domain/common/collections";
-import {
-  CURRENT_STORAGE_SCHEMA_VERSION,
-} from "../../../domain/common/constants";
+import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
 import { nowIso } from "../../../domain/common/time";
 import {
   ensureCourseData,
