@@ -62,6 +62,7 @@ export function useDashboardController() {
     useState<UserSettings | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const deferredQuery = useDeferredValue(filters.query);
+  const { courseId, difficulty, status: filterStatus } = filters;
 
   useEffect(() => {
     const handlePopState = () => {
@@ -84,10 +85,12 @@ export function useDashboardController() {
   const rows = useMemo(
     () =>
       filterLibraryRows(payload?.library ?? [], {
-        ...filters,
+        courseId,
+        difficulty,
+        status: filterStatus,
         query: deferredQuery,
       }),
-    [deferredQuery, filters, payload?.library]
+    [courseId, deferredQuery, difficulty, filterStatus, payload?.library]
   );
 
   async function refresh(clearStatus = true): Promise<void> {
