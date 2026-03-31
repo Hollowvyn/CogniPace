@@ -47,6 +47,11 @@ export function LibraryView(props: LibraryViewProps) {
                 query: event.target.value,
               }));
             }}
+            slotProps={{
+              htmlInput: {
+                "aria-label": "Search title or slug",
+              },
+            }}
             value={props.filters.query}
           />
         </Grid>

@@ -50,6 +50,11 @@ export function SettingsView(props: SettingsViewProps) {
                   dailyNewLimit: Number(event.target.value) || 0,
                 }));
               }}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Daily New",
+                },
+              }}
               type="number"
               value={props.settingsDraft.dailyNewLimit}
             />
@@ -63,6 +68,11 @@ export function SettingsView(props: SettingsViewProps) {
                   ...current,
                   dailyReviewLimit: Number(event.target.value) || 0,
                 }));
+              }}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Daily Review",
+                },
               }}
               type="number"
               value={props.settingsDraft.dailyReviewLimit}
@@ -181,6 +191,11 @@ export function SettingsView(props: SettingsViewProps) {
                   },
                 }));
               }}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Quiet start",
+                },
+              }}
               type="number"
               value={props.settingsDraft.quietHours.startHour}
             />
@@ -197,6 +212,11 @@ export function SettingsView(props: SettingsViewProps) {
                     endHour: Number(event.target.value) || 0,
                   },
                 }));
+              }}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Quiet end",
+                },
               }}
               type="number"
               value={props.settingsDraft.quietHours.endHour}
