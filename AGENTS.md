@@ -86,6 +86,8 @@ Read these in order before planning or implementing changes:
   - `src/**`
   - `tests/**`
   - `public/**`
+  - `.github/workflows/*`
+  - `.github/dependabot.yml`
   - `package.json`
   - `package-lock.json`
   - `build.cjs`

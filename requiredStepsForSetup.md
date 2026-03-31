@@ -69,12 +69,13 @@ Rules:
   - `docs/DESIGN_GUIDELINES.md`
   - `docs/decisions/`
   - `docs/stitch-design-doc.md`
+  - `.github/workflows/ci.yml`
+  - `.github/dependabot.yml`
   - `.github/PULL_REQUEST_TEMPLATE.md`
   - `.github/ISSUE_TEMPLATE/`
 
 ### Still Missing
 
-- `.github` workflows
 - root `LICENSE` if repo visibility changes to public
 
 ### Current Health
@@ -91,6 +92,10 @@ Rules:
 - React is now the canonical UI model, not a provisional migration path
 - GitHub merge settings now use squash-only merges with auto-delete-on-merge kept on
 - GitHub rulesets and protected-branch enforcement remain unavailable on the current private repo tier
+- GitHub Actions CI now runs `lint`, `typecheck`, `test`, and `build` on pull requests and pushes to `main`
+- Dependabot is configured for weekly npm and GitHub Actions updates
+- Vulnerability alerts and automated security fixes are enabled for the current repo model
+- CodeQL remains deferred until the repo becomes public
 
 ## Ordered Setup Phases
 
@@ -101,15 +106,14 @@ Important:
 
 ## Current Phase
 
-- Phase 4 is now complete.
+- Phase 5 is now complete.
 - Status: completed on 2026-03-30
-- Next true setup phase: Phase 5
+- Next true setup phase: Phase 6
 
 ## Remaining Execution Order From The React Baseline
 
-1. Phase 5
-2. Phase 6
-3. Phase 7
+1. Phase 6
+2. Phase 7
 
 ## Phase 0: Stabilize Local Baseline
 
@@ -347,44 +351,46 @@ Status: completed on 2026-03-30
 
 ## Phase 5: CI And GitHub-Native Security
 
+Status: completed on 2026-03-30
+
 ### Goals
 
 - Make every PR validate automatically
 - Use GitHub-native tooling first
 - Phase checks in realistically instead of pretending the repo is already green
 - Validate the React stack directly, not just the old TypeScript baseline
+- Land the CI and dependency-monitoring pieces that are actually available on the current personal + private repo tier
 
 ### Steps
 
-- [ ] Add `ci.yml` for:
+- [x] Add `ci.yml` for:
   - `npm ci`
   - `npm run lint`
   - `npm run build`
   - `npm run test`
   - `npm run typecheck`
-- [ ] Keep `npm run test` as the combined logic + React UI gate
-- [ ] Optionally split workflow jobs into:
+- [x] Keep `npm run test` as the combined logic + React UI gate
+- [x] Split workflow jobs into:
   - logic tests
   - UI tests
   - build and typecheck
-- [ ] Optionally add an architecture-boundary test job
-- [ ] Add `dependabot.yml`
-- [ ] Enable:
-  - dependency graph
-  - Dependabot alerts
-  - Dependabot security updates
-  - CodeQL default setup after the repo is public
-- [ ] Phase required checks:
-  - require `lint`
-  - require `build` first
-  - require `test` first
-  - require `typecheck` only after it is green
+- [x] Keep architecture-boundary coverage inside the existing `npm run test` surface for now
+- [x] Add `dependabot.yml`
+- [x] Configure GitHub-native dependency monitoring for the current repo model:
+  - rely on GitHub dependency graph for the npm lockfile surface
+  - enable vulnerability alerts
+  - enable automated security fixes
+  - configure weekly Dependabot version updates for npm and GitHub Actions
+- [x] Explicitly defer:
+  - CodeQL default setup until the repo is public
+  - enforceable required checks until the repo has rulesets or protected-branch support available
 
 ### Done When
 
-- [ ] every PR gets automatic validation
-- [ ] `main` has enforceable status checks
-- [ ] the React validation surface is represented in CI before optional third-party apps are added
+- [x] every PR gets automatic validation
+- [x] the React validation surface is represented in CI before optional third-party apps are added
+- [x] GitHub-native dependency monitoring and security-update automation are in place for the current repo model
+- [x] enforceable required checks are documented as deferred until the repo can support them
 
 ## Phase 6: Jules Automation
 
