@@ -5,6 +5,7 @@ import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { StatusBanner, SurfaceCard } from "../../components";
@@ -72,13 +73,15 @@ export function PopupApp() {
         />
         {controller.hasMultipleRecommended ? (
           <Stack alignItems="flex-end">
-            <IconButton
-              aria-label="Shuffle recommendation"
-              onClick={controller.shuffleRecommendation}
-              size="small"
-            >
-              ↻
-            </IconButton>
+            <Tooltip title="Shuffle recommendation">
+              <IconButton
+                aria-label="Shuffle recommendation"
+                onClick={controller.shuffleRecommendation}
+                size="small"
+              >
+                ↻
+              </IconButton>
+            </Tooltip>
           </Stack>
         ) : null}
 
