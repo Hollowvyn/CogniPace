@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { StatusBanner } from "../../../components";
@@ -36,18 +37,22 @@ export function DashboardHeader(props: DashboardHeaderProps) {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
-            <IconButton
-              aria-label="Refresh dashboard"
-              onClick={props.onRefresh}
-            >
-              ↻
-            </IconButton>
-            <IconButton
-              aria-label="Open settings"
-              onClick={props.onOpenSettings}
-            >
-              ⚙
-            </IconButton>
+            <Tooltip title="Refresh dashboard">
+              <IconButton
+                aria-label="Refresh dashboard"
+                onClick={props.onRefresh}
+              >
+                ↻
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Open settings">
+              <IconButton
+                aria-label="Open settings"
+                onClick={props.onOpenSettings}
+              >
+                ⚙
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
         <StatusBanner isError={props.status.isError} message={props.status.message} />
