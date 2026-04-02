@@ -9,8 +9,9 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import React, { memo } from "react";
 
-import { ActiveCourseView } from "../../../domain/views";
+import { ActiveCourseView, CourseQuestionView } from "../../../domain/views";
 import { ToneChip } from "../../components";
 import {
   difficultyTone,
@@ -28,6 +29,60 @@ export interface ProblemStatusTableProps {
     chapterId?: string;
   }) => Promise<void> | void;
 }
+
+// ⚡ Bolt Optimization: Extracted row into memoized component to prevent re-rendering all rows when unrelated parent state changes
+const MemoizedProblemRow = memo(function MemoizedProblemRow(props: {
+  question: CourseQuestionView;
+  courseId: string | undefined;
+  onOpenProblem: ProblemStatusTableProps["onOpenProblem"];
+}) {
+  const { question, courseId, onOpenProblem } = props;
+  return (
+    <TableRow>
+      <TableCell>
+        <Typography variant="subtitle2">{question.title}</Typography>
+        <Typography color="text.secondary" variant="body2">
+          {question.slug}
+        </Typography>
+      </TableCell>
+      <TableCell>{question.chapterTitle}</TableCell>
+      <TableCell>
+        <ToneChip
+          label={question.difficulty}
+          tone={difficultyTone(question.difficulty)}
+        />
+      </TableCell>
+      <TableCell>
+        <Stack spacing={0.5}>
+          <ToneChip
+            label={labelForStatus(question.status)}
+            tone={questionStatusTone(question.status)}
+          />
+          {question.reviewPhase ? (
+            <Typography color="text.secondary" variant="body2">
+              FSRS {formatStudyPhase(question.reviewPhase)}
+            </Typography>
+          ) : null}
+        </Stack>
+      </TableCell>
+      <TableCell>{formatDisplayDate(question.nextReviewAt)}</TableCell>
+      <TableCell>
+        <Button
+          onClick={() => {
+            void onOpenProblem({
+              slug: question.slug,
+              courseId: courseId,
+              chapterId: question.chapterId,
+            });
+          }}
+          variant="outlined"
+        >
+          Launch
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 export function ProblemStatusTable(props: ProblemStatusTableProps) {
   if (!props.course) {
@@ -55,49 +110,12 @@ export function ProblemStatusTable(props: ProblemStatusTableProps) {
         </TableHead>
         <TableBody>
           {questions.map((question) => (
-            <TableRow key={question.slug}>
-              <TableCell>
-                <Typography variant="subtitle2">{question.title}</Typography>
-                <Typography color="text.secondary" variant="body2">
-                  {question.slug}
-                </Typography>
-              </TableCell>
-              <TableCell>{question.chapterTitle}</TableCell>
-              <TableCell>
-                <ToneChip
-                  label={question.difficulty}
-                  tone={difficultyTone(question.difficulty)}
-                />
-              </TableCell>
-              <TableCell>
-                <Stack spacing={0.5}>
-                  <ToneChip
-                    label={labelForStatus(question.status)}
-                    tone={questionStatusTone(question.status)}
-                  />
-                  {question.reviewPhase ? (
-                    <Typography color="text.secondary" variant="body2">
-                      FSRS {formatStudyPhase(question.reviewPhase)}
-                    </Typography>
-                  ) : null}
-                </Stack>
-              </TableCell>
-              <TableCell>{formatDisplayDate(question.nextReviewAt)}</TableCell>
-              <TableCell>
-                <Button
-                  onClick={() => {
-                    void props.onOpenProblem({
-                      slug: question.slug,
-                      courseId: props.course?.id,
-                      chapterId: question.chapterId,
-                    });
-                  }}
-                  variant="outlined"
-                >
-                  Launch
-                </Button>
-              </TableCell>
-            </TableRow>
+            <MemoizedProblemRow
+              key={question.slug}
+              courseId={props.course?.id}
+              onOpenProblem={props.onOpenProblem}
+              question={question}
+            />
           ))}
         </TableBody>
       </Table>
