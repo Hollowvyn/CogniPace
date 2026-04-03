@@ -1,5 +1,6 @@
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { BrandMark } from "../../../components";
@@ -22,12 +23,16 @@ export function PopupHeader(props: PopupHeaderProps) {
         <Typography variant="subtitle1">LeetCode Reviews</Typography>
       </Stack>
       <Stack direction="row" spacing={0.5}>
-        <IconButton aria-label="Refresh popup" onClick={props.onRefresh} size="small">
-          ↻
-        </IconButton>
-        <IconButton aria-label="Open settings" onClick={props.onOpenSettings} size="small">
-          ⚙
-        </IconButton>
+        <Tooltip title="Refresh popup">
+          <IconButton aria-label="Refresh popup" onClick={props.onRefresh} size="small">
+            ↻
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Open settings">
+          <IconButton aria-label="Open settings" onClick={props.onOpenSettings} size="small">
+            ⚙
+          </IconButton>
+        </Tooltip>
       </Stack>
     </Stack>
   );

@@ -11,6 +11,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import { Difficulty, Rating, ReviewMode } from "../../../shared/types";
@@ -94,21 +95,25 @@ export function OverlayPanel(props: OverlayPanelProps) {
         </Typography>
         <Stack direction="row" spacing={0.5}>
           {!props.collapsed ? (
+            <Tooltip title="Open settings">
+              <IconButton
+                aria-label="Open settings"
+                onClick={props.onOpenSettings}
+                size="small"
+              >
+                ⚙
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          <Tooltip title={props.collapsed ? "Expand overlay" : "Collapse overlay"}>
             <IconButton
-              aria-label="Open settings"
-              onClick={props.onOpenSettings}
+              aria-label={props.collapsed ? "Expand overlay" : "Collapse overlay"}
+              onClick={props.onToggleCollapse}
               size="small"
             >
-              ⚙
+              {props.collapsed ? "▢" : "▁"}
             </IconButton>
-          ) : null}
-          <IconButton
-            aria-label={props.collapsed ? "Expand overlay" : "Collapse overlay"}
-            onClick={props.onToggleCollapse}
-            size="small"
-          >
-            {props.collapsed ? "▢" : "▁"}
-          </IconButton>
+          </Tooltip>
         </Stack>
       </Stack>
 
