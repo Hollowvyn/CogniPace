@@ -20,7 +20,8 @@ export function openDashboardPage(
     return;
   }
 
-  windowRef.open(url.toString(), "_blank");
+  // 🛡️ Sentinel: Prevent reverse tabnabbing by specifying noopener,noreferrer
+  windowRef.open(url.toString(), "_blank", "noopener,noreferrer");
 }
 
 /** Opens the dashboard directly on the settings screen. */
