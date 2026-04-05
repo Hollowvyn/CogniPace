@@ -1,0 +1,3 @@
+## 2025-05-19 - useDeferredValue + React.memo list rendering optimization
+**Learning:** In React 19, `useDeferredValue` does not prevent synchronous re-rendering of the entire tree on rapid state changes when mapping over large lists. The shallow prop comparison required to skip synchronous diffing while the deferred query catches up requires extracting list items into a `React.memo` component.
+**Action:** Always wrap list items in `React.memo` when rendering large lists powered by `useDeferredValue` filtering to ensure the deferral actually drops frames during rapid input instead of blocking the main thread synchronously.
