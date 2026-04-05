@@ -14,7 +14,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import React from "react";
+import React, { memo } from "react";
 
 import { AppShellPayload, LibraryProblemRow } from "../../../../domain/views";
 import { SurfaceCard, ToneChip } from "../../../components";
@@ -32,6 +32,60 @@ export interface LibraryViewProps {
   payload: AppShellPayload | null;
   rows: LibraryProblemRow[];
 }
+
+// ⚡ Bolt Optimization: Memoize the library problem row to prevent synchronous
+// re-rendering of the entire list when unrelated state (like the deferred search query) changes.
+// The shallow comparison skips diffing unchanged rows, keeping typing responsive.
+const LibraryProblemRowItem = memo(function LibraryProblemRowItem(props: {
+  row: LibraryProblemRow;
+  onOpenProblem: (target: { slug: string }) => Promise<void>;
+}) {
+  const { row, onOpenProblem } = props;
+  const primaryCourse = row.courses[0];
+  const studyStateSummary = row.studyStateSummary;
+  const phaseLabel = studyStateSummary
+    ? formatStudyPhase(studyStateSummary.phase)
+    : "NEW";
+  const statusLabel = studyStateSummary?.isDue
+    ? `${phaseLabel} · DUE NOW`
+    : phaseLabel;
+
+  return (
+    <TableRow>
+      <TableCell>
+        <Typography variant="subtitle2">{row.problem.title}</Typography>
+        <Typography color="text.secondary" variant="body2">
+          {row.problem.leetcodeSlug}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        <ToneChip
+          label={row.problem.difficulty}
+          tone={difficultyTone(row.problem.difficulty)}
+        />
+      </TableCell>
+      <TableCell>
+        {primaryCourse ? primaryCourse.courseName : "Independent"}
+      </TableCell>
+      <TableCell>{statusLabel}</TableCell>
+      <TableCell>
+        {formatDisplayDate(studyStateSummary?.nextReviewAt)}
+      </TableCell>
+      <TableCell>
+        <Button
+          onClick={() => {
+            void onOpenProblem({
+              slug: row.problem.leetcodeSlug,
+            });
+          }}
+          variant="outlined"
+        >
+          Open
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 export function LibraryView(props: LibraryViewProps) {
   return (
@@ -136,52 +190,13 @@ export function LibraryView(props: LibraryViewProps) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {props.rows.map((row) => {
-              const primaryCourse = row.courses[0];
-              const studyStateSummary = row.studyStateSummary;
-              const phaseLabel = studyStateSummary
-                ? formatStudyPhase(studyStateSummary.phase)
-                : "NEW";
-              const statusLabel = studyStateSummary?.isDue
-                ? `${phaseLabel} · DUE NOW`
-                : phaseLabel;
-
-              return (
-                <TableRow key={row.problem.leetcodeSlug}>
-                  <TableCell>
-                    <Typography variant="subtitle2">{row.problem.title}</Typography>
-                    <Typography color="text.secondary" variant="body2">
-                      {row.problem.leetcodeSlug}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <ToneChip
-                      label={row.problem.difficulty}
-                      tone={difficultyTone(row.problem.difficulty)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {primaryCourse ? primaryCourse.courseName : "Independent"}
-                  </TableCell>
-                  <TableCell>{statusLabel}</TableCell>
-                  <TableCell>
-                    {formatDisplayDate(studyStateSummary?.nextReviewAt)}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      onClick={() => {
-                        void props.onOpenProblem({
-                          slug: row.problem.leetcodeSlug,
-                        });
-                      }}
-                      variant="outlined"
-                    >
-                      Open
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {props.rows.map((row) => (
+              <LibraryProblemRowItem
+                key={row.problem.leetcodeSlug}
+                onOpenProblem={props.onOpenProblem}
+                row={row}
+              />
+            ))}
             {props.rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6}>
