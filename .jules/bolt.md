@@ -1,0 +1,3 @@
+## 2025-02-24 - React 19 useDeferredValue requires React.memo on large lists
+**Learning:** `useDeferredValue` does not magically prevent the whole tree from re-rendering synchronously if state (e.g. input query) changes rapidly. In lists like `LibraryView`, typing blocked the UI thread because the parent `LibraryView` re-rendered immediately on keystroke, diffing hundreds of table rows synchronously even while the `deferredQuery` was queued.
+**Action:** When using `useDeferredValue` on lists, extract list items into a `React.memo` component (e.g. `LibraryRow`). The shallow prop comparison prevents synchronous diffing of the list items while the deferred computation catches up.
