@@ -123,7 +123,7 @@ export function buildTodayQueue(
     const state = cloneStateOrDefault(
       data.studyStatesBySlug[problem.leetcodeSlug]
     );
-    const studyStateSummary = getStudyStateSummary(state, now);
+    const studyStateSummary = getStudyStateSummary(state, now, data.settings.targetRetention);
     if (studyStateSummary.suspended) {
       continue;
     }

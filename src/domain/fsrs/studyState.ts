@@ -118,6 +118,25 @@ function daysBetween(later: Date, earlier: Date): number {
   );
 }
 
+/**
+ * Calculate the current retrievability (probability of recall) for a card.
+ * Uses the FSRS formula: R = 0.9 ^ (t / S)
+ * where t = days since last review, S = stability
+ *
+ * @param elapsedDays - Days since last review
+ * @param stability - Card's stability (how long until memory decays)
+ * @returns Retrievability between 0 and 1
+ */
+export function calculateRetrievability(
+  elapsedDays: number,
+  stability: number
+): number {
+  if (stability <= 0) return 0;
+  if (elapsedDays <= 0) return 1;
+  // FSRS decay formula: R = 0.9 ^ (t / S)
+  return Math.pow(0.9, elapsedDays / stability);
+}
+
 function bestTimeFromHistory(
   history: AttemptHistoryEntry[]
 ): number | undefined {
@@ -389,9 +408,13 @@ export function getLastReviewedAt(
   return latestReviewedAt(state.attemptHistory, state.fsrsCard?.lastReview);
 }
 
+/** Default target retention if not specified */
+const DEFAULT_TARGET_RETENTION = 0.85;
+
 export function getStudyStateSummary(
   state?: StudyState | null,
-  now = new Date()
+  now = new Date(),
+  targetRetention = DEFAULT_TARGET_RETENTION
 ): StudyStateSummary {
   if (!state) {
     return {
@@ -403,6 +426,7 @@ export function getStudyStateSummary(
       isDue: false,
       isOverdue: false,
       overdueDays: 0,
+      retrievability: undefined,
     };
   }
 
@@ -416,12 +440,27 @@ export function getStudyStateSummary(
   const lapses =
     card?.lapses ??
     state.attemptHistory.filter((entry) => entry.rating === 0).length;
+  const isStarted = reviewCount > 0 || Boolean(lastReviewedAt);
+
+  // Calculate retrievability based on time since last review and stability
+  let retrievability: number | undefined;
+  if (card && card.stability > 0 && card.last_review) {
+    const elapsedDays = daysBetween(now, card.last_review);
+    retrievability = calculateRetrievability(elapsedDays, card.stability);
+  }
+
+  // Card is due when retrievability drops below target retention threshold
+  const isDue =
+    !state.suspended &&
+    isStarted &&
+    retrievability !== undefined &&
+    retrievability < targetRetention;
+
+  // Calculate overdue based on original due date for backwards compatibility
   const nowMs = now.getTime();
   const dueMs = nextReviewAt
     ? new Date(nextReviewAt).getTime()
     : Number.POSITIVE_INFINITY;
-  const isStarted = reviewCount > 0 || Boolean(lastReviewedAt);
-  const isDue = !state.suspended && isStarted && dueMs <= nowMs;
   const overdueDays = isDue
     ? Math.max(0, Math.floor((nowMs - dueMs) / DAY_MS))
     : 0;
@@ -444,6 +483,7 @@ export function getStudyStateSummary(
     isDue,
     isOverdue: overdueDays > 0,
     overdueDays,
+    retrievability,
   };
 }
 

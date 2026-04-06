@@ -1,4 +1,5 @@
 /** Dashboard settings screen for local review configuration and backup workflows. */
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
@@ -8,9 +9,11 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
+import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { ChangeEvent } from "react";
 
@@ -132,6 +135,46 @@ export function SettingsView(props: SettingsViewProps) {
                 <MenuItem value="weakestFirst">Weakest First</MenuItem>
               </Select>
             </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Box sx={{ px: 1 }}>
+              <Typography gutterBottom variant="body2">
+                Target Retention:{" "}
+                <Tooltip title="Cards become due when their retrievability drops below this threshold. Lower = fewer reviews, higher = more reviews but better retention.">
+                  <Box
+                    component="span"
+                    sx={{ cursor: "help", opacity: 0.6, fontSize: "0.85em" }}
+                  >
+                    ⓘ
+                  </Box>
+                </Tooltip>
+              </Typography>
+              <Stack alignItems="center" direction="row" spacing={2}>
+                <Slider
+                  marks={[
+                    { value: 0.7, label: "70%" },
+                    { value: 0.85, label: "85%" },
+                    { value: 0.95, label: "95%" },
+                  ]}
+                  max={0.95}
+                  min={0.7}
+                  onChange={(_, value) => {
+                    props.onUpdateSettings((current) => ({
+                      ...current,
+                      targetRetention: value as number,
+                    }));
+                  }}
+                  step={0.01}
+                  sx={{ flex: 1 }}
+                  value={props.settingsDraft.targetRetention ?? 0.85}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
+                />
+                <Typography sx={{ minWidth: 45 }} variant="body2">
+                  {Math.round((props.settingsDraft.targetRetention ?? 0.85) * 100)}%
+                </Typography>
+              </Stack>
+            </Box>
           </Grid>
         </Grid>
         <Divider />

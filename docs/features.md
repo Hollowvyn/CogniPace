@@ -325,6 +325,7 @@ Provide a searchable and filterable view of tracked problems.
 - table of tracked problems
 - filters by query, course, difficulty, and status
 - displays review state summary and course memberships
+- shows current retrievability (memory strength) per card with color-coded percentage
 
 ### Key States And Edge Cases
 
@@ -386,6 +387,57 @@ Show retention and workload signals without requiring external analytics infrast
 
 - analytics help the user decide whether retention and workload are healthy
 
+## FSRS Scheduling And Retrievability
+
+### Purpose
+
+Schedule reviews based on memory decay using the FSRS algorithm's retrievability model.
+
+### User Flow
+
+1. User reviews a card and provides a rating (Again/Hard/Good/Easy)
+2. FSRS algorithm updates the card's stability and difficulty
+3. Product calculates retrievability as memory decays over time
+4. Card becomes due when retrievability drops below target retention threshold
+5. User can adjust target retention in settings to control review frequency
+
+### Current Behavior
+
+- each reviewed card has a retrievability score (0-100%) representing probability of recall
+- retrievability decays over time based on card stability using formula: R = 0.9^(days/stability)
+- cards become due when retrievability drops below target retention threshold
+- default target retention is 85%
+- target retention is adjustable via settings slider (70-95%)
+- Library view displays current retrievability per card with color coding:
+  - green (≥85%): strong memory
+  - yellow (≥70%): needs attention soon
+  - red (<70%): due for review
+
+### Key States And Edge Cases
+
+- new cards without reviews show no retrievability (displayed as "—")
+- cards with very high stability decay slowly and stay due-free longer
+- cards with low stability (difficult or lapsed) decay quickly and come due sooner
+- lower target retention means fewer reviews but higher forgetting risk
+- higher target retention means more reviews but better long-term retention
+
+### In Scope
+
+- visualization of retrievability trends over time
+- per-card retrievability display in queue view
+- forecasting based on retrievability decay
+
+### Out Of Scope
+
+- custom FSRS parameter tuning per user
+- machine learning optimization of retention targets
+
+### Acceptance Criteria
+
+- users can see current memory strength for each reviewed card
+- users can adjust how aggressively cards become due via target retention
+- scheduling reflects actual memory decay rather than fixed intervals
+
 ## Settings And Notifications
 
 ### Purpose
@@ -404,6 +456,7 @@ Let users tune study behavior and optional alerting.
 - study mode
 - active course selection
 - review order
+- target retention threshold (70-95% slider, default 85%)
 - require solve time
 - notifications toggle
 - quiet hours

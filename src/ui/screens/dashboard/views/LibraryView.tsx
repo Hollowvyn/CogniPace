@@ -131,6 +131,7 @@ export function LibraryView(props: LibraryViewProps) {
               <TableCell>Difficulty</TableCell>
               <TableCell>Course</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Retention</TableCell>
               <TableCell>Next Review</TableCell>
               <TableCell>Action</TableCell>
             </TableRow>
@@ -165,6 +166,28 @@ export function LibraryView(props: LibraryViewProps) {
                   </TableCell>
                   <TableCell>{statusLabel}</TableCell>
                   <TableCell>
+                    {studyStateSummary?.retrievability !== undefined ? (
+                      <Typography
+                        sx={{
+                          color:
+                            studyStateSummary.retrievability >= 0.85
+                              ? "success.main"
+                              : studyStateSummary.retrievability >= 0.7
+                                ? "warning.main"
+                                : "error.main",
+                          fontWeight: 500,
+                        }}
+                        variant="body2"
+                      >
+                        {Math.round(studyStateSummary.retrievability * 100)}%
+                      </Typography>
+                    ) : (
+                      <Typography color="text.secondary" variant="body2">
+                        —
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {formatDisplayDate(studyStateSummary?.nextReviewAt)}
                   </TableCell>
                   <TableCell>
@@ -184,7 +207,7 @@ export function LibraryView(props: LibraryViewProps) {
             })}
             {props.rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6}>
+                <TableCell colSpan={7}>
                   <Typography color="text.secondary" variant="body2">
                     No tracked problems match the current filters.
                   </Typography>

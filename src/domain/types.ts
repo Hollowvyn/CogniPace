@@ -91,6 +91,8 @@ export interface UserSettings {
   autoDetectSolved: boolean;
   notifications: boolean;
   quietHours: QuietHours;
+  /** Target retention rate (0-1). Cards become due when retrievability drops below this. Default 0.85 */
+  targetRetention: number;
 }
 
 export interface CourseQuestionRef {
@@ -203,6 +205,8 @@ export interface StudyStateSummary {
   isDue: boolean;
   isOverdue: boolean;
   overdueDays: number;
+  /** Current probability of recall (0-1). Decays over time based on stability. */
+  retrievability?: number;
 }
 
 export interface CuratedProblemInput {

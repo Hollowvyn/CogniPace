@@ -39,6 +39,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
     startHour: 22,
     endHour: 8,
   },
+  /** Target retention threshold. Cards become due when retrievability drops below this. */
+  targetRetention: 0.85,
 };
 
 /** Creates the empty persisted study-state baseline for a tracked problem. */

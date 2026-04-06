@@ -15,14 +15,20 @@ import { validateExtensionPagePath } from "../../runtime/validator";
 import { ok } from "../responses";
 
 function libraryRows(
-  payload: Awaited<ReturnType<typeof getAppData>>
+  payload: Awaited<ReturnType<typeof getAppData>>,
+  now = new Date()
 ): LibraryProblemRow[] {
+  const targetRetention = payload.settings.targetRetention;
   return Object.values(payload.problemsBySlug)
     .map((problem) => ({
       problem,
       studyState: payload.studyStatesBySlug[problem.leetcodeSlug] ?? null,
       studyStateSummary: payload.studyStatesBySlug[problem.leetcodeSlug]
-        ? getStudyStateSummary(payload.studyStatesBySlug[problem.leetcodeSlug])
+        ? getStudyStateSummary(
+            payload.studyStatesBySlug[problem.leetcodeSlug],
+            now,
+            targetRetention
+          )
         : null,
       courses: getCourseMemberships(payload, problem.leetcodeSlug),
     }))
