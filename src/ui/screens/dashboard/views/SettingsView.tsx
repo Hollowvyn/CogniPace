@@ -142,8 +142,10 @@ export function SettingsView(props: SettingsViewProps) {
                 Target Retention:{" "}
                 <Tooltip title="Cards become due when their retrievability drops below this threshold. Lower = fewer reviews, higher = more reviews but better retention.">
                   <Box
+                    aria-label="Information about Target Retention"
                     component="span"
                     sx={{ cursor: "help", opacity: 0.6, fontSize: "0.85em" }}
+                    tabIndex={0}
                   >
                     ⓘ
                   </Box>
