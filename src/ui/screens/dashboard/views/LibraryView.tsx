@@ -108,8 +108,7 @@ const LibraryProblemRowView = React.memo(
         </TableCell>
       </TableRow>
     );
-  },
-  (prev, next) => prev.row === next.row && prev.onOpenProblem === next.onOpenProblem
+  }
 );
 
 export function LibraryView(props: LibraryViewProps) {
