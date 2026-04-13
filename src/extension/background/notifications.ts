@@ -1,6 +1,6 @@
 /** Notification helpers and quiet-hour policy for the background worker. */
-import { getAppData } from "../../data/repositories/appDataRepository";
-import { buildTodayQueue } from "../../domain/queue/buildTodayQueue";
+import {getAppData} from "../../data/repositories/appDataRepository";
+import {buildTodayQueue} from "../../domain/queue/buildTodayQueue";
 
 function inQuietHours(
   startHour: number,
@@ -42,10 +42,10 @@ export async function maybeNotifyDueQueue(): Promise<void> {
     return;
   }
 
-  await chrome.notifications.create("leetcode-spaced-repetition-due", {
+  await chrome.notifications.create("cognipace-due", {
     type: "basic",
     iconUrl: "icons/icon-128.png",
-    title: "LeetCode reviews due",
+    title: "CogniPace reviews due",
     message: `You have ${queue.dueCount} review${queue.dueCount === 1 ? "" : "s"} due today.`,
   });
 }

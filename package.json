@@ -1,8 +1,8 @@
 {
-  "name": "leetcode-spaced-repetition-extension",
+  "name": "cognipace-extension",
   "version": "0.1.0",
   "private": true,
-  "description": "LeetCode spaced repetition Chrome extension",
+  "description": "CogniPace Chrome extension",
   "scripts": {
     "build": "node build.cjs",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",
