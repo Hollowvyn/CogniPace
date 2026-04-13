@@ -6,9 +6,9 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { StatusBanner } from "../../../components";
-import { DashboardRoute } from "../../../navigation/dashboardRoutes";
-import { UiStatus } from "../../../state/useAppShellQuery";
+import {StatusBanner} from "../../../components";
+import {DashboardRoute} from "../../../navigation/dashboardRoutes";
+import {UiStatus} from "../../../state/useAppShellQuery";
 
 export interface DashboardHeaderProps {
   onOpenSettings: () => void;
@@ -19,11 +19,11 @@ export interface DashboardHeaderProps {
 
 export function DashboardHeader(props: DashboardHeaderProps) {
   return (
-    <Paper sx={{ p: 2.25 }}>
+    <Paper sx={{p: 2.25}}>
       <Stack spacing={2}>
         <Stack
-          alignItems={{ md: "center", xs: "flex-start" }}
-          direction={{ md: "row", xs: "column" }}
+          alignItems={{md: "center", xs: "flex-start"}}
+          direction={{md: "row", xs: "column"}}
           justifyContent="space-between"
           spacing={2}
         >
@@ -55,7 +55,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
             </Tooltip>
           </Stack>
         </Stack>
-        <StatusBanner isError={props.status.isError} message={props.status.message} />
+        <StatusBanner isError={props.status.isError} message={props.status.message}/>
       </Stack>
     </Paper>
   );

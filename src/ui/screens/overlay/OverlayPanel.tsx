@@ -5,18 +5,18 @@ import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
 import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import Tooltip from "@mui/material/Tooltip";
+import ToggleButton from "@mui/material/ToggleButton";
 import Typography from "@mui/material/Typography";
 
-import { Difficulty, Rating, ReviewMode } from "../../../shared/types";
-import { ToneChip } from "../../components";
-import { difficultyTone, Tone } from "../../presentation/studyState";
+import {Difficulty, Rating, ReviewMode} from "../../../shared/types";
+import {ToneChip} from "../../components";
+import {difficultyTone, Tone} from "../../presentation/studyState";
 
 const ratingCopy: Record<Rating, string> = {
   0: "Reset",
@@ -117,7 +117,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
         </Stack>
       </Stack>
 
-      <Box sx={{ p: props.collapsed ? 1.5 : 1.75 }}>
+      <Box sx={{p: props.collapsed ? 1.5 : 1.75}}>
         <Stack spacing={props.collapsed ? 1.5 : 2}>
           <Stack
             alignItems="flex-start"
@@ -125,14 +125,14 @@ export function OverlayPanel(props: OverlayPanelProps) {
             justifyContent="space-between"
             spacing={1}
           >
-            <Box sx={{ minWidth: 0 }}>
+            <Box sx={{minWidth: 0}}>
               <Typography noWrap variant={props.collapsed ? "h6" : "h4"}>
                 {props.title}
               </Typography>
-              <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mt: 1 }}>
-                <ToneChip label={props.modeBadgeLabel} tone="accent" />
-                <ToneChip label={props.phaseLabel} tone={props.phaseTone} />
-                {props.isDue ? <ToneChip label="Due now" tone="info" /> : null}
+              <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{mt: 1}}>
+                <ToneChip label={props.modeBadgeLabel} tone="accent"/>
+                <ToneChip label={props.phaseLabel} tone={props.phaseTone}/>
+                {props.isDue ? <ToneChip label="Due now" tone="info"/> : null}
               </Stack>
             </Box>
             <ToneChip
@@ -149,7 +149,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
             </Typography>
           ) : null}
 
-          <Paper sx={{ p: props.collapsed ? 1.25 : 1.5 }}>
+          <Paper sx={{p: props.collapsed ? 1.25 : 1.5}}>
             <Stack spacing={1.25}>
               <Stack
                 alignItems="center"
@@ -222,7 +222,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
                   <Typography color="text.secondary" variant="overline">
                     Recalibration Protocol
                   </Typography>
-                  <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <FormControl size="small" sx={{minWidth: 140}}>
                     <Select
                       onChange={(event) => {
                         props.onChangeMode(event.target.value as ReviewMode);
@@ -314,7 +314,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
             <Button
               fullWidth
               onClick={props.onQuickSubmit}
-              sx={{ minHeight: 38 }}
+              sx={{minHeight: 38}}
               variant="contained"
             >
               Submit

@@ -53,6 +53,11 @@ export function SettingsView(props: SettingsViewProps) {
                   dailyNewLimit: Number(event.target.value) || 0,
                 }));
               }}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Daily New",
+                },
+              }}
               type="number"
               value={props.settingsDraft.dailyNewLimit}
             />
@@ -66,6 +71,11 @@ export function SettingsView(props: SettingsViewProps) {
                   ...current,
                   dailyReviewLimit: Number(event.target.value) || 0,
                 }));
+              }}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Daily Review",
+                },
               }}
               type="number"
               value={props.settingsDraft.dailyReviewLimit}
@@ -142,8 +152,10 @@ export function SettingsView(props: SettingsViewProps) {
                 Target Retention:{" "}
                 <Tooltip title="Cards become due when their retrievability drops below this threshold. Lower = fewer reviews, higher = more reviews but better retention.">
                   <Box
+                    aria-label="Information about Target Retention"
                     component="span"
                     sx={{ cursor: "help", opacity: 0.6, fontSize: "0.85em" }}
+                    tabIndex={0}
                   >
                     ⓘ
                   </Box>
@@ -224,6 +236,11 @@ export function SettingsView(props: SettingsViewProps) {
                   },
                 }));
               }}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Quiet start",
+                },
+              }}
               type="number"
               value={props.settingsDraft.quietHours.startHour}
             />
@@ -240,6 +257,11 @@ export function SettingsView(props: SettingsViewProps) {
                     endHour: Number(event.target.value) || 0,
                   },
                 }));
+              }}
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Quiet end",
+                },
               }}
               type="number"
               value={props.settingsDraft.quietHours.endHour}

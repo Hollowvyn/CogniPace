@@ -1,6 +1,8 @@
-# LeetCode Spaced Repetition Chrome Extension
+# CogniPace Chrome Extension
 
-LeetCode Spaced Repetition is a Chrome extension for deliberate interview practice. It combines spaced repetition with curated learning paths so you can decide what to review now, what to study next, and how your practice is trending over time without leaving the browser.
+CogniPace is a Chrome extension for deliberate interview practice. It combines spaced repetition with curated learning
+paths so you can decide what to review now, what to study next, and how your practice is trending over time without
+leaving the browser.
 
 ## Current Status
 
@@ -19,7 +21,8 @@ The product combines two ideas:
 1. Spaced repetition for deciding what to review now.
 2. Course progression for deciding what to study next.
 
-The popup is the primary surface. The LeetCode page overlay and dashboard are current supporting surfaces, not future placeholders. Product details and behavior boundaries live in the docs below.
+The popup is the primary surface. The LeetCode page overlay and dashboard are current supporting surfaces, not future
+placeholders. Product details and behavior boundaries live in the docs below.
 
 ## Current Technical Baseline
 
@@ -151,10 +154,13 @@ Rules:
 
 - If two docs disagree, follow the higher-precedence doc and ask a human before implementing the conflicting part.
 - Future ideas are not implementation approval.
-- `In Scope` in `docs/features.md` means directionally allowed work if explicitly requested and reviewed, not self-starting backlog permission.
-- The PR author owns updating any affected docs, and reviewers should block merges when behavior or architecture changes are undocumented.
+- `In Scope` in `docs/features.md` means directionally allowed work if explicitly requested and reviewed, not
+  self-starting backlog permission.
+- The PR author owns updating any affected docs, and reviewers should block merges when behavior or architecture changes
+  are undocumented.
 - Any PR that changes product behavior should update `docs/product.md` or `docs/features.md`.
-- Any PR that changes runtime boundaries, persisted data shape, or message contracts should update `docs/architecture.md`.
+- Any PR that changes runtime boundaries, persisted data shape, or message contracts should update
+  `docs/architecture.md`.
 - Any PR that changes visual conventions should update `docs/DESIGN_GUIDELINES.md`.
 - Any PR that changes setup or process expectations should update `requiredStepsForSetup.md`.
 

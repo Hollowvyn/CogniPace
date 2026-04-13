@@ -108,6 +108,11 @@ export function CourseIngestForm(props: CourseIngestFormProps) {
             }));
           }}
           placeholder="https://leetcode.com/problems/..."
+          slotProps={{
+            htmlInput: {
+              "aria-label": "LeetCode Slug or URL",
+            },
+          }}
           value={formState.input}
         />
         <FormControlLabel

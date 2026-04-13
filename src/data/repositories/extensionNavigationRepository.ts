@@ -20,7 +20,8 @@ export function openDashboardPage(
     return;
   }
 
-  windowRef.open(url.toString(), "_blank");
+  // Security: Add noopener,noreferrer to prevent reverse tabnabbing
+  windowRef.open(url.toString(), "_blank", "noopener,noreferrer");
 }
 
 /** Opens the dashboard directly on the settings screen. */
