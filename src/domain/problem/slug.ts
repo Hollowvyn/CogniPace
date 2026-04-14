@@ -34,6 +34,7 @@ export function isProblemPage(url: string): boolean {
   try {
     const parsed = new URL(url);
     return (
+      (parsed.protocol === "https:" || parsed.protocol === "http:") &&
       /(^|\.)leetcode\.com$/.test(parsed.hostname) &&
       /\/problems\/.+/.test(parsed.pathname)
     );
