@@ -2,9 +2,11 @@
 
 ## Product Summary
 
-LeetCode Spaced Repetition is a Chrome extension that helps users practice coding interview problems with spaced repetition and curated progression at the same time.
+CogniPace is a Chrome extension that helps users practice coding interview problems with spaced repetition and curated
+progression at the same time.
 
-The product is designed for people who want more structure than random LeetCode browsing but less overhead than a full study platform. It is intentionally extension-first, local-first, and lightweight.
+The product is designed for people who want more structure than random LeetCode browsing but less overhead than a full
+study platform. It is intentionally extension-first, local-first, and lightweight.
 
 ## Target User
 
@@ -55,7 +57,8 @@ The overlay supports in-context logging and review actions while the user is on 
 
 ### Dashboard
 
-The dashboard is the secondary control surface for inspection, configuration, analytics, library management, and backup flow.
+The dashboard is the secondary control surface for inspection, configuration, analytics, library management, and backup
+flow.
 
 ### Background Service Worker
 

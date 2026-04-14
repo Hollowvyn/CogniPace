@@ -1,15 +1,23 @@
 {
   "manifest_version": 3,
-  "name": "LeetCode Spaced Repetition",
-  "description": "Master LeetCode with spaced repetition and curated paths.",
+  "name": "CogniPace",
+  "description": "Master coding practice with spaced repetition and curated paths.",
   "version": "0.1.0",
-  "permissions": ["storage", "alarms", "notifications", "tabs"],
-  "host_permissions": ["https://leetcode.com/*", "https://www.leetcode.com/*"],
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://leetcode.com/*",
+    "https://www.leetcode.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "LeetCode Spaced Repetition",
+    "default_title": "CogniPace",
     "default_popup": "popup.html"
   },
   "content_scripts": [
@@ -18,7 +26,9 @@
         "https://leetcode.com/problems/*",
         "https://www.leetcode.com/problems/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],

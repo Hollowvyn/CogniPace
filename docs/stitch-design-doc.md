@@ -68,7 +68,8 @@ Other current product surfaces exist:
 - LeetCode page overlay
 - full-page extension dashboard
 
-They are documented in the canonical product docs and can receive separate design work, but they should not dominate this popup-oriented prompt.
+They are documented in the canonical product docs and can receive separate design work, but they should not dominate
+this popup-oriented prompt.
 
 ## 4. MVP Functional Requirements
 
@@ -171,34 +172,39 @@ Layout:
 Sections:
 
 1. Header
-   - title: LeetCode Reviews
-   - optional small refresh action
+
+- title: LeetCode Reviews
+- optional small refresh action
 
 2. Summary row
-   - due count
-   - streak or optional secondary metric
+
+- due count
+- streak or optional secondary metric
 
 3. Recommended question card
-   - section title: Recommended Now
-   - question title
-   - difficulty
-   - short reason badge:
-     - Due now
-     - Overdue
-     - Review focus
-   - open CTA
-   - shuffle CTA
+
+- section title: Recommended Now
+- question title
+- difficulty
+- short reason badge:
+  - Due now
+  - Overdue
+  - Review focus
+- open CTA
+- shuffle CTA
 
 4. Course next card
-   - section title: Next In Course
-   - active course name
-   - active chapter name
-   - next question title
-   - open CTA
+
+- section title: Next In Course
+- active course name
+- active chapter name
+- next question title
+- open CTA
 
 5. Footer actions
-   - optional mode selector
-   - open dashboard
+
+- optional mode selector
+- open dashboard
 
 ## 8. Popup Behavior Details
 
@@ -280,14 +286,16 @@ and less like:
 These are not the main target of this prompt, but they are part of the current product:
 
 1. Full-page dashboard
-   - analytics
-   - course management
-   - problem database
+
+- analytics
+- course management
+- problem database
 
 2. LeetCode page overlay
-   - timer
-   - review buttons
-   - notes
+
+- timer
+- review buttons
+- notes
 
 Do not let these surfaces dominate the popup prompt.
 
@@ -295,4 +303,9 @@ Do not let these surfaces dominate the popup prompt.
 
 Use this prompt with Stitch:
 
-"Design a Chrome extension popup for a LeetCode spaced repetition tool. This is not a landing page or web app. The popup should be compact and utility-first. It must show: (1) the next recommended question to do right now, based on spaced repetition, with a shuffle action; and (2) the next question in the active course, where courses contain chapters. Each card should open the LeetCode page when clicked. The recommended question and the course-next question are separate UI elements and should both be visible. Include a small summary row and an optional footer action to open a larger dashboard. Keep the design tight, technical, and appropriate for a browser extension popup."
+"Design a Chrome extension popup for CogniPace, a spaced repetition tool for coding practice. This is not a landing page
+or web app. The popup should be compact and utility-first. It must show: (1) the next recommended question to do right
+now, based on spaced repetition, with a shuffle action; and (2) the next question in the active course, where courses
+contain chapters. Each card should open the problem page when clicked. The recommended question and the course-next
+question are separate UI elements and should both be visible. Include a small summary row and an optional footer action
+to open a larger dashboard. Keep the design tight, technical, and appropriate for a browser extension popup."

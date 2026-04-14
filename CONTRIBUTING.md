@@ -1,6 +1,7 @@
-# Contributing to LeetCode Spaced Repetition
+# Contributing to CogniPace
 
-This repo is a TypeScript Chrome extension with a React 19 + MUI + Emotion UI stack. Contribute against the current layered architecture, not the legacy pre-React structure.
+This repo is a TypeScript Chrome extension with a React 19 + MUI + Emotion UI stack. Contribute against the current
+layered architecture, not the legacy pre-React structure.
 
 ## Baseline Setup
 
@@ -62,7 +63,8 @@ npm run check
 
 ## Merge And Review Policy
 
-The repo is currently operating as a personal + private repository, so some GitHub-native protections are still unavailable on the current tier.
+The repo is currently operating as a personal + private repository, so some GitHub-native protections are still
+unavailable on the current tier.
 
 - All non-emergency changes should go through pull requests
 - Do not push directly to `main` except for an explicit emergency fix
