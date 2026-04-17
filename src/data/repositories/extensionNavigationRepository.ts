@@ -20,7 +20,6 @@ export function openDashboardPage(
     return;
   }
 
-  // Security: Add noopener,noreferrer to prevent reverse tabnabbing
   windowRef.open(url.toString(), "_blank", "noopener,noreferrer");
 }
 
