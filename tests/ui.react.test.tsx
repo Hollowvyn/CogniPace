@@ -542,6 +542,32 @@ describe("OverlayPanel", () => {
     expect(screen.getByLabelText("Notes")).toBeTruthy();
   });
 
+  it("uses expanded header row click zones while respecting buttons", () => {
+    const onOpenSettings = vi.fn();
+    const onToggleCollapse = vi.fn();
+
+    renderOverlayPanel({
+      onOpenSettings,
+      onToggleCollapse,
+    });
+
+    fireEvent.click(screen.getByRole("button", {name: "Open settings"}));
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(0);
+
+    fireEvent.click(screen.getByText("Group Anagrams"));
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByTestId("expanded-overlay-header-divider"));
+    expect(onToggleCollapse).toHaveBeenCalledTimes(2);
+
+    fireEvent.click(screen.getByTestId("expanded-overlay-header-row"));
+    expect(onToggleCollapse).toHaveBeenCalledTimes(3);
+
+    fireEvent.click(screen.getByRole("button", {name: "Collapse overlay"}));
+    expect(onToggleCollapse).toHaveBeenCalledTimes(4);
+  });
+
   it("renders a compact collapsed summary", () => {
     renderOverlayPanel({
       collapsed: true,

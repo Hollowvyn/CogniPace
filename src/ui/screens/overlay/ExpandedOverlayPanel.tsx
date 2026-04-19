@@ -1,4 +1,4 @@
-import CloseFullscreenRounded from "@mui/icons-material/CloseFullscreenRounded";
+import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Box from "@mui/material/Box";
@@ -100,6 +100,14 @@ const actionButtonSx = {
 };
 
 const assessmentRailDividerColor = alpha(kineticTokens.mutedText, 0.12);
+const headerIconButtonSx = {
+  backgroundColor: alpha(kineticTokens.mutedText, 0.08),
+  border: `1px solid ${alpha(kineticTokens.mutedText, 0.16)}`,
+  color: "text.secondary",
+  "&:hover": {
+    backgroundColor: alpha(kineticTokens.mutedText, 0.14),
+  },
+};
 
 const statusToneStyles: Record<
   OverlayHeaderStatusTone,
@@ -302,40 +310,65 @@ export function ExpandedOverlayPanel(props: OverlayPanelProps) {
       <Stack
         alignItems="center"
         direction="row"
-        justifyContent="space-between"
-        spacing={1}
+        onClick={props.onToggleCollapse}
+        spacing={0.85}
         sx={{
           borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
           p: 1.65,
         }}
+        data-testid="expanded-overlay-header-row"
       >
-        <Typography
-          color="primary.light"
-          noWrap
-          sx={{flex: "0 1 50%", minWidth: 0}}
-          variant="overline"
-        >
-          {props.title}
-        </Typography>
-        <Stack direction="row" spacing={0.5}>
+        <Stack alignItems="center" direction="row" spacing={0.55}>
+          <Tooltip title="Collapse overlay">
+            <IconButton
+              aria-label="Collapse overlay"
+              onClick={(event) => {
+                event.stopPropagation();
+                props.onToggleCollapse();
+              }}
+              size="small"
+              sx={headerIconButtonSx}
+            >
+              <KeyboardArrowDownRounded fontSize="small"/>
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Open settings">
             <IconButton
               aria-label="Open settings"
-              onClick={props.onOpenSettings}
+              onClick={(event) => {
+                event.stopPropagation();
+                props.onOpenSettings();
+              }}
               size="small"
+              sx={headerIconButtonSx}
             >
               <SettingsRounded fontSize="small"/>
             </IconButton>
           </Tooltip>
-          <Tooltip title="Collapse overlay">
-            <IconButton
-              aria-label="Collapse overlay"
-              onClick={props.onToggleCollapse}
-              size="small"
-            >
-              <CloseFullscreenRounded fontSize="small"/>
-            </IconButton>
-          </Tooltip>
+          <Box
+            aria-hidden="true"
+            data-testid="expanded-overlay-header-divider"
+            sx={{
+              alignSelf: "stretch",
+              backgroundColor: (theme) => theme.palette.divider,
+              borderRadius: 999,
+              width: "1px",
+            }}
+          />
+        </Stack>
+        <Stack
+          alignItems="center"
+          direction="row"
+          sx={{flex: 1, minWidth: 0}}
+        >
+          <Typography
+            color="primary.light"
+            noWrap
+            sx={{flexShrink: 1, minWidth: 0}}
+            variant="overline"
+          >
+            {props.title}
+          </Typography>
         </Stack>
       </Stack>
 
