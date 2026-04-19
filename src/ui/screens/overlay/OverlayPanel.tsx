@@ -1,4 +1,7 @@
 /** Pure presentational overlay panel rendered inside the LeetCode page shadow root. */
+import CloseFullscreenRounded from "@mui/icons-material/CloseFullscreenRounded";
+import OpenInFullRounded from "@mui/icons-material/OpenInFullRounded";
+import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -101,7 +104,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
                 onClick={props.onOpenSettings}
                 size="small"
               >
-                ⚙
+                <SettingsRounded fontSize="small"/>
               </IconButton>
             </Tooltip>
           ) : null}
@@ -111,7 +114,11 @@ export function OverlayPanel(props: OverlayPanelProps) {
               onClick={props.onToggleCollapse}
               size="small"
             >
-              {props.collapsed ? "▢" : "▁"}
+              {props.collapsed ? (
+                <OpenInFullRounded fontSize="small"/>
+              ) : (
+                <CloseFullscreenRounded fontSize="small"/>
+              )}
             </IconButton>
           </Tooltip>
         </Stack>

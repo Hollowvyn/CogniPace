@@ -1,4 +1,6 @@
 /** Dashboard page header with route metadata and transient status messaging. */
+import RefreshRounded from "@mui/icons-material/RefreshRounded";
+import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -42,7 +44,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
                 aria-label="Refresh dashboard"
                 onClick={props.onRefresh}
               >
-                ↻
+                <RefreshRounded/>
               </IconButton>
             </Tooltip>
             <Tooltip title="Open settings">
@@ -50,7 +52,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
                 aria-label="Open settings"
                 onClick={props.onOpenSettings}
               >
-                ⚙
+                <SettingsRounded/>
               </IconButton>
             </Tooltip>
           </Stack>

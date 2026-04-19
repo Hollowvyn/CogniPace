@@ -1,19 +1,13 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {cleanup, fireEvent, render, screen, waitFor,} from "@testing-library/react";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
-import { StudyState } from "../src/domain/types";
-import { CourseQuestionView } from "../src/domain/views";
-import { createMockAppShellPayload } from "../src/ui/mockData";
-import { AppProviders } from "../src/ui/providers";
-import { DashboardApp } from "../src/ui/screens/dashboard/DashboardApp";
-import { OverlayPanel } from "../src/ui/screens/overlay/OverlayPanel";
-import { PopupApp } from "../src/ui/screens/popup/PopupApp";
+import {StudyState} from "../src/domain/types";
+import {CourseQuestionView} from "../src/domain/views";
+import {createMockAppShellPayload} from "../src/ui/mockData";
+import {AppProviders} from "../src/ui/providers";
+import {DashboardApp} from "../src/ui/screens/dashboard/DashboardApp";
+import {OverlayPanel} from "../src/ui/screens/overlay/OverlayPanel";
+import {PopupApp} from "../src/ui/screens/popup/PopupApp";
 
 const sendMessageMock = vi.fn();
 const tabsCreateMock = vi.fn();
@@ -50,16 +44,16 @@ function makeStudyState(nextReviewAt?: string): StudyState {
     attemptHistory: [],
     fsrsCard: nextReviewAt
       ? {
-          difficulty: 4,
-          due: nextReviewAt,
-          elapsedDays: 2,
-          lapses: 0,
-          learningSteps: 0,
-          reps: 1,
-          scheduledDays: 2,
-          stability: 2,
-          state: "Review",
-        }
+        difficulty: 4,
+        due: nextReviewAt,
+        elapsedDays: 2,
+        lapses: 0,
+        learningSteps: 0,
+        reps: 1,
+        scheduledDays: 2,
+        stability: 2,
+        state: "Review",
+      }
       : undefined,
     suspended: false,
     tags: [],
@@ -207,8 +201,8 @@ function makePayload() {
       id: "Blind75",
       name: "Blind 75",
       chapterOptions: [
-        { id: "arrays-1", title: "Arrays" },
-        { id: "graphs-1", title: "Graphs" },
+        {id: "arrays-1", title: "Arrays"},
+        {id: "graphs-1", title: "Graphs"},
       ],
     },
   ];
@@ -265,23 +259,26 @@ describe("PopupApp", () => {
     sendMessageMock.mockImplementation(
       async (type: string, request: unknown) => {
         if (type === "GET_APP_SHELL_DATA") {
-          return { ok: true, data: payload };
+          return {ok: true, data: payload};
         }
         if (type === "OPEN_PROBLEM_PAGE") {
-          return { ok: true, data: { opened: true }, request };
+          return {ok: true, data: {opened: true}, request};
         }
-        return { ok: true, data: {} };
+        return {ok: true, data: {}};
       }
     );
 
     render(
       <AppProviders>
-        <PopupApp />
+        <PopupApp/>
       </AppProviders>
     );
 
     expect(await screen.findByText("Two Sum")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Open Problem" }));
+    expect(screen.getByRole("button", {name: "Refresh popup"})).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Open settings"})).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Shuffle recommendation"})).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", {name: "Open Problem"}));
 
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith("OPEN_PROBLEM_PAGE", {
@@ -298,25 +295,27 @@ describe("DashboardApp", () => {
     const payload = makePayload();
     sendMessageMock.mockImplementation(async (type: string) => {
       if (type === "GET_APP_SHELL_DATA") {
-        return { ok: true, data: payload };
+        return {ok: true, data: payload};
       }
-      return { ok: true, data: {} };
+      return {ok: true, data: {}};
     });
 
     render(
       <AppProviders>
-        <DashboardApp />
+        <DashboardApp/>
       </AppProviders>
     );
 
     expect(
-      await screen.findByRole("heading", { name: "Dashboard" })
+      await screen.findByRole("heading", {name: "Dashboard"})
     ).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Library" }));
+    expect(screen.getByRole("button", {name: "Refresh dashboard"})).toBeTruthy();
+    expect(screen.getAllByRole("button", {name: "Open settings"}).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", {name: "Library"}));
 
     expect(await screen.findByText("All Tracked Problems")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Search title or slug"), {
-      target: { value: "merge" },
+      target: {value: "merge"},
     });
 
     await waitFor(() => {
@@ -329,25 +328,28 @@ describe("DashboardApp", () => {
     const payload = makePayload();
     sendMessageMock.mockImplementation(async (type: string) => {
       if (type === "GET_APP_SHELL_DATA") {
-        return { ok: true, data: payload };
+        return {ok: true, data: payload};
       }
       if (type === "UPDATE_SETTINGS") {
-        return { ok: true, data: {} };
+        return {ok: true, data: {}};
       }
-      return { ok: true, data: {} };
+      return {ok: true, data: {}};
     });
 
     render(
       <AppProviders>
-        <DashboardApp />
+        <DashboardApp/>
       </AppProviders>
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
+    fireEvent.click(await screen.findByRole("button", {name: "Settings"}));
+    expect(
+      screen.getByRole("button", {name: "Information about Target Retention"})
+    ).toBeTruthy();
     fireEvent.change(await screen.findByLabelText("Daily New"), {
-      target: { value: "9" },
+      target: {value: "9"},
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save Settings" }));
+    fireEvent.click(screen.getByRole("button", {name: "Save Settings"}));
 
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith(
@@ -405,11 +407,13 @@ describe("OverlayPanel", () => {
       </AppProviders>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /hard/i }));
+    expect(screen.getByRole("button", {name: "Open settings"})).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Collapse overlay"})).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", {name: /hard/i}));
     expect(onSelectRating).toHaveBeenCalledWith(1);
 
     fireEvent.mouseDown(screen.getByRole("combobox"));
-    fireEvent.click(screen.getByRole("option", { name: "Recall mode" }));
+    fireEvent.click(screen.getByRole("option", {name: "Recall mode"}));
     expect(onChangeMode).toHaveBeenCalledWith("RECALL");
   });
 });

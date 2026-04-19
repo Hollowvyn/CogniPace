@@ -1,4 +1,5 @@
 /** Popup screen composition for the compact extension surface. */
+import ShuffleRounded from "@mui/icons-material/ShuffleRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
@@ -8,14 +9,14 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { StatusBanner, SurfaceCard } from "../../components";
-import { CourseNextCard } from "../../features/courses/CourseNextCard";
-import { CourseProgressCard } from "../../features/courses/CourseProgressCard";
-import { RecommendedProblemCard } from "../../features/recommended/RecommendedProblemCard";
+import {StatusBanner, SurfaceCard} from "../../components";
+import {CourseNextCard} from "../../features/courses/CourseNextCard";
+import {CourseProgressCard} from "../../features/courses/CourseProgressCard";
+import {RecommendedProblemCard} from "../../features/recommended/RecommendedProblemCard";
 
-import { PopupActions } from "./components/PopupActions";
-import { PopupHeader } from "./components/PopupHeader";
-import { usePopupController } from "./usePopupController";
+import {PopupActions} from "./components/PopupActions";
+import {PopupHeader} from "./components/PopupHeader";
+import {usePopupController} from "./usePopupController";
 
 export function PopupApp() {
   const controller = usePopupController();
@@ -79,7 +80,7 @@ export function PopupApp() {
                 onClick={controller.shuffleRecommendation}
                 size="small"
               >
-                ↻
+                <ShuffleRounded fontSize="small"/>
               </IconButton>
             </Tooltip>
           </Stack>
@@ -136,7 +137,7 @@ export function PopupApp() {
           studyMode={controller.payload?.settings.studyMode}
         />
 
-        <Divider />
+        <Divider/>
         <StatusBanner
           isError={controller.status.isError}
           message={controller.status.message}

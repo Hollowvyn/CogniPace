@@ -1,10 +1,12 @@
 /** Dashboard settings screen for local review configuration and backup workflows. */
+import InfoOutlined from "@mui/icons-material/InfoOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
@@ -15,15 +17,11 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { ChangeEvent } from "react";
+import {ChangeEvent} from "react";
 
-import {
-  ReviewOrder,
-  StudyMode,
-  UserSettings,
-} from "../../../../domain/types";
-import { AppShellPayload } from "../../../../domain/views";
-import { SurfaceCard } from "../../../components";
+import {ReviewOrder, StudyMode, UserSettings,} from "../../../../domain/types";
+import {AppShellPayload} from "../../../../domain/views";
+import {SurfaceCard} from "../../../components";
 
 export interface SettingsViewProps {
   onExportData: () => Promise<void>;
@@ -43,7 +41,7 @@ export function SettingsView(props: SettingsViewProps) {
     <Stack spacing={2}>
       <SurfaceCard label="Study Settings" title="Daily Cadence">
         <Grid container spacing={1.5}>
-          <Grid size={{ md: 6, xs: 12 }}>
+          <Grid size={{md: 6, xs: 12}}>
             <TextField
               fullWidth
               label="Daily New"
@@ -62,7 +60,7 @@ export function SettingsView(props: SettingsViewProps) {
               value={props.settingsDraft.dailyNewLimit}
             />
           </Grid>
-          <Grid size={{ md: 6, xs: 12 }}>
+          <Grid size={{md: 6, xs: 12}}>
             <TextField
               fullWidth
               label="Daily Review"
@@ -81,7 +79,7 @@ export function SettingsView(props: SettingsViewProps) {
               value={props.settingsDraft.dailyReviewLimit}
             />
           </Grid>
-          <Grid size={{ md: 6, xs: 12 }}>
+          <Grid size={{md: 6, xs: 12}}>
             <FormControl fullWidth>
               <InputLabel id="settings-study-mode-label">Study Mode</InputLabel>
               <Select
@@ -100,7 +98,7 @@ export function SettingsView(props: SettingsViewProps) {
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ md: 6, xs: 12 }}>
+          <Grid size={{md: 6, xs: 12}}>
             <FormControl fullWidth>
               <InputLabel id="settings-active-course-label">
                 Active Course
@@ -124,7 +122,7 @@ export function SettingsView(props: SettingsViewProps) {
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ md: 6, xs: 12 }}>
+          <Grid size={{md: 6, xs: 12}}>
             <FormControl fullWidth>
               <InputLabel id="settings-review-order-label">
                 Review Order
@@ -146,27 +144,29 @@ export function SettingsView(props: SettingsViewProps) {
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Box sx={{ px: 1 }}>
-              <Typography gutterBottom variant="body2">
-                Target Retention:{" "}
-                <Tooltip title="Cards become due when their retrievability drops below this threshold. Lower = fewer reviews, higher = more reviews but better retention.">
-                  <Box
+          <Grid size={{xs: 12}}>
+            <Box sx={{px: 1}}>
+              <Stack alignItems="center" direction="row" spacing={0.5} sx={{mb: 1}}>
+                <Typography variant="body2">
+                  Target Retention:
+                </Typography>
+                <Tooltip
+                  title="Cards become due when their retrievability drops below this threshold. Lower = fewer reviews, higher = more reviews but better retention.">
+                  <IconButton
                     aria-label="Information about Target Retention"
-                    component="span"
-                    sx={{ cursor: "help", opacity: 0.6, fontSize: "0.85em" }}
-                    tabIndex={0}
+                    size="small"
+                    sx={{opacity: 0.72, p: 0.25}}
                   >
-                    ⓘ
-                  </Box>
+                    <InfoOutlined fontSize="small"/>
+                  </IconButton>
                 </Tooltip>
-              </Typography>
+              </Stack>
               <Stack alignItems="center" direction="row" spacing={2}>
                 <Slider
                   marks={[
-                    { value: 0.7, label: "70%" },
-                    { value: 0.85, label: "85%" },
-                    { value: 0.95, label: "95%" },
+                    {value: 0.7, label: "70%"},
+                    {value: 0.85, label: "85%"},
+                    {value: 0.95, label: "95%"},
                   ]}
                   max={0.95}
                   min={0.7}
@@ -177,21 +177,21 @@ export function SettingsView(props: SettingsViewProps) {
                     }));
                   }}
                   step={0.01}
-                  sx={{ flex: 1 }}
+                  sx={{flex: 1}}
                   value={props.settingsDraft.targetRetention ?? 0.85}
                   valueLabelDisplay="auto"
                   valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
                 />
-                <Typography sx={{ minWidth: 45 }} variant="body2">
+                <Typography sx={{minWidth: 45}} variant="body2">
                   {Math.round((props.settingsDraft.targetRetention ?? 0.85) * 100)}%
                 </Typography>
               </Stack>
             </Box>
           </Grid>
         </Grid>
-        <Divider />
+        <Divider/>
         <Grid container spacing={1.5}>
-          <Grid size={{ md: 4, xs: 12 }}>
+          <Grid size={{md: 4, xs: 12}}>
             <FormControlLabel
               control={
                 <Switch
@@ -207,7 +207,7 @@ export function SettingsView(props: SettingsViewProps) {
               label="Require solve time"
             />
           </Grid>
-          <Grid size={{ md: 4, xs: 12 }}>
+          <Grid size={{md: 4, xs: 12}}>
             <FormControlLabel
               control={
                 <Switch
@@ -223,7 +223,7 @@ export function SettingsView(props: SettingsViewProps) {
               label="Notifications"
             />
           </Grid>
-          <Grid size={{ md: 2, xs: 6 }}>
+          <Grid size={{md: 2, xs: 6}}>
             <TextField
               fullWidth
               label="Quiet start"
@@ -245,7 +245,7 @@ export function SettingsView(props: SettingsViewProps) {
               value={props.settingsDraft.quietHours.startHour}
             />
           </Grid>
-          <Grid size={{ md: 2, xs: 6 }}>
+          <Grid size={{md: 2, xs: 6}}>
             <TextField
               fullWidth
               label="Quiet end"
@@ -268,15 +268,15 @@ export function SettingsView(props: SettingsViewProps) {
             />
           </Grid>
         </Grid>
-        <Divider />
+        <Divider/>
         <Stack spacing={1}>
           <Typography color="text.secondary" variant="overline">
             Enabled Sets
           </Typography>
           <Grid container spacing={1.25}>
             {sets.map(([name, enabled]) => (
-              <Grid key={name} size={{ md: 4, xs: 12 }}>
-                <Paper sx={{ p: 1.5 }}>
+              <Grid key={name} size={{md: 4, xs: 12}}>
+                <Paper sx={{p: 1.5}}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -299,7 +299,7 @@ export function SettingsView(props: SettingsViewProps) {
             ))}
           </Grid>
         </Stack>
-        <Stack direction={{ md: "row", xs: "column" }} spacing={1}>
+        <Stack direction={{md: "row", xs: "column"}} spacing={1}>
           <Button onClick={props.onSaveSettings} variant="contained">
             Save Settings
           </Button>
@@ -310,7 +310,7 @@ export function SettingsView(props: SettingsViewProps) {
       </SurfaceCard>
 
       <SurfaceCard label="Data" title="Import / Export">
-        <Stack direction={{ md: "row", xs: "column" }} spacing={1}>
+        <Stack direction={{md: "row", xs: "column"}} spacing={1}>
           <Button
             onClick={() => {
               void props.onExportData();
