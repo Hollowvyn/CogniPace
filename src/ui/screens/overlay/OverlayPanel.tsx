@@ -156,10 +156,24 @@ export function OverlayPanel(props: OverlayPanelProps) {
     ? "Pause timer"
     : "Start timer";
   const collapsedRestartLabel = "Restart timer";
+  const handleCollapsedSurfaceClick = (
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
+    const clickedElement = event.target;
+    if (
+      clickedElement instanceof Element &&
+      clickedElement.closest("[data-overlay-interactive='true']")
+    ) {
+      return;
+    }
+
+    props.onToggleCollapse();
+  };
 
   if (props.collapsed) {
     return (
       <Paper
+        onClick={handleCollapsedSurfaceClick}
         sx={{
           borderRadius: 2.25,
           border: (theme) => `1px solid ${theme.palette.divider}`,
@@ -178,6 +192,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
               <Tooltip title="Expand overlay">
                 <IconButton
                   aria-label="Expand overlay"
+                  data-overlay-interactive="true"
                   onClick={props.onToggleCollapse}
                   size="small"
                   sx={{
@@ -193,6 +208,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
                 </IconButton>
               </Tooltip>
               <Box
+                data-overlay-interactive="true"
                 sx={{
                   alignSelf: "stretch",
                   backgroundColor: (theme) => theme.palette.divider,
@@ -202,6 +218,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
               />
               <Typography
                 component="div"
+                data-overlay-interactive="true"
                 sx={{
                   ...timerTextSx,
                   flexShrink: 0,
@@ -213,6 +230,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
               <Tooltip title={collapsedTimerActionLabel}>
                 <IconButton
                   aria-label={collapsedTimerActionLabel}
+                  data-overlay-interactive="true"
                   onClick={
                     props.isTimerRunning
                       ? props.onPauseTimer
@@ -236,9 +254,10 @@ export function OverlayPanel(props: OverlayPanelProps) {
                 </IconButton>
               </Tooltip>
               <Tooltip title={collapsedRestartLabel}>
-                <span>
+                <span data-overlay-interactive="true">
                   <IconButton
                     aria-label={collapsedRestartLabel}
+                    data-overlay-interactive="true"
                     disabled={!props.canReset}
                     onClick={props.onResetTimer}
                     size="small"
@@ -258,6 +277,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
             </Stack>
             <Stack alignItems="center" direction="row" spacing={0.75}>
               <Button
+                data-overlay-interactive="true"
                 onClick={props.onCompactSubmit}
                 size="small"
                 variant="contained"
@@ -267,6 +287,7 @@ export function OverlayPanel(props: OverlayPanelProps) {
               <Tooltip title="Fail review">
                 <IconButton
                   aria-label="Fail review"
+                  data-overlay-interactive="true"
                   onClick={props.onCompactFail}
                   size="small"
                   sx={{

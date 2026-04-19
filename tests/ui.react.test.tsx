@@ -475,8 +475,9 @@ describe("OverlayPanel", () => {
     const onResetTimer = vi.fn();
     const onCompactSubmit = vi.fn();
     const onCompactFail = vi.fn();
+    const onToggleCollapse = vi.fn();
 
-    const {rerender} = render(
+    const {container, rerender} = render(
       <AppProviders>
         <OverlayPanel
           canReset
@@ -499,7 +500,7 @@ describe("OverlayPanel", () => {
           onSaveReview={() => undefined}
           onSelectRating={() => undefined}
           onStartTimer={onStartTimer}
-          onToggleCollapse={() => undefined}
+          onToggleCollapse={onToggleCollapse}
           saveButtonLabel="Save Override"
           selectedMode="FULL_SOLVE"
           selectedRating={2}
@@ -511,17 +512,27 @@ describe("OverlayPanel", () => {
       </AppProviders>
     );
 
+    fireEvent.click(screen.getByText("03:12"));
+    expect(onToggleCollapse).toHaveBeenCalledTimes(0);
+
+    fireEvent.click(container.querySelector(".MuiPaper-root") as HTMLElement);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
     fireEvent.click(screen.getByRole("button", {name: "Start timer"}));
     expect(onStartTimer).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", {name: "Restart timer"}));
     expect(onResetTimer).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", {name: "Fail review"}));
     expect(onCompactFail).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", {name: "Submit"}));
     expect(onCompactSubmit).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
 
     rerender(
       <AppProviders>
@@ -546,7 +557,7 @@ describe("OverlayPanel", () => {
           onSaveReview={() => undefined}
           onSelectRating={() => undefined}
           onStartTimer={onStartTimer}
-          onToggleCollapse={() => undefined}
+          onToggleCollapse={onToggleCollapse}
           saveButtonLabel="Save Override"
           selectedMode="FULL_SOLVE"
           selectedRating={2}
@@ -560,5 +571,48 @@ describe("OverlayPanel", () => {
 
     fireEvent.click(screen.getByRole("button", {name: "Pause timer"}));
     expect(onPauseTimer).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AppProviders>
+        <OverlayPanel
+          canReset={false}
+          collapsed
+          difficulty="Easy"
+          feedback=""
+          feedbackIsError={false}
+          isTimerRunning={false}
+          nextReviewLabel="Next review 3/30/2026"
+          notes=""
+          onChangeMode={() => undefined}
+          onChangeNotes={() => undefined}
+          onCompactFail={onCompactFail}
+          onCompactSubmit={onCompactSubmit}
+          onOpenSettings={() => undefined}
+          onPauseTimer={onPauseTimer}
+          onQuickSubmit={() => undefined}
+          onRefresh={() => undefined}
+          onResetTimer={onResetTimer}
+          onSaveReview={() => undefined}
+          onSelectRating={() => undefined}
+          onStartTimer={onStartTimer}
+          onToggleCollapse={onToggleCollapse}
+          saveButtonLabel="Save Override"
+          selectedMode="FULL_SOLVE"
+          selectedRating={2}
+          statusLabel="Due now · Repeat review"
+          targetDisplay="20:00"
+          timerDisplay="03:12"
+          title="Counting Bits"
+        />
+      </AppProviders>
+    );
+
+    const disabledRestartButton = screen.getByRole("button", {
+      name: "Restart timer",
+    });
+    fireEvent.click(disabledRestartButton.parentElement as HTMLElement);
+    expect(onResetTimer).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
   });
 });
