@@ -61,7 +61,7 @@ function makeScheduledState(nextReviewAt: string): StudyState {
         mode: "FULL_SOLVE",
       },
     ],
-    fsrsCard: {
+    fsrs: {
       due: nextReviewAt,
       stability: 4,
       difficulty: 5,
@@ -119,7 +119,7 @@ function testLegacyStorageMigrationRebuildsHistoryIntoFsrsCard(): void {
   assert.ok(migrated.courseProgressById.Blind75);
 
   const summary = getStudyStateSummary(migrated.studyStatesBySlug["two-sum"]);
-  assert.ok(migrated.studyStatesBySlug["two-sum"]?.fsrsCard);
+  assert.ok(migrated.studyStatesBySlug["two-sum"]?.fsrs);
   assert.equal(summary.reviewCount, 1);
   assert.equal(summary.phase, "Review");
 }
@@ -245,7 +245,7 @@ function testFsrsFirstGoodUsesShortTermLearningStep(): void {
   assert.equal(firstSummary.reviewCount, 1);
   assert.equal(firstSummary.phase, "Learning");
   assert.equal(firstSummary.nextReviewAt, "2026-03-01T15:10:00.000Z");
-  assert.equal(first.fsrsCard?.scheduledDays, 0);
+  assert.equal(first.fsrs?.scheduledDays, 0);
 
   const second = applyReview({
     state: first,
@@ -260,7 +260,7 @@ function testFsrsFirstGoodUsesShortTermLearningStep(): void {
   );
   assert.equal(secondSummary.phase, "Review");
   assert.equal(secondSummary.nextReviewAt, "2026-03-03T15:10:00.000Z");
-  assert.equal(second.fsrsCard?.scheduledDays, 2);
+  assert.equal(second.fsrs?.scheduledDays, 2);
 }
 
 function testEarlyRepeatFollowsRawFsrsOutput(): void {
@@ -293,7 +293,7 @@ function testEarlyRepeatFollowsRawFsrsOutput(): void {
 
   assert.equal(firstDue.getUTCHours(), 15);
   assert.ok(secondDue.getTime() > firstDue.getTime());
-  assert.deepEqual(second.fsrsCard, serializeFsrsCard(rawCard));
+  assert.deepEqual(second.fsrs, serializeFsrsCard(rawCard));
 }
 
 function testSequentialReviewsMatchRawFsrsScheduler(): void {
@@ -312,7 +312,7 @@ function testSequentialReviewsMatchRawFsrsScheduler(): void {
       now: reviewAt.toISOString(),
     });
 
-    assert.deepEqual(appState.fsrsCard, serializeFsrsCard(rawCard));
+    assert.deepEqual(appState.fsrs, serializeFsrsCard(rawCard));
     reviewAt = rawCard.due;
   }
 }
@@ -333,7 +333,7 @@ function testSameMomentRapidResubmitsMatchRawFsrsScheduler(): void {
       now: reviewAt.toISOString(),
     });
 
-    assert.deepEqual(appState.fsrsCard, serializeFsrsCard(rawCard));
+    assert.deepEqual(appState.fsrs, serializeFsrsCard(rawCard));
   }
 }
 

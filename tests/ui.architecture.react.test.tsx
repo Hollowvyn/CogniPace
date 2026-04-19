@@ -54,7 +54,7 @@ beforeEach(() => {
 function makeStudyState(nextReviewAt?: string): StudyState {
   return {
     attemptHistory: [],
-    fsrsCard: nextReviewAt
+    fsrs: nextReviewAt
       ? {
           difficulty: 4,
           due: nextReviewAt,
