@@ -6,6 +6,6 @@ import {
 } from "./useOverlayController";
 
 export function OverlayRoot(environment: OverlayControllerEnvironment) {
-  const { panelProps } = useOverlayController(environment);
-  return panelProps ? <OverlayPanel {...panelProps} /> : null;
+  const {renderModel} = useOverlayController(environment);
+  return renderModel ? <OverlayPanel renderModel={renderModel}/> : null;
 }

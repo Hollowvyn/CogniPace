@@ -1,4 +1,4 @@
-export const STORAGE_SCHEMA_VERSION = 3;
+export const STORAGE_SCHEMA_VERSION = 4;
 
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
 
@@ -16,6 +16,14 @@ export type StudyMode = "freestyle" | "studyPlan";
 export type Rating = 0 | 1 | 2 | 3;
 
 export type ReviewMode = "RECALL" | "FULL_SOLVE";
+
+export interface ReviewLogFields {
+  interviewPattern?: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
+  languages?: string;
+  notes?: string;
+}
 
 export type SourceSet =
   | "Blind75"
@@ -45,7 +53,7 @@ export interface AttemptHistoryEntry {
   rating: Rating;
   solveTimeMs?: number;
   mode: ReviewMode;
-  notesSnapshot?: string;
+  logSnapshot?: ReviewLogFields;
 }
 
 export type FsrsCardState = "New" | "Learning" | "Review" | "Relearning";
@@ -63,13 +71,12 @@ export interface FsrsCardSnapshot {
   lastReview?: string;
 }
 
-export interface StudyState {
+export interface StudyState extends ReviewLogFields {
   suspended: boolean;
   bestTimeMs?: number;
   lastSolveTimeMs?: number;
   lastRating?: Rating;
   confidence?: number;
-  notes?: string;
   tags: string[];
   attemptHistory: AttemptHistoryEntry[];
   fsrsCard?: FsrsCardSnapshot;

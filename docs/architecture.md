@@ -2,7 +2,8 @@
 
 ## System Shape
 
-The extension now follows an explicit `ui + data + domain + extension + entrypoints` layout built around a React 19 + MUI + Emotion UI stack.
+The extension now follows an explicit `ui + data + domain + extension + entrypoints` layout built around a React 19 +
+MUI + Emotion UI stack.
 
 - `src/entrypoints/`
   Small mount/bootstrap files only
@@ -61,8 +62,10 @@ Responsibilities:
 - mount a shadow-root-backed React overlay on LeetCode problem pages
 - inject an Emotion cache into the overlay shadow root before rendering
 - detect page context and current problem metadata
-- manage timer, notes, rating, and review actions
-- save review results through runtime messaging
+- manage timer, structured log fields, FSRS assessment, and review-session actions
+- keep the compact inlay and expanded overlay panel separated inside `src/ui/screens/overlay/*`
+- compose page bootstrap in `useOverlayController.ts`, extracted helpers/hooks in `controller/*`, and explicit collapsed/expanded sections in `components/*`
+- save new review results and last-review overrides through runtime messaging
 
 ### Library Redirect
 
@@ -118,7 +121,8 @@ Location: `src/data/`
 Subdirectories:
 
 - `repositories/`
-  Repository-style access for app shell, courses, problem sessions, settings, backups, app data, and extension navigation
+  Repository-style access for app shell, courses, problem sessions, settings, backups, app data, and extension
+  navigation
 - `datasources/chrome/`
   Raw Chrome platform access such as `chrome.storage.local`
 - `catalog/`
@@ -179,8 +183,8 @@ The intended runtime path for React surfaces is:
 
 1. A screen, controller, or shared UI hook calls a repository in `src/data/repositories/*`.
 2. The repository talks to either:
-   - a runtime client in `src/extension/runtime/client.ts`, or
-   - a datasource under `src/data/datasources/chrome/*`.
+  - a runtime client in `src/extension/runtime/client.ts`, or
+  - a datasource under `src/data/datasources/chrome/*`.
 3. The background bootstrap validates and routes runtime messages through `src/extension/background/router.ts`.
 4. Background handlers compose repositories and pure domain logic.
 5. The repository returns a typed payload back to the UI layer.
@@ -211,6 +215,10 @@ This keeps React screens free of direct Chrome API calls and keeps domain logic 
 - Queue logic: `src/domain/queue/*`
 - Runtime contracts: `src/extension/runtime/contracts.ts`
 - Background router and handlers: `src/extension/background/*`
+- Overlay controller orchestration: `src/ui/screens/overlay/useOverlayController.ts`
+- Overlay controller helpers/hooks: `src/ui/screens/overlay/controller/*`
+- Overlay surface variants and sections: `src/ui/screens/overlay/OverlayPanel.tsx`,
+  `src/ui/screens/overlay/components/*`, `src/ui/screens/overlay/overlayPanel.types.ts`
 
 ## Runtime Message Flow
 
@@ -228,6 +236,10 @@ Important persisted areas:
 
 - `problemsBySlug`
 - `studyStatesBySlug`
+  This now includes top-level saved log fields such as interview pattern, time complexity, space complexity, languages,
+  and notes.
+  Each attempt history entry may also include a structured `logSnapshot` used for review overrides and migration-safe
+  history replay.
 - `coursesById`
 - `courseOrder`
 - `courseProgressById`
@@ -242,6 +254,13 @@ Export payload remains:
 - `coursesById`
 - `courseOrder`
 - `courseProgressById`
+
+Overlay-specific runtime contracts now include:
+
+- `SAVE_REVIEW_RESULT`
+  appends a new FSRS review event and stores the current structured log fields
+- `OVERRIDE_LAST_REVIEW_RESULT`
+  replaces the latest attempt entry and rebuilds the FSRS card from review history
 
 ## Constraints
 

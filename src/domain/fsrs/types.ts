@@ -3,6 +3,7 @@ export {
   Difficulty,
   FsrsCardSnapshot,
   Rating,
+  ReviewLogFields,
   ReviewMode,
   StudyPhase,
   StudyState,

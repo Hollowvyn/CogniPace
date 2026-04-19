@@ -1,27 +1,16 @@
 /** Background handlers for problem-context, review-session, and page actions. */
-import {
-  getAppData,
-  mutateAppData,
-} from "../../../data/repositories/appDataRepository";
-import {
-  ensureProblem,
-  ensureStudyState,
-  normalizeDifficulty,
-} from "../../../data/repositories/problemRepository";
-import { nowIso } from "../../../domain/common/time";
-import {
-  markCourseQuestionLaunched,
-  syncCourseProgress,
-} from "../../../domain/courses/courseProgress";
-import { applyReview, resetSchedule } from "../../../domain/fsrs/scheduler";
-import { getStudyStateSummary } from "../../../domain/fsrs/studyState";
-import { normalizeSlug } from "../../../domain/problem/slug";
-import {
-  canonicalProblemUrlForOpen,
-} from "../../runtime/validator";
-import { ok } from "../responses";
+import {getAppData, mutateAppData,} from "../../../data/repositories/appDataRepository";
+import {ensureProblem, ensureStudyState, normalizeDifficulty,} from "../../../data/repositories/problemRepository";
+import {nowIso} from "../../../domain/common/time";
+import {markCourseQuestionLaunched, syncCourseProgress,} from "../../../domain/courses/courseProgress";
+import {applyReview, overrideLastReview, resetSchedule,} from "../../../domain/fsrs/scheduler";
+import {getStudyStateSummary, normalizeReviewLogFields,} from "../../../domain/fsrs/studyState";
+import {normalizeSlug} from "../../../domain/problem/slug";
+import {ReviewLogFields} from "../../../domain/types";
+import {canonicalProblemUrlForOpen,} from "../../runtime/validator";
+import {ok} from "../responses";
 
-import { trackCourseQuestionLaunch } from "./courseHandlers";
+import {trackCourseQuestionLaunch} from "./courseHandlers";
 
 /** Opens a LeetCode problem page and optionally records course launch context. */
 export async function openProblemPage(payload: {
@@ -42,8 +31,8 @@ export async function openProblemPage(payload: {
     });
   }
 
-  await chrome.tabs.create({ url: canonicalProblemUrlForOpen(slug) });
-  return ok({ opened: true });
+  await chrome.tabs.create({url: canonicalProblemUrlForOpen(slug)});
+  return ok({opened: true});
 }
 
 /** Upserts the current problem page into storage from detected page metadata. */
@@ -95,12 +84,26 @@ export async function getProblemContext(payload: { slug: string }) {
   const data = await getAppData();
   const slug = normalizeSlug(payload.slug);
   if (!slug) {
-    return ok({ problem: null, studyState: null });
+    return ok({problem: null, studyState: null});
   }
 
   return ok({
     problem: data.problemsBySlug[slug] ?? null,
     studyState: data.studyStatesBySlug[slug] ?? null,
+  });
+}
+
+function buildReviewLogFields(
+  payload: Partial<ReviewLogFields>,
+  current: ReviewLogFields
+): ReviewLogFields {
+  return normalizeReviewLogFields({
+    interviewPattern:
+      payload.interviewPattern ?? current.interviewPattern,
+    timeComplexity: payload.timeComplexity ?? current.timeComplexity,
+    spaceComplexity: payload.spaceComplexity ?? current.spaceComplexity,
+    languages: payload.languages ?? current.languages,
+    notes: payload.notes ?? current.notes,
   });
 }
 
@@ -110,6 +113,10 @@ export async function saveReviewResult(payload: {
   rating: 0 | 1 | 2 | 3;
   solveTimeMs?: number;
   mode?: "RECALL" | "FULL_SOLVE";
+  interviewPattern?: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
+  languages?: string;
   notes?: string;
   courseId?: string;
   chapterId?: string;
@@ -121,8 +128,9 @@ export async function saveReviewResult(payload: {
 
   const now = nowIso();
   const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, { slug: normalized });
+    const problem = ensureProblem(data, {slug: normalized});
     const current = ensureStudyState(data, normalized);
+    const logSnapshot = buildReviewLogFields(payload, current);
 
     const nextState = applyReview({
       state: current,
@@ -130,14 +138,67 @@ export async function saveReviewResult(payload: {
       rating: payload.rating,
       solveTimeMs: payload.solveTimeMs,
       mode: payload.mode,
-      notesSnapshot: payload.notes ?? current.notes,
+      logSnapshot,
       settings: data.settings,
       now,
     });
 
-    if (typeof payload.notes === "string") {
-      nextState.notes = payload.notes;
-    }
+    data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
+    markCourseQuestionLaunched(
+      data,
+      normalized,
+      now,
+      payload.courseId,
+      payload.chapterId
+    );
+    syncCourseProgress(data, now);
+    return data;
+  });
+
+  const nextState = updated.studyStatesBySlug[normalized];
+  const studyStateSummary = getStudyStateSummary(nextState);
+  return ok({
+    studyState: nextState,
+    nextReviewAt: studyStateSummary.nextReviewAt,
+    phase: studyStateSummary.phase,
+    lastRating: nextState.lastRating,
+  });
+}
+
+/** Replaces the latest review result and rebuilds the schedule from history. */
+export async function overrideLastReviewResult(payload: {
+  slug: string;
+  rating: 0 | 1 | 2 | 3;
+  solveTimeMs?: number;
+  mode?: "RECALL" | "FULL_SOLVE";
+  interviewPattern?: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
+  languages?: string;
+  notes?: string;
+  courseId?: string;
+  chapterId?: string;
+}) {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) {
+    throw new Error("Invalid slug.");
+  }
+
+  const now = nowIso();
+  const updated = await mutateAppData((data) => {
+    const problem = ensureProblem(data, {slug: normalized});
+    const current = ensureStudyState(data, normalized);
+    const logSnapshot = buildReviewLogFields(payload, current);
+
+    const nextState = overrideLastReview({
+      state: current,
+      rating: payload.rating,
+      solveTimeMs: payload.solveTimeMs,
+      mode: payload.mode,
+      logSnapshot,
+      settings: data.settings,
+      now,
+    });
 
     data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
     markCourseQuestionLaunched(
@@ -186,14 +247,14 @@ export async function updateNotes(payload: { slug: string; notes: string }) {
   }
 
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, { slug: normalized });
+    ensureProblem(data, {slug: normalized});
     const state = ensureStudyState(data, normalized);
     state.notes = payload.notes;
     data.studyStatesBySlug[normalized] = state;
     return data;
   });
 
-  return ok({ studyState: updated.studyStatesBySlug[normalized] });
+  return ok({studyState: updated.studyStatesBySlug[normalized]});
 }
 
 /** Updates the saved tags for a specific problem. */
@@ -204,14 +265,14 @@ export async function updateTags(payload: { slug: string; tags: string[] }) {
   }
 
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, { slug: normalized });
+    ensureProblem(data, {slug: normalized});
     const state = ensureStudyState(data, normalized);
     state.tags = payload.tags.map((tag) => tag.trim()).filter(Boolean);
     data.studyStatesBySlug[normalized] = state;
     return data;
   });
 
-  return ok({ studyState: updated.studyStatesBySlug[normalized] });
+  return ok({studyState: updated.studyStatesBySlug[normalized]});
 }
 
 /** Suspends or unsuspends a problem in the scheduler. */
@@ -225,7 +286,7 @@ export async function suspendProblem(payload: {
   }
 
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, { slug: normalized });
+    ensureProblem(data, {slug: normalized});
     const state = ensureStudyState(data, normalized);
     state.suspended = payload.suspend;
     data.studyStatesBySlug[normalized] = state;
@@ -233,7 +294,7 @@ export async function suspendProblem(payload: {
     return data;
   });
 
-  return ok({ studyState: updated.studyStatesBySlug[normalized] });
+  return ok({studyState: updated.studyStatesBySlug[normalized]});
 }
 
 /** Resets the schedule for a specific problem while optionally preserving notes. */
@@ -247,7 +308,7 @@ export async function resetProblem(payload: {
   }
 
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, { slug: normalized });
+    ensureProblem(data, {slug: normalized});
     const state = data.studyStatesBySlug[normalized];
     data.studyStatesBySlug[normalized] = resetSchedule(
       state,
@@ -257,5 +318,5 @@ export async function resetProblem(payload: {
     return data;
   });
 
-  return ok({ studyState: updated.studyStatesBySlug[normalized] });
+  return ok({studyState: updated.studyStatesBySlug[normalized]});
 }

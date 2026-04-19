@@ -1,14 +1,15 @@
 /** Runtime message validation and sender authorization safeguards. */
-import { assertImportPayloadShape } from "../../data/importexport/backup";
-import { isProblemPage, normalizeSlug, slugToUrl } from "../../domain/problem/slug";
+import {assertImportPayloadShape} from "../../data/importexport/backup";
+import {isProblemPage, normalizeSlug, slugToUrl} from "../../domain/problem/slug";
 
-import { MessageType, RuntimeMessage } from "./contracts";
+import {MessageType, RuntimeMessage} from "./contracts";
 
 const MESSAGE_TYPES = {
   UPSERT_PROBLEM_FROM_PAGE: true,
   GET_PROBLEM_CONTEXT: true,
   RATE_PROBLEM: true,
   SAVE_REVIEW_RESULT: true,
+  OVERRIDE_LAST_REVIEW_RESULT: true,
   OPEN_EXTENSION_PAGE: true,
   OPEN_PROBLEM_PAGE: true,
   UPDATE_NOTES: true,
@@ -34,6 +35,7 @@ const CONTENT_SCRIPT_MESSAGE_TYPES = new Set<MessageType>([
   "UPSERT_PROBLEM_FROM_PAGE",
   "GET_PROBLEM_CONTEXT",
   "SAVE_REVIEW_RESULT",
+  "OVERRIDE_LAST_REVIEW_RESULT",
   "OPEN_EXTENSION_PAGE",
 ]);
 
@@ -244,15 +246,33 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireOptionalString(payload.notesSnapshot, "notesSnapshot");
       return;
     case "SAVE_REVIEW_RESULT":
+    case "OVERRIDE_LAST_REVIEW_RESULT":
       hasExactKeys(
         payload,
-        ["slug", "rating", "solveTimeMs", "mode", "notes", "courseId", "chapterId", "source"],
+        [
+          "slug",
+          "rating",
+          "solveTimeMs",
+          "mode",
+          "interviewPattern",
+          "timeComplexity",
+          "spaceComplexity",
+          "languages",
+          "notes",
+          "courseId",
+          "chapterId",
+          "source",
+        ],
         `Payload for ${type}`
       );
       requireString(payload.slug, "slug");
       requireRating(payload.rating, "rating");
       requireOptionalFiniteNumber(payload.solveTimeMs, "solveTimeMs");
       requireOptionalReviewMode(payload.mode, "mode");
+      requireOptionalString(payload.interviewPattern, "interviewPattern");
+      requireOptionalString(payload.timeComplexity, "timeComplexity");
+      requireOptionalString(payload.spaceComplexity, "spaceComplexity");
+      requireOptionalString(payload.languages, "languages");
       requireOptionalString(payload.notes, "notes");
       requireOptionalString(payload.courseId, "courseId");
       requireOptionalString(payload.chapterId, "chapterId");
@@ -379,7 +399,7 @@ export function validateRuntimeMessage(message: unknown): RuntimeMessage {
 
   hasExactKeys(message, ["type", "payload"], "Runtime message");
 
-  const { type, payload } = message;
+  const {type, payload} = message;
   if (
     typeof type !== "string" ||
     !Object.prototype.hasOwnProperty.call(MESSAGE_TYPES, type)

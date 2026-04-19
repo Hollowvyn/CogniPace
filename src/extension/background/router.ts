@@ -1,8 +1,8 @@
 /** Central runtime router that dispatches validated messages to grouped handlers. */
-import { ExportPayload } from "../../domain/types";
-import { RuntimeMessage, MessageType } from "../runtime/contracts";
+import {ExportPayload} from "../../domain/types";
+import {MessageType, RuntimeMessage} from "../runtime/contracts";
 
-import { getAppShellData, getQueue, openExtensionPage } from "./handlers/appShellHandlers";
+import {getAppShellData, getQueue, openExtensionPage} from "./handlers/appShellHandlers";
 import {
   activateCourseChapter,
   addProblemByInput,
@@ -15,6 +15,7 @@ import {
 import {
   getProblemContext,
   openProblemPage,
+  overrideLastReviewResult,
   rateProblem,
   resetProblem,
   saveReviewResult,
@@ -23,7 +24,7 @@ import {
   updateTags,
   upsertFromPage,
 } from "./handlers/problemHandlers";
-import { exportData, importData, updateSettings } from "./handlers/settingsHandlers";
+import {exportData, importData, updateSettings} from "./handlers/settingsHandlers";
 
 /** Routes a validated runtime message to the appropriate grouped handler. */
 export async function handleMessage(message: RuntimeMessage) {
@@ -39,6 +40,10 @@ export async function handleMessage(message: RuntimeMessage) {
     case "SAVE_REVIEW_RESULT":
       return saveReviewResult(
         message.payload as Parameters<typeof saveReviewResult>[0]
+      );
+    case "OVERRIDE_LAST_REVIEW_RESULT":
+      return overrideLastReviewResult(
+        message.payload as Parameters<typeof overrideLastReviewResult>[0]
       );
     case "OPEN_EXTENSION_PAGE":
       return openExtensionPage(

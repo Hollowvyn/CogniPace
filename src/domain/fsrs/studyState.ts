@@ -1,21 +1,15 @@
-import {
-  Card,
-  Rating as FsrsRating,
-  State as FsrsState,
-  createEmptyCard,
-  fsrs,
-  generatorParameters,
-} from "ts-fsrs";
+import {Card, createEmptyCard, fsrs, generatorParameters, Rating as FsrsRating, State as FsrsState,} from "ts-fsrs";
 
 import {
   AttemptHistoryEntry,
   FsrsCardSnapshot,
   Rating,
+  ReviewLogFields,
   StudyPhase,
   StudyState,
   StudyStateSummary,
 } from "./types";
-import { uniqueStrings } from "./utils";
+import {uniqueStrings} from "./utils";
 
 type LegacyStudyStatus =
   | "NEW"
@@ -43,6 +37,8 @@ type FsrsGrade =
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_EASE = 2.5;
 const scheduler = fsrs(generatorParameters());
+
+type UnknownRecord = Record<string, unknown>;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -154,6 +150,52 @@ function bestTimeFromHistory(
   return Math.min(...values);
 }
 
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeOptionalLogValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+export function normalizeReviewLogFields(
+  value?: Partial<ReviewLogFields> | null
+): ReviewLogFields {
+  return {
+    interviewPattern: normalizeOptionalLogValue(value?.interviewPattern),
+    timeComplexity: normalizeOptionalLogValue(value?.timeComplexity),
+    spaceComplexity: normalizeOptionalLogValue(value?.spaceComplexity),
+    languages: normalizeOptionalLogValue(value?.languages),
+    notes: normalizeOptionalLogValue(value?.notes),
+  };
+}
+
+export function hasReviewLogFields(
+  value?: Partial<ReviewLogFields> | null
+): boolean {
+  const normalized = normalizeReviewLogFields(value);
+  return Boolean(
+    normalized.interviewPattern ||
+    normalized.timeComplexity ||
+    normalized.spaceComplexity ||
+    normalized.languages ||
+    normalized.notes
+  );
+}
+
+function latestLogSnapshot(
+  history: AttemptHistoryEntry[]
+): ReviewLogFields | undefined {
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const candidate = history[index]?.logSnapshot;
+    if (hasReviewLogFields(candidate)) {
+      return normalizeReviewLogFields(candidate);
+    }
+  }
+
+  return undefined;
+}
+
 function normalizeAttemptHistory(history: unknown): AttemptHistoryEntry[] {
   if (!Array.isArray(history)) {
     return [];
@@ -166,6 +208,26 @@ function normalizeAttemptHistory(history: unknown): AttemptHistoryEntry[] {
       }
 
       const candidate = entry as Partial<AttemptHistoryEntry>;
+      const rawLogSnapshot = isRecord(candidate.logSnapshot)
+        ? candidate.logSnapshot
+        : undefined;
+      const normalizedLogSnapshot = normalizeReviewLogFields({
+        interviewPattern: normalizeOptionalLogValue(
+          rawLogSnapshot?.interviewPattern
+        ),
+        timeComplexity: normalizeOptionalLogValue(
+          rawLogSnapshot?.timeComplexity
+        ),
+        spaceComplexity: normalizeOptionalLogValue(
+          rawLogSnapshot?.spaceComplexity
+        ),
+        languages: normalizeOptionalLogValue(rawLogSnapshot?.languages),
+        notes:
+          normalizeOptionalLogValue(rawLogSnapshot?.notes) ??
+          normalizeOptionalLogValue(
+            (candidate as Partial<{ notesSnapshot?: string }>).notesSnapshot
+          ),
+      });
       const reviewedAt =
         typeof candidate.reviewedAt === "string"
           ? candidate.reviewedAt
@@ -194,10 +256,9 @@ function normalizeAttemptHistory(history: unknown): AttemptHistoryEntry[] {
             ? candidate.solveTimeMs
             : undefined,
         mode: candidate.mode === "RECALL" ? "RECALL" : "FULL_SOLVE",
-        notesSnapshot:
-          typeof candidate.notesSnapshot === "string"
-            ? candidate.notesSnapshot
-            : undefined,
+        logSnapshot: hasReviewLogFields(normalizedLogSnapshot)
+          ? normalizedLogSnapshot
+          : undefined,
       } as AttemptHistoryEntry;
     })
     .filter((entry): entry is AttemptHistoryEntry => entry !== null);
@@ -279,7 +340,7 @@ function rebuildFsrsCardFromHistory(
   for (const entry of history) {
     card = scheduler.repeat(card, new Date(entry.reviewedAt))[
       toFsrsRating(entry.rating)
-    ].card;
+      ].card;
   }
 
   return card;
@@ -352,6 +413,7 @@ export function normalizeStudyState(
   now = new Date().toISOString()
 ): StudyState {
   const attemptHistory = normalizeAttemptHistory(input?.attemptHistory);
+  const lastLogSnapshot = latestLogSnapshot(attemptHistory);
   const normalizedFsrsCard =
     deserializeFsrsCard(input?.fsrsCard) ??
     (hasLegacyScheduleData(input)
@@ -359,6 +421,13 @@ export function normalizeStudyState(
       : attemptHistory.length > 0
         ? rebuildFsrsCardFromHistory(attemptHistory)
         : null);
+  const normalizedLogFields = normalizeReviewLogFields({
+    interviewPattern: input?.interviewPattern ?? lastLogSnapshot?.interviewPattern,
+    timeComplexity: input?.timeComplexity ?? lastLogSnapshot?.timeComplexity,
+    spaceComplexity: input?.spaceComplexity ?? lastLogSnapshot?.spaceComplexity,
+    languages: input?.languages ?? lastLogSnapshot?.languages,
+    notes: input?.notes ?? lastLogSnapshot?.notes,
+  });
 
   return {
     suspended: input?.suspended === true || input?.status === "SUSPENDED",
@@ -379,7 +448,7 @@ export function normalizeStudyState(
       typeof input?.confidence === "number" && Number.isFinite(input.confidence)
         ? input.confidence
         : undefined,
-    notes: typeof input?.notes === "string" ? input.notes : undefined,
+    ...normalizedLogFields,
     tags: uniqueStrings(Array.isArray(input?.tags) ? input!.tags : []),
     attemptHistory,
     fsrsCard: normalizedFsrsCard

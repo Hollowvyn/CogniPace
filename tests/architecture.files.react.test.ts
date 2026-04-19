@@ -96,4 +96,18 @@ describe("architecture layout", () => {
     expect(storageDatasource).toContain("chrome.storage.local");
     expect(appShellRepository).toContain("extension/runtime/client");
   });
+
+  it("uses explicit overlay variants instead of a shared boolean mode prop", () => {
+    const overlayPanel = read(
+      path.join(repoRoot, "src/ui/screens/overlay/OverlayPanel.tsx")
+    );
+    const overlayTypes = read(
+      path.join(repoRoot, "src/ui/screens/overlay/overlayPanel.types.ts")
+    );
+
+    expect(overlayTypes).toContain('variant: "collapsed"');
+    expect(overlayTypes).toContain('variant: "expanded"');
+    expect(overlayTypes).not.toContain("collapsed: boolean");
+    expect(overlayPanel).toContain('renderModel.variant === "collapsed"');
+  });
 });

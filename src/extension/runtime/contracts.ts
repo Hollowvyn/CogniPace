@@ -4,6 +4,7 @@ import type {
   Difficulty,
   ExportPayload,
   Rating,
+  ReviewLogFields,
   ReviewMode,
   TodayQueue,
   UserSettings,
@@ -48,7 +49,25 @@ export interface MessageRequestMap {
     rating: Rating;
     solveTimeMs?: number;
     mode?: ReviewMode;
-    notes?: string;
+    interviewPattern?: ReviewLogFields["interviewPattern"];
+    timeComplexity?: ReviewLogFields["timeComplexity"];
+    spaceComplexity?: ReviewLogFields["spaceComplexity"];
+    languages?: ReviewLogFields["languages"];
+    notes?: ReviewLogFields["notes"];
+    courseId?: string;
+    chapterId?: string;
+    source?: "overlay" | "dashboard";
+  };
+  OVERRIDE_LAST_REVIEW_RESULT: {
+    slug: string;
+    rating: Rating;
+    solveTimeMs?: number;
+    mode?: ReviewMode;
+    interviewPattern?: ReviewLogFields["interviewPattern"];
+    timeComplexity?: ReviewLogFields["timeComplexity"];
+    spaceComplexity?: ReviewLogFields["spaceComplexity"];
+    languages?: ReviewLogFields["languages"];
+    notes?: ReviewLogFields["notes"];
     courseId?: string;
     chapterId?: string;
     source?: "overlay" | "dashboard";
@@ -130,6 +149,7 @@ export interface MessageResponseMap {
   GET_PROBLEM_CONTEXT: ProblemContextResponse;
   RATE_PROBLEM: SaveReviewResultResponse;
   SAVE_REVIEW_RESULT: SaveReviewResultResponse;
+  OVERRIDE_LAST_REVIEW_RESULT: SaveReviewResultResponse;
   OPEN_EXTENSION_PAGE: OpenedResponse;
   OPEN_PROBLEM_PAGE: OpenedResponse;
   UPDATE_NOTES: StudyStateMutationResponse;

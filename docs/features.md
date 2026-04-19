@@ -122,10 +122,9 @@ Let users review and log progress directly on the LeetCode problem page.
 
 - collapsed and expanded overlay states
 - collapsed overlay prioritizes a compact timer-first strip with expand access
-- rating controls
-- timer controls
-- notes field
-- quick-submit path
+- expanded overlay shows a smaller timer, a target-time reference, and a compact FSRS assessment control
+- expanded logging fields include interview pattern, time complexity, space complexity, languages used, and notes
+- submit, failed, save-override, and restart session actions are distinct
 - open settings shortcut
 
 ### Key States And Edge Cases
@@ -134,6 +133,7 @@ Let users review and log progress directly on the LeetCode problem page.
 - timer is not used
 - review is first solve versus repeat review
 - overlay is collapsed but user still needs quick context
+- user edits logs or rating after the current session has already been submitted
 
 ### In Scope
 
@@ -150,8 +150,8 @@ Let users review and log progress directly on the LeetCode problem page.
 ### Acceptance Criteria
 
 - a user can log a review result from the problem page
-- timer and rating behaviors are understandable
-- notes persist with the associated problem state
+- timer and assessment behaviors are understandable
+- structured log fields persist with the associated problem state
 
 ## Solve Timer And Quick Submit
 
@@ -163,23 +163,27 @@ Give users lightweight solve-time awareness and a fast logging path.
 
 1. User starts a timer while solving or reviewing a problem
 2. Product compares elapsed time with the difficulty-based target
-3. User either quick-submits or opens the explicit save flow
-4. Review state updates based on rating, timing, and mode
+3. User either submits from the compact strip or opens the expanded flow
+4. After submit, the current session is locked until the user saves an override or restarts the session
+5. Review state updates based on rating, timing, and inferred mode
 
 ### Current Behavior
 
 - timer goal is derived from problem difficulty
 - user can start, pause, and reset the timer
-- collapsed submit saves immediately, preserves elapsed time, and expands into the full override form
-- quick submit defaults to a conservative rating path
-- full save path supports explicit override
+- collapsed submit derives a conservative default rating, saves immediately, and expands into the full override form
+- expanded submit uses the selected FSRS rating directly
+- failed is a dedicated submission path that currently maps to `Again`
+- save override replaces the latest submission instead of appending a new review
+- restart opens a fresh local session without mutating persisted review history until the next submit
 
 ### Key States And Edge Cases
 
 - no timer used
 - timer exceeds target significantly
 - repeat review versus first solve
-- user wants explicit override instead of inferred quick submit behavior
+- user wants explicit override instead of a second submission
+- user restarts after submitting and expects a fresh local session with persisted logs prefilled
 
 ### In Scope
 
@@ -193,7 +197,7 @@ Give users lightweight solve-time awareness and a fast logging path.
 
 ### Acceptance Criteria
 
-- users can understand the difference between quick submit and explicit save
+- users can understand the difference between submit, save override, and restart
 - timer state and review outcome relationship is visible
 
 ## Notes And Review Overrides
@@ -205,21 +209,23 @@ Support lightweight reflection and correction during review logging.
 ### User Flow
 
 1. User opens the overlay on a problem page
-2. User adds or edits notes while solving or reviewing
-3. User chooses quick submit or explicit save
-4. Product persists the note content with the problem state
+2. User adds or edits structured log fields while solving or reviewing
+3. User submits the current session
+4. User can still edit the current submission through save override
+5. Product persists the structured log content with the problem state and snapshots it with each review
 
 ### Current Behavior
 
-- notes can be entered on the overlay
-- explicit save supports review override flow
-- review result can include notes snapshot and context
+- structured log fields are editable before and after submit
+- submit appends a new FSRS review event
+- save override replaces the latest saved review instead of adding another review
+- each review attempt stores a log snapshot alongside the current top-level saved fields
 
 ### Key States And Edge Cases
 
-- notes exist before a new review is logged
-- user wants to save notes without changing other fields
-- quick submit and explicit save produce different levels of control
+- saved log fields exist before a new session begins
+- user changes rating or log details after submit and expects the latest submission to update in place
+- user restarts after submit and expects unsaved edits to be discarded in favor of the latest persisted fields
 
 ### In Scope
 
@@ -233,8 +239,8 @@ Support lightweight reflection and correction during review logging.
 
 ### Acceptance Criteria
 
-- notes remain associated with the problem
-- explicit save path allows deliberate override behavior
+- structured log fields remain associated with the problem
+- save override updates the latest submission in place without adding duplicate review history
 
 ## Dashboard Overview
 

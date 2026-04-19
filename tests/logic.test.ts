@@ -1,36 +1,24 @@
 import assert from "node:assert/strict";
 
-import { createEmptyCard } from "ts-fsrs";
+import {createEmptyCard} from "ts-fsrs";
 
-import { normalizeSlug } from "../src/domain/problem/slug";
-import { sanitizeImportPayload } from "../src/shared/backup";
-import {
-  createDefaultStudyState,
-  CURRENT_STORAGE_SCHEMA_VERSION,
-  DEFAULT_SETTINGS,
-} from "../src/shared/constants";
-import {
-  buildActiveCourseView,
-  syncCourseProgress,
-} from "../src/shared/courses";
-import { listStudyPlans } from "../src/shared/curatedSets";
-import { buildTodayQueue } from "../src/shared/queue";
-import { buildRecommendedCandidates } from "../src/shared/recommendations";
+import {normalizeSlug} from "../src/domain/problem/slug";
+import {sanitizeImportPayload} from "../src/shared/backup";
+import {createDefaultStudyState, CURRENT_STORAGE_SCHEMA_VERSION, DEFAULT_SETTINGS,} from "../src/shared/constants";
+import {buildActiveCourseView, syncCourseProgress,} from "../src/shared/courses";
+import {listStudyPlans} from "../src/shared/curatedSets";
+import {buildTodayQueue} from "../src/shared/queue";
+import {buildRecommendedCandidates} from "../src/shared/recommendations";
 import {
   assertAuthorizedRuntimeMessage,
   canonicalProblemUrlForOpen,
   validateExtensionPagePath,
   validateRuntimeMessage,
 } from "../src/shared/runtimeValidation";
-import { applyReview } from "../src/shared/scheduler";
-import { normalizeStoredAppData } from "../src/shared/storage";
-import {
-  getFsrsScheduler,
-  getStudyStateSummary,
-  serializeFsrsCard,
-  toFsrsRating,
-} from "../src/shared/studyState";
-import { Problem, Rating, StudyState } from "../src/shared/types";
+import {applyReview, overrideLastReview} from "../src/shared/scheduler";
+import {normalizeStoredAppData} from "../src/shared/storage";
+import {getFsrsScheduler, getStudyStateSummary, serializeFsrsCard, toFsrsRating,} from "../src/shared/studyState";
+import {Problem, Rating, StudyState} from "../src/shared/types";
 
 function makeProblem(
   slug: string,
@@ -84,12 +72,12 @@ function makeLegacyReviewedFixture(
     ...createDefaultStudyState(),
     attemptHistory: withHistory
       ? [
-          {
-            reviewedAt: "2026-03-10T00:00:00.000Z",
-            rating: 2,
-            mode: "FULL_SOLVE",
-          },
-        ]
+        {
+          reviewedAt: "2026-03-10T00:00:00.000Z",
+          rating: 2,
+          mode: "FULL_SOLVE",
+        },
+      ]
       : [],
     lastRating: 2,
     status: "REVIEWING",
@@ -275,7 +263,7 @@ function testEarlyRepeatFollowsRawFsrsOutput(): void {
   });
   rawCard = scheduler.repeat(rawCard, new Date("2026-03-25T15:00:00.000Z"))[
     toFsrsRating(2)
-  ].card;
+    ].card;
 
   const second = applyReview({
     state: first,
@@ -286,7 +274,7 @@ function testEarlyRepeatFollowsRawFsrsOutput(): void {
   });
   rawCard = scheduler.repeat(rawCard, new Date("2026-03-25T18:00:00.000Z"))[
     toFsrsRating(2)
-  ].card;
+    ].card;
 
   const firstDue = new Date(getStudyStateSummary(first).nextReviewAt!);
   const secondDue = new Date(getStudyStateSummary(second).nextReviewAt!);
@@ -335,6 +323,96 @@ function testSameMomentRapidResubmitsMatchRawFsrsScheduler(): void {
 
     assert.deepEqual(appState.fsrsCard, serializeFsrsCard(rawCard));
   }
+}
+
+function testOverrideLastReviewRebuildsFsrsFromReplacedHistory(): void {
+  const first = applyReview({
+    rating: 2,
+    logSnapshot: {
+      interviewPattern: "Hash map lookup",
+      notes: "Track complements.",
+    },
+    settings: DEFAULT_SETTINGS,
+    now: "2026-03-01T15:00:00.000Z",
+  });
+
+  const second = applyReview({
+    state: first,
+    rating: 1,
+    logSnapshot: {
+      interviewPattern: "Sliding window",
+      languages: "TypeScript",
+      notes: "Missed a boundary case.",
+    },
+    settings: DEFAULT_SETTINGS,
+    now: "2026-03-03T15:00:00.000Z",
+  });
+
+  const overridden = overrideLastReview({
+    state: second,
+    rating: 3,
+    logSnapshot: {
+      interviewPattern: "Two pointers",
+      timeComplexity: "O(n)",
+      spaceComplexity: "O(1)",
+      languages: "TypeScript",
+      notes: "Use mirrored indices.",
+    },
+    settings: DEFAULT_SETTINGS,
+    now: "2026-03-03T15:00:00.000Z",
+  });
+
+  const replayed = applyReview({
+    state: first,
+    rating: 3,
+    logSnapshot: {
+      interviewPattern: "Two pointers",
+      timeComplexity: "O(n)",
+      spaceComplexity: "O(1)",
+      languages: "TypeScript",
+      notes: "Use mirrored indices.",
+    },
+    settings: DEFAULT_SETTINGS,
+    now: "2026-03-03T15:00:00.000Z",
+  });
+
+  assert.equal(overridden.attemptHistory.length, 2);
+  assert.deepEqual(overridden.fsrsCard, replayed.fsrsCard);
+  assert.equal(
+    overridden.attemptHistory[1]?.logSnapshot?.interviewPattern,
+    "Two pointers"
+  );
+  assert.equal(overridden.interviewPattern, "Two pointers");
+  assert.equal(overridden.timeComplexity, "O(n)");
+  assert.equal(overridden.spaceComplexity, "O(1)");
+  assert.equal(overridden.languages, "TypeScript");
+  assert.equal(overridden.notes, "Use mirrored indices.");
+}
+
+function testLegacyNotesSnapshotsMigrateIntoStructuredLogs(): void {
+  const migrated = normalizeStoredAppData({
+    studyStatesBySlug: {
+      "two-sum": {
+        attemptHistory: [
+          {
+            reviewedAt: "2026-03-10T00:00:00.000Z",
+            rating: 2,
+            mode: "FULL_SOLVE",
+            notesSnapshot: "Remember the complement map.",
+          },
+        ],
+        suspended: false,
+        tags: [],
+      } as unknown as StudyState,
+    },
+  });
+
+  const nextState = migrated.studyStatesBySlug["two-sum"];
+  assert.equal(nextState?.notes, "Remember the complement map.");
+  assert.equal(
+    nextState?.attemptHistory[0]?.logSnapshot?.notes,
+    "Remember the complement map."
+  );
 }
 
 function testRuntimeValidationRejectsUnknownMessageType(): void {
@@ -638,6 +716,8 @@ function run(): void {
   testEarlyRepeatFollowsRawFsrsOutput();
   testSequentialReviewsMatchRawFsrsScheduler();
   testSameMomentRapidResubmitsMatchRawFsrsScheduler();
+  testOverrideLastReviewRebuildsFsrsFromReplacedHistory();
+  testLegacyNotesSnapshotsMigrateIntoStructuredLogs();
   testRuntimeValidationRejectsUnknownMessageType();
   testRuntimeValidationRejectsMissingPayload();
   testRuntimeValidationRejectsWrongFieldType();
