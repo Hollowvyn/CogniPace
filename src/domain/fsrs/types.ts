@@ -1,7 +1,7 @@
 export {
   AttemptHistoryEntry,
   Difficulty,
-  FsrsCardSnapshot,
+  FsrsControlPlane,
   Rating,
   ReviewMode,
   StudyPhase,

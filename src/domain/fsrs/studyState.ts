@@ -9,7 +9,7 @@ import {
 
 import {
   AttemptHistoryEntry,
-  FsrsCardSnapshot,
+  FsrsControlPlane,
   Rating,
   StudyPhase,
   StudyState,
@@ -32,6 +32,8 @@ export interface LegacyStudyStateInput extends Partial<StudyState> {
   lapses?: number;
   ease?: number;
   intervalDays?: number;
+  /** Legacy field — superseded by `fsrs`. Read during migration, never written. */
+  fsrsCard?: FsrsControlPlane;
 }
 
 type FsrsGrade =
@@ -70,7 +72,7 @@ function legacyStateFromStatus(
   return FsrsState.Review;
 }
 
-function toFsrsState(state: FsrsCardSnapshot["state"]): FsrsState {
+function toFsrsState(state: FsrsControlPlane["state"]): FsrsState {
   switch (state) {
     case "Learning":
       return FsrsState.Learning;
@@ -208,7 +210,7 @@ function normalizeAttemptHistory(history: unknown): AttemptHistoryEntry[] {
   );
 }
 
-export function serializeFsrsCard(card: Card): FsrsCardSnapshot {
+export function serializeFsrsCard(card: Card): FsrsControlPlane {
   return {
     due: card.due.toISOString(),
     stability: Number.isFinite(card.stability) ? card.stability : 0,
@@ -222,12 +224,12 @@ export function serializeFsrsCard(card: Card): FsrsCardSnapshot {
       : 0,
     reps: Number.isFinite(card.reps) ? card.reps : 0,
     lapses: Number.isFinite(card.lapses) ? card.lapses : 0,
-    state: FsrsState[card.state] as FsrsCardSnapshot["state"],
+    state: FsrsState[card.state] as FsrsControlPlane["state"],
     lastReview: card.last_review?.toISOString(),
   };
 }
 
-export function deserializeFsrsCard(snapshot?: FsrsCardSnapshot): Card | null {
+export function deserializeFsrsCard(snapshot?: FsrsControlPlane): Card | null {
   if (!snapshot) {
     return null;
   }
@@ -353,7 +355,7 @@ export function normalizeStudyState(
 ): StudyState {
   const attemptHistory = normalizeAttemptHistory(input?.attemptHistory);
   const normalizedFsrsCard =
-    deserializeFsrsCard(input?.fsrsCard) ??
+    deserializeFsrsCard(input?.fsrs ?? input?.fsrsCard) ??
     (hasLegacyScheduleData(input)
       ? buildLegacyFsrsCard(input ?? {}, now)
       : attemptHistory.length > 0
@@ -382,7 +384,7 @@ export function normalizeStudyState(
     notes: typeof input?.notes === "string" ? input.notes : undefined,
     tags: uniqueStrings(Array.isArray(input?.tags) ? input!.tags : []),
     attemptHistory,
-    fsrsCard: normalizedFsrsCard
+    fsrs: normalizedFsrsCard
       ? serializeFsrsCard(normalizedFsrsCard)
       : undefined,
   };
@@ -394,7 +396,7 @@ export function getFsrsCard(
 ): Card {
   const normalized = normalizeStudyState(state, now);
   return (
-    deserializeFsrsCard(normalized.fsrsCard) ?? createEmptyCard(new Date(now))
+    deserializeFsrsCard(normalized.fsrs) ?? createEmptyCard(new Date(now))
   );
 }
 
@@ -405,7 +407,7 @@ export function getLastReviewedAt(
     return undefined;
   }
 
-  return latestReviewedAt(state.attemptHistory, state.fsrsCard?.lastReview);
+  return latestReviewedAt(state.attemptHistory, state.fsrs?.lastReview);
 }
 
 /** Default target retention if not specified */
@@ -430,7 +432,7 @@ export function getStudyStateSummary(
     };
   }
 
-  const card = deserializeFsrsCard(state.fsrsCard);
+  const card = deserializeFsrsCard(state.fsrs);
   const nextReviewAt = card?.due.toISOString();
   const reviewCount = card?.reps ?? 0;
   const lastReviewedAt = latestReviewedAt(

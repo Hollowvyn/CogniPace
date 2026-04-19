@@ -13,8 +13,7 @@ import {
   markCourseQuestionLaunched,
   syncCourseProgress,
 } from "../../../domain/courses/courseProgress";
-import { applyReview, resetSchedule } from "../../../domain/fsrs/scheduler";
-import { getStudyStateSummary } from "../../../domain/fsrs/studyState";
+import { applyReview, getStudyStateSummary, resetSchedule } from "../../../domain/fsrs";
 import { normalizeSlug } from "../../../domain/problem/slug";
 import {
   canonicalProblemUrlForOpen,

@@ -64,7 +64,7 @@ export function applyReview(input: ApplyReviewInput): StudyState {
           )
         : state.bestTimeMs,
     attemptHistory: [...state.attemptHistory, historyEntry],
-    fsrsCard: serializeFsrsCard(nextCard),
+    fsrs: serializeFsrsCard(nextCard),
   };
 }
 
