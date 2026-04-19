@@ -7,7 +7,7 @@ import {
   buildCourseOptions,
   getCourseMemberships,
 } from "../../../domain/courses/courseProgress";
-import { getStudyStateSummary } from "../../../domain/fsrs/studyState";
+import { getStudyStateSummary } from "../../../domain/fsrs";
 import { buildRecommendedCandidates } from "../../../domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../../domain/queue/buildTodayQueue";
 import { AppShellPayload, LibraryProblemRow } from "../../../domain/views";

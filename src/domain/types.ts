@@ -58,7 +58,7 @@ export interface AttemptHistoryEntry {
 
 export type FsrsCardState = "New" | "Learning" | "Review" | "Relearning";
 
-export interface FsrsCardSnapshot {
+export interface FsrsControlPlane {
   due: string;
   stability: number;
   difficulty: number;
@@ -79,7 +79,7 @@ export interface StudyState extends ReviewLogFields {
   confidence?: number;
   tags: string[];
   attemptHistory: AttemptHistoryEntry[];
-  fsrsCard?: FsrsCardSnapshot;
+  fsrs?: FsrsControlPlane;
 }
 
 export interface QuietHours {
