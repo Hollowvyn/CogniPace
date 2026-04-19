@@ -277,7 +277,9 @@ describe("PopupApp", () => {
     expect(await screen.findByText("Two Sum")).toBeTruthy();
     expect(screen.getByRole("button", {name: "Refresh popup"})).toBeTruthy();
     expect(screen.getByRole("button", {name: "Open settings"})).toBeTruthy();
-    expect(screen.getByRole("button", {name: "Shuffle recommendation"})).toBeTruthy();
+    expect(
+      screen.getByRole("button", {name: "Shuffle recommendation"})
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", {name: "Open Problem"}));
 
     await waitFor(() => {
@@ -309,8 +311,12 @@ describe("DashboardApp", () => {
     expect(
       await screen.findByRole("heading", {name: "Dashboard"})
     ).toBeTruthy();
-    expect(screen.getByRole("button", {name: "Refresh dashboard"})).toBeTruthy();
-    expect(screen.getAllByRole("button", {name: "Open settings"}).length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("button", {name: "Refresh dashboard"})
+    ).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", {name: "Open settings"}).length
+    ).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", {name: "Library"}));
 
     expect(await screen.findByText("All Tracked Problems")).toBeTruthy();
@@ -376,16 +382,13 @@ describe("OverlayPanel", () => {
           difficulty="Medium"
           feedback="Last reviewed today."
           feedbackIsError={false}
-          goalDisplay="Goal 20:00"
-          hint="Quick submit logs Good by default."
-          isDue
           isTimerRunning={false}
-          lastReviewedLabel="Last 3/29/2026"
-          modeBadgeLabel="Repeat Review"
           nextReviewLabel="Next review 3/30/2026"
           notes=""
           onChangeMode={onChangeMode}
           onChangeNotes={() => undefined}
+          onCompactFail={() => undefined}
+          onCompactSubmit={() => undefined}
           onOpenSettings={() => undefined}
           onPauseTimer={() => undefined}
           onQuickSubmit={() => undefined}
@@ -395,12 +398,11 @@ describe("OverlayPanel", () => {
           onSelectRating={onSelectRating}
           onStartTimer={() => undefined}
           onToggleCollapse={() => undefined}
-          phaseLabel="Review"
-          phaseTone="info"
-          quickRatingLabel="Default Good"
           saveButtonLabel="Save Override"
           selectedMode="FULL_SOLVE"
           selectedRating={2}
+          statusLabel="Due now · Repeat review"
+          targetDisplay="35:00"
           timerDisplay="00:00"
           title="Group Anagrams"
         />
@@ -408,12 +410,209 @@ describe("OverlayPanel", () => {
     );
 
     expect(screen.getByRole("button", {name: "Open settings"})).toBeTruthy();
-    expect(screen.getByRole("button", {name: "Collapse overlay"})).toBeTruthy();
+    expect(
+      screen.getByRole("button", {name: "Collapse overlay"})
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", {name: /hard/i}));
     expect(onSelectRating).toHaveBeenCalledWith(1);
 
     fireEvent.mouseDown(screen.getByRole("combobox"));
     fireEvent.click(screen.getByRole("option", {name: "Recall mode"}));
     expect(onChangeMode).toHaveBeenCalledWith("RECALL");
+  });
+
+  it("renders a compact collapsed summary", () => {
+    render(
+      <AppProviders>
+        <OverlayPanel
+          canReset
+          collapsed
+          difficulty="Easy"
+          feedback=""
+          feedbackIsError={false}
+          isTimerRunning={false}
+          nextReviewLabel="Next review 3/30/2026"
+          notes=""
+          onChangeMode={() => undefined}
+          onChangeNotes={() => undefined}
+          onCompactFail={() => undefined}
+          onCompactSubmit={() => undefined}
+          onOpenSettings={() => undefined}
+          onPauseTimer={() => undefined}
+          onQuickSubmit={() => undefined}
+          onRefresh={() => undefined}
+          onResetTimer={() => undefined}
+          onSaveReview={() => undefined}
+          onSelectRating={() => undefined}
+          onStartTimer={() => undefined}
+          onToggleCollapse={() => undefined}
+          saveButtonLabel="Save Override"
+          selectedMode="FULL_SOLVE"
+          selectedRating={2}
+          statusLabel="Due now · Repeat review"
+          targetDisplay="20:00"
+          timerDisplay="03:12"
+          title="Counting Bits"
+        />
+      </AppProviders>
+    );
+
+    expect(screen.getByRole("button", {name: "Expand overlay"})).toBeTruthy();
+    expect(screen.getByText("03:12")).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Start timer"})).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Restart timer"})).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Fail review"})).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Submit"})).toBeTruthy();
+    expect(screen.queryByText("Counting Bits")).toBeNull();
+    expect(screen.queryByText("Due now · Repeat review")).toBeNull();
+    expect(screen.queryByText("Easy target 20:00")).toBeNull();
+    expect(screen.queryByText("Next review 3/30/2026")).toBeNull();
+  });
+
+  it("uses compact timer, restart, and submit actions in the collapsed overlay", () => {
+    const onStartTimer = vi.fn();
+    const onPauseTimer = vi.fn();
+    const onResetTimer = vi.fn();
+    const onCompactSubmit = vi.fn();
+    const onCompactFail = vi.fn();
+    const onToggleCollapse = vi.fn();
+
+    const {container, rerender} = render(
+      <AppProviders>
+        <OverlayPanel
+          canReset
+          collapsed
+          difficulty="Easy"
+          feedback=""
+          feedbackIsError={false}
+          isTimerRunning={false}
+          nextReviewLabel="Next review 3/30/2026"
+          notes=""
+          onChangeMode={() => undefined}
+          onChangeNotes={() => undefined}
+          onCompactFail={onCompactFail}
+          onCompactSubmit={onCompactSubmit}
+          onOpenSettings={() => undefined}
+          onPauseTimer={onPauseTimer}
+          onQuickSubmit={() => undefined}
+          onRefresh={() => undefined}
+          onResetTimer={onResetTimer}
+          onSaveReview={() => undefined}
+          onSelectRating={() => undefined}
+          onStartTimer={onStartTimer}
+          onToggleCollapse={onToggleCollapse}
+          saveButtonLabel="Save Override"
+          selectedMode="FULL_SOLVE"
+          selectedRating={2}
+          statusLabel="Due now · Repeat review"
+          targetDisplay="20:00"
+          timerDisplay="03:12"
+          title="Counting Bits"
+        />
+      </AppProviders>
+    );
+
+    fireEvent.click(screen.getByText("03:12"));
+    expect(onToggleCollapse).toHaveBeenCalledTimes(0);
+
+    fireEvent.click(container.querySelector(".MuiPaper-root") as HTMLElement);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", {name: "Start timer"}));
+    expect(onStartTimer).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", {name: "Restart timer"}));
+    expect(onResetTimer).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", {name: "Fail review"}));
+    expect(onCompactFail).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", {name: "Submit"}));
+    expect(onCompactSubmit).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AppProviders>
+        <OverlayPanel
+          canReset
+          collapsed
+          difficulty="Easy"
+          feedback=""
+          feedbackIsError={false}
+          isTimerRunning
+          nextReviewLabel="Next review 3/30/2026"
+          notes=""
+          onChangeMode={() => undefined}
+          onChangeNotes={() => undefined}
+          onCompactFail={onCompactFail}
+          onCompactSubmit={onCompactSubmit}
+          onOpenSettings={() => undefined}
+          onPauseTimer={onPauseTimer}
+          onQuickSubmit={() => undefined}
+          onRefresh={() => undefined}
+          onResetTimer={onResetTimer}
+          onSaveReview={() => undefined}
+          onSelectRating={() => undefined}
+          onStartTimer={onStartTimer}
+          onToggleCollapse={onToggleCollapse}
+          saveButtonLabel="Save Override"
+          selectedMode="FULL_SOLVE"
+          selectedRating={2}
+          statusLabel="Due now · Repeat review"
+          targetDisplay="20:00"
+          timerDisplay="03:12"
+          title="Counting Bits"
+        />
+      </AppProviders>
+    );
+
+    fireEvent.click(screen.getByRole("button", {name: "Pause timer"}));
+    expect(onPauseTimer).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AppProviders>
+        <OverlayPanel
+          canReset={false}
+          collapsed
+          difficulty="Easy"
+          feedback=""
+          feedbackIsError={false}
+          isTimerRunning={false}
+          nextReviewLabel="Next review 3/30/2026"
+          notes=""
+          onChangeMode={() => undefined}
+          onChangeNotes={() => undefined}
+          onCompactFail={onCompactFail}
+          onCompactSubmit={onCompactSubmit}
+          onOpenSettings={() => undefined}
+          onPauseTimer={onPauseTimer}
+          onQuickSubmit={() => undefined}
+          onRefresh={() => undefined}
+          onResetTimer={onResetTimer}
+          onSaveReview={() => undefined}
+          onSelectRating={() => undefined}
+          onStartTimer={onStartTimer}
+          onToggleCollapse={onToggleCollapse}
+          saveButtonLabel="Save Override"
+          selectedMode="FULL_SOLVE"
+          selectedRating={2}
+          statusLabel="Due now · Repeat review"
+          targetDisplay="20:00"
+          timerDisplay="03:12"
+          title="Counting Bits"
+        />
+      </AppProviders>
+    );
+
+    const disabledRestartButton = screen.getByRole("button", {
+      name: "Restart timer",
+    });
+    fireEvent.click(disabledRestartButton.parentElement as HTMLElement);
+    expect(onResetTimer).toHaveBeenCalledTimes(1);
+    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
   });
 });

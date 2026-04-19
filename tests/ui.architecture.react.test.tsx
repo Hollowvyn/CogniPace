@@ -1,24 +1,15 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {cleanup, fireEvent, render, screen, waitFor,} from "@testing-library/react";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
-import { defaultReviewMode, deriveQuickRating } from "../src/domain/fsrs/reviewPolicy";
-import { StudyState } from "../src/domain/types";
-import { CourseQuestionView } from "../src/domain/views";
-import { createMockAppShellPayload } from "../src/ui/mockData";
-import {
-  buildDashboardUrl,
-  readDashboardViewFromSearch,
-} from "../src/ui/navigation/dashboardRoutes";
-import { filterLibraryRows } from "../src/ui/presentation/library";
-import { AppProviders } from "../src/ui/providers";
-import { DashboardApp } from "../src/ui/screens/dashboard/DashboardApp";
-import { OverlayRoot } from "../src/ui/screens/overlay/OverlayRoot";
+import {defaultReviewMode, deriveQuickRating,} from "../src/domain/fsrs/reviewPolicy";
+import {StudyState} from "../src/domain/types";
+import {CourseQuestionView} from "../src/domain/views";
+import {createMockAppShellPayload} from "../src/ui/mockData";
+import {buildDashboardUrl, readDashboardViewFromSearch,} from "../src/ui/navigation/dashboardRoutes";
+import {filterLibraryRows} from "../src/ui/presentation/library";
+import {AppProviders} from "../src/ui/providers";
+import {DashboardApp} from "../src/ui/screens/dashboard/DashboardApp";
+import {OverlayRoot} from "../src/ui/screens/overlay/OverlayRoot";
 
 const sendMessageMock = vi.fn();
 const tabsCreateMock = vi.fn();
@@ -56,16 +47,16 @@ function makeStudyState(nextReviewAt?: string): StudyState {
     attemptHistory: [],
     fsrsCard: nextReviewAt
       ? {
-          difficulty: 4,
-          due: nextReviewAt,
-          elapsedDays: 2,
-          lapses: 0,
-          learningSteps: 0,
-          reps: 1,
-          scheduledDays: 2,
-          stability: 2,
-          state: "Review",
-        }
+        difficulty: 4,
+        due: nextReviewAt,
+        elapsedDays: 2,
+        lapses: 0,
+        learningSteps: 0,
+        reps: 1,
+        scheduledDays: 2,
+        stability: 2,
+        state: "Review",
+      }
       : undefined,
     suspended: false,
     tags: [],
@@ -137,7 +128,7 @@ function makePayload() {
     {
       id: "Blind75",
       name: "Blind 75",
-      chapterOptions: [{ id: "arrays-1", title: "Arrays" }],
+      chapterOptions: [{id: "arrays-1", title: "Arrays"}],
     },
   ];
   payload.library = [
@@ -189,7 +180,7 @@ function deferred<T>() {
     resolve = done;
   });
 
-  return { promise, resolve };
+  return {promise, resolve};
 }
 
 describe("route and selector contracts", () => {
@@ -197,7 +188,10 @@ describe("route and selector contracts", () => {
     expect(readDashboardViewFromSearch("?view=courses")).toBe("courses");
     expect(readDashboardViewFromSearch("?view=unknown")).toBe("dashboard");
     expect(
-      buildDashboardUrl("chrome-extension://test/dashboard.html?view=settings", "library")
+      buildDashboardUrl(
+        "chrome-extension://test/dashboard.html?view=settings",
+        "library"
+      )
     ).toContain("view=library");
   });
 
@@ -231,22 +225,24 @@ describe("dashboard navigation", () => {
 
     sendMessageMock.mockImplementation(async (type: string) => {
       if (type === "GET_APP_SHELL_DATA") {
-        return { ok: true, data: payload };
+        return {ok: true, data: payload};
       }
-      return { ok: true, data: {} };
+      return {ok: true, data: {}};
     });
 
     render(
       <AppProviders>
-        <DashboardApp />
+        <DashboardApp/>
       </AppProviders>
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Courses" }));
+    fireEvent.click(await screen.findByRole("button", {name: "Courses"}));
 
     await waitFor(() => {
       expect(pushStateSpy).toHaveBeenCalled();
-      expect(String(pushStateSpy.mock.calls.at(-1)?.[2])).toContain("view=courses");
+      expect(String(pushStateSpy.mock.calls.at(-1)?.[2])).toContain(
+        "view=courses"
+      );
     });
   });
 
@@ -256,18 +252,18 @@ describe("dashboard navigation", () => {
 
     sendMessageMock.mockImplementation(async (type: string) => {
       if (type === "GET_APP_SHELL_DATA") {
-        return { ok: true, data: payload };
+        return {ok: true, data: payload};
       }
-      return { ok: true, data: {} };
+      return {ok: true, data: {}};
     });
 
     render(
       <AppProviders>
-        <DashboardApp />
+        <DashboardApp/>
       </AppProviders>
     );
 
-    await screen.findByRole("heading", { name: "Dashboard" });
+    await screen.findByRole("heading", {name: "Dashboard"});
     window.history.pushState({}, "", "/dashboard.html?view=library");
     window.dispatchEvent(new PopStateEvent("popstate"));
 
@@ -279,7 +275,10 @@ describe("overlay controller", () => {
   it("ignores stale async responses after navigation changes", async () => {
     const firstContext = deferred<{
       ok: true;
-      data: { problem: { title: string; difficulty: "Easy" }; studyState: null };
+      data: {
+        problem: { title: string; difficulty: "Easy" };
+        studyState: null;
+      };
     }>();
     const secondContext = deferred<{
       ok: true;
@@ -292,43 +291,49 @@ describe("overlay controller", () => {
     const timeouts = new Map<number, () => void>();
     const intervals = new Map<number, () => void>();
 
-    sendMessageMock.mockImplementation((type: string, payload: { slug?: string }) => {
-      if (type === "UPSERT_PROBLEM_FROM_PAGE") {
-        return Promise.resolve({
-          ok: true,
-          data: {
-            problem: {
-              id: payload.slug,
-              leetcodeSlug: payload.slug,
-              title: payload.slug,
-              difficulty: "Easy",
-              url: `https://leetcode.com/problems/${payload.slug}/`,
-              topics: [],
-              sourceSet: [],
-              createdAt: "2026-03-01T00:00:00.000Z",
-              updatedAt: "2026-03-01T00:00:00.000Z",
+    sendMessageMock.mockImplementation(
+      (type: string, payload: { slug?: string }) => {
+        if (type === "UPSERT_PROBLEM_FROM_PAGE") {
+          return Promise.resolve({
+            ok: true,
+            data: {
+              problem: {
+                id: payload.slug,
+                leetcodeSlug: payload.slug,
+                title: payload.slug,
+                difficulty: "Easy",
+                url: `https://leetcode.com/problems/${payload.slug}/`,
+                topics: [],
+                sourceSet: [],
+                createdAt: "2026-03-01T00:00:00.000Z",
+                updatedAt: "2026-03-01T00:00:00.000Z",
+              },
+              studyState: null,
             },
-            studyState: null,
-          },
-        });
+          });
+        }
+
+        if (type === "GET_PROBLEM_CONTEXT" && payload.slug === "two-sum") {
+          return firstContext.promise;
+        }
+
+        if (
+          type === "GET_PROBLEM_CONTEXT" &&
+          payload.slug === "group-anagrams"
+        ) {
+          return secondContext.promise;
+        }
+
+        if (type === "OPEN_EXTENSION_PAGE") {
+          return Promise.resolve({ok: true, data: {opened: true}});
+        }
+
+        return Promise.resolve({ok: true, data: {}});
       }
+    );
 
-      if (type === "GET_PROBLEM_CONTEXT" && payload.slug === "two-sum") {
-        return firstContext.promise;
-      }
-
-      if (type === "GET_PROBLEM_CONTEXT" && payload.slug === "group-anagrams") {
-        return secondContext.promise;
-      }
-
-      if (type === "OPEN_EXTENSION_PAGE") {
-        return Promise.resolve({ ok: true, data: { opened: true } });
-      }
-
-      return Promise.resolve({ ok: true, data: {} });
-    });
-
-    const overlayDocument = document.implementation.createHTMLDocument("overlay");
+    const overlayDocument =
+      document.implementation.createHTMLDocument("overlay");
     overlayDocument.body.innerHTML = `
       <h1>Two Sum</h1>
       <span>Easy</span>
@@ -372,7 +377,7 @@ describe("overlay controller", () => {
 
     render(
       <AppProviders>
-        <OverlayRoot documentRef={overlayDocument} windowRef={fakeWindow} />
+        <OverlayRoot documentRef={overlayDocument} windowRef={fakeWindow}/>
       </AppProviders>
     );
 
@@ -389,17 +394,20 @@ describe("overlay controller", () => {
     secondContext.resolve({
       ok: true,
       data: {
-        problem: { title: "Group Anagrams", difficulty: "Medium" },
+        problem: {title: "Group Anagrams", difficulty: "Medium"},
         studyState: null,
       },
     });
 
+    fireEvent.click(
+      await screen.findByRole("button", {name: "Expand overlay"})
+    );
     expect(await screen.findByText("Group Anagrams")).toBeTruthy();
 
     firstContext.resolve({
       ok: true,
       data: {
-        problem: { title: "Two Sum", difficulty: "Easy" },
+        problem: {title: "Two Sum", difficulty: "Easy"},
         studyState: null,
       },
     });
@@ -409,5 +417,301 @@ describe("overlay controller", () => {
 
     expect(screen.queryByText("Two Sum")).toBeNull();
     expect(screen.getByText("Group Anagrams")).toBeTruthy();
+  });
+
+  it("saves from compact mode and expands while preserving elapsed time", async () => {
+    let nextTimerId = 1;
+    const timeouts = new Map<number, () => void>();
+    const intervals = new Map<number, () => void>();
+    let nowMs = 1000;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => nowMs);
+
+    try {
+      sendMessageMock.mockImplementation(
+        (type: string, payload: { slug?: string }) => {
+          if (type === "UPSERT_PROBLEM_FROM_PAGE") {
+            return Promise.resolve({
+              ok: true,
+              data: {
+                problem: {
+                  id: payload.slug,
+                  leetcodeSlug: payload.slug,
+                  title: "Counting Bits",
+                  difficulty: "Easy",
+                  url: `https://leetcode.com/problems/${payload.slug}/`,
+                  topics: [],
+                  sourceSet: [],
+                  createdAt: "2026-03-01T00:00:00.000Z",
+                  updatedAt: "2026-03-01T00:00:00.000Z",
+                },
+                studyState: null,
+              },
+            });
+          }
+
+          if (
+            type === "GET_PROBLEM_CONTEXT" &&
+            payload.slug === "counting-bits"
+          ) {
+            return Promise.resolve({
+              ok: true,
+              data: {
+                problem: {title: "Counting Bits", difficulty: "Easy"},
+                studyState: null,
+              },
+            });
+          }
+
+          if (
+            type === "SAVE_REVIEW_RESULT" &&
+            payload.slug === "counting-bits"
+          ) {
+            return Promise.resolve({ok: true, data: {}});
+          }
+
+          if (type === "OPEN_EXTENSION_PAGE") {
+            return Promise.resolve({ok: true, data: {opened: true}});
+          }
+
+          return Promise.resolve({ok: true, data: {}});
+        }
+      );
+
+      const overlayDocument =
+        document.implementation.createHTMLDocument("overlay");
+      overlayDocument.body.innerHTML = `
+        <h1>Counting Bits</h1>
+        <span>Easy</span>
+      `;
+
+      const fakeWindow = {
+        clearInterval: (id: number) => {
+          intervals.delete(id);
+        },
+        clearTimeout: (id: number) => {
+          timeouts.delete(id);
+        },
+        location: {
+          href: "https://leetcode.com/problems/counting-bits/",
+        },
+        setInterval: (callback: TimerHandler) => {
+          const id = nextTimerId++;
+          intervals.set(id, callback as () => void);
+          return id;
+        },
+        setTimeout: (callback: TimerHandler) => {
+          const id = nextTimerId++;
+          timeouts.set(id, callback as () => void);
+          return id;
+        },
+      } as unknown as Window;
+
+      const runPendingTimeouts = () => {
+        const pending = [...timeouts.entries()];
+        timeouts.clear();
+        for (const [, callback] of pending) {
+          callback();
+        }
+      };
+
+      const runIntervalTick = () => {
+        for (const callback of intervals.values()) {
+          callback();
+        }
+      };
+
+      render(
+        <AppProviders>
+          <OverlayRoot documentRef={overlayDocument} windowRef={fakeWindow}/>
+        </AppProviders>
+      );
+
+      runPendingTimeouts();
+
+      expect(
+        await screen.findByRole("button", {name: "Start timer"})
+      ).toBeTruthy();
+
+      fireEvent.click(screen.getByRole("button", {name: "Start timer"}));
+
+      nowMs = 5000;
+      runIntervalTick();
+
+      await waitFor(() => {
+        expect(screen.getByText("00:04")).toBeTruthy();
+      });
+
+      fireEvent.click(screen.getByRole("button", {name: "Submit"}));
+
+      await waitFor(() => {
+        expect(sendMessageMock).toHaveBeenCalledWith(
+          "SAVE_REVIEW_RESULT",
+          expect.objectContaining({
+            slug: "counting-bits",
+            rating: 2,
+            mode: "FULL_SOLVE",
+            solveTimeMs: 4000,
+            source: "overlay",
+          })
+        );
+      });
+
+      expect(
+        await screen.findByRole("button", {name: "Collapse overlay"})
+      ).toBeTruthy();
+      expect(screen.getByText("Counting Bits")).toBeTruthy();
+      expect(screen.getByText("Rating")).toBeTruthy();
+      expect(screen.getByText("00:04")).toBeTruthy();
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
+
+  it("logs compact failure and expands while preserving elapsed time", async () => {
+    let nextTimerId = 1;
+    const timeouts = new Map<number, () => void>();
+    const intervals = new Map<number, () => void>();
+    let nowMs = 1000;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => nowMs);
+
+    try {
+      sendMessageMock.mockImplementation(
+        (type: string, payload: { slug?: string }) => {
+          if (type === "UPSERT_PROBLEM_FROM_PAGE") {
+            return Promise.resolve({
+              ok: true,
+              data: {
+                problem: {
+                  id: payload.slug,
+                  leetcodeSlug: payload.slug,
+                  title: "Counting Bits",
+                  difficulty: "Easy",
+                  url: `https://leetcode.com/problems/${payload.slug}/`,
+                  topics: [],
+                  sourceSet: [],
+                  createdAt: "2026-03-01T00:00:00.000Z",
+                  updatedAt: "2026-03-01T00:00:00.000Z",
+                },
+                studyState: null,
+              },
+            });
+          }
+
+          if (
+            type === "GET_PROBLEM_CONTEXT" &&
+            payload.slug === "counting-bits"
+          ) {
+            return Promise.resolve({
+              ok: true,
+              data: {
+                problem: {title: "Counting Bits", difficulty: "Easy"},
+                studyState: null,
+              },
+            });
+          }
+
+          if (
+            type === "SAVE_REVIEW_RESULT" &&
+            payload.slug === "counting-bits"
+          ) {
+            return Promise.resolve({ok: true, data: {}});
+          }
+
+          if (type === "OPEN_EXTENSION_PAGE") {
+            return Promise.resolve({ok: true, data: {opened: true}});
+          }
+
+          return Promise.resolve({ok: true, data: {}});
+        }
+      );
+
+      const overlayDocument =
+        document.implementation.createHTMLDocument("overlay");
+      overlayDocument.body.innerHTML = `
+        <h1>Counting Bits</h1>
+        <span>Easy</span>
+      `;
+
+      const fakeWindow = {
+        clearInterval: (id: number) => {
+          intervals.delete(id);
+        },
+        clearTimeout: (id: number) => {
+          timeouts.delete(id);
+        },
+        location: {
+          href: "https://leetcode.com/problems/counting-bits/",
+        },
+        setInterval: (callback: TimerHandler) => {
+          const id = nextTimerId++;
+          intervals.set(id, callback as () => void);
+          return id;
+        },
+        setTimeout: (callback: TimerHandler) => {
+          const id = nextTimerId++;
+          timeouts.set(id, callback as () => void);
+          return id;
+        },
+      } as unknown as Window;
+
+      const runPendingTimeouts = () => {
+        const pending = [...timeouts.entries()];
+        timeouts.clear();
+        for (const [, callback] of pending) {
+          callback();
+        }
+      };
+
+      const runIntervalTick = () => {
+        for (const callback of intervals.values()) {
+          callback();
+        }
+      };
+
+      render(
+        <AppProviders>
+          <OverlayRoot documentRef={overlayDocument} windowRef={fakeWindow}/>
+        </AppProviders>
+      );
+
+      runPendingTimeouts();
+
+      expect(
+        await screen.findByRole("button", {name: "Start timer"})
+      ).toBeTruthy();
+
+      fireEvent.click(screen.getByRole("button", {name: "Start timer"}));
+
+      nowMs = 5000;
+      runIntervalTick();
+
+      await waitFor(() => {
+        expect(screen.getByText("00:04")).toBeTruthy();
+      });
+
+      fireEvent.click(screen.getByRole("button", {name: "Fail review"}));
+
+      await waitFor(() => {
+        expect(sendMessageMock).toHaveBeenCalledWith(
+          "SAVE_REVIEW_RESULT",
+          expect.objectContaining({
+            slug: "counting-bits",
+            rating: 0,
+            mode: "FULL_SOLVE",
+            solveTimeMs: 4000,
+            source: "overlay",
+          })
+        );
+      });
+
+      expect(
+        await screen.findByRole("button", {name: "Collapse overlay"})
+      ).toBeTruthy();
+      expect(screen.getByText("Counting Bits")).toBeTruthy();
+      expect(screen.getByText("Rating")).toBeTruthy();
+      expect(screen.getByText("00:04")).toBeTruthy();
+    } finally {
+      dateNowSpy.mockRestore();
+    }
   });
 });

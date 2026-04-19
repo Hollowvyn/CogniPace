@@ -1,29 +1,20 @@
 /** Overlay controller for page detection, timer state, review state, and stale-refresh guards. */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 
-import { openExtensionPage, getProblemContext, saveReviewResult, upsertProblemFromPage } from "../../../data/repositories/problemSessionRepository";
-import { formatClock } from "../../../domain/common/time";
 import {
-  defaultReviewMode,
-  deriveQuickRating,
-  goalForDifficulty,
-} from "../../../domain/fsrs/reviewPolicy";
-import {
-  getStudyPhaseLabel,
-  getStudyStateSummary,
-} from "../../../domain/fsrs/studyState";
-import { parseDifficulty } from "../../../domain/problem/difficulty";
-import { normalizeSlug, slugToTitle } from "../../../domain/problem/slug";
-import {
-  Difficulty,
-  Rating,
-  ReviewMode,
-  StudyPhase,
-  StudyState,
-} from "../../../domain/types";
-import { Tone } from "../../presentation/studyState";
+  getProblemContext,
+  openExtensionPage,
+  saveReviewResult,
+  upsertProblemFromPage,
+} from "../../../data/repositories/problemSessionRepository";
+import {formatClock} from "../../../domain/common/time";
+import {defaultReviewMode, deriveQuickRating, goalForDifficulty,} from "../../../domain/fsrs/reviewPolicy";
+import {getStudyStateSummary} from "../../../domain/fsrs/studyState";
+import {parseDifficulty} from "../../../domain/problem/difficulty";
+import {normalizeSlug, slugToTitle} from "../../../domain/problem/slug";
+import {Difficulty, Rating, ReviewMode, StudyState,} from "../../../domain/types";
 
-import { OverlayPanelProps } from "./OverlayPanel";
+import {OverlayPanelProps} from "./OverlayPanel";
 
 const TIMER_TICK_MS = 250;
 
@@ -70,20 +61,6 @@ function formatDate(iso?: string): string {
   return date.toLocaleDateString();
 }
 
-function phaseTone(phase: StudyPhase): Tone {
-  switch (phase) {
-    case "Review":
-      return "info";
-    case "Learning":
-    case "Relearning":
-      return "accent";
-    case "Suspended":
-      return "default";
-    default:
-      return "accent";
-  }
-}
-
 function ratingLabel(rating: Rating): string {
   switch (rating) {
     case 0:
@@ -97,10 +74,17 @@ function ratingLabel(rating: Rating): string {
   }
 }
 
-function modeBadge(state: StudyState | null): string {
-  return getStudyStateSummary(state).reviewCount > 0
-    ? "Repeat Review"
-    : "First Solve";
+function buildStatusLabel(state: StudyState | null): string {
+  const summary = getStudyStateSummary(state);
+  const labels: string[] = [];
+
+  if (summary.isDue) {
+    labels.push("Due now");
+  }
+
+  labels.push(summary.reviewCount > 0 ? "Repeat review" : "First solve");
+
+  return labels.join(" · ");
 }
 
 interface OverlayState {
@@ -140,7 +124,7 @@ export interface OverlayControllerEnvironment {
 export function useOverlayController(
   environment: OverlayControllerEnvironment
 ): { panelProps: OverlayPanelProps | null } {
-  const { documentRef, windowRef } = environment;
+  const {documentRef, windowRef} = environment;
   const [state, setState] = useState<OverlayState>(initialOverlayState);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -159,15 +143,12 @@ export function useOverlayController(
     }
   }, [windowRef]);
 
-  const getElapsedMs = useCallback(
-    (nowMs = Date.now()): number => {
-      return pausedElapsedMsRef.current +
-        (timerStartedAtMsRef.current
-          ? nowMs - timerStartedAtMsRef.current
-          : 0);
-    },
-    []
-  );
+  const getElapsedMs = useCallback((nowMs = Date.now()): number => {
+    return (
+      pausedElapsedMsRef.current +
+      (timerStartedAtMsRef.current ? nowMs - timerStartedAtMsRef.current : 0)
+    );
+  }, []);
 
   const isTimerRunning = useCallback((): boolean => {
     return timerStartedAtMsRef.current !== null;
@@ -197,7 +178,7 @@ export function useOverlayController(
       setTimerRunning(false);
 
       if (showFeedback) {
-        setFeedback("Timer reset.");
+        setFeedback("Timer restarted.");
       }
     },
     [clearTick, setFeedback]
@@ -291,7 +272,8 @@ export function useOverlayController(
         problem: null,
         studyState: null,
       };
-      const currentDifficulty = problemContext.problem?.difficulty ?? detectedDifficulty;
+      const currentDifficulty =
+        problemContext.problem?.difficulty ?? detectedDifficulty;
       const currentState = problemContext.studyState ?? null;
       const currentTitle = problemContext.problem?.title ?? title;
 
@@ -304,7 +286,7 @@ export function useOverlayController(
           current.draftContextSlug !== slug ? slug : current.draftContextSlug,
         draftNotes:
           current.draftContextSlug !== slug
-            ? currentState?.notes ?? ""
+            ? (currentState?.notes ?? "")
             : current.draftNotes,
         feedbackIsError: false,
         selectedMode: defaultReviewMode(currentState),
@@ -343,11 +325,6 @@ export function useOverlayController(
     [setFeedback, state.draftNotes]
   );
 
-  const quickRating = useMemo(
-    () => deriveQuickRating(elapsedMs, goalForDifficulty(state.currentDifficulty)),
-    [elapsedMs, state.currentDifficulty]
-  );
-
   const onQuickSubmit = useCallback(async (): Promise<void> => {
     if (!state.activeSlug) {
       return;
@@ -380,8 +357,6 @@ export function useOverlayController(
       return;
     }
 
-    resetTimer(false);
-
     if (solveTimeMs) {
       setFeedback(
         `Logged ${ratingLabel(rating)} from ${formatClock(
@@ -389,9 +364,7 @@ export function useOverlayController(
         )} against a ${formatClock(goalForDifficulty(state.currentDifficulty))} goal.`
       );
     } else {
-      setFeedback(
-        "Logged Good with default settings. Expand the panel if you want to override the recalibration."
-      );
+      setFeedback("Logged Good. Expand if you want to change the rating.");
     }
 
     await refreshCurrentPage(state.activeSlug);
@@ -401,7 +374,6 @@ export function useOverlayController(
     pauseTimer,
     persistReview,
     refreshCurrentPage,
-    resetTimer,
     setFeedback,
     state.activeSlug,
     state.currentDifficulty,
@@ -413,7 +385,7 @@ export function useOverlayController(
       return;
     }
 
-    setFeedback("Saving recalibration...");
+    setFeedback("Saving review...");
 
     if (isTimerRunning()) {
       pauseTimer(false);
@@ -430,8 +402,7 @@ export function useOverlayController(
       return;
     }
 
-    setFeedback("Saved. Recomputing status...");
-    resetTimer(false);
+    setFeedback("Saved. Refreshing schedule...");
     await refreshCurrentPage(state.activeSlug);
   }, [
     getElapsedMs,
@@ -439,12 +410,88 @@ export function useOverlayController(
     pauseTimer,
     persistReview,
     refreshCurrentPage,
-    resetTimer,
     setFeedback,
     state.activeSlug,
     state.selectedMode,
     state.selectedRating,
   ]);
+
+  const saveCompactReview = useCallback(
+    async (rating: Rating, startMessage: string): Promise<void> => {
+      if (!state.activeSlug) {
+        return;
+      }
+
+      setFeedback(startMessage);
+
+      if (isTimerRunning()) {
+        pauseTimer(false);
+      }
+
+      const solveTimeMs = getElapsedMs() > 0 ? getElapsedMs() : undefined;
+      const mode = defaultReviewMode(state.currentState);
+
+      const saved = await persistReview(
+        state.activeSlug,
+        rating,
+        mode,
+        solveTimeMs
+      );
+      if (!saved) {
+        return;
+      }
+
+      setState((current) => ({
+        ...current,
+        collapsed: false,
+        selectedMode: mode,
+        selectedRating: rating,
+      }));
+
+      if (solveTimeMs) {
+        setFeedback(
+          `Logged ${ratingLabel(rating)} from ${formatClock(
+            solveTimeMs
+          )}. Details open below.`
+        );
+      } else {
+        setFeedback(`Logged ${ratingLabel(rating)}. Details open below.`);
+      }
+
+      await refreshCurrentPage(state.activeSlug);
+    },
+    [
+      getElapsedMs,
+      isTimerRunning,
+      pauseTimer,
+      persistReview,
+      refreshCurrentPage,
+      setFeedback,
+      state.activeSlug,
+      state.currentState,
+    ]
+  );
+
+  const onCompactSubmit = useCallback(async (): Promise<void> => {
+    if (!state.activeSlug) {
+      return;
+    }
+
+    const rating = deriveQuickRating(
+      getElapsedMs() > 0 ? getElapsedMs() : undefined,
+      goalForDifficulty(state.currentDifficulty)
+    );
+    await saveCompactReview(rating, "Submitting review...");
+  }, [
+    state.activeSlug,
+    state.currentDifficulty,
+    saveCompactReview,
+    getElapsedMs,
+  ]);
+
+  const onCompactFail = useCallback(async (): Promise<void> => {
+    await saveCompactReview(0, "Logging failure...");
+  }, [saveCompactReview]);
 
   const scheduleWarmRefreshes = useCallback(
     (slug: string) => {
@@ -490,10 +537,10 @@ export function useOverlayController(
     }
 
     ++requestTokenRef.current;
-      activeSlugRef.current = slug;
-      clearWarmRefreshes();
-      resetTimer(false);
-      setTimerRunning(false);
+    activeSlugRef.current = slug;
+    clearWarmRefreshes();
+    resetTimer(false);
+    setTimerRunning(false);
     setState((current) => ({
       ...current,
       activeSlug: slug,
@@ -550,7 +597,7 @@ export function useOverlayController(
   }, [clearTick, clearWarmRefreshes]);
 
   if (!state.activeSlug) {
-    return { panelProps: null };
+    return {panelProps: null};
   }
 
   const studyStateSummary = getStudyStateSummary(state.currentState);
@@ -564,25 +611,12 @@ export function useOverlayController(
         state.feedbackMessage ||
         (studyStateSummary.nextReviewAt
           ? `Next review ${formatDate(studyStateSummary.nextReviewAt)}`
-          : "Open details to adjust recalibration or add notes."),
+          : "Expand to rate or add notes."),
       feedbackIsError: state.feedbackIsError,
-      goalDisplay: `Goal ${formatClock(goalForDifficulty(state.currentDifficulty))}`,
-      hint: timerRunning
-        ? "Timer running. Submit logs with the conservative protocol unless you override it."
-        : elapsedMs > 0
-          ? `Paused at ${formatClock(elapsedMs)}. Quick submit will log ${ratingLabel(
-              quickRating
-            )} based on that run.`
-          : "Quick submit logs Good by default. Start the timer if you want solve time to drive the default rating.",
-      isDue: studyStateSummary.isDue,
       isTimerRunning: timerRunning,
-      lastReviewedLabel: studyStateSummary.lastReviewedAt
-        ? `Last ${formatDate(studyStateSummary.lastReviewedAt)}`
-        : "No logged review yet",
-      modeBadgeLabel: modeBadge(state.currentState),
       nextReviewLabel: studyStateSummary.nextReviewAt
         ? `Next review ${formatDate(studyStateSummary.nextReviewAt)}`
-        : "Open details to adjust recalibration or add notes.",
+        : "Expand to rate or add notes.",
       notes: state.draftNotes,
       onChangeMode: (mode: ReviewMode) => {
         setState((current) => ({
@@ -595,6 +629,12 @@ export function useOverlayController(
           ...current,
           draftNotes: value,
         }));
+      },
+      onCompactSubmit: () => {
+        void onCompactSubmit();
+      },
+      onCompactFail: () => {
+        void onCompactFail();
       },
       onOpenSettings: () => {
         void openExtensionPage("dashboard.html?view=settings");
@@ -629,14 +669,13 @@ export function useOverlayController(
           collapsed: !current.collapsed,
         }));
       },
-      phaseLabel: getStudyPhaseLabel(studyStateSummary.phase),
-      phaseTone: phaseTone(studyStateSummary.phase),
-      quickRatingLabel: `Default ${ratingLabel(quickRating)}`,
       saveButtonLabel: studyStateSummary.reviewCount
         ? "Save Override"
         : "Save First Solve",
       selectedMode: state.selectedMode,
       selectedRating: state.selectedRating,
+      statusLabel: buildStatusLabel(state.currentState),
+      targetDisplay: formatClock(goalForDifficulty(state.currentDifficulty)),
       timerDisplay: formatClock(elapsedMs),
       title: state.currentTitle,
     },

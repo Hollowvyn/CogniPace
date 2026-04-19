@@ -121,6 +121,7 @@ Let users review and log progress directly on the LeetCode problem page.
 ### Current Behavior
 
 - collapsed and expanded overlay states
+- collapsed overlay prioritizes a compact timer-first strip with expand access
 - rating controls
 - timer controls
 - notes field
@@ -169,6 +170,7 @@ Give users lightweight solve-time awareness and a fast logging path.
 
 - timer goal is derived from problem difficulty
 - user can start, pause, and reset the timer
+- collapsed submit saves immediately, preserves elapsed time, and expands into the full override form
 - quick submit defaults to a conservative rating path
 - full save path supports explicit override
 
