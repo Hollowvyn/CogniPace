@@ -5,66 +5,24 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
-import { alpha } from "@mui/material/styles";
+import {alpha} from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { StudyMode } from "../../../../domain/types";
-import { ActiveCourseView, CourseQuestionView } from "../../../../domain/views";
-import { kineticTokens } from "../../../theme";
+import {ActiveCourseView, CourseQuestionView} from "../../../../domain/views";
+import {kineticTokens} from "../../../theme";
 
-import {
-  popupIconButtonSx,
-  popupPanelSx,
-  popupSmallButtonSx,
-  popupSectionLabelSx,
-} from "./popupStyles";
+import {popupIconButtonSx, popupPanelSx, popupSectionLabelSx, popupSmallButtonSx,} from "./popupStyles";
 
-import type { ReactNode } from "react";
+import type {ReactNode} from "react";
 
-interface PopupCourseActionProps {
-  courseId: string;
-  nextQuestion: CourseQuestionView;
-  onOpenProblem: (target: {
-    slug: string;
-    courseId?: string;
-    chapterId?: string;
-  }) => Promise<void> | void;
-}
-
-function PopupCourseAction(props: PopupCourseActionProps) {
-  return (
-    <Tooltip title="Continue path">
-      <IconButton
-        aria-label="Continue path"
-        onClick={() => {
-          void props.onOpenProblem({
-            chapterId: props.nextQuestion.chapterId,
-            courseId: props.courseId,
-            slug: props.nextQuestion.slug,
-          });
-        }}
-        size="small"
-        sx={{
-          ...popupIconButtonSx,
-          borderColor: alpha(kineticTokens.accent, 0.42),
-          color: kineticTokens.accent,
-          height: 28,
-          width: 28,
-        }}
-      >
-        <ChevronRightRounded aria-hidden="true" fontSize="small" />
-      </IconButton>
-    </Tooltip>
-  );
-}
-
-function PopupCoursePanelChrome(props: {
+/** Shared layout for all course panels in the popup. */
+export function CoursePanelLayout(props: {
   children: ReactNode;
-  isModeActionDisabled?: boolean;
-  modeActionLabel: string;
+  disabled?: boolean;
   onModeAction: () => void;
-  onOpenCourseDashboard: () => void;
+  onOpenDashboard: () => void;
+  primaryActionLabel: string;
   title?: string;
 }) {
   return (
@@ -75,11 +33,7 @@ function PopupCoursePanelChrome(props: {
         p: 1.35,
       }}
     >
-      <Stack
-        sx={{
-          height: "100%",
-        }}
-      >
+      <Stack sx={{height: "100%"}}>
         <Stack spacing={1.2}>
           <Typography sx={popupSectionLabelSx}>
             {props.title ?? "Active Course"}
@@ -91,12 +45,10 @@ function PopupCoursePanelChrome(props: {
           direction="row"
           justifyContent="space-between"
           spacing={0.8}
-          sx={{
-            mt: "auto",
-          }}
+          sx={{mt: "auto"}}
         >
           <Button
-            disabled={props.isModeActionDisabled}
+            disabled={props.disabled}
             onClick={props.onModeAction}
             size="small"
             sx={{
@@ -106,16 +58,16 @@ function PopupCoursePanelChrome(props: {
             }}
             variant="outlined"
           >
-            {props.modeActionLabel}
+            {props.primaryActionLabel}
           </Button>
           <Tooltip title="Open courses dashboard">
             <IconButton
               aria-label="Open courses dashboard"
-              onClick={props.onOpenCourseDashboard}
+              onClick={props.onOpenDashboard}
               size="small"
               sx={popupIconButtonSx}
             >
-              <CallMadeRounded aria-hidden="true" fontSize="small" />
+              <CallMadeRounded aria-hidden="true" fontSize="small"/>
             </IconButton>
           </Tooltip>
         </Stack>
@@ -124,17 +76,17 @@ function PopupCoursePanelChrome(props: {
   );
 }
 
-function EmptyCoursePanel(props: {
-  isModeActionDisabled?: boolean;
+export function CoursePanelEmpty(props: {
+  disabled?: boolean;
   onEnterFreestyle: () => void;
-  onOpenCourseDashboard: () => void;
+  onOpenDashboard: () => void;
 }) {
   return (
-    <PopupCoursePanelChrome
-      isModeActionDisabled={props.isModeActionDisabled}
-      modeActionLabel="Start freestyle mode"
+    <CoursePanelLayout
+      disabled={props.disabled}
       onModeAction={props.onEnterFreestyle}
-      onOpenCourseDashboard={props.onOpenCourseDashboard}
+      onOpenDashboard={props.onOpenDashboard}
+      primaryActionLabel="Start freestyle mode"
     >
       <Stack spacing={0.7}>
         <Typography component="h2" variant="h6">
@@ -144,54 +96,80 @@ function EmptyCoursePanel(props: {
           Choose a course in the dashboard to restore the guided path.
         </Typography>
       </Stack>
-    </PopupCoursePanelChrome>
+    </CoursePanelLayout>
   );
 }
 
-function CompletedCoursePanel(props: {
-  course: ActiveCourseView;
-  isModeActionDisabled?: boolean;
+export function CoursePanelCompleted(props: {
+  courseName: string;
+  disabled?: boolean;
   onEnterFreestyle: () => void;
-  onOpenCourseDashboard: () => void;
+  onOpenDashboard: () => void;
 }) {
   return (
-    <PopupCoursePanelChrome
-      isModeActionDisabled={props.isModeActionDisabled}
-      modeActionLabel="Start freestyle mode"
+    <CoursePanelLayout
+      disabled={props.disabled}
       onModeAction={props.onEnterFreestyle}
-      onOpenCourseDashboard={props.onOpenCourseDashboard}
+      onOpenDashboard={props.onOpenDashboard}
+      primaryActionLabel="Start freestyle mode"
     >
       <Stack spacing={0.7}>
         <Typography component="h2" variant="h6">
-          {props.course.name}
+          {props.courseName}
         </Typography>
         <Typography color="text.secondary" variant="body2">
           Course complete. Switch tracks in the dashboard or stay focused on due
           reviews.
         </Typography>
       </Stack>
-    </PopupCoursePanelChrome>
+    </CoursePanelLayout>
   );
 }
 
-function StudyPlanCoursePanel(props: {
-  course: ActiveCourseView;
-  isModeActionDisabled?: boolean;
-  nextQuestion: CourseQuestionView;
-  onEnterFreestyle: () => void;
-  onOpenCourseDashboard: () => void;
-  onOpenProblem: (target: {
-    slug: string;
-    courseId?: string;
-    chapterId?: string;
-  }) => Promise<void> | void;
+export function CoursePanelFreestyle(props: {
+  disabled?: boolean;
+  onOpenDashboard: () => void;
+  onReturnToStudyMode: () => void;
 }) {
   return (
-    <PopupCoursePanelChrome
-      isModeActionDisabled={props.isModeActionDisabled}
-      modeActionLabel="Start freestyle mode"
-      onModeAction={props.onEnterFreestyle}
-      onOpenCourseDashboard={props.onOpenCourseDashboard}
+    <CoursePanelLayout
+      disabled={props.disabled}
+      onModeAction={props.onReturnToStudyMode}
+      onOpenDashboard={props.onOpenDashboard}
+      primaryActionLabel="Start study mode"
+    >
+      <Stack spacing={0.7}>
+        <Typography component="h2" variant="h6">
+          You are in free style mode
+        </Typography>
+        <Typography color="text.secondary" variant="body2">
+          Start study mode to resume your guided course progression.
+        </Typography>
+      </Stack>
+    </CoursePanelLayout>
+  );
+}
+
+export function CoursePanelStudyPlan(props: {
+  actions: {
+    onEnterFreestyle: () => void;
+    onOpenDashboard: () => void;
+    onOpenProblem: (target: {
+      slug: string;
+      courseId?: string;
+      chapterId?: string;
+    }) => Promise<void> | void;
+  };
+  course: ActiveCourseView;
+  disabled?: boolean;
+  nextQuestion: CourseQuestionView;
+}) {
+  return (
+    <CoursePanelLayout
+      disabled={props.disabled}
+      onModeAction={props.actions.onEnterFreestyle}
+      onOpenDashboard={props.actions.onOpenDashboard}
+      primaryActionLabel="Start freestyle mode"
     >
       <Stack spacing={1.2}>
         <Typography
@@ -257,84 +235,32 @@ function StudyPlanCoursePanel(props: {
               >
                 {props.nextQuestion.title}
               </Typography>
-              <PopupCourseAction
-                courseId={props.course.id}
-                nextQuestion={props.nextQuestion}
-                onOpenProblem={props.onOpenProblem}
-              />
+              <Tooltip title="Continue path">
+                <IconButton
+                  aria-label="Continue path"
+                  onClick={() => {
+                    void props.actions.onOpenProblem({
+                      chapterId: props.nextQuestion.chapterId,
+                      courseId: props.course.id,
+                      slug: props.nextQuestion.slug,
+                    });
+                  }}
+                  size="small"
+                  sx={{
+                    ...popupIconButtonSx,
+                    borderColor: alpha(kineticTokens.accent, 0.42),
+                    color: kineticTokens.accent,
+                    height: 28,
+                    width: 28,
+                  }}
+                >
+                  <ChevronRightRounded aria-hidden="true" fontSize="small"/>
+                </IconButton>
+              </Tooltip>
             </Stack>
           </Stack>
         </Box>
       </Stack>
-    </PopupCoursePanelChrome>
-  );
-}
-
-export interface PopupCourseSectionProps {
-  course: ActiveCourseView | null;
-  isModeActionDisabled?: boolean;
-  mode: StudyMode;
-  nextQuestion: CourseQuestionView | null;
-  onEnterFreestyle: () => void;
-  onOpenCourseDashboard: () => void;
-  onOpenProblem: (target: {
-    slug: string;
-    courseId?: string;
-    chapterId?: string;
-  }) => Promise<void> | void;
-  onReturnToStudyMode: () => void;
-}
-
-export function PopupCourseSection(props: PopupCourseSectionProps) {
-  if (props.mode === "freestyle") {
-    return (
-      <PopupCoursePanelChrome
-        isModeActionDisabled={props.isModeActionDisabled}
-        modeActionLabel="Start study mode"
-        onModeAction={props.onReturnToStudyMode}
-        onOpenCourseDashboard={props.onOpenCourseDashboard}
-      >
-        <Stack spacing={0.7}>
-          <Typography component="h2" variant="h6">
-            You are in free style mode
-          </Typography>
-          <Typography color="text.secondary" variant="body2">
-            Start study mode to resume your guided course progression.
-          </Typography>
-        </Stack>
-      </PopupCoursePanelChrome>
-    );
-  }
-
-  if (!props.course) {
-    return (
-      <EmptyCoursePanel
-        isModeActionDisabled={props.isModeActionDisabled}
-        onEnterFreestyle={props.onEnterFreestyle}
-        onOpenCourseDashboard={props.onOpenCourseDashboard}
-      />
-    );
-  }
-
-  if (!props.nextQuestion) {
-    return (
-      <CompletedCoursePanel
-        course={props.course}
-        isModeActionDisabled={props.isModeActionDisabled}
-        onEnterFreestyle={props.onEnterFreestyle}
-        onOpenCourseDashboard={props.onOpenCourseDashboard}
-      />
-    );
-  }
-
-  return (
-    <StudyPlanCoursePanel
-      course={props.course}
-      isModeActionDisabled={props.isModeActionDisabled}
-      nextQuestion={props.nextQuestion}
-      onEnterFreestyle={props.onEnterFreestyle}
-      onOpenCourseDashboard={props.onOpenCourseDashboard}
-      onOpenProblem={props.onOpenProblem}
-    />
+    </CoursePanelLayout>
   );
 }

@@ -55,93 +55,84 @@ function PopupChip(props: { label: string; tone: keyof typeof chipToneSx }) {
   );
 }
 
-export interface PopupRecommendationSectionProps {
+/** Layout for the recommendation section header. */
+function RecommendationHeader(props: {
   canShuffle: boolean;
-  onOpenProblem: (target: Pick<RecommendedProblemView, "slug">) => Promise<void> | void;
   onShuffle: () => void;
-  recommended: RecommendedProblemView | null;
+}) {
+  return (
+    <Stack
+      alignItems="center"
+      direction="row"
+      justifyContent="space-between"
+      spacing={1}
+      sx={{
+        borderBottom: `1px solid ${alpha(kineticTokens.outlineStrong, 0.28)}`,
+        px: 1.65,
+        py: 1.3,
+      }}
+    >
+      <Typography sx={popupSectionLabelSx}>Recommended Now</Typography>
+      {props.canShuffle ? (
+        <Tooltip title="Shuffle recommendation">
+          <IconButton
+            aria-label="Shuffle recommendation"
+            onClick={props.onShuffle}
+            size="small"
+            sx={popupIconButtonSx}
+          >
+            <ShuffleRounded aria-hidden="true" fontSize="small"/>
+          </IconButton>
+        </Tooltip>
+      ) : null}
+    </Stack>
+  );
 }
 
-export function PopupRecommendationSection(props: PopupRecommendationSectionProps) {
-  if (!props.recommended) {
-    return (
-      <Box sx={{...popupPanelSx, p: 1.7}}>
-        <Stack spacing={1.7}>
-          <Stack
-            alignItems="center"
-            direction="row"
-            justifyContent="space-between"
-            spacing={1}
-          >
-            <Typography sx={popupSectionLabelSx}>
-              Recommended Now
-            </Typography>
-            {props.canShuffle ? (
-              <Tooltip title="Shuffle recommendation">
-                <IconButton
-                  aria-label="Shuffle recommendation"
-                  onClick={props.onShuffle}
-                  size="small"
-                  sx={popupIconButtonSx}
-                >
-                  <ShuffleRounded aria-hidden="true" fontSize="small"/>
-                </IconButton>
-              </Tooltip>
-            ) : null}
-          </Stack>
-          <Stack spacing={0.65}>
-            <Typography component="h2" variant="h6">
-              Queue Clear
-            </Typography>
-            <Typography color="text.secondary" variant="body2">
-              No review pressure right now. Keep moving through your active
-              course or refresh after the next session.
-            </Typography>
-          </Stack>
-        </Stack>
-      </Box>
-    );
-  }
+export function RecommendationEmpty(props: {
+  canShuffle: boolean;
+  onShuffle: () => void;
+}) {
+  return (
+    <Box sx={{...popupPanelSx, p: 0}}>
+      <RecommendationHeader
+        canShuffle={props.canShuffle}
+        onShuffle={props.onShuffle}
+      />
+      <Stack spacing={0.65} sx={{p: 1.7}}>
+        <Typography component="h2" variant="h6">
+          Queue Clear
+        </Typography>
+        <Typography color="text.secondary" variant="body2">
+          No review pressure right now. Keep moving through your active course
+          or refresh after the next session.
+        </Typography>
+      </Stack>
+    </Box>
+  );
+}
 
+export function RecommendationActive(props: {
+  actions: {
+    onOpenProblem: (
+      target: Pick<RecommendedProblemView, "slug">
+    ) => Promise<void> | void;
+    onShuffle: () => void;
+  };
+  canShuffle: boolean;
+  recommended: RecommendedProblemView;
+}) {
   const reasonTone = recommendedTone(props.recommended.reason);
   const difficultyToneValue = difficultyTone(props.recommended.difficulty);
 
   return (
     <Box sx={{...popupPanelSx, overflow: "hidden"}}>
-      <Stack
-        alignItems="center"
-        direction="row"
-        justifyContent="space-between"
-        spacing={1}
-        sx={{
-          borderBottom: `1px solid ${alpha(kineticTokens.outlineStrong, 0.28)}`,
-          px: 1.65,
-          py: 1.3,
-        }}
-      >
-        <Typography sx={popupSectionLabelSx}>
-          Recommended Now
-        </Typography>
-        {props.canShuffle ? (
-          <Tooltip title="Shuffle recommendation">
-            <IconButton
-              aria-label="Shuffle recommendation"
-              onClick={props.onShuffle}
-              size="small"
-              sx={popupIconButtonSx}
-            >
-              <ShuffleRounded aria-hidden="true" fontSize="small"/>
-            </IconButton>
-          </Tooltip>
-        ) : null}
-      </Stack>
+      <RecommendationHeader
+        canShuffle={props.canShuffle}
+        onShuffle={props.actions.onShuffle}
+      />
 
-      <Stack
-        alignItems="center"
-        direction="row"
-        spacing={1.45}
-        sx={{p: 1.7}}
-      >
+      <Stack alignItems="center" direction="row" spacing={1.45} sx={{p: 1.7}}>
         <Stack spacing={1.05} sx={{flex: 1, minWidth: 0}}>
           <Typography
             component="h2"
@@ -174,7 +165,7 @@ export function PopupRecommendationSection(props: PopupRecommendationSectionProp
         <Button
           endIcon={<OpenInNewRounded aria-hidden="true" fontSize="small"/>}
           onClick={() => {
-            void props.onOpenProblem({slug: props.recommended!.slug});
+            void props.actions.onOpenProblem({slug: props.recommended.slug});
           }}
           sx={{
             ...popupSmallButtonSx,

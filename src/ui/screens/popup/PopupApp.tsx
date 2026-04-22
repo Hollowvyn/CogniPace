@@ -4,19 +4,40 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import { alpha } from "@mui/material/styles";
+import {alpha} from "@mui/material/styles";
 
-import { kineticTokens } from "../../theme";
+import {kineticTokens} from "../../theme";
 
-import { PopupCourseSection } from "./components/PopupCourseSection";
-import { PopupHeader } from "./components/PopupHeader";
-import { PopupMetricTile } from "./components/PopupMetricTile";
-import { PopupRecommendationSection } from "./components/PopupRecommendationSection";
-import { popupShellSx } from "./components/popupStyles";
-import { usePopupController } from "./usePopupController";
+import {
+  CoursePanelCompleted,
+  CoursePanelEmpty,
+  CoursePanelFreestyle,
+  CoursePanelStudyPlan,
+} from "./components/PopupCourseSection";
+import {PopupHeader} from "./components/PopupHeader";
+import {PopupMetricTile} from "./components/PopupMetricTile";
+import {RecommendationActive, RecommendationEmpty,} from "./components/PopupRecommendationSection";
+import {popupShellSx} from "./components/popupStyles";
+import {usePopupController} from "./usePopupController";
 
 export function PopupApp() {
   const controller = usePopupController();
+
+  const courseActions = {
+    onEnterFreestyle: () => {
+      void controller.setStudyMode("freestyle");
+    },
+    onOpenDashboard: controller.openCoursesDashboard,
+    onOpenProblem: controller.onOpenProblem,
+    onReturnToStudyMode: () => {
+      void controller.setStudyMode("studyPlan");
+    },
+  };
+
+  const recommendationActions = {
+    onOpenProblem: controller.onOpenProblem,
+    onShuffle: controller.shuffleRecommendation,
+  };
 
   return (
     <Box
@@ -36,11 +57,7 @@ export function PopupApp() {
           }}
         />
 
-        <Box
-          sx={{
-            p: 1.25,
-          }}
-        >
+        <Box sx={{p: 1.25}}>
           <Stack spacing={1.2}>
             <Grid container spacing={1.25}>
               <Grid size={6}>
@@ -60,27 +77,46 @@ export function PopupApp() {
               </Grid>
             </Grid>
 
-            <PopupRecommendationSection
-              canShuffle={controller.hasMultipleRecommended}
-              onOpenProblem={controller.onOpenProblem}
-              onShuffle={controller.shuffleRecommendation}
-              recommended={controller.recommended}
-            />
+            {controller.recommended ? (
+              <RecommendationActive
+                actions={recommendationActions}
+                canShuffle={controller.hasMultipleRecommended}
+                recommended={controller.recommended}
+              />
+            ) : (
+              <RecommendationEmpty
+                canShuffle={controller.hasMultipleRecommended}
+                onShuffle={controller.shuffleRecommendation}
+              />
+            )}
 
-            <PopupCourseSection
-              course={controller.activeCourseDetail}
-              isModeActionDisabled={controller.isUpdatingStudyMode}
-              mode={controller.studyMode}
-              nextQuestion={controller.courseNext}
-              onEnterFreestyle={() => {
-                void controller.setStudyMode("freestyle");
-              }}
-              onOpenCourseDashboard={controller.openCoursesDashboard}
-              onOpenProblem={controller.onOpenProblem}
-              onReturnToStudyMode={() => {
-                void controller.setStudyMode("studyPlan");
-              }}
-            />
+            {controller.studyMode === "freestyle" ? (
+              <CoursePanelFreestyle
+                disabled={controller.isUpdatingStudyMode}
+                onOpenDashboard={courseActions.onOpenDashboard}
+                onReturnToStudyMode={courseActions.onReturnToStudyMode}
+              />
+            ) : !controller.activeCourseDetail ? (
+              <CoursePanelEmpty
+                disabled={controller.isUpdatingStudyMode}
+                onEnterFreestyle={courseActions.onEnterFreestyle}
+                onOpenDashboard={courseActions.onOpenDashboard}
+              />
+            ) : !controller.courseNext ? (
+              <CoursePanelCompleted
+                courseName={controller.activeCourseDetail.name}
+                disabled={controller.isUpdatingStudyMode}
+                onEnterFreestyle={courseActions.onEnterFreestyle}
+                onOpenDashboard={courseActions.onOpenDashboard}
+              />
+            ) : (
+              <CoursePanelStudyPlan
+                actions={courseActions}
+                course={controller.activeCourseDetail}
+                disabled={controller.isUpdatingStudyMode}
+                nextQuestion={controller.courseNext}
+              />
+            )}
           </Stack>
         </Box>
       </Paper>
