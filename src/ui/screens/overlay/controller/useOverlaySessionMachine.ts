@@ -2,18 +2,14 @@ import {useCallback, useState} from "react";
 
 import {
   overrideLastReviewResult,
+  saveOverlayLogDraft,
   saveReviewResult,
 } from "../../../../data/repositories/problemSessionRepository";
 import {defaultReviewMode} from "../../../../domain/fsrs/reviewPolicy";
 import {Difficulty, Rating, ReviewMode, StudyState} from "../../../../domain/types";
 import {OverlayDraftLogFields} from "../overlayPanel.types";
 
-import {
-  cloneDraft,
-  draftFromStudyState,
-  emptyDraft,
-  reviewPayloadFromDraft,
-} from "./draftFields";
+import {cloneDraft, draftFromStudyState, emptyDraft, reviewPayloadFromDraft,} from "./draftFields";
 import {OverlayTimerController} from "./useOverlayTimer";
 
 interface SubmittedSessionSnapshot {
@@ -33,6 +29,7 @@ interface OverlaySessionState {
   draftContextSlug: string;
   feedbackIsError: boolean;
   feedbackMessage: string;
+  persistedDraft: OverlayDraftLogFields;
   selectedRating: Rating;
   submittedSession: SubmittedSessionSnapshot | null;
 }
@@ -60,6 +57,7 @@ const initialOverlaySessionState: OverlaySessionState = {
   draftContextSlug: "",
   feedbackIsError: false,
   feedbackMessage: "",
+  persistedDraft: emptyDraft(),
   selectedRating: 2,
   submittedSession: null,
 };
@@ -105,6 +103,7 @@ export function useOverlaySessionMachine(
       draftContextSlug: "",
       feedbackIsError: false,
       feedbackMessage: "",
+      persistedDraft: emptyDraft(),
       selectedRating: 2,
       submittedSession: null,
     }));
@@ -123,6 +122,7 @@ export function useOverlaySessionMachine(
         draftContextSlug: "",
         feedbackIsError: false,
         feedbackMessage: "",
+        persistedDraft: emptyDraft(),
         selectedRating: 2,
         submittedSession: null,
       }));
@@ -139,6 +139,7 @@ export function useOverlaySessionMachine(
         currentDifficulty: difficulty,
         currentState: studyState,
         currentTitle: title,
+        persistedDraft: nextDraft,
         draftContextSlug:
           current.draftContextSlug !== slug ? slug : current.draftContextSlug,
         draft:
@@ -176,10 +177,17 @@ export function useOverlaySessionMachine(
     }));
   }, []);
 
-  const toggleCollapse = useCallback(() => {
+  const collapse = useCallback(() => {
     setState((current) => ({
       ...current,
-      collapsed: !current.collapsed,
+      collapsed: true,
+    }));
+  }, []);
+
+  const expand = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      collapsed: false,
     }));
   }, []);
 
@@ -237,6 +245,37 @@ export function useOverlaySessionMachine(
     [setFeedback]
   );
 
+  const persistDraft = useCallback(
+    async (
+      slug: string,
+      draft: OverlayDraftLogFields
+    ): Promise<boolean> => {
+      const response = await saveOverlayLogDraft({
+        slug,
+        ...reviewPayloadFromDraft(draft),
+      });
+
+      if (!response.ok) {
+        setFeedback(response.error ?? "Failed to save log draft.", true);
+        return false;
+      }
+
+      setState((current) => ({
+        ...current,
+        currentState: current.currentState
+          ? {
+            ...current.currentState,
+            ...reviewPayloadFromDraft(draft),
+          }
+          : current.currentState,
+        persistedDraft: cloneDraft(draft),
+      }));
+
+      return true;
+    },
+    [setFeedback]
+  );
+
   const submitRating = useCallback(
     async (rating: Rating): Promise<string | null> => {
       if (!state.activeSlug || state.submittedSession) {
@@ -265,6 +304,15 @@ export function useOverlaySessionMachine(
       setState((current) => ({
         ...current,
         collapsed: false,
+        currentState: current.currentState
+          ? {
+            ...current.currentState,
+            ...reviewPayloadFromDraft(draftSnapshot),
+            lastRating: rating,
+            lastSolveTimeMs: solveTimeMs,
+          }
+          : current.currentState,
+        persistedDraft: draftSnapshot,
         selectedRating: rating,
         submittedSession: {
           draft: draftSnapshot,
@@ -298,6 +346,14 @@ export function useOverlaySessionMachine(
 
     setState((current) => ({
       ...current,
+      currentState: current.currentState
+        ? {
+          ...current.currentState,
+          ...reviewPayloadFromDraft(draftSnapshot),
+          lastRating: state.selectedRating,
+        }
+        : current.currentState,
+      persistedDraft: draftSnapshot,
       submittedSession: current.submittedSession
         ? {
           ...current.submittedSession,
@@ -367,7 +423,10 @@ export function useOverlaySessionMachine(
     applyProblemContext,
     clearActiveProblem,
     clearFeedback,
+    collapse,
+    expand,
     pauseTimer,
+    persistDraft,
     resetTimer,
     restartSession,
     saveOverride,
@@ -376,7 +435,6 @@ export function useOverlaySessionMachine(
     startTimer,
     state,
     submitRating,
-    toggleCollapse,
     updateDraft,
   };
 }

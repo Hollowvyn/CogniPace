@@ -132,6 +132,8 @@ Let users review and log progress directly on the LeetCode problem page.
 - collapsed overlay prioritizes a compact timer-first strip with expand access
 - expanded overlay shows a smaller timer, a target-time reference, and a compact FSRS assessment control
 - expanded logging fields include interview pattern, time complexity, space complexity, languages used, and notes
+- external clicks collapse the expanded overlay
+- collapsing the expanded overlay saves the current structured log fields without creating a new review entry
 - submit, failed, save-override, and restart session actions are distinct
 - open settings shortcut
 - both overlay variants keep helper text and feedback in reserved inline regions so timer and submit states do not shift

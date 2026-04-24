@@ -58,6 +58,14 @@ export interface MessageRequestMap {
     chapterId?: string;
     source?: "overlay" | "dashboard";
   };
+  SAVE_OVERLAY_LOG_DRAFT: {
+    slug: string;
+    interviewPattern?: ReviewLogFields["interviewPattern"];
+    timeComplexity?: ReviewLogFields["timeComplexity"];
+    spaceComplexity?: ReviewLogFields["spaceComplexity"];
+    languages?: ReviewLogFields["languages"];
+    notes?: ReviewLogFields["notes"];
+  };
   OVERRIDE_LAST_REVIEW_RESULT: {
     slug: string;
     rating: Rating;
@@ -149,6 +157,7 @@ export interface MessageResponseMap {
   GET_PROBLEM_CONTEXT: ProblemContextResponse;
   RATE_PROBLEM: SaveReviewResultResponse;
   SAVE_REVIEW_RESULT: SaveReviewResultResponse;
+  SAVE_OVERLAY_LOG_DRAFT: StudyStateMutationResponse;
   OVERRIDE_LAST_REVIEW_RESULT: SaveReviewResultResponse;
   OPEN_EXTENSION_PAGE: OpenedResponse;
   OPEN_PROBLEM_PAGE: OpenedResponse;

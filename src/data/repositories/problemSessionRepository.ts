@@ -35,6 +35,18 @@ export async function saveReviewResult(input: {
   return sendMessage("SAVE_REVIEW_RESULT", input);
 }
 
+/** Persists the overlay's structured log draft without appending review history. */
+export async function saveOverlayLogDraft(input: {
+  slug: string;
+  interviewPattern?: ReviewLogFields["interviewPattern"];
+  timeComplexity?: ReviewLogFields["timeComplexity"];
+  spaceComplexity?: ReviewLogFields["spaceComplexity"];
+  languages?: ReviewLogFields["languages"];
+  notes?: ReviewLogFields["notes"];
+}) {
+  return sendMessage("SAVE_OVERLAY_LOG_DRAFT", input);
+}
+
 /** Replaces the latest saved review result for the active problem. */
 export async function overrideLastReviewResult(input: {
   slug: string;

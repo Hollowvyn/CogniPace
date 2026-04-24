@@ -96,7 +96,7 @@ export function ExpandedOverlayHeader(
       <Stack
         alignItems="center"
         direction="row"
-        onClick={props.header.onToggleCollapse}
+        onClick={props.header.onCollapse}
         spacing={0.85}
         sx={{
           borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
@@ -110,7 +110,7 @@ export function ExpandedOverlayHeader(
               aria-label="Collapse overlay"
               onClick={(event) => {
                 event.stopPropagation();
-                props.header.onToggleCollapse();
+                props.header.onCollapse();
               }}
             >
               <KeyboardArrowDownRounded fontSize="small"/>
@@ -154,19 +154,22 @@ export function ExpandedOverlayHeader(
         </Stack>
       </Stack>
 
-      <Stack spacing={1}>
+      <
+        Stack spacing={1}
+      >
         <Stack
           alignItems="center"
           direction="row"
           justifyContent="space-between"
           spacing={1}
+          sx={{px: 2}}
         >
           <Box sx={{minWidth: 0}}>
             <SurfaceSectionLabel>{props.header.sessionLabel}</SurfaceSectionLabel>
           </Box>
           <DifficultyBadge difficulty={props.header.difficulty}/>
         </Stack>
-        <Stack direction="row" flexWrap="wrap" gap={0.9} sx={{width: "100%"}}>
+        <Stack direction="row" flexWrap="wrap" gap={0.9} justifyContent="space-between" sx={{px: 2}}>
           {props.header.status.cards.map((card) => (
             <HeaderStatusCard
               card={card}

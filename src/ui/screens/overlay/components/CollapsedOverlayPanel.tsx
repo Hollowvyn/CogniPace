@@ -40,7 +40,7 @@ export function CollapsedOverlayPanel(
             <SurfaceTooltip title="Expand overlay">
               <SurfaceIconButton
                 aria-label="Expand overlay"
-                onClick={props.model.actions.onToggleCollapse}
+                onClick={props.model.actions.onExpand}
               >
                 <KeyboardArrowUpRounded fontSize="small"/>
               </SurfaceIconButton>

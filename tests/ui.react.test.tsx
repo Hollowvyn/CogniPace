@@ -737,6 +737,7 @@ describe("OverlayPanel", () => {
       NonNullable<ExpandedOverlayViewModel["feedback"]>
     > | null;
     header?: Partial<ExpandedOverlayViewModel["header"]>;
+    onClickAway?: ExpandedOverlayViewModel["onClickAway"];
     log?: {
       draft?: Partial<ExpandedOverlayViewModel["log"]["draft"]>;
       onChange?: ExpandedOverlayViewModel["log"]["onChange"];
@@ -797,8 +798,8 @@ describe("OverlayPanel", () => {
         feedback,
         header: {
           difficulty: "Medium",
+          onCollapse: () => undefined,
           onOpenSettings: () => undefined,
-          onToggleCollapse: () => undefined,
           sessionLabel: "Recall review",
           status: {
             kind: "history",
@@ -821,6 +822,7 @@ describe("OverlayPanel", () => {
           title: "Group Anagrams",
           ...overrides.header,
         },
+        onClickAway: overrides.onClickAway ?? (() => undefined),
         log: {
           draft: {
             interviewPattern: "",
@@ -867,9 +869,9 @@ describe("OverlayPanel", () => {
         actions: {
           canFail: true,
           canSubmit: true,
+          onExpand: () => undefined,
           onFail: () => undefined,
           onSubmit: () => undefined,
-          onToggleCollapse: () => undefined,
           ...overrides.actions,
         },
         assist: {
@@ -979,36 +981,83 @@ describe("OverlayPanel", () => {
     expect(screen.getByLabelText("Space complexity")).toBeTruthy();
     expect(screen.getByLabelText("Languages used")).toBeTruthy();
     expect(screen.getByLabelText("Notes")).toBeTruthy();
+    expect(
+      screen.getByLabelText("Interview pattern").getAttribute("autocomplete")
+    ).toBe("off");
+    expect(screen.getByLabelText("Notes").getAttribute("autocomplete")).toBe(
+      "off"
+    );
+  });
+
+  it("shows clear icons for populated log fields and clears through the shared change handler", () => {
+    const onChangeDraft = vi.fn();
+
+    renderOverlayPanel(
+      makeExpandedRenderModel({
+        log: {
+          draft: {
+            interviewPattern: "Sliding window",
+            notes: "Track the left pointer.",
+          },
+          onChange: onChangeDraft,
+        },
+      })
+    );
+
+    fireEvent.click(screen.getByRole("button", {name: "Clear Interview pattern"}));
+    fireEvent.click(screen.getByRole("button", {name: "Clear Notes"}));
+
+    expect(onChangeDraft).toHaveBeenCalledWith("interviewPattern", "");
+    expect(onChangeDraft).toHaveBeenCalledWith("notes", "");
+    expect(
+      screen.queryByRole("button", {name: "Clear Time complexity"})
+    ).toBeNull();
   });
 
   it("uses expanded header row click zones while respecting buttons", () => {
     const onOpenSettings = vi.fn();
-    const onToggleCollapse = vi.fn();
+    const onCollapse = vi.fn();
 
     renderOverlayPanel(
       makeExpandedRenderModel({
         header: {
+          onCollapse,
           onOpenSettings,
-          onToggleCollapse,
         },
       })
     );
 
     fireEvent.click(screen.getByRole("button", {name: "Open settings"}));
     expect(onOpenSettings).toHaveBeenCalledTimes(1);
-    expect(onToggleCollapse).toHaveBeenCalledTimes(0);
+    expect(onCollapse).toHaveBeenCalledTimes(0);
 
     fireEvent.click(screen.getByText("Group Anagrams"));
-    expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+    expect(onCollapse).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByTestId("expanded-overlay-header-divider"));
-    expect(onToggleCollapse).toHaveBeenCalledTimes(2);
+    expect(onCollapse).toHaveBeenCalledTimes(2);
 
     fireEvent.click(screen.getByTestId("expanded-overlay-header-row"));
-    expect(onToggleCollapse).toHaveBeenCalledTimes(3);
+    expect(onCollapse).toHaveBeenCalledTimes(3);
 
     fireEvent.click(screen.getByRole("button", {name: "Collapse overlay"}));
-    expect(onToggleCollapse).toHaveBeenCalledTimes(4);
+    expect(onCollapse).toHaveBeenCalledTimes(4);
+  });
+
+  it("collapses on external pointer down but ignores internal interactions", () => {
+    const onClickAway = vi.fn();
+
+    renderOverlayPanel(
+      makeExpandedRenderModel({
+        onClickAway,
+      })
+    );
+
+    fireEvent.pointerDown(screen.getByLabelText("Notes"));
+    expect(onClickAway).toHaveBeenCalledTimes(0);
+
+    fireEvent.pointerDown(document.body);
+    expect(onClickAway).toHaveBeenCalledTimes(1);
   });
 
   it("renders a compact collapsed summary", () => {
@@ -1036,9 +1085,9 @@ describe("OverlayPanel", () => {
     const {rerender} = renderOverlayPanel(
       makeCollapsedRenderModel({
         actions: {
+          onExpand: onToggleCollapse,
           onFail: onFailReview,
           onSubmit: onCompactSubmit,
-          onToggleCollapse,
         },
         timer: {
           onPause: onPauseTimer,
@@ -1065,9 +1114,9 @@ describe("OverlayPanel", () => {
         <OverlayPanel
           renderModel={makeCollapsedRenderModel({
             actions: {
+              onExpand: onToggleCollapse,
               onFail: onFailReview,
               onSubmit: onCompactSubmit,
-              onToggleCollapse,
             },
             timer: {
               isRunning: true,
@@ -1091,6 +1140,7 @@ describe("OverlayPanel", () => {
             actions: {
               canFail: false,
               canSubmit: false,
+              onExpand: onToggleCollapse,
               onFail: onFailReview,
               onSubmit: onCompactSubmit,
             },

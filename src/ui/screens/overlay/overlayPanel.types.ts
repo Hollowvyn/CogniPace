@@ -39,8 +39,8 @@ export type OverlayDraftChangeHandler = (
 
 export interface OverlayHeaderSectionViewModel {
   difficulty: Difficulty;
+  onCollapse: () => void;
   onOpenSettings: () => void;
-  onToggleCollapse: () => void;
   sessionLabel: string;
   status: OverlayHeaderStatus;
   title: string;
@@ -83,9 +83,9 @@ export interface OverlayAssistViewModel {
 export interface CollapsedOverlayActionsViewModel {
   canFail: boolean;
   canSubmit: boolean;
+  onExpand: () => void;
   onFail: () => void;
   onSubmit: () => void;
-  onToggleCollapse: () => void;
 }
 
 export interface ExpandedOverlayActionsViewModel {
@@ -113,6 +113,7 @@ export interface ExpandedOverlayViewModel {
   assessmentAssist: OverlayAssistViewModel;
   feedback: OverlayFeedbackViewModel | null;
   header: OverlayHeaderSectionViewModel;
+  onClickAway: () => void;
   log: OverlayLogSectionViewModel;
   timer: OverlayTimerSectionViewModel & {
     targetDisplay: string;

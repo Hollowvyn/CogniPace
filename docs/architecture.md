@@ -258,6 +258,7 @@ Export payload remains:
 Overlay-specific runtime contracts now include:
 
 - `SAVE_REVIEW_RESULT`
+- `SAVE_OVERLAY_LOG_DRAFT`
   appends a new FSRS review event and stores the current structured log fields
 - `OVERRIDE_LAST_REVIEW_RESULT`
   replaces the latest attempt entry and rebuilds the FSRS card from review history

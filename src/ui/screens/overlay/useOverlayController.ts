@@ -32,7 +32,10 @@ export function useOverlayController(
     activateProblem,
     applyProblemContext,
     clearActiveProblem,
+    collapse,
+    expand,
     pauseTimer,
+    persistDraft,
     resetTimer,
     restartSession,
     saveOverride,
@@ -41,7 +44,6 @@ export function useOverlayController(
     startTimer,
     state: currentState,
     submitRating: persistSubmittedRating,
-    toggleCollapse,
     updateDraft,
   } = useOverlaySessionMachine({timer, windowRef});
   const activeSlugRef = useRef("");
@@ -278,6 +280,21 @@ export function useOverlayController(
     void saveOverride().then(refreshAfterMutation);
   };
 
+  const onCollapseOverlay = async () => {
+    if (currentState.collapsed) {
+      return;
+    }
+
+    if (
+      currentState.activeSlug &&
+      !draftsEqual(currentState.draft, currentState.persistedDraft)
+    ) {
+      await persistDraft(currentState.activeSlug, currentState.draft);
+    }
+
+    collapse();
+  };
+
   const baseTimerModel: OverlayTimerSectionViewModel = {
     canPause: canSubmit,
     canReset: canSubmit && (timer.isRunning || timer.elapsedMs > 0),
@@ -301,9 +318,9 @@ export function useOverlayController(
           actions: {
             canFail: canSubmit,
             canSubmit,
+            onExpand: expand,
             onFail: onFailReview,
             onSubmit: onCompactSubmit,
-            onToggleCollapse: toggleCollapse,
           },
           assist: collapsedAssist,
           feedback,
@@ -340,16 +357,21 @@ export function useOverlayController(
         feedback,
         header: {
           difficulty: currentState.currentDifficulty,
+          onCollapse: () => {
+            void onCollapseOverlay();
+          },
           onOpenSettings: () => {
             void openExtensionPage("dashboard.html?view=settings");
           },
-          onToggleCollapse: toggleCollapse,
           sessionLabel: buildSessionLabel(
             currentState.currentState,
             sessionMode
           ),
           status: buildHeaderStatus(currentState.currentState),
           title: currentState.currentTitle,
+        },
+        onClickAway: () => {
+          void onCollapseOverlay();
         },
         log: {
           draft: currentState.draft,
