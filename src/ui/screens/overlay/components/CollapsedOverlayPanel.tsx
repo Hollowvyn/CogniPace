@@ -5,17 +5,14 @@ import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import {alpha} from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 
+import {NumericDisplay, SurfaceIconButton} from "../../../components";
 import {kineticTokens} from "../../../theme";
 import {CollapsedOverlayViewModel} from "../overlayPanel.types";
-
-import {outlinedChromeIconButtonSx, timerTextSx} from "./sharedStyles";
 
 export function CollapsedOverlayPanel(
   props: {
@@ -40,14 +37,12 @@ export function CollapsedOverlayPanel(
         >
           <Stack alignItems="center" direction="row" spacing={0.9}>
             <Tooltip title="Expand overlay">
-              <IconButton
+              <SurfaceIconButton
                 aria-label="Expand overlay"
                 onClick={props.model.actions.onToggleCollapse}
-                size="small"
-                sx={outlinedChromeIconButtonSx}
               >
                 <KeyboardArrowUpRounded fontSize="small"/>
-              </IconButton>
+              </SurfaceIconButton>
             </Tooltip>
             <Box
               sx={{
@@ -57,19 +52,18 @@ export function CollapsedOverlayPanel(
                 width: "1px",
               }}
             />
-            <Typography
-              component="div"
+            <NumericDisplay
               sx={{
-                ...timerTextSx,
                 flexShrink: 0,
                 fontSize: "2rem",
+                letterSpacing: "-0.06em",
               }}
             >
               {props.model.timer.display}
-            </Typography>
+            </NumericDisplay>
             <Tooltip title={props.model.timer.startLabel}>
               <span>
-                <IconButton
+                <SurfaceIconButton
                   aria-label={props.model.timer.startLabel}
                   disabled={!props.model.timer.canStart}
                   onClick={
@@ -77,7 +71,6 @@ export function CollapsedOverlayPanel(
                       ? props.model.timer.onPause
                       : props.model.timer.onStart
                   }
-                  size="small"
                   sx={{
                     backgroundColor: alpha(kineticTokens.accent, 0.12),
                     border: `1px solid ${alpha(kineticTokens.accentSoft, 0.2)}`,
@@ -92,20 +85,18 @@ export function CollapsedOverlayPanel(
                   ) : (
                     <PlayArrowRounded fontSize="small"/>
                   )}
-                </IconButton>
+                </SurfaceIconButton>
               </span>
             </Tooltip>
             <Tooltip title="Restart timer">
               <span>
-                <IconButton
+                <SurfaceIconButton
                   aria-label="Restart timer"
                   disabled={!props.model.timer.canReset}
                   onClick={props.model.timer.onReset}
-                  size="small"
-                  sx={outlinedChromeIconButtonSx}
                 >
                   <RestartAltRounded fontSize="small"/>
-                </IconButton>
+                </SurfaceIconButton>
               </span>
             </Tooltip>
           </Stack>
@@ -120,11 +111,10 @@ export function CollapsedOverlayPanel(
             </Button>
             <Tooltip title="Fail review">
               <span>
-                <IconButton
+                <SurfaceIconButton
                   aria-label="Fail review"
                   disabled={!props.model.actions.canFail}
                   onClick={props.model.actions.onFail}
-                  size="small"
                   sx={{
                     backgroundColor: kineticTokens.danger,
                     borderRadius: 1.1,
@@ -138,7 +128,7 @@ export function CollapsedOverlayPanel(
                   }}
                 >
                   <CancelRounded fontSize="small"/>
-                </IconButton>
+                </SurfaceIconButton>
               </span>
             </Tooltip>
           </Stack>

@@ -3,14 +3,16 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
+import IconButton, {IconButtonProps} from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
-import { alpha } from "@mui/material/styles";
+import {alpha, Theme} from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { memo, ReactNode } from "react";
+import {SxProps} from "@mui/system";
+import {memo, ReactNode} from "react";
 
-import { Tone } from "../presentation/studyState";
-import { kineticTokens } from "../theme";
+import {Tone} from "../presentation/studyState";
+import {kineticTokens} from "../theme";
 
 const toneStyles: Record<Tone, { background: string; color: string }> = {
   default: {
@@ -57,6 +59,126 @@ export const BrandMark = memo(function BrandMark() {
   );
 });
 
+export function SurfaceSectionLabel(props: { children: ReactNode }) {
+  return (
+    <Typography
+      color="text.secondary"
+      sx={{
+        fontSize: "0.64rem",
+        fontWeight: 700,
+        letterSpacing: "0.14em",
+        textTransform: "uppercase",
+      }}
+    >
+      {props.children}
+    </Typography>
+  );
+}
+
+export function SurfaceIconButton(props: IconButtonProps) {
+  const {sx, ...rest} = props;
+  const baseSx: SxProps<Theme> = {
+    backgroundColor: alpha(kineticTokens.mutedText, 0.08),
+    border: `1px solid ${alpha(kineticTokens.outlineStrong, 0.34)}`,
+    borderRadius: 1.15,
+    color: "text.secondary",
+    height: 30,
+    transition:
+      "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
+    width: 30,
+    "&:hover": {
+      backgroundColor: alpha(kineticTokens.accent, 0.1),
+      borderColor: alpha(kineticTokens.accentSoft, 0.45),
+      color: "primary.light",
+    },
+    "&:focus-visible": {
+      backgroundColor: alpha(kineticTokens.accent, 0.12),
+      outline: `2px solid ${alpha(kineticTokens.info, 0.72)}`,
+      outlineOffset: 2,
+    },
+  };
+  const mergedSx = (sx ? [baseSx, sx] : baseSx) as SxProps<Theme>;
+
+  return (
+    <IconButton
+      size="small"
+      sx={mergedSx}
+      {...rest}
+    />
+  );
+}
+
+export function InsetSurface(props: {
+  children: ReactNode;
+  tone?: Tone;
+  sx?: object;
+}) {
+  const tone = props.tone ?? "default";
+  const backgroundTone = toneStyles[tone];
+
+  return (
+    <Box
+      sx={{
+        backgroundColor:
+          tone === "default"
+            ? alpha(kineticTokens.backgroundAlt, 0.72)
+            : alpha(backgroundTone.color, 0.08),
+        border: `1px solid ${
+          tone === "default"
+            ? alpha(kineticTokens.outlineStrong, 0.22)
+            : alpha(backgroundTone.color, 0.22)
+        }`,
+        borderRadius: 1.8,
+        p: 1.2,
+        ...(props.sx ?? {}),
+      }}
+    >
+      {props.children}
+    </Box>
+  );
+}
+
+export function NumericDisplay(props: {
+  children: ReactNode;
+  color?: string;
+  sx?: object;
+}) {
+  return (
+    <Typography
+      sx={{
+        color: props.color ?? kineticTokens.text,
+        fontFamily: '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif',
+        fontVariantNumeric: "tabular-nums",
+        fontSize: "1.85rem",
+        fontWeight: 700,
+        letterSpacing: "-0.04em",
+        lineHeight: 0.95,
+        ...(props.sx ?? {}),
+      }}
+    >
+      {props.children}
+    </Typography>
+  );
+}
+
+export function StatusSurface(props: {
+  children: ReactNode;
+  tone?: Tone;
+  sx?: object;
+}) {
+  return (
+    <InsetSurface
+      sx={{
+        boxShadow: "none",
+        ...(props.sx ?? {}),
+      }}
+      tone={props.tone}
+    >
+      {props.children}
+    </InsetSurface>
+  );
+}
+
 // Note: SurfaceCard is NOT memoized because it accepts `children: ReactNode`.
 // In React, `children` are almost always passed as new reference objects
 // (new JSX elements) on every render, meaning the shallow comparison will fail
@@ -68,14 +190,14 @@ export function SurfaceCard(props: {
   children: ReactNode;
   compact?: boolean;
 }) {
-  const { action, children, compact = false, label, title } = props;
+  const {action, children, compact = false, label, title} = props;
 
   return (
     <Card>
       <CardContent
         sx={{
           p: compact ? 2 : 2.25,
-          "&:last-child": { pb: compact ? 2 : 2.25 },
+          "&:last-child": {pb: compact ? 2 : 2.25},
         }}
       >
         <Stack spacing={compact ? 1.5 : 2}>
@@ -88,9 +210,7 @@ export function SurfaceCard(props: {
             >
               <Box>
                 {label ? (
-                  <Typography color="text.secondary" variant="overline">
-                    {label}
-                  </Typography>
+                  <SurfaceSectionLabel>{label}</SurfaceSectionLabel>
                 ) : null}
                 {title ? (
                   <Typography component="h2" variant={compact ? "h6" : "h5"}>
@@ -141,18 +261,18 @@ export const ProgressTrack = memo(function ProgressTrack(props: { value: number 
 export const MetricCard = memo(function MetricCard(props: {
   label: string;
   value: string | number;
-  caption: string;
+  caption?: string;
 }) {
   return (
     <SurfaceCard compact>
       <Stack spacing={0.5}>
-        <Typography color="text.secondary" variant="overline">
-          {props.label}
-        </Typography>
-        <Typography variant="h4">{props.value}</Typography>
-        <Typography color="text.secondary" variant="body2">
-          {props.caption}
-        </Typography>
+        <SurfaceSectionLabel>{props.label}</SurfaceSectionLabel>
+        <NumericDisplay sx={{fontSize: "1.85rem"}}>{props.value}</NumericDisplay>
+        {props.caption ? (
+          <Typography color="text.secondary" variant="body2">
+            {props.caption}
+          </Typography>
+        ) : null}
       </Stack>
     </SurfaceCard>
   );

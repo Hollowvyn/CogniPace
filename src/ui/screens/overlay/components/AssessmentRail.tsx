@@ -5,6 +5,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 
 import {Rating} from "../../../../domain/types";
+import {SurfaceSectionLabel} from "../../../components";
 import {kineticTokens} from "../../../theme";
 import {OverlayAssessmentSectionViewModel} from "../overlayPanel.types";
 
@@ -89,9 +90,7 @@ export function AssessmentRail(
 ) {
   return (
     <Stack spacing={1.15}>
-      <Typography color="text.secondary" variant="overline">
-        Assessment
-      </Typography>
+      <SurfaceSectionLabel>Assessment</SurfaceSectionLabel>
       <ToggleButtonGroup
         exclusive
         fullWidth

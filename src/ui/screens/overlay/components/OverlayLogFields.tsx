@@ -1,7 +1,7 @@
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
 
+import {SurfaceSectionLabel} from "../../../components";
 import {OverlayDraftLogFields, OverlayLogSectionViewModel} from "../overlayPanel.types";
 
 function DraftField(
@@ -41,9 +41,7 @@ export function OverlayLogFields(
 ) {
   return (
     <Stack spacing={1.5}>
-      <Typography color="text.secondary" variant="overline">
-        Log
-      </Typography>
+      <SurfaceSectionLabel>Log</SurfaceSectionLabel>
       <DraftField
         ariaLabel="Interview pattern"
         field="interviewPattern"

@@ -1,14 +1,10 @@
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import {alpha} from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 
-import {kineticTokens} from "../../../theme";
+import {InsetSurface, NumericDisplay} from "../../../components";
 import {ExpandedOverlayViewModel} from "../overlayPanel.types";
-
-import {timerTextSx} from "./sharedStyles";
 
 export function ExpandedOverlayTimerCard(
   props: {
@@ -16,15 +12,7 @@ export function ExpandedOverlayTimerCard(
   }
 ) {
   return (
-    <Paper
-      sx={{
-        backgroundColor: alpha(kineticTokens.backgroundAlt, 0.72),
-        border: `1px solid ${alpha(kineticTokens.accent, 0.1)}`,
-        borderRadius: 2.5,
-        px: 1.5,
-        py: 1.55,
-      }}
-    >
+    <InsetSurface sx={{px: 1.5, py: 1.55}} tone="accent">
       <Stack spacing={1.4}>
         <Stack
           alignItems="flex-start"
@@ -32,15 +20,14 @@ export function ExpandedOverlayTimerCard(
           justifyContent="space-between"
           spacing={1}
         >
-          <Typography
-            component="div"
+          <NumericDisplay
             sx={{
-              ...timerTextSx,
               fontSize: "2.4rem",
+              letterSpacing: "-0.06em",
             }}
           >
             {props.timer.display}
-          </Typography>
+          </NumericDisplay>
           <Stack alignItems="flex-end" spacing={0.25} sx={{pt: 0.25}}>
             <Typography color="text.secondary" variant="caption">
               Target time
@@ -77,6 +64,6 @@ export function ExpandedOverlayTimerCard(
           </Button>
         </Stack>
       </Stack>
-    </Paper>
+    </InsetSurface>
   );
 }

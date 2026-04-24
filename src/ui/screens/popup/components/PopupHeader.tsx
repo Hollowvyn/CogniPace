@@ -1,16 +1,13 @@
 import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
-import { alpha } from "@mui/material/styles";
+import {alpha} from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { kineticTokens } from "../../../theme";
-
-import { PopupBrandMark } from "./PopupBrandMark";
-import { popupIconButtonSx } from "./popupStyles";
+import {BrandMark, SurfaceIconButton} from "../../../components";
+import {kineticTokens} from "../../../theme";
 
 export interface PopupHeaderProps {
   onOpenSettings: () => void;
@@ -33,8 +30,8 @@ export function PopupHeader(props: PopupHeaderProps) {
         justifyContent="space-between"
         spacing={1}
       >
-        <Box sx={{ width: 30 }}>
-          <PopupBrandMark />
+        <Box sx={{width: 32}}>
+          <BrandMark/>
         </Box>
         <Typography
           component="h1"
@@ -54,24 +51,22 @@ export function PopupHeader(props: PopupHeaderProps) {
         </Typography>
         <Stack direction="row" spacing={0.45}>
           <Tooltip title="Refresh popup">
-            <IconButton
+            <SurfaceIconButton
               aria-label="Refresh popup"
               onClick={props.onRefresh}
-              size="small"
-              sx={popupIconButtonSx}
+              sx={{color: "primary.light"}}
             >
-              <RefreshRounded aria-hidden="true" fontSize="small" />
-            </IconButton>
+              <RefreshRounded aria-hidden="true" fontSize="small"/>
+            </SurfaceIconButton>
           </Tooltip>
           <Tooltip title="Open settings">
-            <IconButton
+            <SurfaceIconButton
               aria-label="Open settings"
               onClick={props.onOpenSettings}
-              size="small"
-              sx={popupIconButtonSx}
+              sx={{color: "primary.light"}}
             >
-              <SettingsRounded aria-hidden="true" fontSize="small" />
-            </IconButton>
+              <SettingsRounded aria-hidden="true" fontSize="small"/>
+            </SurfaceIconButton>
           </Tooltip>
         </Stack>
       </Stack>

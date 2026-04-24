@@ -1,15 +1,12 @@
 /** Reusable recommendation card shared by popup and dashboard surfaces. */
-import Button, { ButtonProps } from "@mui/material/Button";
+import Button, {ButtonProps} from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import {ReactNode} from "react";
 
-import { RecommendedProblemView } from "../../../domain/views";
-import { SurfaceCard, ToneChip } from "../../components";
-import {
-  difficultyTone,
-  formatDisplayDate,
-  recommendedTone,
-} from "../../presentation/studyState";
+import {RecommendedProblemView} from "../../../domain/views";
+import {SurfaceCard, ToneChip} from "../../components";
+import {difficultyTone, formatDisplayDate, recommendedTone,} from "../../presentation/studyState";
 
 export interface RecommendedProblemCardProps {
   buttonFullWidth?: boolean;
@@ -17,10 +14,12 @@ export interface RecommendedProblemCardProps {
   buttonVariant?: ButtonProps["variant"];
   emptyCopy?: string;
   emptyTitle?: string;
+  headerAction?: ReactNode;
   onOpenProblem: (
     target: Pick<RecommendedProblemView, "slug">
   ) => Promise<void> | void;
   recommended: RecommendedProblemView | null;
+  showNextReviewDate?: boolean;
 }
 
 export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
@@ -30,8 +29,10 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
     buttonVariant = "contained",
     emptyCopy = "No review pressure right now. Shift to the active course to keep the streak moving.",
     emptyTitle = "Queue clear",
+    headerAction,
     onOpenProblem,
     recommended,
+    showNextReviewDate = true,
   } = props;
 
   if (!recommended) {
@@ -47,10 +48,12 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
   return (
     <SurfaceCard
       action={
-        <ToneChip
-          label={recommended.difficulty}
-          tone={difficultyTone(recommended.difficulty)}
-        />
+        headerAction ?? (
+          <ToneChip
+            label={recommended.difficulty}
+            tone={difficultyTone(recommended.difficulty)}
+          />
+        )
       }
       label="Recommended Now"
       title={recommended.title}
@@ -62,18 +65,20 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
             tone={recommendedTone(recommended.reason)}
           />
           {recommended.alsoCourseNext ? (
-            <ToneChip label="Also next in course" tone="success" />
+            <ToneChip label="Also next in course" tone="success"/>
           ) : null}
         </Stack>
-        <Typography color="text.secondary" variant="body2">
-          {recommended.nextReviewAt
-            ? `Next review day: ${formatDisplayDate(recommended.nextReviewAt)}`
-            : "Highest leverage problem in the queue."}
-        </Typography>
+        {showNextReviewDate ? (
+          <Typography color="text.secondary" variant="body2">
+            {recommended.nextReviewAt
+              ? `Next review day: ${formatDisplayDate(recommended.nextReviewAt)}`
+              : "Highest leverage problem in the queue."}
+          </Typography>
+        ) : null}
         <Button
           fullWidth={buttonFullWidth}
           onClick={() => {
-            void onOpenProblem({ slug: recommended.slug });
+            void onOpenProblem({slug: recommended.slug});
           }}
           variant={buttonVariant}
         >

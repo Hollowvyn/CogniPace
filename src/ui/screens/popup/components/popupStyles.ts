@@ -13,39 +13,6 @@ export const popupShellSx = {
   overflow: "hidden",
 };
 
-export const popupPanelSx = {
-  backgroundColor: alpha(kineticTokens.paperStrong, 0.92),
-  border: `1px solid ${alpha(kineticTokens.outlineStrong, 0.32)}`,
-  borderRadius: 1.6,
-  boxShadow: "none",
-};
-
-export const popupSectionLabelSx = {
-  color: kineticTokens.text,
-  fontSize: "0.64rem",
-  fontWeight: 700,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-};
-
-export const popupIconButtonSx = {
-  border: `1px solid ${alpha(kineticTokens.outlineStrong, 0.34)}`,
-  borderRadius: 1.15,
-  color: kineticTokens.accent,
-  height: 30,
-  transition: "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
-  width: 30,
-  "&:hover": {
-    backgroundColor: alpha(kineticTokens.accent, 0.1),
-    borderColor: alpha(kineticTokens.accentSoft, 0.45),
-  },
-  "&:focus-visible": {
-    backgroundColor: alpha(kineticTokens.accent, 0.12),
-    outline: `2px solid ${alpha(kineticTokens.info, 0.72)}`,
-    outlineOffset: 2,
-  },
-};
-
 export const popupActionButtonSx = {
   minHeight: 42,
   touchAction: "manipulation",
@@ -65,14 +32,4 @@ export const popupSmallButtonSx = {
     outline: `2px solid ${alpha(kineticTokens.info, 0.72)}`,
     outlineOffset: 2,
   },
-};
-
-export const popupMetricValueSx = {
-  color: kineticTokens.text,
-  fontFamily: '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif',
-  fontVariantNumeric: "tabular-nums",
-  fontSize: "1.85rem",
-  fontWeight: 700,
-  letterSpacing: "-0.04em",
-  lineHeight: 0.95,
 };

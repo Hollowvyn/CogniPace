@@ -1,11 +1,10 @@
 /** Popup screen composition for the compact extension surface. */
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import {alpha} from "@mui/material/styles";
 
+import {StatusBanner} from "../../components";
 import {kineticTokens} from "../../theme";
 
 import {
@@ -122,17 +121,10 @@ export function PopupApp() {
       </Paper>
 
       {controller.status.message ? (
-        <Alert
-          aria-live="polite"
-          severity={controller.status.isError ? "error" : "info"}
-          sx={{
-            border: `1px solid ${alpha(kineticTokens.outlineStrong, 0.28)}`,
-            borderRadius: 1.4,
-          }}
-          variant="filled"
-        >
-          {controller.status.message}
-        </Alert>
+        <StatusBanner
+          isError={controller.status.isError}
+          message={controller.status.message}
+        />
       ) : null}
     </Box>
   );
