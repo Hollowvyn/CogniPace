@@ -68,7 +68,7 @@ export function CollapsedOverlayPanel(
               {props.model.timer.display}
             </Typography>
             <Tooltip title={props.model.timer.startLabel}>
-              <span>
+              <span aria-label={props.model.timer.startLabel} tabIndex={!props.model.timer.canStart ? 0 : undefined}>
                 <IconButton
                   aria-label={props.model.timer.startLabel}
                   disabled={!props.model.timer.canStart}
@@ -96,7 +96,7 @@ export function CollapsedOverlayPanel(
               </span>
             </Tooltip>
             <Tooltip title="Restart timer">
-              <span>
+              <span aria-label="Restart timer" tabIndex={!props.model.timer.canReset ? 0 : undefined}>
                 <IconButton
                   aria-label="Restart timer"
                   disabled={!props.model.timer.canReset}
@@ -119,7 +119,7 @@ export function CollapsedOverlayPanel(
               Submit
             </Button>
             <Tooltip title="Fail review">
-              <span>
+              <span aria-label="Fail review" tabIndex={!props.model.actions.canFail ? 0 : undefined}>
                 <IconButton
                   aria-label="Fail review"
                   disabled={!props.model.actions.canFail}
