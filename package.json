@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "test": "npm run test:logic && npm run test:ui",
     "typecheck": "tsc --noEmit",
-    "test:logic": "node tests/run-tests.cjs",
+    "test:logic": "vitest run --config vitest.logic.config.mjs",
     "test:ui": "vitest run"
   },
   "keywords": [
