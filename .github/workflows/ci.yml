@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
+    branches: [main]
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -13,80 +13,74 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
+  security-events: write
 
 jobs:
-  lint:
-    name: Lint
+  # 1. Standard Validation
+  validate:
+    name: Validate (${{ matrix.task }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [lint, typecheck, build]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
+      - run: npm ci
+      - run: npm run ${{ matrix.task }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run lint
-        run: npm run lint
-
-  typecheck:
-    name: Typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run typecheck
-        run: npm run typecheck
-
+  # 2. Testing with Coverage
   test:
-    name: Test
+    name: Test & Coverage
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
+      - run: npm ci
       - name: Run tests
         run: npm run test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
-  build:
-    name: Build
+  # 3. Security (Fast Scans)
+  security:
+    name: Security (Semgrep)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: returntocorp/semgrep-action@v1
         with:
-          node-version-file: .nvmrc
-          cache: npm
+          config: auto
 
-      - name: Install dependencies
-        run: npm ci
+  # 4. Dependency Guard
+  review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
 
-      - name: Run build
-        run: npm run build
+  # 5. Master Quality Gate
+  check:
+    name: CI Check
+    if: always()
+    needs: [validate, test, security, review]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Results
+        run: |
+          if [[ "${{ needs.validate.result }}" != "success" ]]; then exit 1; fi
+          if [[ "${{ needs.test.result }}" != "success" ]]; then exit 1; fi
+          if [[ "${{ needs.security.result }}" != "success" ]]; then exit 1; fi
+          if [[ "${{ github.event_name == 'pull_request' && needs.review.result != 'success' }}" == "true" ]]; then exit 1; fi

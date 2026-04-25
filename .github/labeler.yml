@@ -1,0 +1,28 @@
+"🎨 area:ui":
+  - changed-files:
+      - any-glob-to-any-file: "src/ui/**/*"
+
+"🧪 area:tests":
+  - changed-files:
+      - any-glob-to-any-file: "tests/**/*"
+
+"🤖 area:automation":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**/*"
+          - "renovate.json"
+
+"📦 area:data":
+  - changed-files:
+      - any-glob-to-any-file: "src/data/**/*"
+
+"🧠 area:domain":
+  - changed-files:
+      - any-glob-to-any-file: "src/domain/**/*"
+
+"🔧 area:extension":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/extension/**/*"
+          - "src/entrypoints/**/*"
+          - "public/manifest.json"
