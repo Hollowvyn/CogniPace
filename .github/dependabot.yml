@@ -6,14 +6,25 @@ updates:
       interval: weekly
       day: monday
       time: "09:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 5
+      timezone: "UTC"
+    open-pull-requests-limit: 10
     labels:
       - dependencies
     groups:
-      npm-dependencies:
-        patterns:
-          - "*"
+      # High Confidence: Development tools and types
+      # These are generally safe to auto-merge if CI passes
+      development-dependencies:
+        dependency-type: development
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Production dependencies: Grouped but separate for more careful review
+      production-dependencies:
+        dependency-type: production
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -21,7 +32,7 @@ updates:
       interval: weekly
       day: monday
       time: "09:30"
-      timezone: "America/New_York"
+      timezone: "UTC"
     open-pull-requests-limit: 3
     labels:
       - dependencies
