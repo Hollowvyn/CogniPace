@@ -93,7 +93,7 @@ export function useOverlayController(
     payload: AppShellPayload,
     currentSlug: string
   ): OverlayPostSubmitNextViewModel | null => {
-    const distinctRecommended =
+    const fallbackRecommended =
       payload.popup.recommendedCandidates.find(
         (candidate) => candidate.slug !== currentSlug
       ) ??
@@ -103,11 +103,6 @@ export function useOverlayController(
           ? payload.popup.recommended
           : null
       );
-    const fallbackRecommended =
-      distinctRecommended ??
-      payload.popup.recommendedCandidates[0] ??
-      payload.popup.recommended ??
-      null;
 
     if (
       payload.settings.studyMode === "studyPlan" &&

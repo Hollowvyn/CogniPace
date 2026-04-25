@@ -5,12 +5,26 @@ import {nowIso} from "../../../domain/common/time";
 import {markCourseQuestionLaunched, syncCourseProgress,} from "../../../domain/courses/courseProgress";
 import {applyReview, overrideLastReview, resetSchedule,} from "../../../domain/fsrs/scheduler";
 import {getStudyStateSummary, normalizeReviewLogFields,} from "../../../domain/fsrs/studyState";
-import {normalizeSlug} from "../../../domain/problem/slug";
+import {isProblemPage, normalizeSlug} from "../../../domain/problem/slug";
 import {ReviewLogFields} from "../../../domain/types";
 import {canonicalProblemUrlForOpen,} from "../../runtime/validator";
 import {ok} from "../responses";
 
 import {trackCourseQuestionLaunch} from "./courseHandlers";
+
+function readSenderUrl(
+  sender?: chrome.runtime.MessageSender
+): string | undefined {
+  if (typeof sender?.url === "string") {
+    return sender.url;
+  }
+
+  if (typeof sender?.tab?.url === "string") {
+    return sender.tab.url;
+  }
+
+  return undefined;
+}
 
 /** Opens a LeetCode problem page and optionally records course launch context. */
 export async function openProblemPage(
@@ -35,9 +49,15 @@ export async function openProblemPage(
   }
 
   const url = canonicalProblemUrlForOpen(slug);
+  const senderUrl = readSenderUrl(sender);
+  const senderTabId = sender?.tab?.id;
+  const shouldReuseSenderTab =
+    typeof senderTabId === "number" &&
+    !!senderUrl &&
+    isProblemPage(senderUrl);
 
-  if (sender?.tab?.id) {
-    await chrome.tabs.update(sender.tab.id, {url});
+  if (shouldReuseSenderTab) {
+    await chrome.tabs.update(senderTabId, {url});
   } else {
     await chrome.tabs.create({url});
   }

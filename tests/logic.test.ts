@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {createEmptyCard} from "ts-fsrs";
 
 import {normalizeSlug} from "../src/domain/problem/slug";
+import {openProblemPage} from "../src/extension/background/handlers/problemHandlers";
 import {sanitizeImportPayload} from "../src/shared/backup";
 import {createDefaultStudyState, CURRENT_STORAGE_SCHEMA_VERSION, DEFAULT_SETTINGS,} from "../src/shared/constants";
 import {buildActiveCourseView, syncCourseProgress,} from "../src/shared/courses";
@@ -513,6 +514,107 @@ function testAllowedContentScriptSenderIsAccepted(): void {
   );
 }
 
+async function testOpenProblemPageReusesCurrentProblemTab(): Promise<void> {
+  const previousChrome = globalThis.chrome;
+  const createdTabs: chrome.tabs.CreateProperties[] = [];
+  const updatedTabs: Array<{
+    id: number;
+    properties: chrome.tabs.UpdateProperties;
+  }> = [];
+
+  Object.defineProperty(globalThis, "chrome", {
+    configurable: true,
+    value: {
+      tabs: {
+        create: async (properties: chrome.tabs.CreateProperties) => {
+          createdTabs.push(properties);
+          return {} as chrome.tabs.Tab;
+        },
+        update: async (
+          id: number,
+          properties: chrome.tabs.UpdateProperties
+        ) => {
+          updatedTabs.push({id, properties});
+          return {id, ...properties} as chrome.tabs.Tab;
+        },
+      },
+    } as Partial<typeof chrome>,
+  });
+
+  try {
+    await openProblemPage(
+      {slug: " Two-Sum "},
+      {
+        tab: {id: 7},
+        url: "https://leetcode.com/problems/two-sum/",
+      } as chrome.runtime.MessageSender
+    );
+  } finally {
+    Object.defineProperty(globalThis, "chrome", {
+      configurable: true,
+      value: previousChrome,
+    });
+  }
+
+  assert.deepEqual(updatedTabs, [
+    {
+      id: 7,
+      properties: {url: "https://leetcode.com/problems/two-sum/"},
+    },
+  ]);
+  assert.equal(createdTabs.length, 0);
+}
+
+async function testOpenProblemPageOpensNewTabFromExtensionPageSender(): Promise<void> {
+  const previousChrome = globalThis.chrome;
+  const createdTabs: chrome.tabs.CreateProperties[] = [];
+  const updatedTabs: Array<{
+    id: number;
+    properties: chrome.tabs.UpdateProperties;
+  }> = [];
+
+  Object.defineProperty(globalThis, "chrome", {
+    configurable: true,
+    value: {
+      tabs: {
+        create: async (properties: chrome.tabs.CreateProperties) => {
+          createdTabs.push(properties);
+          return {} as chrome.tabs.Tab;
+        },
+        update: async (
+          id: number,
+          properties: chrome.tabs.UpdateProperties
+        ) => {
+          updatedTabs.push({id, properties});
+          return {id, ...properties} as chrome.tabs.Tab;
+        },
+      },
+    } as Partial<typeof chrome>,
+  });
+
+  try {
+    await openProblemPage(
+      {slug: "two-sum"},
+      {
+        tab: {
+          id: 11,
+          url: "chrome-extension://test-extension/dashboard.html?view=library",
+        },
+      } as chrome.runtime.MessageSender
+    );
+  } finally {
+    Object.defineProperty(globalThis, "chrome", {
+      configurable: true,
+      value: previousChrome,
+    });
+  }
+
+  assert.deepEqual(createdTabs, [
+    {url: "https://leetcode.com/problems/two-sum/"},
+  ]);
+  assert.equal(updatedTabs.length, 0);
+}
+
 function testImportSanitizationIgnoresIncomingProblemUrl(): void {
   const sanitized = sanitizeImportPayload({
     version: CURRENT_STORAGE_SCHEMA_VERSION,
@@ -705,7 +807,7 @@ function testProblemSlugNormalizationAcceptsUrlsAndSlugNoise(): void {
   assert.equal(normalizeSlug("Problems/merge-intervals/"), "merge-intervals");
 }
 
-function run(): void {
+async function run(): Promise<void> {
   testLegacyStorageMigrationRebuildsHistoryIntoFsrsCard();
   testStorageMigrationPreservesExistingFsrsCardWithoutHistory();
   testLegacyFallbackConvertsWithoutHistory();
@@ -724,6 +826,8 @@ function run(): void {
   testUnauthorizedSenderIsRejected();
   testExtensionSenderWithoutUrlIsAccepted();
   testAllowedContentScriptSenderIsAccepted();
+  await testOpenProblemPageReusesCurrentProblemTab();
+  await testOpenProblemPageOpensNewTabFromExtensionPageSender();
   testImportSanitizationIgnoresIncomingProblemUrl();
   testImportSanitizationAcceptsOlderVersionedBackups();
   testImportSanitizationDropsMalformedEntriesAndNormalizesKeys();
@@ -735,4 +839,7 @@ function run(): void {
   console.log("logic tests passed");
 }
 
-run();
+void run().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

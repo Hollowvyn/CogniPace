@@ -676,6 +676,171 @@ describe("overlay controller", () => {
     }
   });
 
+  it("shows an empty post-submit state when only the current problem remains", async () => {
+    let nextTimerId = 1;
+    const timeouts = new Map<number, () => void>();
+    const intervals = new Map<number, () => void>();
+    let nowMs = 1000;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => nowMs);
+
+    try {
+      sendMessageMock.mockImplementation(
+        (type: string, payload: { slug?: string }) => {
+          if (type === "UPSERT_PROBLEM_FROM_PAGE") {
+            return Promise.resolve({
+              ok: true,
+              data: {
+                problem: {
+                  id: payload.slug,
+                  leetcodeSlug: payload.slug,
+                  title: "Counting Bits",
+                  difficulty: "Easy",
+                  url: `https://leetcode.com/problems/${payload.slug}/`,
+                  topics: [],
+                  sourceSet: [],
+                  createdAt: "2026-03-01T00:00:00.000Z",
+                  updatedAt: "2026-03-01T00:00:00.000Z",
+                },
+                studyState: null,
+              },
+            });
+          }
+
+          if (
+            type === "GET_PROBLEM_CONTEXT" &&
+            payload.slug === "counting-bits"
+          ) {
+            return Promise.resolve({
+              ok: true,
+              data: {
+                problem: {title: "Counting Bits", difficulty: "Easy"},
+                studyState: null,
+              },
+            });
+          }
+
+          if (
+            type === "SAVE_REVIEW_RESULT" &&
+            payload.slug === "counting-bits"
+          ) {
+            return Promise.resolve({ok: true, data: {}});
+          }
+
+          if (type === "GET_APP_SHELL_DATA") {
+            const nextPayload = makePayload();
+            nextPayload.settings.studyMode = "freestyle";
+            nextPayload.popup.courseNext = {
+              ...nextPayload.popup.courseNext!,
+              slug: "counting-bits",
+              title: "Counting Bits",
+              url: "https://leetcode.com/problems/counting-bits/",
+            };
+            nextPayload.popup.recommended = {
+              ...nextPayload.popup.recommended!,
+              slug: "counting-bits",
+              title: "Counting Bits",
+              url: "https://leetcode.com/problems/counting-bits/",
+            };
+            nextPayload.popup.recommendedCandidates = [
+              nextPayload.popup.recommended!,
+            ];
+            return Promise.resolve({ok: true, data: nextPayload});
+          }
+
+          if (type === "OPEN_EXTENSION_PAGE") {
+            return Promise.resolve({ok: true, data: {opened: true}});
+          }
+
+          return Promise.resolve({ok: true, data: {}});
+        }
+      );
+
+      const overlayDocument =
+        document.implementation.createHTMLDocument("overlay");
+      overlayDocument.body.innerHTML = `
+        <h1>Counting Bits</h1>
+        <span>Easy</span>
+      `;
+
+      const fakeWindow = {
+        clearInterval: (id: number) => {
+          intervals.delete(id);
+        },
+        clearTimeout: (id: number) => {
+          timeouts.delete(id);
+        },
+        location: {
+          href: "https://leetcode.com/problems/counting-bits/",
+        },
+        setInterval: (callback: TimerHandler) => {
+          const id = nextTimerId++;
+          intervals.set(id, callback as () => void);
+          return id;
+        },
+        setTimeout: (callback: TimerHandler) => {
+          const id = nextTimerId++;
+          timeouts.set(id, callback as () => void);
+          return id;
+        },
+      } as unknown as Window;
+
+      const runPendingTimeouts = () => {
+        const pending = [...timeouts.entries()];
+        timeouts.clear();
+        for (const [, callback] of pending) {
+          callback();
+        }
+      };
+
+      const runIntervalTick = () => {
+        for (const callback of intervals.values()) {
+          callback();
+        }
+      };
+
+      render(
+        <AppProviders>
+          <OverlayRoot documentRef={overlayDocument} windowRef={fakeWindow}/>
+        </AppProviders>
+      );
+
+      runPendingTimeouts();
+
+      expect(
+        await screen.findByRole("button", {name: "Start timer"})
+      ).toBeTruthy();
+
+      fireEvent.click(screen.getByRole("button", {name: "Start timer"}));
+
+      nowMs = 5000;
+      runIntervalTick();
+
+      await waitFor(() => {
+        expect(screen.getByText("00:04")).toBeTruthy();
+      });
+
+      fireEvent.click(screen.getByRole("button", {name: "Submit"}));
+
+      await waitFor(() => {
+        expect(sendMessageMock).toHaveBeenCalledWith(
+          "SAVE_REVIEW_RESULT",
+          expect.objectContaining({
+            slug: "counting-bits",
+            rating: 2,
+            mode: "FULL_SOLVE",
+            solveTimeMs: 4000,
+            source: "overlay",
+          })
+        );
+      });
+
+      expect(await screen.findByText("No next question ready")).toBeTruthy();
+      expect(screen.queryByRole("button", {name: "Open next"})).toBeNull();
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
+
   it("logs compact failure and expands while preserving elapsed time", async () => {
     let nextTimerId = 1;
     const timeouts = new Map<number, () => void>();
