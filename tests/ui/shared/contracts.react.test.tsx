@@ -49,39 +49,34 @@ describe("route and selector contracts", () => {
     expect(rows[0]?.problem.leetcodeSlug).toBe("two-sum");
   });
 
-  it("derives review policy from pure helpers", () => {
-    expect(deriveQuickRating(0, 10_000)).toBe(2);
-    expect(deriveQuickRating(12_000, 10_000)).toBe(1);
-    expect(defaultReviewMode(makeStudyState("2026-03-30T00:00:00.000Z"))).toBe(
-      "RECALL"
-    );
-    expect(defaultReviewMode(null)).toBe("FULL_SOLVE");
+  it.each([
+    { elapsed: 0, goal: 10_000, expected: 2 },
+    { elapsed: 12_000, goal: 10_000, expected: 1 },
+  ])("derives quick rating: $elapsed ms vs $goal ms goal -> $expected", ({ elapsed, goal, expected }) => {
+    expect(deriveQuickRating(elapsed, goal)).toBe(expected);
   });
 
-  it("formats submission dates with calendar-style labels", () => {
+  it.each([
+    { state: makeStudyState("2026-03-30T00:00:00.000Z"), expected: "RECALL" },
+    { state: null, expected: "FULL_SOLVE" },
+  ])("derives default review mode", ({ state, expected }) => {
+    expect(defaultReviewMode(state)).toBe(expected);
+  });
+
+  describe("date formatting", () => {
     const relativeTo = new Date("2026-04-19T10:00:00");
 
-    expect(formatSubmissionDateLabel("2026-04-19T12:00:00", relativeTo)).toBe(
-      "today"
-    );
-    expect(formatSubmissionDateLabel("2026-04-18T12:00:00", relativeTo)).toBe(
-      "yesterday"
-    );
-    expect(formatSubmissionDateLabel("2026-04-20T12:00:00", relativeTo)).toBe(
-      "tomorrow"
-    );
-    expect(formatSubmissionDateLabel("2026-04-22T12:00:00", relativeTo)).toBe(
-      "this Wednesday"
-    );
-    expect(formatSubmissionDateLabel("2026-04-16T12:00:00", relativeTo)).toBe(
-      "last Thursday"
-    );
-    expect(formatSubmissionDateLabel("2026-03-01T12:00:00", relativeTo)).toBe(
-      "Mar 1"
-    );
-    expect(formatSubmissionDateLabel("2025-12-31T12:00:00", relativeTo)).toBe(
-      "Dec 31, 2025"
-    );
+    it.each([
+      { date: "2026-04-19T12:00:00", expected: "today" },
+      { date: "2026-04-18T12:00:00", expected: "yesterday" },
+      { date: "2026-04-20T12:00:00", expected: "tomorrow" },
+      { date: "2026-04-22T12:00:00", expected: "this Wednesday" },
+      { date: "2026-04-16T12:00:00", expected: "last Thursday" },
+      { date: "2026-03-01T12:00:00", expected: "Mar 1" },
+      { date: "2025-12-31T12:00:00", expected: "Dec 31, 2025" },
+    ])("formats $date as '$expected'", ({ date, expected }) => {
+      expect(formatSubmissionDateLabel(date, relativeTo)).toBe(expected);
+    });
   });
 
   it("maps structured log drafts to and from study state", () => {
@@ -144,10 +139,17 @@ describe("route and selector contracts", () => {
     expect(headerStatus.cards[0]?.primary).toBe("yesterday");
     expect(headerStatus.cards[1]?.primary).toBe("tomorrow");
     expect(headerStatus.cards[1]?.tone).toBe("warning");
-    expect(buildDueTone("2026-04-19T12:00:00.000Z", relativeTo)).toBe("danger");
-    expect(buildDueTone("2026-04-21T12:00:00.000Z", relativeTo)).toBe(
-      "warning"
-    );
-    expect(buildDueTone("2026-05-10T12:00:00.000Z", relativeTo)).toBe("accent");
+  });
+
+  describe("due tone mapping", () => {
+    const relativeTo = new Date("2026-04-19T10:00:00");
+
+    it.each([
+      { date: "2026-04-19T12:00:00.000Z", expected: "danger" },
+      { date: "2026-04-21T12:00:00.000Z", expected: "warning" },
+      { date: "2026-05-10T12:00:00.000Z", expected: "accent" },
+    ])("maps $date to tone '$expected'", ({ date, expected }) => {
+      expect(buildDueTone(date, relativeTo)).toBe(expected);
+    });
   });
 });
