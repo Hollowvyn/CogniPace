@@ -1,12 +1,13 @@
 /** Shared popup/dashboard query hook for the aggregated app-shell read model. */
-import { startTransition, useCallback, useEffect, useState } from "react";
+import {startTransition, useCallback, useEffect, useState} from "react";
 
-import { fetchAppShellPayload } from "../../data/repositories/appShellRepository";
-import { AppShellPayload } from "../../domain/views";
+import {fetchAppShellPayload} from "../../data/repositories/appShellRepository";
+import {AppShellPayload} from "../../domain/views";
 
 export interface UiStatus {
   message: string;
   isError: boolean;
+  scope?: "course" | "recommendation" | "surface";
 }
 
 /** Detects whether the current thread is running inside an extension context. */
@@ -20,6 +21,7 @@ export function useAppShellQuery(mockData: AppShellPayload) {
   const [status, setStatus] = useState<UiStatus>({
     message: "",
     isError: false,
+    scope: "surface",
   });
 
   const load = useCallback(
@@ -30,7 +32,7 @@ export function useAppShellQuery(mockData: AppShellPayload) {
         startTransition(() => {
           setPayload(mockData);
           if (clearStatusOnSuccess) {
-            setStatus({ message: "", isError: false });
+            setStatus({message: "", isError: false, scope: "surface"});
           }
         });
         return true;
@@ -42,6 +44,7 @@ export function useAppShellQuery(mockData: AppShellPayload) {
           setStatus({
             message: response.error ?? "Failed to load app shell.",
             isError: true,
+            scope: "surface",
           });
         });
         return false;
@@ -51,7 +54,7 @@ export function useAppShellQuery(mockData: AppShellPayload) {
       startTransition(() => {
         setPayload(nextPayload);
         if (clearStatusOnSuccess) {
-          setStatus({ message: "", isError: false });
+          setStatus({message: "", isError: false, scope: "surface"});
         }
       });
       return true;

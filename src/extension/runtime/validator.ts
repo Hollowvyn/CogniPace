@@ -9,6 +9,7 @@ const MESSAGE_TYPES = {
   GET_PROBLEM_CONTEXT: true,
   RATE_PROBLEM: true,
   SAVE_REVIEW_RESULT: true,
+  SAVE_OVERLAY_LOG_DRAFT: true,
   OVERRIDE_LAST_REVIEW_RESULT: true,
   OPEN_EXTENSION_PAGE: true,
   OPEN_PROBLEM_PAGE: true,
@@ -35,6 +36,7 @@ const CONTENT_SCRIPT_MESSAGE_TYPES = new Set<MessageType>([
   "UPSERT_PROBLEM_FROM_PAGE",
   "GET_PROBLEM_CONTEXT",
   "SAVE_REVIEW_RESULT",
+  "SAVE_OVERLAY_LOG_DRAFT",
   "OVERRIDE_LAST_REVIEW_RESULT",
   "OPEN_EXTENSION_PAGE",
 ]);
@@ -283,6 +285,26 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       ) {
         throw new Error('Invalid field "source": expected "overlay" or "dashboard".');
       }
+      return;
+    case "SAVE_OVERLAY_LOG_DRAFT":
+      hasExactKeys(
+        payload,
+        [
+          "slug",
+          "interviewPattern",
+          "timeComplexity",
+          "spaceComplexity",
+          "languages",
+          "notes",
+        ],
+        `Payload for ${type}`
+      );
+      requireString(payload.slug, "slug");
+      requireOptionalString(payload.interviewPattern, "interviewPattern");
+      requireOptionalString(payload.timeComplexity, "timeComplexity");
+      requireOptionalString(payload.spaceComplexity, "spaceComplexity");
+      requireOptionalString(payload.languages, "languages");
+      requireOptionalString(payload.notes, "notes");
       return;
     case "OPEN_EXTENSION_PAGE":
       hasExactKeys(payload, ["path"], `Payload for ${type}`);

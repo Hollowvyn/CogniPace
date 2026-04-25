@@ -1,8 +1,7 @@
-import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {popupMetricValueSx, popupPanelSx, popupSectionLabelSx} from "./popupStyles";
+import {NumericDisplay, SurfaceCard, SurfaceSectionLabel} from "../../../components";
 
 export interface PopupMetricTileProps {
   accent?: string;
@@ -13,15 +12,11 @@ export interface PopupMetricTileProps {
 
 export function PopupMetricTile(props: PopupMetricTileProps) {
   return (
-    <Box sx={{...popupPanelSx, p: 1.1}}>
+    <SurfaceCard compact>
       <Stack spacing={0.55}>
-        <Typography sx={popupSectionLabelSx}>
-          {props.label}
-        </Typography>
+        <SurfaceSectionLabel>{props.label}</SurfaceSectionLabel>
         <Stack alignItems="baseline" direction="row" spacing={0.55}>
-          <Typography sx={{...popupMetricValueSx, color: props.accent}}>
-            {props.value}
-          </Typography>
+          <NumericDisplay color={props.accent}>{props.value}</NumericDisplay>
           {props.suffix ? (
             <Typography
               color="text.secondary"
@@ -37,6 +32,6 @@ export function PopupMetricTile(props: PopupMetricTileProps) {
           ) : null}
         </Stack>
       </Stack>
-    </Box>
+    </SurfaceCard>
   );
 }

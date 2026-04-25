@@ -1,10 +1,10 @@
 /** Reusable course progress summary card shared across popup and dashboard surfaces. */
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { ReactNode } from "react";
+import {ReactNode} from "react";
 
-import { ActiveCourseView, CourseCardView } from "../../../domain/views";
-import { ProgressTrack, SurfaceCard, ToneChip } from "../../components";
+import {ActiveCourseView, CourseCardView} from "../../../domain/views";
+import {ProgressTrack, SurfaceCard, ToneChip} from "../../components";
 
 export interface CourseProgressCardProps {
   action?: ReactNode;
@@ -13,6 +13,7 @@ export interface CourseProgressCardProps {
   emptyCopy?: string;
   emptyTitle?: string;
   label?: string;
+  showProgressChip?: boolean;
 }
 
 export function CourseProgressCard(props: CourseProgressCardProps) {
@@ -23,6 +24,7 @@ export function CourseProgressCard(props: CourseProgressCardProps) {
     emptyCopy = "Set an active course to enable guided traversal.",
     emptyTitle = "No active course",
     label = "Active Course",
+    showProgressChip = true,
   } = props;
 
   if (!course) {
@@ -37,7 +39,12 @@ export function CourseProgressCard(props: CourseProgressCardProps) {
 
   return (
     <SurfaceCard
-      action={action ?? <ToneChip label={`${course.completionPercent}%`} tone="accent" />}
+      action={
+        action ??
+        (showProgressChip ? (
+          <ToneChip label={`${course.completionPercent}%`} tone="accent"/>
+        ) : undefined)
+      }
       label={label}
       title={course.name}
     >
@@ -45,7 +52,7 @@ export function CourseProgressCard(props: CourseProgressCardProps) {
         <Typography color="text.secondary" variant="body2">
           {course.description}
         </Typography>
-        <ProgressTrack value={course.completionPercent} />
+        <ProgressTrack value={course.completionPercent}/>
         <Typography color="text.secondary" variant="body2">
           {course.completedQuestions}/{course.totalQuestions} questions traversed
         </Typography>

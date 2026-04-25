@@ -5,8 +5,9 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 
 import {Rating} from "../../../../domain/types";
+import {FieldAssistRow, SurfaceSectionLabel} from "../../../components";
 import {kineticTokens} from "../../../theme";
-import {OverlayAssessmentSectionViewModel} from "../overlayPanel.types";
+import {OverlayAssessmentSectionViewModel, OverlayAssistViewModel} from "../overlayPanel.types";
 
 interface AssessmentOption {
   color: string;
@@ -79,19 +80,29 @@ function assessmentToggleSx(color: string) {
     "&.Mui-selected:hover": {
       backgroundColor: alpha(color, 0.4),
     },
+    "&.Mui-disabled": {
+      backgroundColor: alpha(color, 0.03),
+      color: alpha(color, 0.26),
+      opacity: 1,
+    },
+    "&.Mui-disabled .assessment-label": {
+      color: alpha(color, 0.28),
+    },
+    "&.Mui-disabled .assessment-copy": {
+      color: alpha(color, 0.2),
+    },
   } as const;
 }
 
 export function AssessmentRail(
   props: {
     assessment: OverlayAssessmentSectionViewModel;
+    assist: OverlayAssistViewModel;
   }
 ) {
   return (
     <Stack spacing={1.15}>
-      <Typography color="text.secondary" variant="overline">
-        Assessment
-      </Typography>
+      <SurfaceSectionLabel>Assessment</SurfaceSectionLabel>
       <ToggleButtonGroup
         exclusive
         fullWidth
@@ -109,6 +120,8 @@ export function AssessmentRail(
             borderLeft: `1px solid ${assessmentRailDividerColor}`,
           },
         }}
+        aria-describedby={props.assist.id}
+        aria-label="Review assessment"
         onChange={(_, value: Rating | null) => {
           if (value === null) {
             return;
@@ -120,6 +133,7 @@ export function AssessmentRail(
       >
         {assessmentOptions.map((option) => (
           <ToggleButton
+            disabled={props.assessment.disabledRatings.includes(option.rating)}
             key={option.rating}
             sx={assessmentToggleSx(option.color)}
             value={option.rating}
@@ -139,6 +153,9 @@ export function AssessmentRail(
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
+      <FieldAssistRow id={props.assist.id} tone={props.assist.tone}>
+        {props.assist.message}
+      </FieldAssistRow>
     </Stack>
   );
 }

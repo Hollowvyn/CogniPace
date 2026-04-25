@@ -1,16 +1,17 @@
 /** Overlay entrypoint that mounts the React overlay into a shadow-root host on LeetCode pages. */
 import createCache from "@emotion/cache";
-import { CacheProvider } from "@emotion/react";
-import { createElement } from "react";
-import { createRoot, Root } from "react-dom/client";
+import {CacheProvider} from "@emotion/react";
+import {createElement} from "react";
+import {createRoot, Root} from "react-dom/client";
 
-import { AppProviders } from "../ui/providers";
-import { OverlayRoot } from "../ui/screens/overlay/OverlayRoot";
+import {AppProviders} from "../ui/providers";
+import {OverlayRoot} from "../ui/screens/overlay/OverlayRoot";
 
 const OVERLAY_ID = "lcsr-overlay-root";
 
 interface OverlayMount {
   cache: ReturnType<typeof createCache>;
+  portalContainer: HTMLElement;
   root: Root;
 }
 
@@ -30,6 +31,7 @@ function createOverlayMount(): OverlayMount {
           key: "lcsr-overlay",
           container: styleContainer,
         }),
+        portalContainer: mountNode,
         root: createRoot(mountNode),
       };
     }
@@ -43,7 +45,7 @@ function createOverlayMount(): OverlayMount {
   host.style.zIndex = "2147483647";
   document.body.appendChild(host);
 
-  const shadowRoot = host.attachShadow({ mode: "open" });
+  const shadowRoot = host.attachShadow({mode: "open"});
   const styleContainer = document.createElement("div");
   styleContainer.dataset.overlayStyles = "true";
   const mountNode = document.createElement("div");
@@ -56,6 +58,7 @@ function createOverlayMount(): OverlayMount {
       key: "lcsr-overlay",
       container: styleContainer,
     }),
+    portalContainer: mountNode,
     root: createRoot(mountNode),
   };
 }
@@ -72,10 +75,10 @@ const mount = ensureOverlayMount();
 mount.root.render(
   createElement(
     CacheProvider,
-    { value: mount.cache },
+    {value: mount.cache},
     createElement(
       AppProviders,
-      null,
+      {portalContainer: mount.portalContainer},
       createElement(OverlayRoot, {
         documentRef: document,
         windowRef: window,

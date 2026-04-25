@@ -18,6 +18,7 @@ import {
   overrideLastReviewResult,
   rateProblem,
   resetProblem,
+  saveOverlayLogDraft,
   saveReviewResult,
   suspendProblem,
   updateNotes,
@@ -40,6 +41,10 @@ export async function handleMessage(message: RuntimeMessage) {
     case "SAVE_REVIEW_RESULT":
       return saveReviewResult(
         message.payload as Parameters<typeof saveReviewResult>[0]
+      );
+    case "SAVE_OVERLAY_LOG_DRAFT":
+      return saveOverlayLogDraft(
+        message.payload as Parameters<typeof saveOverlayLogDraft>[0]
       );
     case "OVERRIDE_LAST_REVIEW_RESULT":
       return overrideLastReviewResult(

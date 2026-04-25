@@ -165,6 +165,36 @@ export async function saveReviewResult(payload: {
   });
 }
 
+/** Persists the overlay's structured log draft without mutating review history. */
+export async function saveOverlayLogDraft(payload: {
+  slug: string;
+  interviewPattern?: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
+  languages?: string;
+  notes?: string;
+}) {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) {
+    throw new Error("Invalid slug.");
+  }
+
+  const updated = await mutateAppData((data) => {
+    ensureProblem(data, {slug: normalized});
+    const current = ensureStudyState(data, normalized);
+    const nextLogFields = buildReviewLogFields(payload, current);
+
+    data.studyStatesBySlug[normalized] = {
+      ...current,
+      ...nextLogFields,
+    };
+
+    return data;
+  });
+
+  return ok({studyState: updated.studyStatesBySlug[normalized]});
+}
+
 /** Replaces the latest review result and rebuilds the schedule from history. */
 export async function overrideLastReviewResult(payload: {
   slug: string;

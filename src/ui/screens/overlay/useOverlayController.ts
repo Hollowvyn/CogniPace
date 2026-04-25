@@ -12,11 +12,7 @@ import {Rating} from "../../../domain/types";
 
 import {draftsEqual} from "./controller/draftFields";
 import {buildHeaderStatus, buildSessionLabel} from "./controller/headerStatus";
-import {
-  getProblemSlugFromUrl,
-  isStaleOverlayRequest,
-  readProblemPageSnapshot,
-} from "./controller/pageContext";
+import {getProblemSlugFromUrl, isStaleOverlayRequest, readProblemPageSnapshot,} from "./controller/pageContext";
 import {useOverlaySessionMachine} from "./controller/useOverlaySessionMachine";
 import {useOverlayTimer} from "./controller/useOverlayTimer";
 import {OverlayRenderModel, OverlayTimerSectionViewModel} from "./overlayPanel.types";
@@ -36,7 +32,11 @@ export function useOverlayController(
     activateProblem,
     applyProblemContext,
     clearActiveProblem,
+    collapse,
+    dock,
+    expand,
     pauseTimer,
+    persistDraft,
     resetTimer,
     restartSession,
     saveOverride,
@@ -45,7 +45,6 @@ export function useOverlayController(
     startTimer,
     state: currentState,
     submitRating: persistSubmittedRating,
-    toggleCollapse,
     updateDraft,
   } = useOverlaySessionMachine({timer, windowRef});
   const activeSlugRef = useRef("");
@@ -215,6 +214,47 @@ export function useOverlayController(
       !draftsEqual(currentState.submittedSession.draft, currentState.draft)
     );
   const canRestart = currentState.submittedSession !== null;
+  const feedback = currentState.feedbackMessage
+    ? {
+      isError: currentState.feedbackIsError,
+      message: currentState.feedbackMessage,
+    }
+    : null;
+  const assessmentAssist = {
+    id: "overlay-assessment-help",
+    message: currentState.failureLocked
+      ? "Failed sessions stay locked to Again until you restart and open a fresh attempt."
+      : currentState.selectedRating === 3
+        ? "Easy means the solution felt immediate and you can trust the recall."
+        : currentState.selectedRating === 2
+          ? "Good means you finished with steady recall but not instantly."
+          : currentState.selectedRating === 1
+            ? "Hard means you got there with friction and should expect a sooner review."
+            : "Again means you could not complete it and want the shortest review interval.",
+    tone: currentState.failureLocked
+      ? "danger"
+      : currentState.selectedRating === 0
+        ? "danger"
+        : currentState.selectedRating === 1
+          ? "warning"
+          : currentState.selectedRating === 3
+            ? "success"
+            : "accent",
+  } as const;
+  const actionAssist = {
+    id: "overlay-action-help",
+    message: currentState.submittedSession
+      ? "Submit is locked for this session. Update replaces the latest saved result; Restart opens a fresh local attempt."
+      : "Submit saves this attempt. Use the selected assessment if you need more control than the compact quick-submit path.",
+    tone: currentState.submittedSession ? "accent" : "default",
+  } as const;
+  const collapsedAssist = {
+    id: "overlay-collapsed-help",
+    message: currentState.submittedSession
+      ? "Result saved. Expand to update or restart this session."
+      : "Collapsed mode keeps timer and quick review actions one click away.",
+    tone: currentState.submittedSession ? "accent" : "default",
+  } as const;
 
   const refreshAfterMutation = async (persistedSlug: string | null) => {
     if (persistedSlug) {
@@ -222,8 +262,13 @@ export function useOverlayController(
     }
   };
 
-  const submitRating = async (rating: Rating) => {
-    const persistedSlug = await persistSubmittedRating(rating);
+  const submitRating = async (
+    rating: Rating,
+    options?: {
+      lockFailureRating?: boolean;
+    }
+  ) => {
+    const persistedSlug = await persistSubmittedRating(rating, options);
     await refreshAfterMutation(persistedSlug);
   };
 
@@ -236,11 +281,41 @@ export function useOverlayController(
   };
 
   const onFailReview = () => {
-    void submitRating(0);
+    void submitRating(0, {lockFailureRating: true});
   };
 
   const onSaveOverride = () => {
     void saveOverride().then(refreshAfterMutation);
+  };
+
+  const onCollapseOverlay = async () => {
+    if (currentState.visualMode === "collapsed") {
+      return;
+    }
+
+    if (
+      currentState.activeSlug &&
+      !draftsEqual(currentState.draft, currentState.persistedDraft)
+    ) {
+      await persistDraft(currentState.activeSlug, currentState.draft);
+    }
+
+    collapse();
+  };
+
+  const onHideOverlay = async () => {
+    if (currentState.visualMode === "docked") {
+      return;
+    }
+
+    if (
+      currentState.activeSlug &&
+      !draftsEqual(currentState.draft, currentState.persistedDraft)
+    ) {
+      await persistDraft(currentState.activeSlug, currentState.draft);
+    }
+
+    dock();
   };
 
   const baseTimerModel: OverlayTimerSectionViewModel = {
@@ -259,20 +334,36 @@ export function useOverlayController(
         : "Start timer",
   };
 
-  if (currentState.collapsed) {
+  if (currentState.visualMode === "collapsed") {
     return {
       renderModel: {
         model: {
           actions: {
             canFail: canSubmit,
+            onHide: () => {
+              void onHideOverlay();
+            },
             canSubmit,
+            onExpand: expand,
             onFail: onFailReview,
             onSubmit: onCompactSubmit,
-            onToggleCollapse: toggleCollapse,
           },
+          assist: collapsedAssist,
+          feedback,
           timer: baseTimerModel,
         },
         variant: "collapsed",
+      },
+    };
+  }
+
+  if (currentState.visualMode === "docked") {
+    return {
+      renderModel: {
+        model: {
+          onRestore: collapse,
+        },
+        variant: "docked",
       },
     };
   }
@@ -295,27 +386,33 @@ export function useOverlayController(
           onUpdate: onSaveOverride,
         },
         assessment: {
+          disabledRatings: currentState.failureLocked ? [1, 2, 3] : [],
           onSelectRating: selectRating,
           selectedRating: currentState.selectedRating,
         },
-        feedback: currentState.feedbackMessage
-          ? {
-            isError: currentState.feedbackIsError,
-            message: currentState.feedbackMessage,
-          }
-          : null,
+        assessmentAssist,
+        actionAssist,
+        feedback,
         header: {
           difficulty: currentState.currentDifficulty,
+          onCollapse: () => {
+            void onCollapseOverlay();
+          },
+          onHide: () => {
+            void onHideOverlay();
+          },
           onOpenSettings: () => {
             void openExtensionPage("dashboard.html?view=settings");
           },
-          onToggleCollapse: toggleCollapse,
           sessionLabel: buildSessionLabel(
             currentState.currentState,
             sessionMode
           ),
           status: buildHeaderStatus(currentState.currentState),
           title: currentState.currentTitle,
+        },
+        onClickAway: () => {
+          void onCollapseOverlay();
         },
         log: {
           draft: currentState.draft,

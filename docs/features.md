@@ -11,7 +11,8 @@ Interpretation rules:
 - `Out of scope` describes work that should not be implemented without explicit human approval
 - `Future candidates` belong in product conversations, not implementation by default
 
-This document is not an auto-generated backlog. A feature being listed as `In scope` does not authorize self-starting work by humans or agents.
+This document is not an auto-generated backlog. A feature being listed as `In scope` does not authorize self-starting
+work by humans or agents.
 
 ## Popup Recommendation Flow
 
@@ -36,6 +37,12 @@ Give the user the fastest possible answer to what to do next.
 - Uses a compact course-panel action to open the dashboard on the courses view
 - Keeps the course panel visible in both `studyPlan` and `freestyle`
 - Uses explicit course-panel actions to start `studyPlan` or `freestyle` rather than a blind mode toggle
+- Applies the selected popup mode immediately as pending local feedback, persists it through settings, and rolls back
+  with
+  inline error feedback if persistence fails
+- Keeps recommendation, course help text, and status feedback inside reserved inline slots so popup actions do not cause
+  jumpy reflow
+- Keeps one stable course card shell across `studyPlan`, `freestyle`, `no active course`, and `complete` states
 
 ### Key States And Edge Cases
 
@@ -83,7 +90,8 @@ Provide guided traversal through curated learning paths without losing review aw
 - supports curated courses and chapters
 - tracks active course and active chapter
 - computes next question and course completion data
-- shows course progress in popup and dashboard, with the popup using a single compact active-course panel that includes progress and the up-next question
+- shows course progress in popup and dashboard, with the popup using a single compact active-course panel that includes
+  progress and the up-next question
 
 ### Key States And Edge Cases
 
@@ -118,17 +126,23 @@ Let users review and log progress directly on the LeetCode problem page.
 ### User Flow
 
 1. User opens a LeetCode problem page
-2. Overlay appears in collapsed or expanded state
+2. Overlay appears in collapsed, expanded, or docked state
 3. User starts the timer, solves, takes notes, and records a review result
 
 ### Current Behavior
 
-- collapsed and expanded overlay states
+- collapsed, expanded, and docked overlay states
 - collapsed overlay prioritizes a compact timer-first strip with expand access
+- docked overlay reduces the surface to a narrow recoverable edge trigger with the brand mark only
+- docked overlay can be dragged vertically along the right edge during the current docked session
 - expanded overlay shows a smaller timer, a target-time reference, and a compact FSRS assessment control
 - expanded logging fields include interview pattern, time complexity, space complexity, languages used, and notes
+- external clicks collapse the expanded overlay
+- collapsing the expanded overlay saves the current structured log fields without creating a new review entry
 - submit, failed, save-override, and restart session actions are distinct
 - open settings shortcut
+- both overlay variants keep helper text and feedback in reserved inline regions so timer and submit states do not shift
+  the control layout unexpectedly
 
 ### Key States And Edge Cases
 
@@ -136,6 +150,8 @@ Let users review and log progress directly on the LeetCode problem page.
 - timer is not used
 - review is first solve versus repeat review
 - overlay is collapsed but user still needs quick context
+- overlay is docked but user still needs a fast in-page restore path
+- docked overlay covers page content and needs to move without leaving the viewport
 - user edits logs or rating after the current session has already been submitted
 
 ### In Scope
@@ -177,6 +193,7 @@ Give users lightweight solve-time awareness and a fast logging path.
 - collapsed submit derives a conservative default rating, saves immediately, and expands into the full override form
 - expanded submit uses the selected FSRS rating directly
 - failed is a dedicated submission path that currently maps to `Again`
+- failed submissions keep the expanded assessment locked to `Again` until the user restarts the local session
 - save override replaces the latest submission instead of appending a new review
 - restart opens a fresh local session without mutating persisted review history until the next submit
 

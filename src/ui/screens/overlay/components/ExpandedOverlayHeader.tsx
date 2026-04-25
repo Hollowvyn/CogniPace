@@ -1,94 +1,50 @@
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
+import VisibilityOffRounded from "@mui/icons-material/VisibilityOffRounded";
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import {alpha} from "@mui/material/styles";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import {Difficulty} from "../../../../domain/types";
+import {StatusSurface, SurfaceIconButton, SurfaceSectionLabel, SurfaceTooltip, ToneChip,} from "../../../components";
+import {difficultyTone} from "../../../presentation/studyState";
 import {kineticTokens} from "../../../theme";
-import {
-  OverlayHeaderSectionViewModel,
-  OverlayHeaderStatusCard,
-  OverlayHeaderStatusTone,
-} from "../overlayPanel.types";
-
-import {outlinedChromeIconButtonSx} from "./sharedStyles";
+import {OverlayHeaderSectionViewModel, OverlayHeaderStatusCard, OverlayHeaderStatusTone,} from "../overlayPanel.types";
 
 const difficultyBadgeStyles: Record<
   Difficulty,
-  { backgroundColor: string; borderColor: string; color: string }
+  ReturnType<typeof difficultyTone>
 > = {
-  Easy: {
-    backgroundColor: alpha(kineticTokens.info, 0.1),
-    borderColor: alpha(kineticTokens.info, 0.22),
-    color: kineticTokens.info,
-  },
-  Medium: {
-    backgroundColor: alpha(kineticTokens.accent, 0.1),
-    borderColor: alpha(kineticTokens.accent, 0.22),
-    color: kineticTokens.accentSoft,
-  },
-  Hard: {
-    backgroundColor: alpha(kineticTokens.danger, 0.1),
-    borderColor: alpha(kineticTokens.danger, 0.22),
-    color: kineticTokens.danger,
-  },
-  Unknown: {
-    backgroundColor: alpha(kineticTokens.mutedText, 0.1),
-    borderColor: alpha(kineticTokens.mutedText, 0.16),
-    color: kineticTokens.mutedText,
-  },
+  Easy: "info",
+  Medium: "accent",
+  Hard: "danger",
+  Unknown: "default",
 };
 
 const statusToneStyles: Record<
   OverlayHeaderStatusTone,
-  { backgroundColor: string; borderColor: string; primaryColor: string }
+  { primaryColor: string; tone: "default" | "accent" | "danger" }
 > = {
   neutral: {
-    backgroundColor: alpha(kineticTokens.backgroundAlt, 0.64),
-    borderColor: alpha(kineticTokens.mutedText, 0.12),
     primaryColor: kineticTokens.text,
+    tone: "default",
   },
   accent: {
-    backgroundColor: alpha(kineticTokens.accent, 0.08),
-    borderColor: alpha(kineticTokens.accent, 0.18),
     primaryColor: kineticTokens.accentSoft,
+    tone: "accent",
   },
   warning: {
-    backgroundColor: alpha(kineticTokens.accent, 0.12),
-    borderColor: alpha(kineticTokens.accent, 0.24),
     primaryColor: kineticTokens.accentSoft,
+    tone: "accent",
   },
   danger: {
-    backgroundColor: alpha(kineticTokens.danger, 0.08),
-    borderColor: alpha(kineticTokens.danger, 0.22),
     primaryColor: kineticTokens.danger,
+    tone: "danger",
   },
 };
 
-function DifficultyBadge(props: {difficulty: Difficulty}) {
-  const badgeStyle = difficultyBadgeStyles[props.difficulty];
-
-  return (
-    <Box
-      sx={{
-        alignItems: "center",
-        backgroundColor: badgeStyle.backgroundColor,
-        border: `1px solid ${badgeStyle.borderColor}`,
-        borderRadius: 999,
-        color: badgeStyle.color,
-        display: "inline-flex",
-        minHeight: 32,
-        px: 1.25,
-      }}
-    >
-      <Typography variant="button">{props.difficulty}</Typography>
-    </Box>
-  );
+function DifficultyBadge(props: { difficulty: Difficulty }) {
+  return <ToneChip label={props.difficulty} tone={difficultyBadgeStyles[props.difficulty]}/>;
 }
 
 function HeaderStatusCard(
@@ -100,22 +56,17 @@ function HeaderStatusCard(
   const toneStyle = statusToneStyles[props.card.tone];
 
   return (
-    <Paper
+    <StatusSurface
       sx={{
-        backgroundColor: toneStyle.backgroundColor,
-        border: `1px solid ${toneStyle.borderColor}`,
-        borderRadius: 2,
-        boxShadow: "none",
         flex: 1,
         minWidth: 0,
         px: props.empty ? 1.35 : 1.15,
         py: props.empty ? 1.1 : 0.95,
       }}
+      tone={toneStyle.tone}
     >
       <Stack spacing={0.3}>
-        <Typography color="text.secondary" variant="caption">
-          {props.card.label}
-        </Typography>
+        <SurfaceSectionLabel>{props.card.label}</SurfaceSectionLabel>
         <Typography
           color={toneStyle.primaryColor}
           sx={{
@@ -132,7 +83,7 @@ function HeaderStatusCard(
           </Typography>
         ) : null}
       </Stack>
-    </Paper>
+    </StatusSurface>
   );
 }
 
@@ -146,7 +97,7 @@ export function ExpandedOverlayHeader(
       <Stack
         alignItems="center"
         direction="row"
-        onClick={props.header.onToggleCollapse}
+        onClick={props.header.onCollapse}
         spacing={0.85}
         sx={{
           borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
@@ -155,32 +106,39 @@ export function ExpandedOverlayHeader(
         data-testid="expanded-overlay-header-row"
       >
         <Stack alignItems="center" direction="row" spacing={0.55}>
-          <Tooltip title="Collapse overlay">
-            <IconButton
+          <SurfaceTooltip title="Collapse overlay">
+            <SurfaceIconButton
               aria-label="Collapse overlay"
               onClick={(event) => {
                 event.stopPropagation();
-                props.header.onToggleCollapse();
+                props.header.onCollapse();
               }}
-              size="small"
-              sx={outlinedChromeIconButtonSx}
             >
               <KeyboardArrowDownRounded fontSize="small"/>
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Open settings">
-            <IconButton
+            </SurfaceIconButton>
+          </SurfaceTooltip>
+          <SurfaceTooltip title="Open settings">
+            <SurfaceIconButton
               aria-label="Open settings"
               onClick={(event) => {
                 event.stopPropagation();
                 props.header.onOpenSettings();
               }}
-              size="small"
-              sx={outlinedChromeIconButtonSx}
             >
               <SettingsRounded fontSize="small"/>
-            </IconButton>
-          </Tooltip>
+            </SurfaceIconButton>
+          </SurfaceTooltip>
+          <SurfaceTooltip title="Hide overlay">
+            <SurfaceIconButton
+              aria-label="Hide overlay"
+              onClick={(event) => {
+                event.stopPropagation();
+                props.header.onHide();
+              }}
+            >
+              <VisibilityOffRounded fontSize="small"/>
+            </SurfaceIconButton>
+          </SurfaceTooltip>
           <Box
             aria-hidden="true"
             data-testid="expanded-overlay-header-divider"
@@ -208,21 +166,22 @@ export function ExpandedOverlayHeader(
         </Stack>
       </Stack>
 
-      <Stack spacing={1}>
+      <
+        Stack spacing={1}
+      >
         <Stack
           alignItems="center"
           direction="row"
           justifyContent="space-between"
           spacing={1}
+          sx={{px: 2}}
         >
           <Box sx={{minWidth: 0}}>
-            <Typography color="primary.light" variant="overline">
-              {props.header.sessionLabel}
-            </Typography>
+            <SurfaceSectionLabel>{props.header.sessionLabel}</SurfaceSectionLabel>
           </Box>
           <DifficultyBadge difficulty={props.header.difficulty}/>
         </Stack>
-        <Stack direction="row" flexWrap="wrap" gap={0.9} sx={{width: "100%"}}>
+        <Stack direction="row" flexWrap="wrap" gap={0.9} justifyContent="space-between" sx={{px: 2}}>
           {props.header.status.cards.map((card) => (
             <HeaderStatusCard
               card={card}

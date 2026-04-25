@@ -1,15 +1,13 @@
 import CodeRounded from "@mui/icons-material/CodeRounded";
 import SchoolRounded from "@mui/icons-material/SchoolRounded";
-import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Stack from "@mui/material/Stack";
 import {alpha} from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 
 import {StudyMode} from "../../../../domain/types";
+import {SurfaceCard} from "../../../components";
 import {kineticTokens} from "../../../theme";
-
-import {popupPanelSx} from "./popupStyles";
 
 interface PopupModeOptionProps {
   active: boolean;
@@ -74,12 +72,7 @@ export interface PopupModeSwitchProps {
 
 export function PopupModeSwitch(props: PopupModeSwitchProps) {
   return (
-    <Box
-      sx={{
-        ...popupPanelSx,
-        p: 0.55,
-      }}
-    >
+    <SurfaceCard compact>
       <Stack direction="row" spacing={0.8}>
         <PopupModeOption
           active={props.studyMode === "studyPlan"}
@@ -98,6 +91,6 @@ export function PopupModeSwitch(props: PopupModeSwitchProps) {
           }}
         />
       </Stack>
-    </Box>
+    </SurfaceCard>
   );
 }

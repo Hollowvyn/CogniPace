@@ -3,19 +3,18 @@ import KeyboardArrowUpRounded from "@mui/icons-material/KeyboardArrowUpRounded";
 import PauseRounded from "@mui/icons-material/PauseRounded";
 import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
+import VisibilityOffRounded from "@mui/icons-material/VisibilityOffRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import {alpha} from "@mui/material/styles";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 
+import {FieldAssistRow, NumericDisplay, SurfaceIconButton, SurfaceTooltip} from "../../../components";
 import {kineticTokens} from "../../../theme";
 import {CollapsedOverlayViewModel} from "../overlayPanel.types";
 
-import {outlinedChromeIconButtonSx, timerTextSx} from "./sharedStyles";
+import {OverlayFeedbackSurface} from "./OverlayFeedbackSurface";
 
 export function CollapsedOverlayPanel(
   props: {
@@ -39,16 +38,22 @@ export function CollapsedOverlayPanel(
           spacing={1.75}
         >
           <Stack alignItems="center" direction="row" spacing={0.9}>
-            <Tooltip title="Expand overlay">
-              <IconButton
+            <SurfaceTooltip title="Expand overlay">
+              <SurfaceIconButton
                 aria-label="Expand overlay"
-                onClick={props.model.actions.onToggleCollapse}
-                size="small"
-                sx={outlinedChromeIconButtonSx}
+                onClick={props.model.actions.onExpand}
               >
                 <KeyboardArrowUpRounded fontSize="small"/>
-              </IconButton>
-            </Tooltip>
+              </SurfaceIconButton>
+            </SurfaceTooltip>
+            <SurfaceTooltip title="Hide overlay">
+              <SurfaceIconButton
+                aria-label="Hide overlay"
+                onClick={props.model.actions.onHide}
+              >
+                <VisibilityOffRounded fontSize="small"/>
+              </SurfaceIconButton>
+            </SurfaceTooltip>
             <Box
               sx={{
                 alignSelf: "stretch",
@@ -57,19 +62,18 @@ export function CollapsedOverlayPanel(
                 width: "1px",
               }}
             />
-            <Typography
-              component="div"
+            <NumericDisplay
               sx={{
-                ...timerTextSx,
                 flexShrink: 0,
                 fontSize: "2rem",
+                letterSpacing: "-0.06em",
               }}
             >
               {props.model.timer.display}
-            </Typography>
-            <Tooltip title={props.model.timer.startLabel}>
+            </NumericDisplay>
+            <SurfaceTooltip title={props.model.timer.startLabel}>
               <span>
-                <IconButton
+                <SurfaceIconButton
                   aria-label={props.model.timer.startLabel}
                   disabled={!props.model.timer.canStart}
                   onClick={
@@ -77,7 +81,6 @@ export function CollapsedOverlayPanel(
                       ? props.model.timer.onPause
                       : props.model.timer.onStart
                   }
-                  size="small"
                   sx={{
                     backgroundColor: alpha(kineticTokens.accent, 0.12),
                     border: `1px solid ${alpha(kineticTokens.accentSoft, 0.2)}`,
@@ -92,22 +95,20 @@ export function CollapsedOverlayPanel(
                   ) : (
                     <PlayArrowRounded fontSize="small"/>
                   )}
-                </IconButton>
+                </SurfaceIconButton>
               </span>
-            </Tooltip>
-            <Tooltip title="Restart timer">
+            </SurfaceTooltip>
+            <SurfaceTooltip title="Restart timer">
               <span>
-                <IconButton
+                <SurfaceIconButton
                   aria-label="Restart timer"
                   disabled={!props.model.timer.canReset}
                   onClick={props.model.timer.onReset}
-                  size="small"
-                  sx={outlinedChromeIconButtonSx}
                 >
                   <RestartAltRounded fontSize="small"/>
-                </IconButton>
+                </SurfaceIconButton>
               </span>
-            </Tooltip>
+            </SurfaceTooltip>
           </Stack>
           <Stack alignItems="center" direction="row" spacing={0.75}>
             <Button
@@ -118,13 +119,12 @@ export function CollapsedOverlayPanel(
             >
               Submit
             </Button>
-            <Tooltip title="Fail review">
+            <SurfaceTooltip title="Fail review">
               <span>
-                <IconButton
+                <SurfaceIconButton
                   aria-label="Fail review"
                   disabled={!props.model.actions.canFail}
                   onClick={props.model.actions.onFail}
-                  size="small"
                   sx={{
                     backgroundColor: kineticTokens.danger,
                     borderRadius: 1.1,
@@ -138,11 +138,17 @@ export function CollapsedOverlayPanel(
                   }}
                 >
                   <CancelRounded fontSize="small"/>
-                </IconButton>
+                </SurfaceIconButton>
               </span>
-            </Tooltip>
+            </SurfaceTooltip>
           </Stack>
         </Stack>
+        <FieldAssistRow id={props.model.assist.id} tone={props.model.assist.tone}>
+          {props.model.assist.message}
+        </FieldAssistRow>
+        {props.model.feedback ? (
+          <OverlayFeedbackSurface feedback={props.model.feedback}/>
+        ) : null}
       </Stack>
     </Paper>
   );

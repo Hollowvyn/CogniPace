@@ -24,13 +24,13 @@ export interface OverlayHeaderStatusCard {
 
 export type OverlayHeaderStatus =
   | {
-    cards: OverlayHeaderStatusCard[];
-    kind: "empty";
-  }
+  cards: OverlayHeaderStatusCard[];
+  kind: "empty";
+}
   | {
-    cards: OverlayHeaderStatusCard[];
-    kind: "history";
-  };
+  cards: OverlayHeaderStatusCard[];
+  kind: "history";
+};
 
 export type OverlayDraftChangeHandler = (
   field: keyof OverlayDraftLogFields,
@@ -39,8 +39,9 @@ export type OverlayDraftChangeHandler = (
 
 export interface OverlayHeaderSectionViewModel {
   difficulty: Difficulty;
+  onCollapse: () => void;
+  onHide: () => void;
   onOpenSettings: () => void;
-  onToggleCollapse: () => void;
   sessionLabel: string;
   status: OverlayHeaderStatus;
   title: string;
@@ -60,6 +61,7 @@ export interface OverlayTimerSectionViewModel {
 }
 
 export interface OverlayAssessmentSectionViewModel {
+  disabledRatings: Rating[];
   onSelectRating: (rating: Rating) => void;
   selectedRating: Rating;
 }
@@ -74,12 +76,19 @@ export interface OverlayFeedbackViewModel {
   message: string;
 }
 
+export interface OverlayAssistViewModel {
+  id?: string;
+  message: string;
+  tone?: "accent" | "danger" | "default" | "info" | "success" | "warning";
+}
+
 export interface CollapsedOverlayActionsViewModel {
   canFail: boolean;
+  onHide: () => void;
   canSubmit: boolean;
+  onExpand: () => void;
   onFail: () => void;
   onSubmit: () => void;
-  onToggleCollapse: () => void;
 }
 
 export interface ExpandedOverlayActionsViewModel {
@@ -95,14 +104,23 @@ export interface ExpandedOverlayActionsViewModel {
 
 export interface CollapsedOverlayViewModel {
   actions: CollapsedOverlayActionsViewModel;
+  assist: OverlayAssistViewModel;
+  feedback: OverlayFeedbackViewModel | null;
   timer: OverlayTimerSectionViewModel;
+}
+
+export interface DockedOverlayViewModel {
+  onRestore: () => void;
 }
 
 export interface ExpandedOverlayViewModel {
   actions: ExpandedOverlayActionsViewModel;
+  actionAssist: OverlayAssistViewModel;
   assessment: OverlayAssessmentSectionViewModel;
+  assessmentAssist: OverlayAssistViewModel;
   feedback: OverlayFeedbackViewModel | null;
   header: OverlayHeaderSectionViewModel;
+  onClickAway: () => void;
   log: OverlayLogSectionViewModel;
   timer: OverlayTimerSectionViewModel & {
     targetDisplay: string;
@@ -111,10 +129,14 @@ export interface ExpandedOverlayViewModel {
 
 export type OverlayRenderModel =
   | {
-    model: CollapsedOverlayViewModel;
-    variant: "collapsed";
-  }
+  model: CollapsedOverlayViewModel;
+  variant: "collapsed";
+}
   | {
-    model: ExpandedOverlayViewModel;
-    variant: "expanded";
-  };
+  model: DockedOverlayViewModel;
+  variant: "docked";
+}
+  | {
+  model: ExpandedOverlayViewModel;
+  variant: "expanded";
+};

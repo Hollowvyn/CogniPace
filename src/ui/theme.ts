@@ -1,4 +1,4 @@
-import { alpha, createTheme } from "@mui/material/styles";
+import {alpha, createTheme} from "@mui/material/styles";
 
 export const kineticTokens = {
   background: "#131313",
@@ -147,6 +147,14 @@ export const kineticTheme = createTheme({
           backgroundSize: "20px 20px",
           opacity: 0.2,
           pointerEvents: "none",
+        },
+        "@media (prefers-reduced-motion: reduce)": {
+          "*, *::before, *::after": {
+            animationDuration: "0.01ms !important",
+            animationIterationCount: "1 !important",
+            scrollBehavior: "auto !important",
+            transitionDuration: "0.01ms !important",
+          },
         },
       },
     },

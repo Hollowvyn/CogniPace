@@ -1,16 +1,13 @@
 /** Popup-local state and actions for the recommendation-first surface. */
-import { startTransition, useMemo, useState } from "react";
+import {startTransition, useMemo, useRef, useState} from "react";
 
-import {
-  openDashboardPage,
-  openSettingsPage,
-} from "../../../data/repositories/extensionNavigationRepository";
-import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
-import { updateSettings } from "../../../data/repositories/settingsRepository";
-import { StudyMode } from "../../../domain/types";
-import { RecommendedProblemView } from "../../../domain/views";
-import { createMockAppShellPayload } from "../../mockData";
-import { useAppShellQuery } from "../../state/useAppShellQuery";
+import {openDashboardPage, openSettingsPage,} from "../../../data/repositories/extensionNavigationRepository";
+import {openProblemPage} from "../../../data/repositories/problemSessionRepository";
+import {updateSettings} from "../../../data/repositories/settingsRepository";
+import {StudyMode} from "../../../domain/types";
+import {RecommendedProblemView} from "../../../domain/views";
+import {createMockAppShellPayload} from "../../mockData";
+import {useAppShellQuery} from "../../state/useAppShellQuery";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],
@@ -24,22 +21,31 @@ function currentRecommended(
   return candidates[recommendedIndex % candidates.length] ?? candidates[0];
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-}
+function popupErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
 
-const STUDY_MODE_REQUEST_DELAY_MS = 500;
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
+
+  return "Failed to update study mode.";
+}
 
 /** Coordinates popup data loading, recommendation rotation, and user actions. */
 export function usePopupController() {
-  const { load, payload, setPayload, setStatus, status } = useAppShellQuery(
+  const {load, payload, setPayload, setStatus, status} = useAppShellQuery(
     createMockAppShellPayload()
   );
   const [recommendedIndex, setRecommendedIndex] = useState(0);
-  const [isUpdatingStudyMode, setIsUpdatingStudyMode] = useState(false);
-  const studyMode = payload?.settings.studyMode ?? "studyPlan";
+  const [pendingStudyMode, setPendingStudyMode] = useState<StudyMode | null>(
+    null
+  );
+  const studyModeWriteInFlightRef = useRef(false);
+  const persistedStudyMode = payload?.settings.studyMode ?? "studyPlan";
+  const studyMode = pendingStudyMode ?? persistedStudyMode;
+  const isUpdatingStudyMode = pendingStudyMode !== null;
 
   const recommended = useMemo(
     () =>
@@ -75,29 +81,41 @@ export function usePopupController() {
       setStatus({
         message: response.error ?? "Failed to open problem.",
         isError: true,
+        scope: target.courseId ? "course" : "recommendation",
       });
     }
   }
 
   async function setStudyMode(mode: StudyMode): Promise<void> {
-    if (studyMode === mode || isUpdatingStudyMode) {
+    if (studyMode === mode || studyModeWriteInFlightRef.current) {
       return;
     }
 
-    setIsUpdatingStudyMode(true);
+    studyModeWriteInFlightRef.current = true;
+    setPendingStudyMode(mode);
     setStatus({
       message: "",
       isError: false,
+      scope: "course",
     });
 
-    await delay(STUDY_MODE_REQUEST_DELAY_MS);
-    const response = await updateSettings({ studyMode: mode });
+    let response: Awaited<ReturnType<typeof updateSettings>>;
+    try {
+      response = await updateSettings({studyMode: mode});
+    } catch (error) {
+      response = {
+        ok: false,
+        error: popupErrorMessage(error),
+      };
+    }
 
     if (!response.ok) {
-      setIsUpdatingStudyMode(false);
+      studyModeWriteInFlightRef.current = false;
+      setPendingStudyMode(null);
       setStatus({
         message: response.error ?? "Failed to update study mode.",
         isError: true,
+        scope: "course",
       });
       return;
     }
@@ -115,7 +133,16 @@ export function usePopupController() {
         },
       };
     });
-    setIsUpdatingStudyMode(false);
+    studyModeWriteInFlightRef.current = false;
+    setPendingStudyMode(null);
+    setStatus({
+      message:
+        mode === "freestyle"
+          ? "Freestyle active. The course card stays available so you can jump back into the guided path."
+          : "Study mode active. Your next guided question is ready below.",
+      isError: false,
+      scope: "course",
+    });
   }
 
   return {
