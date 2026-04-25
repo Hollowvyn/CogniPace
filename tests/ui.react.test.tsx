@@ -1117,6 +1117,15 @@ describe("OverlayPanel", () => {
     );
   });
 
+  it("lets the expanded overlay grow to the viewport ceiling without a fixed cap", () => {
+    renderOverlayPanel();
+
+    expect(
+      globalThis.getComputedStyle(screen.getByTestId("expanded-overlay-panel"))
+        .maxHeight
+    ).toBe("calc(100vh - 10px)");
+  });
+
   it("locks the assessment rail to Again after a failed session", () => {
     const onSelectRating = vi.fn();
 

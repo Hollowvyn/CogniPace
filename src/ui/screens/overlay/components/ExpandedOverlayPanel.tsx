@@ -55,13 +55,14 @@ export function ExpandedOverlayPanel(
 
   return (
     <Paper
+      data-testid="expanded-overlay-panel"
       ref={surfaceRef}
       sx={{
         border: (theme) => `1px solid ${theme.palette.divider}`,
         borderRadius: 1.5,
         display: "flex",
         flexDirection: "column",
-        maxHeight: "min(760px, calc(100vh - 24px))",
+        maxHeight: "calc(100vh - 10px)",
         overflow: "hidden",
         width: 392,
       }}
