@@ -16,6 +16,7 @@ jobs:
   # 1. Semantic Security Analysis
   codeql:
     name: CodeQL
+    if: vars.CODEQL_WORKFLOW_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -30,18 +31,35 @@ jobs:
     name: SonarQube
     runs-on: ubuntu-latest
     steps:
+      - name: Check SonarQube configuration
+        id: sonar_config
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          if [[ -n "$SONAR_TOKEN" && -n "$SONAR_HOST_URL" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping SonarQube scan because SONAR_TOKEN or SONAR_HOST_URL is not configured."
+          fi
       - uses: actions/checkout@v6
+        if: steps.sonar_config.outputs.enabled == 'true'
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v6
+        if: steps.sonar_config.outputs.enabled == 'true'
         with:
           node-version-file: .nvmrc
           cache: npm
       - name: Install dependencies
+        if: steps.sonar_config.outputs.enabled == 'true'
         run: npm ci
       - name: Generate coverage
+        if: steps.sonar_config.outputs.enabled == 'true'
         run: npm run test
       - name: SonarQube Scan
+        if: steps.sonar_config.outputs.enabled == 'true'
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

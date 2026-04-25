@@ -4,24 +4,7 @@ const path = require("path");
 const esbuild = require("esbuild");
 
 const outdir = path.join(__dirname, "dist");
-
-function copyRecursive(src, dest) {
-  if (!fs.existsSync(src)) {
-    return;
-  }
-
-  const stats = fs.statSync(src);
-  if (stats.isDirectory()) {
-    fs.mkdirSync(dest, { recursive: true });
-    for (const entry of fs.readdirSync(src)) {
-      copyRecursive(path.join(src, entry), path.join(dest, entry));
-    }
-    return;
-  }
-
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.copyFileSync(src, dest);
-}
+const publicDir = path.join(__dirname, "public");
 
 async function build() {
   fs.rmSync(outdir, { recursive: true, force: true });
@@ -46,7 +29,9 @@ async function build() {
     logLevel: "info",
   });
 
-  copyRecursive(path.join(__dirname, "public"), outdir);
+  if (fs.existsSync(publicDir)) {
+    fs.cpSync(publicDir, outdir, { recursive: true });
+  }
   console.log("Build complete. Load ./dist as unpacked extension.");
 }
 
