@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":combinePatchMinorReleases",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "timezone": "UTC",
+  "dependencyDashboard": true,
+  "stabilityDays": 3,
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 2,
+  "packageRules": [
+    {
+      "description": "High Confidence Auto-Merge: Patches and Minor updates to DevDependencies",
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^0/",
+      "matchConfidence": ["high"],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "DevDependencies are safe to auto-merge if confidence is high",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor"],
+      "matchConfidence": ["high"],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "Always require manual review for Major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Require manual review for updates with Low/Neutral confidence",
+      "matchConfidence": ["low", "neutral"],
+      "automerge": false
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": true
+  }
+}
