@@ -12,6 +12,7 @@ export interface RecommendedProblemCardProps {
   buttonFullWidth?: boolean;
   buttonLabel?: string;
   buttonVariant?: ButtonProps["variant"];
+  compact?: boolean;
   emptyCopy?: string;
   emptyTitle?: string;
   headerAction?: ReactNode;
@@ -28,6 +29,7 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
     buttonFullWidth = false,
     buttonLabel = "Open Problem",
     buttonVariant = "contained",
+    compact = false,
     emptyCopy = "No review pressure right now. Shift to the active course to keep the streak moving.",
     emptyTitle = "Queue clear",
     headerAction,
@@ -39,8 +41,8 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
 
   if (!recommended) {
     return (
-      <SurfaceCard label="Recommended Now" title={emptyTitle}>
-        <Stack spacing={1.2}>
+      <SurfaceCard compact={compact} label="Recommended Now" title={emptyTitle}>
+        <Stack spacing={compact ? 1 : 1.2}>
           <Typography color="text.secondary" variant="body2">
             {emptyCopy}
           </Typography>
@@ -52,6 +54,7 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
 
   return (
     <SurfaceCard
+      compact={compact}
       action={
         headerAction ?? (
           <ToneChip
@@ -63,7 +66,7 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
       label="Recommended Now"
       title={recommended.title}
     >
-      <Stack spacing={1.5}>
+      <Stack spacing={compact ? 1.15 : 1.5}>
         <Stack direction="row" flexWrap="wrap" gap={1}>
           <ToneChip
             label={recommended.reason}
@@ -85,6 +88,7 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
           onClick={() => {
             void onOpenProblem({slug: recommended.slug});
           }}
+          size={compact ? "small" : "medium"}
           variant={buttonVariant}
         >
           {buttonLabel}

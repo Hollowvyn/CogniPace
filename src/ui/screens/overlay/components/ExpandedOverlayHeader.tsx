@@ -87,110 +87,112 @@ function HeaderStatusCard(
   );
 }
 
+export function ExpandedOverlayStatus(props: {
+  header: OverlayHeaderSectionViewModel;
+}) {
+  return (
+    <Stack spacing={1}>
+      <Stack
+        alignItems="center"
+        direction="row"
+        justifyContent="space-between"
+        spacing={1}
+      >
+        <Box sx={{minWidth: 0}}>
+          <SurfaceSectionLabel>{props.header.sessionLabel}</SurfaceSectionLabel>
+        </Box>
+        <DifficultyBadge difficulty={props.header.difficulty}/>
+      </Stack>
+      <Stack
+        direction="row"
+        flexWrap="wrap"
+        gap={0.9}
+        justifyContent="space-between"
+      >
+        {props.header.status.cards.map((card) => (
+          <HeaderStatusCard
+            card={card}
+            empty={props.header.status.kind === "empty"}
+            key={`${card.label}-${card.primary}`}
+          />
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+
 export function ExpandedOverlayHeader(
   props: {
     header: OverlayHeaderSectionViewModel;
   }
 ) {
   return (
-    <>
-      <Stack
-        alignItems="center"
-        direction="row"
-        onClick={props.header.onCollapse}
-        spacing={0.85}
-        sx={{
-          borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
-          p: 1.65,
-        }}
-        data-testid="expanded-overlay-header-row"
-      >
-        <Stack alignItems="center" direction="row" spacing={0.55}>
-          <SurfaceTooltip title="Collapse overlay">
-            <SurfaceIconButton
-              aria-label="Collapse overlay"
-              onClick={(event) => {
-                event.stopPropagation();
-                props.header.onCollapse();
-              }}
-            >
-              <KeyboardArrowDownRounded fontSize="small"/>
-            </SurfaceIconButton>
-          </SurfaceTooltip>
-          <SurfaceTooltip title="Open settings">
-            <SurfaceIconButton
-              aria-label="Open settings"
-              onClick={(event) => {
-                event.stopPropagation();
-                props.header.onOpenSettings();
-              }}
-            >
-              <SettingsRounded fontSize="small"/>
-            </SurfaceIconButton>
-          </SurfaceTooltip>
-          <SurfaceTooltip title="Hide overlay">
-            <SurfaceIconButton
-              aria-label="Hide overlay"
-              onClick={(event) => {
-                event.stopPropagation();
-                props.header.onHide();
-              }}
-            >
-              <VisibilityOffRounded fontSize="small"/>
-            </SurfaceIconButton>
-          </SurfaceTooltip>
-          <Box
-            aria-hidden="true"
-            data-testid="expanded-overlay-header-divider"
-            sx={{
-              alignSelf: "stretch",
-              backgroundColor: (theme) => theme.palette.divider,
-              borderRadius: 999,
-              width: "1px",
+    <Stack
+      alignItems="center"
+      direction="row"
+      onClick={props.header.onCollapse}
+      spacing={0.85}
+      sx={{
+        borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+        p: 1.65,
+      }}
+      data-testid="expanded-overlay-header-row"
+    >
+      <Stack alignItems="center" direction="row" spacing={0.55}>
+        <SurfaceTooltip title="Collapse overlay">
+          <SurfaceIconButton
+            aria-label="Collapse overlay"
+            onClick={(event) => {
+              event.stopPropagation();
+              props.header.onCollapse();
             }}
-          />
-        </Stack>
-        <Stack
-          alignItems="center"
-          direction="row"
-          sx={{flex: 1, minWidth: 0}}
-        >
-          <Typography
-            color="primary.light"
-            noWrap
-            sx={{flexShrink: 1, minWidth: 0}}
-            variant="overline"
           >
-            {props.header.title}
-          </Typography>
-        </Stack>
+            <KeyboardArrowDownRounded fontSize="small"/>
+          </SurfaceIconButton>
+        </SurfaceTooltip>
+        <SurfaceTooltip title="Open settings">
+          <SurfaceIconButton
+            aria-label="Open settings"
+            onClick={(event) => {
+              event.stopPropagation();
+              props.header.onOpenSettings();
+            }}
+          >
+            <SettingsRounded fontSize="small"/>
+          </SurfaceIconButton>
+        </SurfaceTooltip>
+        <SurfaceTooltip title="Hide overlay">
+          <SurfaceIconButton
+            aria-label="Hide overlay"
+            onClick={(event) => {
+              event.stopPropagation();
+              props.header.onHide();
+            }}
+          >
+            <VisibilityOffRounded fontSize="small"/>
+          </SurfaceIconButton>
+        </SurfaceTooltip>
+        <Box
+          aria-hidden="true"
+          data-testid="expanded-overlay-header-divider"
+          sx={{
+            alignSelf: "stretch",
+            backgroundColor: (theme) => theme.palette.divider,
+            borderRadius: 999,
+            width: "1px",
+          }}
+        />
       </Stack>
-
-      <
-        Stack spacing={1}
-      >
-        <Stack
-          alignItems="center"
-          direction="row"
-          justifyContent="space-between"
-          spacing={1}
-          sx={{px: 2}}
+      <Stack alignItems="center" direction="row" sx={{flex: 1, minWidth: 0}}>
+        <Typography
+          color="primary.light"
+          noWrap
+          sx={{flexShrink: 1, minWidth: 0}}
+          variant="overline"
         >
-          <Box sx={{minWidth: 0}}>
-            <SurfaceSectionLabel>{props.header.sessionLabel}</SurfaceSectionLabel>
-          </Box>
-          <DifficultyBadge difficulty={props.header.difficulty}/>
-        </Stack>
-        <Stack direction="row" flexWrap="wrap" gap={0.9} justifyContent="space-between" sx={{px: 2}}>
-          {props.header.status.cards.map((card) => (
-            <HeaderStatusCard
-              card={card}
-              empty={props.header.status.kind === "empty"}
-              key={`${card.label}-${card.primary}`}
-            />
-          ))}
-        </Stack>
+          {props.header.title}
+        </Typography>
       </Stack>
-    </>
+    </Stack>
   );
 }

@@ -13,11 +13,14 @@ import {ok} from "../responses";
 import {trackCourseQuestionLaunch} from "./courseHandlers";
 
 /** Opens a LeetCode problem page and optionally records course launch context. */
-export async function openProblemPage(payload: {
-  slug: string;
-  courseId?: string;
-  chapterId?: string;
-}) {
+export async function openProblemPage(
+  payload: {
+    slug: string;
+    courseId?: string;
+    chapterId?: string;
+  },
+  sender?: chrome.runtime.MessageSender
+) {
   const slug = normalizeSlug(payload.slug);
   if (!slug) {
     throw new Error("Invalid slug.");
@@ -31,7 +34,14 @@ export async function openProblemPage(payload: {
     });
   }
 
-  await chrome.tabs.create({url: canonicalProblemUrlForOpen(slug)});
+  const url = canonicalProblemUrlForOpen(slug);
+
+  if (sender?.tab?.id) {
+    await chrome.tabs.update(sender.tab.id, {url});
+  } else {
+    await chrome.tabs.create({url});
+  }
+
   return ok({opened: true});
 }
 

@@ -572,6 +572,10 @@ describe("overlay controller", () => {
             return Promise.resolve({ok: true, data: {}});
           }
 
+          if (type === "GET_APP_SHELL_DATA") {
+            return Promise.resolve({ok: true, data: makePayload()});
+          }
+
           if (type === "OPEN_EXTENSION_PAGE") {
             return Promise.resolve({ok: true, data: {opened: true}});
           }
@@ -665,6 +669,8 @@ describe("overlay controller", () => {
       expect(screen.getByText("Counting Bits")).toBeTruthy();
       expect(screen.getByText("Assessment")).toBeTruthy();
       expect(screen.getByText("00:04")).toBeTruthy();
+      expect(screen.getByText("Next In Study Mode")).toBeTruthy();
+      expect(screen.getByText("Contains Duplicate")).toBeTruthy();
     } finally {
       dateNowSpy.mockRestore();
     }
@@ -718,6 +724,34 @@ describe("overlay controller", () => {
             payload.slug === "counting-bits"
           ) {
             return Promise.resolve({ok: true, data: {}});
+          }
+
+          if (type === "GET_APP_SHELL_DATA") {
+            const nextPayload = makePayload();
+            nextPayload.settings.studyMode = "freestyle";
+            nextPayload.popup.courseNext = {
+              ...nextPayload.popup.courseNext!,
+              slug: "counting-bits",
+              title: "Counting Bits",
+            };
+            nextPayload.popup.recommended = {
+              ...nextPayload.popup.recommended!,
+              slug: "counting-bits",
+              title: "Counting Bits",
+            };
+            nextPayload.popup.recommendedCandidates = [
+              nextPayload.popup.recommended!,
+              {
+                slug: "group-anagrams",
+                title: "Group Anagrams",
+                url: "https://leetcode.com/problems/group-anagrams/",
+                difficulty: "Medium",
+                reason: "Review focus",
+                nextReviewAt: "2026-03-31T00:00:00.000Z",
+                alsoCourseNext: false,
+              },
+            ];
+            return Promise.resolve({ok: true, data: nextPayload});
           }
 
           if (type === "OPEN_EXTENSION_PAGE") {
@@ -829,6 +863,8 @@ describe("overlay controller", () => {
         (screen.getByRole("button", {name: "Again Failed"}) as HTMLButtonElement)
           .disabled
       ).toBe(false);
+      expect(screen.getByText("Recommended Now")).toBeTruthy();
+      expect(screen.getByText("Group Anagrams")).toBeTruthy();
 
       fireEvent.click(screen.getByRole("button", {name: "Restart"}));
 
@@ -855,6 +891,7 @@ describe("overlay controller", () => {
     const intervals = new Map<number, () => void>();
     const reviewedAt = "2026-03-01T00:00:00.000Z";
     let currentState: StudyState | null = null;
+    const nextPayload = makePayload();
 
     sendMessageMock.mockImplementation(
       (type: string, payload: Record<string, unknown> & { slug?: string }) => {
@@ -969,6 +1006,10 @@ describe("overlay controller", () => {
           return Promise.resolve({ok: true, data: {studyState: currentState}});
         }
 
+        if (type === "GET_APP_SHELL_DATA") {
+          return Promise.resolve({ok: true, data: nextPayload});
+        }
+
         if (type === "OPEN_EXTENSION_PAGE") {
           return Promise.resolve({ok: true, data: {opened: true}});
         }
@@ -1063,6 +1104,8 @@ describe("overlay controller", () => {
     ).toBe(true);
     expect(screen.getByText("Last submitted")).toBeTruthy();
     expect(screen.getByText("Next due")).toBeTruthy();
+    expect(screen.getByText("Next In Study Mode")).toBeTruthy();
+    expect(screen.getByText("Contains Duplicate")).toBeTruthy();
     expect(
       (screen.getByRole("button", {name: "Restart"}) as HTMLButtonElement)
         .disabled
@@ -1112,6 +1155,9 @@ describe("overlay controller", () => {
       (screen.getByRole("button", {name: "Submit"}) as HTMLButtonElement)
         .disabled
     ).toBe(false);
+    await waitFor(() => {
+      expect(screen.queryByText("Next In Study Mode")).toBeNull();
+    });
     expect(
       (screen.getByRole("button", {name: "Update"}) as HTMLButtonElement)
         .disabled
@@ -1136,6 +1182,7 @@ describe("overlay controller", () => {
     const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => nowMs);
     const reviewedAt = "2026-04-18T00:00:00.000Z";
     let currentState: StudyState | null = null;
+    const nextPayload = makePayload();
 
     try {
       sendMessageMock.mockImplementation(
@@ -1212,6 +1259,10 @@ describe("overlay controller", () => {
             };
 
             return Promise.resolve({ok: true, data: {studyState: currentState}});
+          }
+
+          if (type === "GET_APP_SHELL_DATA") {
+            return Promise.resolve({ok: true, data: nextPayload});
           }
 
           return Promise.resolve({ok: true, data: {}});
@@ -1291,6 +1342,7 @@ describe("overlay controller", () => {
           })
         );
       });
+      expect(screen.getByText("Next In Study Mode")).toBeTruthy();
 
       nowMs = 9000;
       fireEvent.click(screen.getByRole("button", {name: "Start"}));
@@ -1302,6 +1354,9 @@ describe("overlay controller", () => {
           (screen.getByRole("button", {name: "Submit"}) as HTMLButtonElement)
             .disabled
         ).toBe(false);
+      });
+      await waitFor(() => {
+        expect(screen.queryByText("Next In Study Mode")).toBeNull();
       });
 
       await waitFor(() => {

@@ -28,7 +28,10 @@ import {
 import {exportData, importData, updateSettings} from "./handlers/settingsHandlers";
 
 /** Routes a validated runtime message to the appropriate grouped handler. */
-export async function handleMessage(message: RuntimeMessage) {
+export async function handleMessage(
+  message: RuntimeMessage,
+  sender?: chrome.runtime.MessageSender
+) {
   switch (message.type as MessageType) {
     case "UPSERT_PROBLEM_FROM_PAGE":
       return upsertFromPage(message.payload as Parameters<typeof upsertFromPage>[0]);
@@ -56,7 +59,8 @@ export async function handleMessage(message: RuntimeMessage) {
       );
     case "OPEN_PROBLEM_PAGE":
       return openProblemPage(
-        message.payload as Parameters<typeof openProblemPage>[0]
+        message.payload as Parameters<typeof openProblemPage>[0],
+        sender
       );
     case "UPDATE_NOTES":
       return updateNotes(message.payload as Parameters<typeof updateNotes>[0]);

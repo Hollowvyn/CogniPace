@@ -833,6 +833,7 @@ describe("OverlayPanel", () => {
       draft?: Partial<ExpandedOverlayViewModel["log"]["draft"]>;
       onChange?: ExpandedOverlayViewModel["log"]["onChange"];
     };
+    postSubmitNext?: ExpandedOverlayViewModel["postSubmitNext"];
     timer?: Partial<ExpandedOverlayViewModel["timer"]>;
   };
 
@@ -929,6 +930,7 @@ describe("OverlayPanel", () => {
           },
           onChange: overrides.log?.onChange ?? (() => undefined),
         },
+        postSubmitNext: overrides.postSubmitNext ?? null,
         timer: {
           canPause: true,
           canReset: true,
@@ -1227,6 +1229,81 @@ describe("OverlayPanel", () => {
 
     fireEvent.pointerDown(document.body);
     expect(onClickAway).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders and clears the post-submit next card in the expanded overlay", () => {
+    const onOpenProblem = vi.fn();
+    const {rerender} = renderOverlayPanel(
+      makeExpandedRenderModel({
+        postSubmitNext: {
+          kind: "course",
+          activeCourseId: "Blind75",
+          onOpenProblem,
+          view: {
+            slug: "contains-duplicate",
+            title: "Contains Duplicate",
+            url: "https://leetcode.com/problems/contains-duplicate/",
+            difficulty: "Easy",
+            chapterId: "arrays-1",
+            chapterTitle: "Arrays",
+            status: "READY",
+            reviewPhase: "Review",
+            nextReviewAt: "2026-03-30T00:00:00.000Z",
+            inLibrary: true,
+            isCurrent: true,
+          },
+        },
+      })
+    );
+
+    expect(screen.getByText("Next In Study Mode")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", {name: "Open next"}));
+    expect(onOpenProblem).toHaveBeenCalledWith({
+      slug: "contains-duplicate",
+      courseId: "Blind75",
+      chapterId: "arrays-1",
+    });
+
+    rerender(
+      <AppProviders>
+        <OverlayPanel renderModel={makeExpandedRenderModel({postSubmitNext: null})}/>
+      </AppProviders>
+    );
+
+    expect(screen.queryByText("Next In Study Mode")).toBeNull();
+  });
+
+  it("keeps the post-submit section visible while loading or empty", () => {
+    const {rerender} = renderOverlayPanel(
+      makeExpandedRenderModel({
+        postSubmitNext: {
+          kind: "loading",
+          title: "Finding next question",
+          message: "Review saved. Pulling the latest recommendation now.",
+        },
+      })
+    );
+
+    expect(screen.getByText("Next Up")).toBeTruthy();
+    expect(screen.getByText("Finding next question")).toBeTruthy();
+
+    rerender(
+      <AppProviders>
+        <OverlayPanel
+          renderModel={makeExpandedRenderModel({
+            postSubmitNext: {
+              kind: "empty",
+              title: "No next question ready",
+              message:
+                "Review saved. The current study queue does not have another question ready.",
+            },
+          })}
+        />
+      </AppProviders>
+    );
+
+    expect(screen.getByText("No next question ready")).toBeTruthy();
   });
 
   it("renders a compact collapsed summary", () => {

@@ -1,21 +1,24 @@
 /** Overlay controller that composes page bootstrap, timer state, session state, and render-model shaping. */
-import {useCallback, useEffect, useRef} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 
+import {fetchAppShellPayload} from "../../../data/repositories/appShellRepository";
 import {
   getProblemContext,
   openExtensionPage,
+  openProblemPage,
   upsertProblemFromPage,
 } from "../../../data/repositories/problemSessionRepository";
 import {formatClock} from "../../../domain/common/time";
 import {defaultReviewMode, deriveQuickRating, goalForDifficulty} from "../../../domain/fsrs/reviewPolicy";
 import {Rating} from "../../../domain/types";
+import {AppShellPayload} from "../../../domain/views";
 
 import {draftsEqual} from "./controller/draftFields";
 import {buildHeaderStatus, buildSessionLabel} from "./controller/headerStatus";
 import {getProblemSlugFromUrl, isStaleOverlayRequest, readProblemPageSnapshot,} from "./controller/pageContext";
 import {useOverlaySessionMachine} from "./controller/useOverlaySessionMachine";
 import {useOverlayTimer} from "./controller/useOverlayTimer";
-import {OverlayRenderModel, OverlayTimerSectionViewModel} from "./overlayPanel.types";
+import {OverlayPostSubmitNextViewModel, OverlayRenderModel, OverlayTimerSectionViewModel,} from "./overlayPanel.types";
 
 export interface OverlayControllerEnvironment {
   documentRef: Document;
@@ -28,6 +31,8 @@ export function useOverlayController(
 ): { renderModel: OverlayRenderModel | null } {
   const {documentRef, windowRef} = environment;
   const timer = useOverlayTimer(windowRef);
+  const [postSubmitNext, setPostSubmitNext] =
+    useState<OverlayPostSubmitNextViewModel | null>(null);
   const {
     activateProblem,
     applyProblemContext,
@@ -49,6 +54,7 @@ export function useOverlayController(
   } = useOverlaySessionMachine({timer, windowRef});
   const activeSlugRef = useRef("");
   const lastHrefRef = useRef(windowRef.location.href);
+  const postSubmitRequestTokenRef = useRef(0);
   const requestTokenRef = useRef(0);
   const warmRefreshHandlesRef = useRef<number[]>([]);
 
@@ -58,6 +64,107 @@ export function useOverlayController(
     }
     warmRefreshHandlesRef.current = [];
   }, [windowRef]);
+
+  const clearPostSubmitNext = useCallback(() => {
+    postSubmitRequestTokenRef.current += 1;
+    setPostSubmitNext(null);
+  }, []);
+
+  const showPostSubmitLoading = useCallback(() => {
+    setPostSubmitNext({
+      kind: "loading",
+      title: "Finding next question",
+      message: "Review saved. Pulling the latest recommendation now.",
+    });
+  }, []);
+
+  const openOverlayProblem = useCallback(async (target: {
+    slug: string;
+    courseId?: string;
+    chapterId?: string;
+  }) => {
+    const response = await openProblemPage(target);
+    if (!response.ok) {
+      setFeedback(response.error ?? "Failed to open problem.", true);
+    }
+  }, [setFeedback]);
+
+  const derivePostSubmitNext = useCallback((
+    payload: AppShellPayload,
+    currentSlug: string
+  ): OverlayPostSubmitNextViewModel | null => {
+    const distinctRecommended =
+      payload.popup.recommendedCandidates.find(
+        (candidate) => candidate.slug !== currentSlug
+      ) ??
+      (
+        payload.popup.recommended &&
+        payload.popup.recommended.slug !== currentSlug
+          ? payload.popup.recommended
+          : null
+      );
+    const fallbackRecommended =
+      distinctRecommended ??
+      payload.popup.recommendedCandidates[0] ??
+      payload.popup.recommended ??
+      null;
+
+    if (
+      payload.settings.studyMode === "studyPlan" &&
+      payload.popup.courseNext &&
+      payload.popup.courseNext.slug !== currentSlug
+    ) {
+      return {
+        kind: "course",
+        activeCourseId: payload.activeCourse?.id,
+        onOpenProblem: openOverlayProblem,
+        view: payload.popup.courseNext,
+      };
+    }
+
+    if (fallbackRecommended) {
+      return {
+        kind: "recommended",
+        onOpenProblem: openOverlayProblem,
+        recommended: fallbackRecommended,
+      };
+    }
+
+    return null;
+  }, [openOverlayProblem]);
+
+  const refreshPostSubmitNext = useCallback(async (currentSlug: string) => {
+    const requestToken = ++postSubmitRequestTokenRef.current;
+    const response = await fetchAppShellPayload();
+    if (requestToken !== postSubmitRequestTokenRef.current) {
+      return;
+    }
+
+    if (
+      !response.ok ||
+      !response.data ||
+      !("settings" in response.data) ||
+      !("popup" in response.data)
+    ) {
+      setPostSubmitNext({
+        kind: "empty",
+        title: "Next question unavailable",
+        message:
+          response.error ??
+          "Review saved, but the overlay could not load the latest recommendation.",
+      });
+      return;
+    }
+
+    setPostSubmitNext(
+      derivePostSubmitNext(response.data, currentSlug) ?? {
+        kind: "empty",
+        title: "No next question ready",
+        message:
+          "Review saved. The current study queue does not have another question ready.",
+      }
+    );
+  }, [derivePostSubmitNext]);
 
   const refreshCurrentPage = useCallback(
     async (slugOverride?: string): Promise<void> => {
@@ -145,6 +252,7 @@ export function useOverlayController(
       ++requestTokenRef.current;
       activeSlugRef.current = "";
       clearWarmRefreshes();
+      clearPostSubmitNext();
       clearActiveProblem();
       return;
     }
@@ -156,6 +264,7 @@ export function useOverlayController(
     ++requestTokenRef.current;
     activeSlugRef.current = slug;
     clearWarmRefreshes();
+    clearPostSubmitNext();
     activateProblem(readProblemPageSnapshot(documentRef, slug));
 
     await refreshCurrentPage(slug);
@@ -163,6 +272,7 @@ export function useOverlayController(
   }, [
     activateProblem,
     clearActiveProblem,
+    clearPostSubmitNext,
     clearWarmRefreshes,
     documentRef,
     refreshCurrentPage,
@@ -269,7 +379,13 @@ export function useOverlayController(
     }
   ) => {
     const persistedSlug = await persistSubmittedRating(rating, options);
+    if (!persistedSlug) {
+      clearPostSubmitNext();
+      return;
+    }
+    showPostSubmitLoading();
     await refreshAfterMutation(persistedSlug);
+    await refreshPostSubmitNext(persistedSlug);
   };
 
   const onCompactSubmit = () => {
@@ -285,7 +401,14 @@ export function useOverlayController(
   };
 
   const onSaveOverride = () => {
-    void saveOverride().then(refreshAfterMutation);
+    void saveOverride().then(async (persistedSlug) => {
+      if (!persistedSlug) {
+        return;
+      }
+      showPostSubmitLoading();
+      await refreshAfterMutation(persistedSlug);
+      await refreshPostSubmitNext(persistedSlug);
+    });
   };
 
   const onCollapseOverlay = async () => {
@@ -326,7 +449,12 @@ export function useOverlayController(
     isRunning: timer.isRunning,
     onPause: pauseTimer,
     onReset: resetTimer,
-    onStart: startTimer,
+    onStart: () => {
+      if (canRestart) {
+        clearPostSubmitNext();
+      }
+      startTimer();
+    },
     startLabel: timer.isRunning
       ? "Pause timer"
       : canRestart && !canSubmit
@@ -378,6 +506,7 @@ export function useOverlayController(
           canUpdate,
           onFail: onFailReview,
           onRestart: () => {
+            clearPostSubmitNext();
             restartSession(false);
           },
           onSubmit: () => {
@@ -418,6 +547,7 @@ export function useOverlayController(
           draft: currentState.draft,
           onChange: updateDraft,
         },
+        postSubmitNext,
         timer: {
           ...baseTimerModel,
           targetDisplay: formatClock(goalForDifficulty(currentState.currentDifficulty)),

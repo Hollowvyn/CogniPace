@@ -196,6 +196,9 @@ Give users lightweight solve-time awareness and a fast logging path.
 - failed submissions keep the expanded assessment locked to `Again` until the user restarts the local session
 - save override replaces the latest submission instead of appending a new review
 - restart opens a fresh local session without mutating persisted review history until the next submit
+- successful saved overlay results expand into a compact next-step preview below the actions, preferring the next
+  study-mode question and otherwise falling back to the next distinct recommendation
+- restarting or starting a fresh local session clears that post-submit next-step preview
 
 ### Key States And Edge Cases
 

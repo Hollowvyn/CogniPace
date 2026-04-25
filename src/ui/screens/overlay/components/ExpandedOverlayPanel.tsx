@@ -7,10 +7,11 @@ import {ExpandedOverlayViewModel} from "../overlayPanel.types";
 
 import {AssessmentRail} from "./AssessmentRail";
 import {ExpandedOverlayActions} from "./ExpandedOverlayActions";
-import {ExpandedOverlayHeader} from "./ExpandedOverlayHeader";
+import {ExpandedOverlayHeader, ExpandedOverlayStatus} from "./ExpandedOverlayHeader";
 import {ExpandedOverlayTimerCard} from "./ExpandedOverlayTimerCard";
 import {OverlayFeedbackSurface} from "./OverlayFeedbackSurface";
 import {OverlayLogFields} from "./OverlayLogFields";
+import {OverlayPostSubmitNextCard} from "./OverlayPostSubmitNextCard";
 
 export function ExpandedOverlayPanel(
   props: {
@@ -18,6 +19,12 @@ export function ExpandedOverlayPanel(
   }
 ) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
+
+  const onClickAwayRef = useRef(props.model.onClickAway);
+
+  useEffect(() => {
+    onClickAwayRef.current = props.model.onClickAway;
+  });
 
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -36,7 +43,7 @@ export function ExpandedOverlayPanel(
         (eventTarget instanceof Node && surface.contains(eventTarget));
 
       if (!clickedInsideOverlay) {
-        props.model.onClickAway();
+        onClickAwayRef.current();
       }
     };
 
@@ -44,7 +51,7 @@ export function ExpandedOverlayPanel(
     return () => {
       ownerDocument.removeEventListener("pointerdown", handlePointerDown, true);
     };
-  }, [props.model]);
+  }, []);
 
   return (
     <Paper
@@ -52,14 +59,26 @@ export function ExpandedOverlayPanel(
       sx={{
         border: (theme) => `1px solid ${theme.palette.divider}`,
         borderRadius: 1.5,
+        display: "flex",
+        flexDirection: "column",
+        maxHeight: "min(760px, calc(100vh - 24px))",
         overflow: "hidden",
         width: 392,
       }}
     >
       <ExpandedOverlayHeader header={props.model.header}/>
 
-      <Box sx={{p: 2}}>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          overscrollBehavior: "contain",
+          p: 2,
+        }}
+      >
         <Stack spacing={2}>
+          <ExpandedOverlayStatus header={props.model.header}/>
           {props.model.feedback ? (
             <OverlayFeedbackSurface feedback={props.model.feedback}/>
           ) : null}
@@ -73,6 +92,7 @@ export function ExpandedOverlayPanel(
             actions={props.model.actions}
             assist={props.model.actionAssist}
           />
+          <OverlayPostSubmitNextCard nextTarget={props.model.postSubmitNext}/>
         </Stack>
       </Box>
     </Paper>

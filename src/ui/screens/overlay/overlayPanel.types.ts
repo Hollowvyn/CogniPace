@@ -1,4 +1,5 @@
 import {Difficulty, Rating} from "../../../domain/types";
+import {CourseQuestionView, RecommendedProblemView} from "../../../domain/views";
 
 export interface OverlayDraftLogFields {
   interviewPattern: string;
@@ -102,6 +103,35 @@ export interface ExpandedOverlayActionsViewModel {
   onUpdate: () => void;
 }
 
+export type OverlayPostSubmitNextViewModel =
+  | {
+  kind: "loading";
+  message: string;
+  title: string;
+}
+  | {
+  kind: "empty";
+  message: string;
+  title: string;
+}
+  | {
+  activeCourseId?: string;
+  kind: "course";
+  onOpenProblem: (target: {
+    slug: string;
+    courseId?: string;
+    chapterId?: string;
+  }) => Promise<void> | void;
+  view: CourseQuestionView;
+}
+  | {
+  kind: "recommended";
+  onOpenProblem: (
+    target: Pick<RecommendedProblemView, "slug">
+  ) => Promise<void> | void;
+  recommended: RecommendedProblemView;
+};
+
 export interface CollapsedOverlayViewModel {
   actions: CollapsedOverlayActionsViewModel;
   assist: OverlayAssistViewModel;
@@ -122,6 +152,7 @@ export interface ExpandedOverlayViewModel {
   header: OverlayHeaderSectionViewModel;
   onClickAway: () => void;
   log: OverlayLogSectionViewModel;
+  postSubmitNext: OverlayPostSubmitNextViewModel | null;
   timer: OverlayTimerSectionViewModel & {
     targetDisplay: string;
   };
