@@ -46,7 +46,7 @@
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.5"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
