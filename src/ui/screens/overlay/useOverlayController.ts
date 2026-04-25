@@ -33,6 +33,7 @@ export function useOverlayController(
     applyProblemContext,
     clearActiveProblem,
     collapse,
+    dock,
     expand,
     pauseTimer,
     persistDraft,
@@ -288,7 +289,7 @@ export function useOverlayController(
   };
 
   const onCollapseOverlay = async () => {
-    if (currentState.collapsed) {
+    if (currentState.visualMode === "collapsed") {
       return;
     }
 
@@ -300,6 +301,21 @@ export function useOverlayController(
     }
 
     collapse();
+  };
+
+  const onHideOverlay = async () => {
+    if (currentState.visualMode === "docked") {
+      return;
+    }
+
+    if (
+      currentState.activeSlug &&
+      !draftsEqual(currentState.draft, currentState.persistedDraft)
+    ) {
+      await persistDraft(currentState.activeSlug, currentState.draft);
+    }
+
+    dock();
   };
 
   const baseTimerModel: OverlayTimerSectionViewModel = {
@@ -318,12 +334,15 @@ export function useOverlayController(
         : "Start timer",
   };
 
-  if (currentState.collapsed) {
+  if (currentState.visualMode === "collapsed") {
     return {
       renderModel: {
         model: {
           actions: {
             canFail: canSubmit,
+            onHide: () => {
+              void onHideOverlay();
+            },
             canSubmit,
             onExpand: expand,
             onFail: onFailReview,
@@ -334,6 +353,17 @@ export function useOverlayController(
           timer: baseTimerModel,
         },
         variant: "collapsed",
+      },
+    };
+  }
+
+  if (currentState.visualMode === "docked") {
+    return {
+      renderModel: {
+        model: {
+          onRestore: collapse,
+        },
+        variant: "docked",
       },
     };
   }
@@ -367,6 +397,9 @@ export function useOverlayController(
           difficulty: currentState.currentDifficulty,
           onCollapse: () => {
             void onCollapseOverlay();
+          },
+          onHide: () => {
+            void onHideOverlay();
           },
           onOpenSettings: () => {
             void openExtensionPage("dashboard.html?view=settings");

@@ -1,5 +1,6 @@
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
+import VisibilityOffRounded from "@mui/icons-material/VisibilityOffRounded";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -125,6 +126,17 @@ export function ExpandedOverlayHeader(
               }}
             >
               <SettingsRounded fontSize="small"/>
+            </SurfaceIconButton>
+          </SurfaceTooltip>
+          <SurfaceTooltip title="Hide overlay">
+            <SurfaceIconButton
+              aria-label="Hide overlay"
+              onClick={(event) => {
+                event.stopPropagation();
+                props.header.onHide();
+              }}
+            >
+              <VisibilityOffRounded fontSize="small"/>
             </SurfaceIconButton>
           </SurfaceTooltip>
           <Box

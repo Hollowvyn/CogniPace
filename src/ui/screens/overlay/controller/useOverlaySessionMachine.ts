@@ -21,7 +21,6 @@ interface SubmittedSessionSnapshot {
 
 interface OverlaySessionState {
   activeSlug: string;
-  collapsed: boolean;
   currentDifficulty: Difficulty;
   currentState: StudyState | null;
   currentTitle: string;
@@ -33,6 +32,7 @@ interface OverlaySessionState {
   persistedDraft: OverlayDraftLogFields;
   selectedRating: Rating;
   submittedSession: SubmittedSessionSnapshot | null;
+  visualMode: "collapsed" | "docked" | "expanded";
 }
 
 interface ActivateOverlayProblemArgs {
@@ -50,7 +50,6 @@ interface ApplyOverlayProblemContextArgs {
 
 const initialOverlaySessionState: OverlaySessionState = {
   activeSlug: "",
-  collapsed: true,
   currentDifficulty: "Unknown",
   currentState: null,
   currentTitle: "",
@@ -62,6 +61,7 @@ const initialOverlaySessionState: OverlaySessionState = {
   persistedDraft: emptyDraft(),
   selectedRating: 2,
   submittedSession: null,
+  visualMode: "collapsed",
 };
 
 interface OverlaySessionMachineArgs {
@@ -109,6 +109,7 @@ export function useOverlaySessionMachine(
       persistedDraft: emptyDraft(),
       selectedRating: 2,
       submittedSession: null,
+      visualMode: "collapsed",
     }));
   }, [timer]);
 
@@ -129,6 +130,7 @@ export function useOverlaySessionMachine(
         persistedDraft: emptyDraft(),
         selectedRating: 2,
         submittedSession: null,
+        visualMode: "collapsed",
       }));
     },
     [timer]
@@ -184,14 +186,21 @@ export function useOverlaySessionMachine(
   const collapse = useCallback(() => {
     setState((current) => ({
       ...current,
-      collapsed: true,
+      visualMode: "collapsed",
     }));
   }, []);
 
   const expand = useCallback(() => {
     setState((current) => ({
       ...current,
-      collapsed: false,
+      visualMode: "expanded",
+    }));
+  }, []);
+
+  const dock = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      visualMode: "docked",
     }));
   }, []);
 
@@ -312,7 +321,6 @@ export function useOverlaySessionMachine(
 
       setState((current) => ({
         ...current,
-        collapsed: false,
         currentState: current.currentState
           ? {
             ...current.currentState,
@@ -330,6 +338,7 @@ export function useOverlaySessionMachine(
           rating,
           solveTimeMs,
         },
+        visualMode: "expanded",
       }));
 
       return state.activeSlug;
@@ -442,6 +451,7 @@ export function useOverlaySessionMachine(
     clearActiveProblem,
     clearFeedback,
     collapse,
+    dock,
     expand,
     pauseTimer,
     persistDraft,

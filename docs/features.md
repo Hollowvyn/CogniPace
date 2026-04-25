@@ -123,13 +123,15 @@ Let users review and log progress directly on the LeetCode problem page.
 ### User Flow
 
 1. User opens a LeetCode problem page
-2. Overlay appears in collapsed or expanded state
+2. Overlay appears in collapsed, expanded, or docked state
 3. User starts the timer, solves, takes notes, and records a review result
 
 ### Current Behavior
 
-- collapsed and expanded overlay states
+- collapsed, expanded, and docked overlay states
 - collapsed overlay prioritizes a compact timer-first strip with expand access
+- docked overlay reduces the surface to a narrow recoverable edge trigger with the brand mark only
+- docked overlay can be dragged vertically along the right edge during the current docked session
 - expanded overlay shows a smaller timer, a target-time reference, and a compact FSRS assessment control
 - expanded logging fields include interview pattern, time complexity, space complexity, languages used, and notes
 - external clicks collapse the expanded overlay
@@ -145,6 +147,8 @@ Let users review and log progress directly on the LeetCode problem page.
 - timer is not used
 - review is first solve versus repeat review
 - overlay is collapsed but user still needs quick context
+- overlay is docked but user still needs a fast in-page restore path
+- docked overlay covers page content and needs to move without leaving the viewport
 - user edits logs or rating after the current session has already been submitted
 
 ### In Scope

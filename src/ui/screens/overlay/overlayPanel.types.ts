@@ -24,13 +24,13 @@ export interface OverlayHeaderStatusCard {
 
 export type OverlayHeaderStatus =
   | {
-    cards: OverlayHeaderStatusCard[];
-    kind: "empty";
-  }
+  cards: OverlayHeaderStatusCard[];
+  kind: "empty";
+}
   | {
-    cards: OverlayHeaderStatusCard[];
-    kind: "history";
-  };
+  cards: OverlayHeaderStatusCard[];
+  kind: "history";
+};
 
 export type OverlayDraftChangeHandler = (
   field: keyof OverlayDraftLogFields,
@@ -40,6 +40,7 @@ export type OverlayDraftChangeHandler = (
 export interface OverlayHeaderSectionViewModel {
   difficulty: Difficulty;
   onCollapse: () => void;
+  onHide: () => void;
   onOpenSettings: () => void;
   sessionLabel: string;
   status: OverlayHeaderStatus;
@@ -83,6 +84,7 @@ export interface OverlayAssistViewModel {
 
 export interface CollapsedOverlayActionsViewModel {
   canFail: boolean;
+  onHide: () => void;
   canSubmit: boolean;
   onExpand: () => void;
   onFail: () => void;
@@ -107,6 +109,10 @@ export interface CollapsedOverlayViewModel {
   timer: OverlayTimerSectionViewModel;
 }
 
+export interface DockedOverlayViewModel {
+  onRestore: () => void;
+}
+
 export interface ExpandedOverlayViewModel {
   actions: ExpandedOverlayActionsViewModel;
   actionAssist: OverlayAssistViewModel;
@@ -123,10 +129,14 @@ export interface ExpandedOverlayViewModel {
 
 export type OverlayRenderModel =
   | {
-    model: CollapsedOverlayViewModel;
-    variant: "collapsed";
-  }
+  model: CollapsedOverlayViewModel;
+  variant: "collapsed";
+}
   | {
-    model: ExpandedOverlayViewModel;
-    variant: "expanded";
-  };
+  model: DockedOverlayViewModel;
+  variant: "docked";
+}
+  | {
+  model: ExpandedOverlayViewModel;
+  variant: "expanded";
+};

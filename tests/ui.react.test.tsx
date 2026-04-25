@@ -9,6 +9,7 @@ import {DashboardApp} from "../src/ui/screens/dashboard/DashboardApp";
 import {OverlayPanel} from "../src/ui/screens/overlay/OverlayPanel";
 import {
   CollapsedOverlayViewModel,
+  DockedOverlayViewModel,
   ExpandedOverlayViewModel,
   OverlayRenderModel,
 } from "../src/ui/screens/overlay/overlayPanel.types";
@@ -754,6 +755,8 @@ describe("OverlayPanel", () => {
     timer?: Partial<CollapsedOverlayViewModel["timer"]>;
   };
 
+  type DockedRenderModelOverrides = Partial<DockedOverlayViewModel>;
+
   function makeExpandedRenderModel(
     overrides: ExpandedRenderModelOverrides = {}
   ): OverlayRenderModel {
@@ -800,6 +803,7 @@ describe("OverlayPanel", () => {
         header: {
           difficulty: "Medium",
           onCollapse: () => undefined,
+          onHide: () => undefined,
           onOpenSettings: () => undefined,
           sessionLabel: "Recall review",
           status: {
@@ -869,6 +873,7 @@ describe("OverlayPanel", () => {
       model: {
         actions: {
           canFail: true,
+          onHide: () => undefined,
           canSubmit: true,
           onExpand: () => undefined,
           onFail: () => undefined,
@@ -899,11 +904,41 @@ describe("OverlayPanel", () => {
     };
   }
 
+  function makeDockedRenderModel(
+    overrides: DockedRenderModelOverrides = {}
+  ): OverlayRenderModel {
+    return {
+      model: {
+        onRestore: () => undefined,
+        ...overrides,
+      },
+      variant: "docked",
+    };
+  }
+
   function renderOverlayPanel(renderModel = makeExpandedRenderModel()) {
     return render(
       <AppProviders>
         <OverlayPanel renderModel={renderModel}/>
       </AppProviders>
+    );
+  }
+
+  function firePointerEvent(
+    target: Element,
+    type: "pointerdown" | "pointermove" | "pointerup",
+    coordinates: {
+      clientX?: number;
+      clientY: number;
+    }
+  ) {
+    fireEvent(
+      target,
+      new MouseEvent(type, {
+        bubbles: true,
+        clientX: coordinates.clientX ?? 0,
+        clientY: coordinates.clientY,
+      })
     );
   }
 
@@ -1054,11 +1089,13 @@ describe("OverlayPanel", () => {
   it("uses expanded header row click zones while respecting buttons", () => {
     const onOpenSettings = vi.fn();
     const onCollapse = vi.fn();
+    const onHide = vi.fn();
 
     renderOverlayPanel(
       makeExpandedRenderModel({
         header: {
           onCollapse,
+          onHide,
           onOpenSettings,
         },
       })
@@ -1066,6 +1103,11 @@ describe("OverlayPanel", () => {
 
     fireEvent.click(screen.getByRole("button", {name: "Open settings"}));
     expect(onOpenSettings).toHaveBeenCalledTimes(1);
+    expect(onCollapse).toHaveBeenCalledTimes(0);
+    expect(onHide).toHaveBeenCalledTimes(0);
+
+    fireEvent.click(screen.getByRole("button", {name: "Hide overlay"}));
+    expect(onHide).toHaveBeenCalledTimes(1);
     expect(onCollapse).toHaveBeenCalledTimes(0);
 
     fireEvent.click(screen.getByText("Group Anagrams"));
@@ -1101,6 +1143,7 @@ describe("OverlayPanel", () => {
     renderOverlayPanel(makeCollapsedRenderModel());
 
     expect(screen.getByRole("button", {name: "Expand overlay"})).toBeTruthy();
+    expect(screen.getByRole("button", {name: "Hide overlay"})).toBeTruthy();
     expect(screen.getByText("03:12")).toBeTruthy();
     expect(screen.getByRole("button", {name: "Start timer"})).toBeTruthy();
     expect(screen.getByRole("button", {name: "Restart timer"})).toBeTruthy();
@@ -1117,11 +1160,13 @@ describe("OverlayPanel", () => {
     const onResetTimer = vi.fn();
     const onCompactSubmit = vi.fn();
     const onFailReview = vi.fn();
+    const onHide = vi.fn();
     const onToggleCollapse = vi.fn();
 
     const {rerender} = renderOverlayPanel(
       makeCollapsedRenderModel({
         actions: {
+          onHide,
           onExpand: onToggleCollapse,
           onFail: onFailReview,
           onSubmit: onCompactSubmit,
@@ -1143,6 +1188,9 @@ describe("OverlayPanel", () => {
     fireEvent.click(screen.getByRole("button", {name: "Fail review"}));
     expect(onFailReview).toHaveBeenCalledTimes(1);
 
+    fireEvent.click(screen.getByRole("button", {name: "Hide overlay"}));
+    expect(onHide).toHaveBeenCalledTimes(1);
+
     fireEvent.click(screen.getByRole("button", {name: "Submit"}));
     expect(onCompactSubmit).toHaveBeenCalledTimes(1);
 
@@ -1151,6 +1199,7 @@ describe("OverlayPanel", () => {
         <OverlayPanel
           renderModel={makeCollapsedRenderModel({
             actions: {
+              onHide,
               onExpand: onToggleCollapse,
               onFail: onFailReview,
               onSubmit: onCompactSubmit,
@@ -1177,6 +1226,7 @@ describe("OverlayPanel", () => {
             actions: {
               canFail: false,
               canSubmit: false,
+              onHide,
               onExpand: onToggleCollapse,
               onFail: onFailReview,
               onSubmit: onCompactSubmit,
@@ -1210,6 +1260,61 @@ describe("OverlayPanel", () => {
       (screen.getByRole("button", {name: "Fail review"}) as HTMLButtonElement)
         .disabled
     ).toBe(true);
+  });
+
+  it("renders a docked overlay trigger", () => {
+    const onRestore = vi.fn();
+
+    renderOverlayPanel(makeDockedRenderModel({onRestore}));
+
+    fireEvent.click(screen.getByRole("button", {name: "Show overlay"}));
+    expect(onRestore).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps tiny dock pointer movement as a restore click", () => {
+    const onRestore = vi.fn();
+
+    renderOverlayPanel(makeDockedRenderModel({onRestore}));
+
+    const dockTrigger = screen.getByRole("button", {name: "Show overlay"});
+    firePointerEvent(dockTrigger, "pointerdown", {clientY: 100});
+    firePointerEvent(dockTrigger, "pointermove", {clientY: 103});
+    firePointerEvent(dockTrigger, "pointerup", {clientY: 103});
+    fireEvent.click(dockTrigger);
+
+    expect(onRestore).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("docked-overlay-panel").style.transform)
+      .toBe("translateY(0px)");
+  });
+
+  it("moves the dock vertically without restoring the overlay", () => {
+    const onRestore = vi.fn();
+
+    renderOverlayPanel(makeDockedRenderModel({onRestore}));
+
+    const dockTrigger = screen.getByRole("button", {name: "Show overlay"});
+    firePointerEvent(dockTrigger, "pointerdown", {clientY: 100});
+    firePointerEvent(dockTrigger, "pointermove", {clientY: 80});
+    firePointerEvent(dockTrigger, "pointerup", {clientY: 80});
+    fireEvent.click(dockTrigger);
+
+    expect(onRestore).toHaveBeenCalledTimes(0);
+    expect(screen.getByTestId("docked-overlay-panel").style.transform)
+      .toBe("translateY(-20px)");
+  });
+
+  it("ignores horizontal dock movement", () => {
+    const onRestore = vi.fn();
+
+    renderOverlayPanel(makeDockedRenderModel({onRestore}));
+
+    const dockTrigger = screen.getByRole("button", {name: "Show overlay"});
+    firePointerEvent(dockTrigger, "pointerdown", {clientX: 40, clientY: 100});
+    firePointerEvent(dockTrigger, "pointermove", {clientX: 4, clientY: 100});
+    firePointerEvent(dockTrigger, "pointerup", {clientX: 4, clientY: 100});
+
+    expect(screen.getByTestId("docked-overlay-panel").style.transform)
+      .toBe("translateY(0px)");
   });
 
   it("shows expanded submission controls for override and restart", () => {

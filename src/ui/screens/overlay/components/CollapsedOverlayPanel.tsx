@@ -3,6 +3,7 @@ import KeyboardArrowUpRounded from "@mui/icons-material/KeyboardArrowUpRounded";
 import PauseRounded from "@mui/icons-material/PauseRounded";
 import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
+import VisibilityOffRounded from "@mui/icons-material/VisibilityOffRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -43,6 +44,14 @@ export function CollapsedOverlayPanel(
                 onClick={props.model.actions.onExpand}
               >
                 <KeyboardArrowUpRounded fontSize="small"/>
+              </SurfaceIconButton>
+            </SurfaceTooltip>
+            <SurfaceTooltip title="Hide overlay">
+              <SurfaceIconButton
+                aria-label="Hide overlay"
+                onClick={props.model.actions.onHide}
+              >
+                <VisibilityOffRounded fontSize="small"/>
               </SurfaceIconButton>
             </SurfaceTooltip>
             <Box

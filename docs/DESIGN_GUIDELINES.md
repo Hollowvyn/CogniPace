@@ -4,7 +4,8 @@
 
 This document captures the current visual and interaction direction for the extension.
 
-It is a design reference, not the canonical product spec. Product truth lives in `docs/product.md` and `docs/features.md`.
+It is a design reference, not the canonical product spec. Product truth lives in `docs/product.md` and
+`docs/features.md`.
 
 ## Visual Direction
 
@@ -24,7 +25,8 @@ The UI should feel like a sharp browser tool rather than a marketing site or mob
 - dense is acceptable if the information order is clear
 - the popup should prefer surface-specific sections over generic dashboard cards
 - compact icon actions are preferred over oversized footer buttons when the destination is secondary
-- study-mode actions in the popup should name the next action explicitly, for example `Start study mode` or `Start freestyle mode`
+- study-mode actions in the popup should name the next action explicitly, for example `Start study mode` or
+  `Start freestyle mode`
 - popup sections should reserve space for helper copy and inline status so action feedback does not shift the layout
 - mode changes should update the existing course panel in place instead of swapping between visually unrelated cards
 
@@ -39,6 +41,9 @@ The UI should feel like a sharp browser tool rather than a marketing site or mob
 - the overlay should remain supportive rather than dominant
 - quick logging must feel fast
 - expanded controls should be available without overwhelming the page
+- hidden overlay behavior should minimize to a narrow, always-recoverable edge trigger rather than disappearing
+  completely
+- dock movement should stay vertical-only, right-edge bound, and visibly recoverable
 - collapsed and expanded overlay variants should keep action positions stable as timer and submit state change
 - critical guidance should appear as visible helper text; tooltips are secondary clarification, not the only explanation
 
@@ -63,7 +68,8 @@ Labels should explain the state directly, for example:
 - make secondary controls visually secondary
 - use status and difficulty badges sparingly but clearly
 - keep the recommendation panel visually strongest, with the active-course panel directly beneath it
-- when progress and next-up content belong to the same course flow, keep them in one panel instead of splitting them into separate cards
+- when progress and next-up content belong to the same course flow, keep them in one panel instead of splitting them
+  into separate cards
 
 ## What Not To Design
 
@@ -85,4 +91,5 @@ Labels should explain the state directly, for example:
 
 ## Relationship To Stitch
 
-The existing Stitch document is a supporting design-generation artifact. This file is the higher-level design reference that contributors should follow before using or updating Stitch-oriented prompts.
+The existing Stitch document is a supporting design-generation artifact. This file is the higher-level design reference
+that contributors should follow before using or updating Stitch-oriented prompts.
