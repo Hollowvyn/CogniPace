@@ -39,7 +39,7 @@ Rules:
 
 - Project type: TypeScript Chrome extension using Manifest V3 with React 19 UI mounted from TSX entrypoints
 - Frontend stack: React 19 + MUI + Emotion
-- Architecture layout: `ui + data + domain + extension + entrypoints`
+- Architecture layout: `ui + data + domain + extension + entrypoints + shared`
 - GitHub operating model: personal + private
 - Repository visibility: private
 - Package manager: `npm`
@@ -203,7 +203,7 @@ Status: completed on 2026-03-30
 ### Steps
 
 - [x] Update the baseline snapshot to reflect React 19 + MUI + Emotion
-- [x] Document the current `ui + data + domain + extension + entrypoints` layout
+- [x] Document the current `ui + data + domain + extension + entrypoints + shared` layout
 - [x] Update current health to include `npm run test:ui`, React hooks linting, and React architecture tests
 - [x] Update build and tooling truth to reflect TSX entrypoints, `jsx: react-jsx`, `vitest`, and `@testing-library/react`
 - [x] Refresh `README.md` and `docs/architecture.md` for the React stack
@@ -477,8 +477,8 @@ Only start this phase after the repo already has:
    - useful for merge queue and PR automation
 
 5. `Renovate`
-   - only if replacing Dependabot version updates
-   - useful for grouping and scheduling dependency updates
+   - [x] Installed and configured to coexist with Dependabot
+   - useful for grouping and scheduling dependency updates and high-confidence auto-merges
 
 6. `Snyk`
    - optional deeper application security layer beyond GitHub-native tooling
@@ -486,7 +486,6 @@ Only start this phase after the repo already has:
 
 ### Rules
 
-- [ ] Do not run Renovate and Dependabot version updates together
 - [ ] Do not add Codecov before real coverage exists
 - [ ] Do not add Mergify before PR throughput justifies it
 - [ ] Do not add optional third-party bots before the repo can already sustain its native workflow cleanly
@@ -517,7 +516,6 @@ Only start this phase after the repo already has:
 
 - Codecov after coverage exists
 - Mergify after PR volume grows
-- Renovate only if replacing Dependabot
 - Snyk only if GitHub-native security plus Semgrep is not enough
 
 ## Deferred Items

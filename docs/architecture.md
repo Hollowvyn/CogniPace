@@ -2,7 +2,7 @@
 
 ## System Shape
 
-The extension now follows an explicit `ui + data + domain + extension + entrypoints` layout built around a React 19 +
+The extension now follows an explicit `ui + data + domain + extension + entrypoints + shared` layout built around a React 19 +
 MUI + Emotion UI stack.
 
 - `src/entrypoints/`
@@ -15,6 +15,8 @@ MUI + Emotion UI stack.
   Pure business logic and business types
 - `src/extension/`
   Chrome runtime contracts, validation, background routing, and notifications
+- `src/shared/`
+  Export proxies and reusable contracts for logic residing in the domain
 
 The goal is that a new engineer can find the right change area by directory alone.
 
@@ -183,8 +185,10 @@ The intended runtime path for React surfaces is:
 
 1. A screen, controller, or shared UI hook calls a repository in `src/data/repositories/*`.
 2. The repository talks to either:
-  - a runtime client in `src/extension/runtime/client.ts`, or
-  - a datasource under `src/data/datasources/chrome/*`.
+
+- a runtime client in `src/extension/runtime/client.ts`, or
+- a datasource under `src/data/datasources/chrome/*`.
+
 3. The background bootstrap validates and routes runtime messages through `src/extension/background/router.ts`.
 4. Background handlers compose repositories and pure domain logic.
 5. The repository returns a typed payload back to the UI layer.
