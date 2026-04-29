@@ -17,7 +17,11 @@ export function DashboardApp() {
 
   return (
     <DashboardFrame>
-      <Stack direction={{ lg: "row", xs: "column" }} spacing={2}>
+      <Stack
+        alignItems={{ lg: "flex-start", xs: "stretch" }}
+        direction={{ lg: "row", xs: "column" }}
+        spacing={2}
+      >
         <DashboardRail
           activeView={controller.view}
           onNavigate={controller.navigateToView}

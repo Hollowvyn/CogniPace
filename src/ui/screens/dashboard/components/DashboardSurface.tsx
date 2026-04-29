@@ -57,7 +57,7 @@ export function DashboardRailPanel(props: { children: ReactNode }) {
         minWidth: { lg: 218 },
         p: 1.75,
         position: { lg: "sticky" },
-        top: { lg: 20 },
+        top: { lg: 0 },
         width: { lg: 218, xs: "100%" },
       }}
     >
