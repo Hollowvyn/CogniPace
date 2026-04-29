@@ -1,8 +1,12 @@
 /** Runtime message validation and sender authorization safeguards. */
-import {assertImportPayloadShape} from "../../data/importexport/backup";
-import {isProblemPage, normalizeSlug, slugToUrl} from "../../domain/problem/slug";
+import { assertImportPayloadShape } from "../../data/importexport/backup";
+import {
+  isProblemPage,
+  normalizeSlug,
+  slugToUrl,
+} from "../../domain/problem/slug";
 
-import {MessageType, RuntimeMessage} from "./contracts";
+import { MessageType, RuntimeMessage } from "./contracts";
 
 const MESSAGE_TYPES = {
   UPSERT_PROBLEM_FROM_PAGE: true,
@@ -25,6 +29,7 @@ const MESSAGE_TYPES = {
   IMPORT_CUSTOM_SET: true,
   EXPORT_DATA: true,
   IMPORT_DATA: true,
+  RESET_STUDY_HISTORY: true,
   UPDATE_SETTINGS: true,
   ADD_PROBLEM_BY_INPUT: true,
   ADD_PROBLEM_TO_COURSE: true,
@@ -55,13 +60,18 @@ const EMPTY_KEYS: readonly string[] = [];
 const SETTINGS_KEYS = [
   "dailyNewLimit",
   "dailyReviewLimit",
+  "dailyQuestionGoal",
   "reviewOrder",
   "studyMode",
   "activeCourseId",
   "setsEnabled",
   "requireSolveTime",
+  "difficultyGoalMs",
+  "skipIgnoredQuestions",
+  "skipPremiumQuestions",
   "autoDetectSolved",
   "notifications",
+  "notificationTime",
   "quietHours",
   "activeStudyPlanId",
 ] as const;
@@ -122,6 +132,15 @@ function requireOptionalFiniteNumber(value: unknown, field: string): void {
     (typeof value !== "number" || !Number.isFinite(value))
   ) {
     throw new Error(`Invalid field "${field}": expected a number.`);
+  }
+}
+
+function requireOptionalTimeString(value: unknown, field: string): void {
+  if (value === undefined) {
+    return;
+  }
+  if (typeof value !== "string" || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(value)) {
+    throw new Error(`Invalid field "${field}": expected HH:mm time.`);
   }
 }
 
@@ -196,9 +215,21 @@ function validateSetsEnabled(value: unknown): void {
   }
   for (const [key, enabled] of Object.entries(value)) {
     if (typeof enabled !== "boolean") {
-      throw new Error(`Invalid field "setsEnabled.${key}": expected a boolean.`);
+      throw new Error(
+        `Invalid field "setsEnabled.${key}": expected a boolean.`
+      );
     }
   }
+}
+
+function validateDifficultyGoalMs(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "difficultyGoalMs": expected an object.');
+  }
+  hasExactKeys(value, ["Easy", "Medium", "Hard"], 'Field "difficultyGoalMs"');
+  requireOptionalFiniteNumber(value.Easy, "difficultyGoalMs.Easy");
+  requireOptionalFiniteNumber(value.Medium, "difficultyGoalMs.Medium");
+  requireOptionalFiniteNumber(value.Hard, "difficultyGoalMs.Hard");
 }
 
 function validateCustomSetItems(value: unknown): void {
@@ -210,7 +241,11 @@ function validateCustomSetItems(value: unknown): void {
     if (!isRecord(item)) {
       throw new Error('Invalid field "items": expected object entries.');
     }
-    hasExactKeys(item, ["slug", "title", "difficulty", "tags"], 'Field "items[]"');
+    hasExactKeys(
+      item,
+      ["slug", "title", "difficulty", "tags"],
+      'Field "items[]"'
+    );
     requireString(item.slug, "items[].slug");
     requireOptionalString(item.title, "items[].title");
     requireOptionalDifficulty(item.difficulty, "items[].difficulty");
@@ -285,7 +320,9 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
         payload.source !== "overlay" &&
         payload.source !== "dashboard"
       ) {
-        throw new Error('Invalid field "source": expected "overlay" or "dashboard".');
+        throw new Error(
+          'Invalid field "source": expected "overlay" or "dashboard".'
+        );
       }
       return;
     case "SAVE_OVERLAY_LOG_DRAFT":
@@ -313,7 +350,11 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.path, "path");
       return;
     case "OPEN_PROBLEM_PAGE":
-      hasExactKeys(payload, ["slug", "courseId", "chapterId"], `Payload for ${type}`);
+      hasExactKeys(
+        payload,
+        ["slug", "courseId", "chapterId"],
+        `Payload for ${type}`
+      );
       requireString(payload.slug, "slug");
       requireOptionalString(payload.courseId, "courseId");
       requireOptionalString(payload.chapterId, "chapterId");
@@ -332,6 +373,7 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "GET_DASHBOARD_DATA":
     case "GET_APP_SHELL_DATA":
     case "EXPORT_DATA":
+    case "RESET_STUDY_HISTORY":
       hasExactKeys(payload, EMPTY_KEYS, `Payload for ${type}`);
       return;
     case "SWITCH_ACTIVE_COURSE":
@@ -344,7 +386,11 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.chapterId, "chapterId");
       return;
     case "TRACK_COURSE_QUESTION_LAUNCH":
-      hasExactKeys(payload, ["slug", "courseId", "chapterId"], `Payload for ${type}`);
+      hasExactKeys(
+        payload,
+        ["slug", "courseId", "chapterId"],
+        `Payload for ${type}`
+      );
       requireString(payload.slug, "slug");
       requireOptionalString(payload.courseId, "courseId");
       requireOptionalString(payload.chapterId, "chapterId");
@@ -363,6 +409,10 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       return;
     case "UPDATE_SETTINGS":
       hasExactKeys(payload, SETTINGS_KEYS, `Payload for ${type}`);
+      requireOptionalFiniteNumber(
+        payload.dailyQuestionGoal,
+        "dailyQuestionGoal"
+      );
       requireOptionalFiniteNumber(payload.dailyNewLimit, "dailyNewLimit");
       requireOptionalFiniteNumber(payload.dailyReviewLimit, "dailyReviewLimit");
       requireOptionalReviewOrder(payload.reviewOrder, "reviewOrder");
@@ -370,8 +420,20 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireOptionalString(payload.activeCourseId, "activeCourseId");
       requireOptionalString(payload.activeStudyPlanId, "activeStudyPlanId");
       requireOptionalBoolean(payload.requireSolveTime, "requireSolveTime");
+      requireOptionalBoolean(
+        payload.skipIgnoredQuestions,
+        "skipIgnoredQuestions"
+      );
+      requireOptionalBoolean(
+        payload.skipPremiumQuestions,
+        "skipPremiumQuestions"
+      );
       requireOptionalBoolean(payload.autoDetectSolved, "autoDetectSolved");
       requireOptionalBoolean(payload.notifications, "notifications");
+      requireOptionalTimeString(payload.notificationTime, "notificationTime");
+      if (payload.difficultyGoalMs !== undefined) {
+        validateDifficultyGoalMs(payload.difficultyGoalMs);
+      }
       if (payload.quietHours !== undefined) {
         validateQuietHours(payload.quietHours);
       }
@@ -423,7 +485,7 @@ export function validateRuntimeMessage(message: unknown): RuntimeMessage {
 
   hasExactKeys(message, ["type", "payload"], "Runtime message");
 
-  const {type, payload} = message;
+  const { type, payload } = message;
   if (
     typeof type !== "string" ||
     !Object.prototype.hasOwnProperty.call(MESSAGE_TYPES, type)
@@ -490,7 +552,12 @@ export function validateExtensionPagePath(pathInput: string): string {
   if (!value) {
     throw new Error("Missing extension path.");
   }
-  if (/^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("/") || value.includes("\\") || value.includes("..")) {
+  if (
+    /^[a-z][a-z0-9+.-]*:/i.test(value) ||
+    value.startsWith("/") ||
+    value.includes("\\") ||
+    value.includes("..")
+  ) {
     throw new Error("Invalid extension path.");
   }
 

@@ -22,6 +22,7 @@ import type {
   ProblemMutationResponse,
   SaveReviewResultResponse,
   SettingsUpdateResponse,
+  StudyHistoryResetResponse,
   StudyStateMutationResponse,
 } from "../../domain/views";
 
@@ -120,6 +121,7 @@ export interface MessageRequestMap {
   };
   EXPORT_DATA: Record<string, never>;
   IMPORT_DATA: ExportPayload;
+  RESET_STUDY_HISTORY: Record<string, never>;
   UPDATE_SETTINGS: Partial<UserSettings> & {
     activeStudyPlanId?: string;
   };
@@ -173,6 +175,7 @@ export interface MessageResponseMap {
   IMPORT_CUSTOM_SET: ImportSummaryResponse;
   EXPORT_DATA: ExportPayload;
   IMPORT_DATA: ImportedResponse;
+  RESET_STUDY_HISTORY: StudyHistoryResetResponse;
   UPDATE_SETTINGS: SettingsUpdateResponse;
   ADD_PROBLEM_BY_INPUT: ProblemMutationResponse & { slug: string };
   ADD_PROBLEM_TO_COURSE: CourseMutationResponse;
