@@ -1,24 +1,40 @@
 /** Overlay controller that composes page bootstrap, timer state, session state, and render-model shaping. */
-import {useCallback, useEffect, useRef, useState} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import {fetchAppShellPayload} from "../../../data/repositories/appShellRepository";
+import { fetchAppShellPayload } from "../../../data/repositories/appShellRepository";
 import {
   getProblemContext,
   openExtensionPage,
   openProblemPage,
   upsertProblemFromPage,
 } from "../../../data/repositories/problemSessionRepository";
-import {formatClock} from "../../../domain/common/time";
-import {defaultReviewMode, deriveQuickRating, goalForDifficulty} from "../../../domain/fsrs/reviewPolicy";
-import {Rating} from "../../../domain/types";
-import {AppShellPayload} from "../../../domain/views";
+import { DEFAULT_SETTINGS } from "../../../domain/common/constants";
+import { formatClock } from "../../../domain/common/time";
+import {
+  defaultReviewMode,
+  deriveQuickRating,
+  goalForDifficulty,
+} from "../../../domain/fsrs/reviewPolicy";
+import { Rating, UserSettings } from "../../../domain/types";
+import { AppShellPayload } from "../../../domain/views";
 
-import {draftsEqual} from "./controller/draftFields";
-import {buildHeaderStatus, buildSessionLabel} from "./controller/headerStatus";
-import {getProblemSlugFromUrl, isStaleOverlayRequest, readProblemPageSnapshot,} from "./controller/pageContext";
-import {useOverlaySessionMachine} from "./controller/useOverlaySessionMachine";
-import {useOverlayTimer} from "./controller/useOverlayTimer";
-import {OverlayPostSubmitNextViewModel, OverlayRenderModel, OverlayTimerSectionViewModel,} from "./overlayPanel.types";
+import { draftsEqual } from "./controller/draftFields";
+import {
+  buildHeaderStatus,
+  buildSessionLabel,
+} from "./controller/headerStatus";
+import {
+  getProblemSlugFromUrl,
+  isStaleOverlayRequest,
+  readProblemPageSnapshot,
+} from "./controller/pageContext";
+import { useOverlaySessionMachine } from "./controller/useOverlaySessionMachine";
+import { useOverlayTimer } from "./controller/useOverlayTimer";
+import {
+  OverlayPostSubmitNextViewModel,
+  OverlayRenderModel,
+  OverlayTimerSectionViewModel,
+} from "./overlayPanel.types";
 
 export interface OverlayControllerEnvironment {
   documentRef: Document;
@@ -29,10 +45,11 @@ export interface OverlayControllerEnvironment {
 export function useOverlayController(
   environment: OverlayControllerEnvironment
 ): { renderModel: OverlayRenderModel | null } {
-  const {documentRef, windowRef} = environment;
+  const { documentRef, windowRef } = environment;
   const timer = useOverlayTimer(windowRef);
   const [postSubmitNext, setPostSubmitNext] =
     useState<OverlayPostSubmitNextViewModel | null>(null);
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const {
     activateProblem,
     applyProblemContext,
@@ -51,7 +68,7 @@ export function useOverlayController(
     state: currentState,
     submitRating: persistSubmittedRating,
     updateDraft,
-  } = useOverlaySessionMachine({timer, windowRef});
+  } = useOverlaySessionMachine({ timer, windowRef });
   const activeSlugRef = useRef("");
   const lastHrefRef = useRef(windowRef.location.href);
   const postSubmitRequestTokenRef = useRef(0);
@@ -78,88 +95,91 @@ export function useOverlayController(
     });
   }, []);
 
-  const openOverlayProblem = useCallback(async (target: {
-    slug: string;
-    courseId?: string;
-    chapterId?: string;
-  }) => {
-    const response = await openProblemPage(target);
-    if (!response.ok) {
-      setFeedback(response.error ?? "Failed to open problem.", true);
-    }
-  }, [setFeedback]);
+  const openOverlayProblem = useCallback(
+    async (target: { slug: string; courseId?: string; chapterId?: string }) => {
+      const response = await openProblemPage(target);
+      if (!response.ok) {
+        setFeedback(response.error ?? "Failed to open problem.", true);
+      }
+    },
+    [setFeedback]
+  );
 
-  const derivePostSubmitNext = useCallback((
-    payload: AppShellPayload,
-    currentSlug: string
-  ): OverlayPostSubmitNextViewModel | null => {
-    const fallbackRecommended =
-      payload.popup.recommendedCandidates.find(
-        (candidate) => candidate.slug !== currentSlug
-      ) ??
-      (
-        payload.popup.recommended &&
+  const derivePostSubmitNext = useCallback(
+    (
+      payload: AppShellPayload,
+      currentSlug: string
+    ): OverlayPostSubmitNextViewModel | null => {
+      const fallbackRecommended =
+        payload.popup.recommendedCandidates.find(
+          (candidate) => candidate.slug !== currentSlug
+        ) ??
+        (payload.popup.recommended &&
         payload.popup.recommended.slug !== currentSlug
           ? payload.popup.recommended
-          : null
-      );
+          : null);
 
-    if (
-      payload.settings.studyMode === "studyPlan" &&
-      payload.popup.courseNext &&
-      payload.popup.courseNext.slug !== currentSlug
-    ) {
-      return {
-        kind: "course",
-        activeCourseId: payload.activeCourse?.id,
-        onOpenProblem: openOverlayProblem,
-        view: payload.popup.courseNext,
-      };
-    }
-
-    if (fallbackRecommended) {
-      return {
-        kind: "recommended",
-        onOpenProblem: openOverlayProblem,
-        recommended: fallbackRecommended,
-      };
-    }
-
-    return null;
-  }, [openOverlayProblem]);
-
-  const refreshPostSubmitNext = useCallback(async (currentSlug: string) => {
-    const requestToken = ++postSubmitRequestTokenRef.current;
-    const response = await fetchAppShellPayload();
-    if (requestToken !== postSubmitRequestTokenRef.current) {
-      return;
-    }
-
-    if (
-      !response.ok ||
-      !response.data ||
-      !("settings" in response.data) ||
-      !("popup" in response.data)
-    ) {
-      setPostSubmitNext({
-        kind: "empty",
-        title: "Next question unavailable",
-        message:
-          response.error ??
-          "Review saved, but the overlay could not load the latest recommendation.",
-      });
-      return;
-    }
-
-    setPostSubmitNext(
-      derivePostSubmitNext(response.data, currentSlug) ?? {
-        kind: "empty",
-        title: "No next question ready",
-        message:
-          "Review saved. The current study queue does not have another question ready.",
+      if (
+        payload.settings.studyMode === "studyPlan" &&
+        payload.popup.courseNext &&
+        payload.popup.courseNext.slug !== currentSlug
+      ) {
+        return {
+          kind: "course",
+          activeCourseId: payload.activeCourse?.id,
+          onOpenProblem: openOverlayProblem,
+          view: payload.popup.courseNext,
+        };
       }
-    );
-  }, [derivePostSubmitNext]);
+
+      if (fallbackRecommended) {
+        return {
+          kind: "recommended",
+          onOpenProblem: openOverlayProblem,
+          recommended: fallbackRecommended,
+        };
+      }
+
+      return null;
+    },
+    [openOverlayProblem]
+  );
+
+  const refreshPostSubmitNext = useCallback(
+    async (currentSlug: string) => {
+      const requestToken = ++postSubmitRequestTokenRef.current;
+      const response = await fetchAppShellPayload();
+      if (requestToken !== postSubmitRequestTokenRef.current) {
+        return;
+      }
+
+      if (
+        !response.ok ||
+        !response.data ||
+        !("settings" in response.data) ||
+        !("popup" in response.data)
+      ) {
+        setPostSubmitNext({
+          kind: "empty",
+          title: "Next question unavailable",
+          message:
+            response.error ??
+            "Review saved, but the overlay could not load the latest recommendation.",
+        });
+        return;
+      }
+
+      setPostSubmitNext(
+        derivePostSubmitNext(response.data, currentSlug) ?? {
+          kind: "empty",
+          title: "No next question ready",
+          message:
+            "Review saved. The current study queue does not have another question ready.",
+        }
+      );
+    },
+    [derivePostSubmitNext]
+  );
 
   const refreshCurrentPage = useCallback(
     async (slugOverride?: string): Promise<void> => {
@@ -195,7 +215,10 @@ export function useOverlayController(
         return;
       }
 
-      const context = await getProblemContext(slug);
+      const [context, shell] = await Promise.all([
+        getProblemContext(slug),
+        fetchAppShellPayload(),
+      ]);
       if (
         isStaleOverlayRequest(
           requestToken,
@@ -212,12 +235,17 @@ export function useOverlayController(
         return;
       }
 
+      if (shell.ok && shell.data?.settings) {
+        setSettings(shell.data.settings);
+      }
+
       const problemContext = context.data ?? {
         problem: null,
         studyState: null,
       };
       applyProblemContext({
-        difficulty: problemContext.problem?.difficulty ?? pageSnapshot.difficulty,
+        difficulty:
+          problemContext.problem?.difficulty ?? pageSnapshot.difficulty,
         slug,
         studyState: problemContext.studyState ?? null,
         title: problemContext.problem?.title ?? pageSnapshot.title,
@@ -305,7 +333,7 @@ export function useOverlayController(
   }, [clearWarmRefreshes]);
 
   if (!currentState.activeSlug) {
-    return {renderModel: null};
+    return { renderModel: null };
   }
 
   const sessionMode =
@@ -314,16 +342,14 @@ export function useOverlayController(
   const canSubmit = currentState.submittedSession === null;
   const canUpdate =
     currentState.submittedSession !== null &&
-    (
-      currentState.submittedSession.rating !== currentState.selectedRating ||
-      !draftsEqual(currentState.submittedSession.draft, currentState.draft)
-    );
+    (currentState.submittedSession.rating !== currentState.selectedRating ||
+      !draftsEqual(currentState.submittedSession.draft, currentState.draft));
   const canRestart = currentState.submittedSession !== null;
   const feedback = currentState.feedbackMessage
     ? {
-      isError: currentState.feedbackIsError,
-      message: currentState.feedbackMessage,
-    }
+        isError: currentState.feedbackIsError,
+        message: currentState.feedbackMessage,
+      }
     : null;
   const assessmentAssist = {
     id: "overlay-assessment-help",
@@ -386,13 +412,16 @@ export function useOverlayController(
   const onCompactSubmit = () => {
     const rating = deriveQuickRating(
       timer.readElapsedMs() > 0 ? timer.readElapsedMs() : undefined,
-      goalForDifficulty(currentState.currentDifficulty)
+      goalForDifficulty(
+        currentState.currentDifficulty,
+        settings.difficultyGoalMs
+      )
     );
     void submitRating(rating);
   };
 
   const onFailReview = () => {
-    void submitRating(0, {lockFailureRating: true});
+    void submitRating(0, { lockFailureRating: true });
   };
 
   const onSaveOverride = () => {
@@ -545,7 +574,12 @@ export function useOverlayController(
         postSubmitNext,
         timer: {
           ...baseTimerModel,
-          targetDisplay: formatClock(goalForDifficulty(currentState.currentDifficulty)),
+          targetDisplay: formatClock(
+            goalForDifficulty(
+              currentState.currentDifficulty,
+              settings.difficultyGoalMs
+            )
+          ),
         },
       },
       variant: "expanded",
