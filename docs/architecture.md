@@ -248,6 +248,9 @@ Important persisted areas:
 - `courseOrder`
 - `courseProgressById`
 - `settings`
+  Includes current settings such as `dailyQuestionGoal`, `targetRetention`, `reviewOrder`, `studyMode`,
+  `difficultyGoalMs`, notification preferences, question filters, and legacy-readable fields used by existing course
+  and source-set flows.
 
 Export payload remains:
 
@@ -259,13 +262,16 @@ Export payload remains:
 - `courseOrder`
 - `courseProgressById`
 
-Overlay-specific runtime contracts now include:
+Review and history runtime contracts now include:
 
 - `SAVE_REVIEW_RESULT`
 - `SAVE_OVERLAY_LOG_DRAFT`
   appends a new FSRS review event and stores the current structured log fields
 - `OVERRIDE_LAST_REVIEW_RESULT`
   replaces the latest attempt entry and rebuilds the FSRS card from review history
+- `RESET_STUDY_HISTORY`
+  clears review history, FSRS cards, solve-time/rating state, suspended flags, and course progress derived from study
+  history while preserving settings, courses, source data, and the problem library
 
 ## Constraints
 

@@ -483,20 +483,23 @@ Let users tune study behavior and optional alerting.
 
 ### Current Behavior
 
-- daily limits
+- daily question goal as one total queue cap
 - study mode
-- active course selection
 - review order
 - target retention threshold (70-95% slider, default 85%)
 - require solve time
-- notifications toggle
-- quiet hours
+- difficulty solve-time goals for Easy, Medium, and Hard
+- question filters for ignored/suspended questions and premium-only metadata
+- notifications toggle with one local reminder time
+- disabled v2 auto-detect solve setting
+- global study-history reset with confirmation
 
 ### Key States And Edge Cases
 
 - notifications disabled
-- quiet hours suppress alerts
+- notification time controls are disabled until reminders are enabled
 - invalid or missing active course falls back to defaults
+- history reset preserves settings, courses, source data, and the problem library
 
 ### In Scope
 
@@ -510,6 +513,8 @@ Let users tune study behavior and optional alerting.
 ### Acceptance Criteria
 
 - settings are understandable and persist reliably
+- queue generation respects the daily question goal and filter settings
+- history reset is confirmed before clearing local review state
 
 ## Import / Export Backup
 

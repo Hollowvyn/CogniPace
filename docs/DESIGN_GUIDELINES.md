@@ -35,6 +35,9 @@ The UI should feel like a sharp browser tool rather than a marketing site or mob
 - the dashboard should feel like an operational control surface
 - overview, courses, library, analytics, and settings should stay visually distinct
 - the dashboard should not drift into a generic product shell unrelated to study flow
+- dashboard shell and settings work should compose local dashboard surface primitives rather than one-off nested paper
+  panels
+- dashboard sections should use inset rows and grouped controls for dense settings instead of card grids inside cards
 
 ## Overlay Guidelines
 
