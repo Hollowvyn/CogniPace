@@ -31,10 +31,26 @@ export type StoredAppData = Partial<AppData> & {
 function normalizeSettings(input?: LegacySettingsPatch): UserSettings {
   const nextActiveCourseId =
     input?.activeCourseId || input?.activeStudyPlanId || DEFAULT_COURSE_ID;
+  const legacyDailyGoal =
+    typeof input?.dailyNewLimit === "number" &&
+    Number.isFinite(input.dailyNewLimit) &&
+    typeof input?.dailyReviewLimit === "number" &&
+    Number.isFinite(input.dailyReviewLimit)
+      ? Math.max(0, Math.round(input.dailyNewLimit + input.dailyReviewLimit))
+      : DEFAULT_SETTINGS.dailyQuestionGoal;
   const merged: UserSettings = {
     ...DEFAULT_SETTINGS,
     ...(input ?? {}),
+    dailyQuestionGoal:
+      typeof input?.dailyQuestionGoal === "number" &&
+      Number.isFinite(input.dailyQuestionGoal)
+        ? Math.max(0, Math.round(input.dailyQuestionGoal))
+        : legacyDailyGoal,
     activeCourseId: nextActiveCourseId,
+    difficultyGoalMs: {
+      ...DEFAULT_SETTINGS.difficultyGoalMs,
+      ...(input?.difficultyGoalMs ?? {}),
+    },
     quietHours: {
       ...DEFAULT_SETTINGS.quietHours,
       ...(input?.quietHours ?? {}),
@@ -44,10 +60,50 @@ function normalizeSettings(input?: LegacySettingsPatch): UserSettings {
       ...(input?.setsEnabled ?? {}),
     },
   };
+  const normalizedNotificationTime = normalizeNotificationTime(
+    merged.notificationTime
+  );
 
   if (merged.studyMode !== "freestyle" && merged.studyMode !== "studyPlan") {
     merged.studyMode = DEFAULT_SETTINGS.studyMode;
   }
+
+  merged.dailyQuestionGoal = normalizeNonNegativeInteger(
+    merged.dailyQuestionGoal,
+    DEFAULT_SETTINGS.dailyQuestionGoal
+  );
+  merged.dailyNewLimit = normalizeNonNegativeInteger(
+    merged.dailyNewLimit,
+    DEFAULT_SETTINGS.dailyNewLimit
+  );
+  merged.dailyReviewLimit = normalizeNonNegativeInteger(
+    merged.dailyReviewLimit,
+    DEFAULT_SETTINGS.dailyReviewLimit
+  );
+  merged.targetRetention = normalizeNumberInRange(
+    merged.targetRetention,
+    DEFAULT_SETTINGS.targetRetention,
+    0.7,
+    0.95
+  );
+  merged.notificationTime =
+    normalizedNotificationTime ?? DEFAULT_SETTINGS.notificationTime;
+  merged.autoDetectSolved = false;
+
+  merged.difficultyGoalMs = {
+    Easy: normalizePositiveInteger(
+      merged.difficultyGoalMs.Easy,
+      DEFAULT_SETTINGS.difficultyGoalMs.Easy
+    ),
+    Medium: normalizePositiveInteger(
+      merged.difficultyGoalMs.Medium,
+      DEFAULT_SETTINGS.difficultyGoalMs.Medium
+    ),
+    Hard: normalizePositiveInteger(
+      merged.difficultyGoalMs.Hard,
+      DEFAULT_SETTINGS.difficultyGoalMs.Hard
+    ),
+  };
 
   if (
     typeof merged.activeCourseId !== "string" ||
@@ -71,6 +127,39 @@ function normalizeSettings(input?: LegacySettingsPatch): UserSettings {
   }
 
   return merged;
+}
+
+function normalizeNonNegativeInteger(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, Math.round(value))
+    : fallback;
+}
+
+function normalizePositiveInteger(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(1, Math.round(value))
+    : fallback;
+}
+
+function normalizeNumberInRange(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeNotificationTime(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
+  return match ? value.trim() : null;
 }
 
 /** Normalizes the stored payload into the current `AppData` runtime shape. */
@@ -152,11 +241,25 @@ export function mergeSettings(
   current: UserSettings,
   patch: LegacySettingsPatch
 ): UserSettings {
+  const patchDailyQuestionGoal =
+    patch.dailyQuestionGoal ??
+    (typeof patch.dailyNewLimit === "number" &&
+    Number.isFinite(patch.dailyNewLimit) &&
+    typeof patch.dailyReviewLimit === "number" &&
+    Number.isFinite(patch.dailyReviewLimit)
+      ? patch.dailyNewLimit + patch.dailyReviewLimit
+      : current.dailyQuestionGoal);
+
   return normalizeSettings({
     ...current,
     ...patch,
+    dailyQuestionGoal: patchDailyQuestionGoal,
     activeCourseId:
       patch.activeCourseId || patch.activeStudyPlanId || current.activeCourseId,
+    difficultyGoalMs: {
+      ...current.difficultyGoalMs,
+      ...(patch.difficultyGoalMs ?? {}),
+    },
     quietHours: {
       ...current.quietHours,
       ...(patch.quietHours ?? {}),

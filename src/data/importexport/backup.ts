@@ -9,6 +9,7 @@ import {
   ExportPayload,
   Problem,
   StudyState,
+  UserSettings,
 } from "./types";
 import {
   normalizeSlug,
@@ -44,13 +45,12 @@ function ensureAllowedKeys(payload: UnknownRecord): void {
 }
 
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
 }
 
-function safeString(
-  value: unknown,
-  fallback: string
-): string {
+function safeString(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
@@ -62,6 +62,22 @@ function safeInteger(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value)
     ? Math.max(0, Math.round(value))
     : fallback;
+}
+
+function safeNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
+}
+
+function safeBoolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function safeTimeString(value: unknown): string | undefined {
+  return typeof value === "string" && /^([01]\d|2[0-3]):([0-5]\d)$/.test(value)
+    ? value
+    : undefined;
 }
 
 function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
@@ -106,9 +122,7 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
   };
 }
 
-function sanitizeStudyStatesBySlug(
-  value: unknown
-): Record<string, StudyState> {
+function sanitizeStudyStatesBySlug(value: unknown): Record<string, StudyState> {
   if (!isRecord(value)) {
     return {};
   }
@@ -122,6 +136,96 @@ function sanitizeStudyStatesBySlug(
     result[normalizedSlug] = state as unknown as StudyState;
   }
   return result;
+}
+
+function sanitizeSettings(
+  value: unknown
+): (Partial<UserSettings> & { activeStudyPlanId?: string }) | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const settings: Partial<UserSettings> & { activeStudyPlanId?: string } = {};
+  const dailyQuestionGoal = safeNumber(value.dailyQuestionGoal);
+  const dailyNewLimit = safeNumber(value.dailyNewLimit);
+  const dailyReviewLimit = safeNumber(value.dailyReviewLimit);
+  const targetRetention = safeNumber(value.targetRetention);
+
+  if (dailyQuestionGoal !== undefined) {
+    settings.dailyQuestionGoal = dailyQuestionGoal;
+  }
+  if (dailyNewLimit !== undefined) {
+    settings.dailyNewLimit = dailyNewLimit;
+  }
+  if (dailyReviewLimit !== undefined) {
+    settings.dailyReviewLimit = dailyReviewLimit;
+  }
+  if (targetRetention !== undefined) {
+    settings.targetRetention = targetRetention;
+  }
+  if (
+    value.reviewOrder === "dueFirst" ||
+    value.reviewOrder === "mixByDifficulty" ||
+    value.reviewOrder === "weakestFirst"
+  ) {
+    settings.reviewOrder = value.reviewOrder;
+  }
+  if (value.studyMode === "studyPlan" || value.studyMode === "freestyle") {
+    settings.studyMode = value.studyMode;
+  }
+  settings.activeCourseId = safeOptionalString(value.activeCourseId);
+  settings.activeStudyPlanId = safeOptionalString(value.activeStudyPlanId);
+
+  const requireSolveTime = safeBoolean(value.requireSolveTime);
+  const autoDetectSolved = safeBoolean(value.autoDetectSolved);
+  const notifications = safeBoolean(value.notifications);
+  const skipIgnoredQuestions = safeBoolean(value.skipIgnoredQuestions);
+  const skipPremiumQuestions = safeBoolean(value.skipPremiumQuestions);
+  const notificationTime = safeTimeString(value.notificationTime);
+
+  if (requireSolveTime !== undefined) {
+    settings.requireSolveTime = requireSolveTime;
+  }
+  if (autoDetectSolved !== undefined) {
+    settings.autoDetectSolved = autoDetectSolved;
+  }
+  if (notifications !== undefined) {
+    settings.notifications = notifications;
+  }
+  if (skipIgnoredQuestions !== undefined) {
+    settings.skipIgnoredQuestions = skipIgnoredQuestions;
+  }
+  if (skipPremiumQuestions !== undefined) {
+    settings.skipPremiumQuestions = skipPremiumQuestions;
+  }
+  if (notificationTime !== undefined) {
+    settings.notificationTime = notificationTime;
+  }
+
+  if (isRecord(value.difficultyGoalMs)) {
+    settings.difficultyGoalMs = {
+      Easy: safeNumber(value.difficultyGoalMs.Easy) ?? 20 * 60 * 1000,
+      Medium: safeNumber(value.difficultyGoalMs.Medium) ?? 35 * 60 * 1000,
+      Hard: safeNumber(value.difficultyGoalMs.Hard) ?? 50 * 60 * 1000,
+    };
+  }
+
+  if (isRecord(value.quietHours)) {
+    settings.quietHours = {
+      startHour: safeInteger(value.quietHours.startHour, 22),
+      endHour: safeInteger(value.quietHours.endHour, 8),
+    };
+  }
+
+  if (isRecord(value.setsEnabled)) {
+    settings.setsEnabled = Object.fromEntries(
+      Object.entries(value.setsEnabled).filter(
+        (entry): entry is [string, boolean] => typeof entry[1] === "boolean"
+      )
+    );
+  }
+
+  return settings;
 }
 
 function sanitizeCourseChapter(
@@ -155,9 +259,7 @@ function sanitizeCourseQuestionRef(
     return null;
   }
 
-  const slug = normalizeSlug(
-    typeof ref.slug === "string" ? ref.slug : slugKey
-  );
+  const slug = normalizeSlug(typeof ref.slug === "string" ? ref.slug : slugKey);
   if (!slug) {
     return null;
   }
@@ -282,7 +384,9 @@ function sanitizeChapterProgress(
   }
 
   const questionProgressBySlug: Record<string, CourseQuestionProgress> = {};
-  for (const [slugKey, progress] of Object.entries(value.questionProgressBySlug)) {
+  for (const [slugKey, progress] of Object.entries(
+    value.questionProgressBySlug
+  )) {
     const sanitized = sanitizeQuestionProgress(slugKey, progress);
     if (!sanitized) {
       continue;
@@ -339,7 +443,9 @@ function sanitizeCourseProgressById(
   return result;
 }
 
-export function assertImportPayloadShape(payload: unknown): asserts payload is ExportPayload {
+export function assertImportPayloadShape(
+  payload: unknown
+): asserts payload is ExportPayload {
   if (!isRecord(payload)) {
     throw new Error("Invalid import format: expected an object payload.");
   }
@@ -389,7 +495,9 @@ export function assertImportPayloadShape(payload: unknown): asserts payload is E
     payload.courseOrder !== undefined &&
     !isStringArray(payload.courseOrder)
   ) {
-    throw new Error("Invalid import format: courseOrder must be a string array.");
+    throw new Error(
+      "Invalid import format: courseOrder must be a string array."
+    );
   }
 
   if (
@@ -427,7 +535,7 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
         : CURRENT_STORAGE_SCHEMA_VERSION,
     problems,
     studyStatesBySlug: sanitizeStudyStatesBySlug(payload.studyStatesBySlug),
-    settings: payload.settings,
+    settings: sanitizeSettings(payload.settings),
     coursesById,
     courseOrder: uniqueStrings(
       (Array.isArray(payload.courseOrder) ? payload.courseOrder : [])

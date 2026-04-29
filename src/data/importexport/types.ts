@@ -8,4 +8,5 @@ export {
   ExportPayload,
   Problem,
   StudyState,
+  UserSettings,
 } from "../../domain/types";

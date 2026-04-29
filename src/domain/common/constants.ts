@@ -17,6 +17,7 @@ export const BUILT_IN_SETS = [
 ];
 
 export const DEFAULT_SETTINGS: UserSettings = {
+  dailyQuestionGoal: 18,
   dailyNewLimit: 3,
   dailyReviewLimit: 15,
   reviewOrder: "dueFirst",
@@ -33,8 +34,16 @@ export const DEFAULT_SETTINGS: UserSettings = {
     Custom: true,
   },
   requireSolveTime: false,
+  difficultyGoalMs: {
+    Easy: 20 * 60 * 1000,
+    Medium: 35 * 60 * 1000,
+    Hard: 50 * 60 * 1000,
+  },
+  skipIgnoredQuestions: true,
+  skipPremiumQuestions: false,
   autoDetectSolved: false,
   notifications: false,
+  notificationTime: "09:00",
   quietHours: {
     startHour: 22,
     endHour: 8,

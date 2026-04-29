@@ -27,6 +27,7 @@ describe("storage migration", () => {
     });
 
     assert.equal(migrated.settings.activeCourseId, "Blind75");
+    assert.equal(migrated.settings.dailyQuestionGoal, 18);
     assert.ok(migrated.coursesById.Blind75);
     assert.ok(migrated.courseProgressById.Blind75);
 
@@ -50,6 +51,17 @@ describe("storage migration", () => {
     const summary = getStudyStateSummary(migrated.studyStatesBySlug["two-sum"]);
     assert.equal(summary.nextReviewAt, "2026-03-12T00:00:00.000Z");
     assert.equal(summary.phase, "Review");
+  });
+
+  it("derives the total daily question goal from complete legacy limits", () => {
+    const migrated = normalizeStoredAppData({
+      settings: {
+        dailyNewLimit: 6,
+        dailyReviewLimit: 14,
+      },
+    });
+
+    assert.equal(migrated.settings.dailyQuestionGoal, 20);
   });
 
   it("converts legacy fallback schedule data without history", () => {

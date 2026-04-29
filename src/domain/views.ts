@@ -181,6 +181,10 @@ export interface StudyStateMutationResponse {
   studyState: StudyState;
 }
 
+export interface StudyHistoryResetResponse {
+  reset: true;
+}
+
 export interface PopupModeLabel {
   currentMode: StudyMode;
 }

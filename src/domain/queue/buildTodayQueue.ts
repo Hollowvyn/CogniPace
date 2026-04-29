@@ -17,6 +17,20 @@ function isSetEnabled(
   return problem.sourceSet.some((set) => setsEnabled[set] !== false);
 }
 
+function hasPremiumMetadata(problem: Problem): boolean {
+  const candidate = problem as Problem & {
+    isPremium?: boolean;
+    paidOnly?: boolean;
+    premium?: boolean;
+  };
+
+  return (
+    candidate.isPremium === true ||
+    candidate.paidOnly === true ||
+    candidate.premium === true
+  );
+}
+
 function sortByDueDateAsc(items: QueueItem[]): QueueItem[] {
   return [...items].sort((a, b) => {
     const aTs = a.studyStateSummary.nextReviewAt
@@ -111,9 +125,21 @@ export function buildTodayQueue(
   reinforcementCount: number;
   items: QueueItem[];
 } {
-  const problems = Object.values(data.problemsBySlug).filter((problem) =>
-    isSetEnabled(problem, data.settings.setsEnabled)
+  const dailyQuestionGoal = Math.max(
+    0,
+    Math.round(data.settings.dailyQuestionGoal)
   );
+  const problems = Object.values(data.problemsBySlug).filter((problem) => {
+    if (!isSetEnabled(problem, data.settings.setsEnabled)) {
+      return false;
+    }
+
+    if (data.settings.skipPremiumQuestions && hasPremiumMetadata(problem)) {
+      return false;
+    }
+
+    return true;
+  });
 
   const due: QueueItem[] = [];
   const newCandidates: QueueItem[] = [];
@@ -123,8 +149,12 @@ export function buildTodayQueue(
     const state = cloneStateOrDefault(
       data.studyStatesBySlug[problem.leetcodeSlug]
     );
-    const studyStateSummary = getStudyStateSummary(state, now, data.settings.targetRetention);
-    if (studyStateSummary.suspended) {
+    const studyStateSummary = getStudyStateSummary(
+      state,
+      now,
+      data.settings.targetRetention
+    );
+    if (data.settings.skipIgnoredQuestions && studyStateSummary.suspended) {
       continue;
     }
 
@@ -163,15 +193,14 @@ export function buildTodayQueue(
   }
 
   const dueOrdered = orderItems(due, data.settings.reviewOrder);
+  const dueForQueue = dueOrdered.slice(0, dailyQuestionGoal);
+  const slotsAfterDue = Math.max(0, dailyQuestionGoal - dueForQueue.length);
   const newOrdered = orderItems(newCandidates, data.settings.reviewOrder).slice(
     0,
-    data.settings.dailyNewLimit
+    slotsAfterDue
   );
 
-  const reinforcementSlots = Math.max(
-    0,
-    data.settings.dailyReviewLimit - dueOrdered.length
-  );
+  const reinforcementSlots = Math.max(0, slotsAfterDue - newOrdered.length);
   const reinforcementOrdered = orderItems(
     reinforcementCandidates,
     data.settings.reviewOrder
@@ -182,6 +211,6 @@ export function buildTodayQueue(
     dueCount: dueOrdered.length,
     newCount: newOrdered.length,
     reinforcementCount: reinforcementOrdered.length,
-    items: [...dueOrdered, ...newOrdered, ...reinforcementOrdered],
+    items: [...dueForQueue, ...newOrdered, ...reinforcementOrdered],
   };
 }

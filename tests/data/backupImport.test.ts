@@ -48,11 +48,51 @@ describe("backup import sanitization", () => {
     assert.deepEqual(Object.keys(sanitized.studyStatesBySlug), ["two-sum"]);
   });
 
+  it("sanitizes current and legacy settings fields", () => {
+    const sanitized = sanitizeImportPayload({
+      problems: [],
+      settings: {
+        dailyQuestionGoal: 22,
+        difficultyGoalMs: {
+          Easy: 25 * 60 * 1000,
+          Medium: 40 * 60 * 1000,
+          Hard: 55 * 60 * 1000,
+        },
+        notificationTime: "09:30",
+        skipIgnoredQuestions: true,
+        skipPremiumQuestions: false,
+        quietHours: {
+          startHour: 21,
+          endHour: 7,
+        },
+      },
+      studyStatesBySlug: {},
+    });
+
+    assert.equal(sanitized.settings?.dailyQuestionGoal, 22);
+    assert.equal(sanitized.settings?.difficultyGoalMs?.Easy, 25 * 60 * 1000);
+    assert.equal(sanitized.settings?.notificationTime, "09:30");
+    assert.equal(sanitized.settings?.skipIgnoredQuestions, true);
+    assert.equal(sanitized.settings?.quietHours?.startHour, 21);
+  });
+
   describe("version handling", () => {
     it.each([
-      { version: CURRENT_STORAGE_SCHEMA_VERSION - 1, expected: CURRENT_STORAGE_SCHEMA_VERSION, name: "accepts older versioned backups" },
-      { version: CURRENT_STORAGE_SCHEMA_VERSION, expected: CURRENT_STORAGE_SCHEMA_VERSION, name: "accepts current version" },
-      { version: undefined, expected: undefined, name: "accepts versionless imports" },
+      {
+        version: CURRENT_STORAGE_SCHEMA_VERSION - 1,
+        expected: CURRENT_STORAGE_SCHEMA_VERSION,
+        name: "accepts older versioned backups",
+      },
+      {
+        version: CURRENT_STORAGE_SCHEMA_VERSION,
+        expected: CURRENT_STORAGE_SCHEMA_VERSION,
+        name: "accepts current version",
+      },
+      {
+        version: undefined,
+        expected: undefined,
+        name: "accepts versionless imports",
+      },
     ])("$name", ({ version, expected }) => {
       const sanitized = sanitizeImportPayload({
         version,

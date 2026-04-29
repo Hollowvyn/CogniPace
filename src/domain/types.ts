@@ -1,4 +1,4 @@
-export const STORAGE_SCHEMA_VERSION = 4;
+export const STORAGE_SCHEMA_VERSION = 5;
 
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
 
@@ -87,7 +87,14 @@ export interface QuietHours {
   endHour: number;
 }
 
+export interface DifficultyGoalSettings {
+  Easy: number;
+  Medium: number;
+  Hard: number;
+}
+
 export interface UserSettings {
+  dailyQuestionGoal: number;
   dailyNewLimit: number;
   dailyReviewLimit: number;
   reviewOrder: ReviewOrder;
@@ -95,8 +102,12 @@ export interface UserSettings {
   activeCourseId: string;
   setsEnabled: Record<string, boolean>;
   requireSolveTime: boolean;
+  difficultyGoalMs: DifficultyGoalSettings;
+  skipIgnoredQuestions: boolean;
+  skipPremiumQuestions: boolean;
   autoDetectSolved: boolean;
   notifications: boolean;
+  notificationTime: string;
   quietHours: QuietHours;
   /** Target retention rate (0-1). Cards become due when retrievability drops below this. Default 0.85 */
   targetRetention: number;

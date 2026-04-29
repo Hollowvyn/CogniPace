@@ -8,3 +8,8 @@ export async function updateSettings(
 ) {
   return sendMessage("UPDATE_SETTINGS", payload);
 }
+
+/** Clears all local study history while preserving settings, courses, and library data. */
+export async function resetStudyHistory() {
+  return sendMessage("RESET_STUDY_HISTORY", {});
+}
