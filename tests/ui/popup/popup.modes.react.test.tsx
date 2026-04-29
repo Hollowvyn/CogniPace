@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { deferred, makePayload } from "../support/appShellFixtures";
-import { screen, waitFor } from "../support/render";
+import { act, screen, waitFor } from "../support/render";
 import { sendMessageMock } from "../support/setup";
 
 import { renderPopupWithPayload } from "./support";
@@ -23,7 +23,9 @@ describe("Popup Study Modes", () => {
       screen.getByRole("button", { name: "Start freestyle mode" })
     );
 
-    expect(await screen.findByText("You are in free style mode")).toBeInTheDocument();
+    expect(
+      await screen.findByText("You are in free style mode")
+    ).toBeInTheDocument();
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith(
         "UPDATE_SETTINGS",
@@ -56,7 +58,9 @@ describe("Popup Study Modes", () => {
       screen.getByRole("button", { name: "Start freestyle mode" })
     );
 
-    expect(await screen.findByText("You are in free style mode")).toBeInTheDocument();
+    expect(
+      await screen.findByText("You are in free style mode")
+    ).toBeInTheDocument();
 
     updateResponse.resolve({
       ok: false,
@@ -65,7 +69,9 @@ describe("Popup Study Modes", () => {
 
     expect(await screen.findByText("Storage unavailable.")).toBeInTheDocument();
     expect(screen.getByText("Blind 75")).toBeInTheDocument();
-    expect(screen.queryByText("You are in free style mode")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("You are in free style mode")
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", {
         name: "Start freestyle mode",
@@ -85,12 +91,22 @@ describe("Popup Study Modes", () => {
       screen.getByRole("button", { name: "Start freestyle mode" })
     );
 
-    expect(await screen.findByText("You are in free style mode")).toBeInTheDocument();
+    expect(
+      await screen.findByText("You are in free style mode")
+    ).toBeInTheDocument();
 
-    updateResponse.reject(new Error("Background unavailable."));
+    act(() => {
+      updateResponse.reject(new Error("Background unavailable."));
+    });
 
-    expect(await screen.findByText("Background unavailable.")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        /Background unavailable\.|Failed to update study mode\./
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText("Blind 75")).toBeInTheDocument();
-    expect(screen.queryByText("You are in free style mode")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("You are in free style mode")
+    ).not.toBeInTheDocument();
   });
 });

@@ -4,6 +4,7 @@ import Stack from "@mui/material/Stack";
 
 import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardRail } from "./components/DashboardRail";
+import { DashboardFrame } from "./components/DashboardSurface";
 import { useDashboardController } from "./useDashboardController";
 import { AnalyticsView } from "./views/AnalyticsView";
 import { CoursesView } from "./views/CoursesView";
@@ -15,7 +16,7 @@ export function DashboardApp() {
   const controller = useDashboardController();
 
   return (
-    <Box sx={{ maxWidth: 1440, mx: "auto", p: 2.5 }}>
+    <DashboardFrame>
       <Stack direction={{ lg: "row", xs: "column" }} spacing={2}>
         <DashboardRail
           activeView={controller.view}
@@ -66,17 +67,20 @@ export function DashboardApp() {
 
             {controller.view === "settings" ? (
               <SettingsView
+                importFile={controller.importFile}
                 onExportData={controller.onExportData}
                 onImportData={controller.onImportData}
                 onResetSettings={() => {
                   controller.setSettingsDraftState(null);
+                }}
+                onResetStudyHistory={() => {
+                  void controller.onResetStudyHistory();
                 }}
                 onSaveSettings={() => {
                   void controller.onSaveSettings();
                 }}
                 onSetImportFile={controller.setImportFile}
                 onUpdateSettings={controller.updateSettingsDraft}
-                payload={controller.payload}
                 settingsDraft={controller.draftSettings}
               />
             ) : null}
@@ -93,6 +97,6 @@ export function DashboardApp() {
           </Stack>
         </Box>
       </Stack>
-    </Box>
+    </DashboardFrame>
   );
 }

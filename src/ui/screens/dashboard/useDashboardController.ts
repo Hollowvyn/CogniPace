@@ -1,5 +1,11 @@
 /** Dashboard-local controller for route state, filters, settings draft, and runtime mutations. */
-import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
+import {
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   downloadBackupJson,
@@ -12,7 +18,10 @@ import {
   switchActiveCourse,
 } from "../../../data/repositories/courseActionRepository";
 import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
-import { updateSettings } from "../../../data/repositories/settingsRepository";
+import {
+  resetStudyHistory,
+  updateSettings,
+} from "../../../data/repositories/settingsRepository";
 import { DEFAULT_SETTINGS } from "../../../domain/common/constants";
 import { UserSettings } from "../../../domain/types";
 import { createMockAppShellPayload } from "../../mockData";
@@ -36,6 +45,7 @@ import { useAppShellQuery } from "../../state/useAppShellQuery";
 function cloneSettings(settings: UserSettings): UserSettings {
   return {
     ...settings,
+    difficultyGoalMs: { ...settings.difficultyGoalMs },
     quietHours: { ...settings.quietHours },
     setsEnabled: { ...settings.setsEnabled },
   };
@@ -101,7 +111,11 @@ export function useDashboardController() {
     startTransition(() => {
       setView(nextView);
     });
-    window.history.pushState({}, "", buildDashboardUrl(window.location.href, nextView));
+    window.history.pushState(
+      {},
+      "",
+      buildDashboardUrl(window.location.href, nextView)
+    );
   }
 
   async function runMutation<T extends { ok: boolean; error?: string }>(
@@ -154,7 +168,9 @@ export function useDashboardController() {
     );
   }
 
-  function updateSettingsDraft(updater: (current: UserSettings) => UserSettings) {
+  function updateSettingsDraft(
+    updater: (current: UserSettings) => UserSettings
+  ) {
     setSettingsDraftState((current) =>
       updater(cloneSettings(current ?? payload?.settings ?? DEFAULT_SETTINGS))
     );
@@ -163,6 +179,10 @@ export function useDashboardController() {
   async function onSaveSettings(): Promise<void> {
     await runMutation(updateSettings(draftSettings), "Settings saved.");
     setSettingsDraftState(null);
+  }
+
+  async function onResetStudyHistory(): Promise<void> {
+    await runMutation(resetStudyHistory(), "Study history reset.");
   }
 
   async function onExportData(): Promise<void> {
@@ -239,7 +259,10 @@ export function useDashboardController() {
     await runMutation(switchActiveCourse(courseId), "Active course updated.");
   }
 
-  async function onSetChapter(courseId: string, chapterId: string): Promise<void> {
+  async function onSetChapter(
+    courseId: string,
+    chapterId: string
+  ): Promise<void> {
     await runMutation(
       setActiveCourseChapter(courseId, chapterId),
       "Active chapter updated."
@@ -255,6 +278,7 @@ export function useDashboardController() {
     onImportData,
     onOpenProblem,
     onSaveSettings,
+    onResetStudyHistory,
     onSetChapter,
     onSubmitCourseForm,
     onSwitchCourse,
