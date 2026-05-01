@@ -244,10 +244,9 @@ Status: completed on 2026-03-30
 - [x] Repo is private; defer root `LICENSE` until visibility changes
 - [x] Add `CODEOWNERS`
 - [x] Add `.github/PULL_REQUEST_TEMPLATE.md`
-- [x] Add issue forms for:
-  - bug
-  - feature request
-  - maintenance task
+- [x] Add low-friction issue forms for:
+  - bug reports
+  - work requests
 
 ### Done When
 
