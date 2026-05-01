@@ -275,6 +275,8 @@ Status: completed on 2026-03-30
   - `docs/product.md`
   - `docs/features.md`
   - `docs/architecture.md`
+  - `docs/DESIGN_GUIDELINES.md`
+  - `requiredStepsForSetup.md`
 - [x] Define roles:
   - humans own roadmap, scope, releases, architecture, and permissions
   - Jules owns recurring maintenance, suggested tasks, CI repair on Jules PRs, dependency hygiene, performance, and UX polish

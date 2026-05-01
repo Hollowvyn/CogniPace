@@ -29,7 +29,8 @@ npm run check
 
 ## Validation And Review
 
-- Run `npm run check` before opening a PR
+- Run `npm run check` before opening a PR that touches code, tests, public assets, build config, or runtime/tooling config
+- For docs-only or governance-only changes, run `npm run format:check`
 - Update tests when behavior changes
 - Include screenshots for visible popup, dashboard, or overlay changes
 - Keep docs in sync with code changes
