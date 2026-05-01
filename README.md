@@ -16,11 +16,21 @@ Requirements:
 - Node `24.x` LTS
 - `npm`
 
-Install and verify:
+Install dependencies:
 
 ```bash
 npm install
+```
+
+Run the full local verification:
+
+```bash
 npm run check
+```
+
+Build the extension for Chrome:
+
+```bash
 npm run build
 ```
 
@@ -30,6 +40,8 @@ Load the extension in Chrome:
 2. Turn on **Developer mode**
 3. Click **Load unpacked**
 4. Select the `dist` folder
+
+After code changes, run `npm run build` again and reload the extension from `chrome://extensions`.
 
 ## How It Works
 
@@ -54,12 +66,12 @@ The main surfaces are:
 
 ## Project Docs
 
-- [docs/product.md](docs/product.md)
-- [docs/features.md](docs/features.md)
-- [docs/architecture.md](docs/architecture.md)
-- [docs/DESIGN_GUIDELINES.md](docs/DESIGN_GUIDELINES.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [SECURITY.md](SECURITY.md)
+- Product scope: [docs/product.md](docs/product.md)
+- Feature behavior: [docs/features.md](docs/features.md)
+- Architecture: [docs/architecture.md](docs/architecture.md)
+- Design guidelines: [docs/DESIGN_GUIDELINES.md](docs/DESIGN_GUIDELINES.md)
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Security: [SECURITY.md](SECURITY.md)
 
 ## License
 
