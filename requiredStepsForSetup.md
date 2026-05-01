@@ -69,14 +69,22 @@ Rules:
   - `docs/DESIGN_GUIDELINES.md`
   - `docs/decisions/`
   - `docs/stitch-design-doc.md`
-  - `.github/workflows/ci.yml`
+  - `.github/workflows/`
   - `.github/dependabot.yml`
+  - `.github/labeler.yml`
   - `.github/PULL_REQUEST_TEMPLATE.md`
   - `.github/ISSUE_TEMPLATE/`
+  - `.jules/instructions.md`
 
 ### Still Missing
 
-- none for current public-visibility prep
+- Phase 6 external Jules setup remains pending:
+  - online Jules prompts for Cartographer, Sentinel, Palette, and Victor
+  - Jules environment setup run and snapshot
+  - Jules Suggested Tasks
+  - Jules CI fixer for Jules-created PRs
+  - co-authored Jules commit authorship
+  - Codex code review integration must be installed/enabled for `@codex review` comments to trigger reviews
 
 ### Current Health
 
@@ -97,6 +105,11 @@ Rules:
 - Dependabot is configured for weekly npm and GitHub Actions updates
 - Vulnerability alerts and automated security fixes are enabled for the current repo model
 - CodeQL remains deferred until the repo becomes public
+- Repo-side Jules platform instructions now exist in `.jules/instructions.md`
+- New Jules PRs are automatically commented with `@codex review` so Codex can review them when the Codex GitHub
+  integration is enabled
+- Jules branch naming is prompt-enforced and checked by CI because the Jules Action does not expose an output branch-name
+  input
 
 ## Ordered Setup Phases
 
@@ -107,13 +120,14 @@ Important:
 
 ## Current Phase
 
-- Phase 5 is now complete.
-- Status: completed on 2026-03-30
-- Next true setup phase: Phase 6
+- Phase 6 is in progress.
+- Status: repo-side Jules instructions, Jules PR branch checks, and Codex review-request automation configured on
+  2026-05-01; Jules online prompt setup is still pending.
+- Next true setup phase: finish Phase 6 external Jules setup
 
 ## Remaining Execution Order From The React Baseline
 
-1. Phase 6
+1. Finish Phase 6
 2. Phase 7
 
 ## Phase 0: Stabilize Local Baseline
@@ -396,6 +410,8 @@ Status: completed on 2026-03-30
 
 ## Phase 6: Jules Automation
 
+Status: in progress as of 2026-05-01
+
 ### Goals
 
 - Make Jules part of the core operating model before optional marketplace tooling
@@ -405,38 +421,81 @@ Status: completed on 2026-03-30
 
 ### Steps
 
-- [ ] Install and configure Jules before any optional marketplace stack
+- [x] Add repo-side Jules platform instructions under `.jules/instructions.md`
+- [ ] Update online Jules platform prompts for:
+  - Cartographer docs drift checks
+  - Sentinel security hardening
+  - Palette micro-UX and accessibility polish
+  - Victor test reliability improvements
+- [ ] Configure Friday-morning Jules platform schedules for:
+  - weekly Cartographer docs pass
+  - weekly Sentinel security pass
+  - weekly Palette UX and accessibility polish pass
+  - weekly Victor testing reliability pass
+- [x] Add a GitHub Action that requests `@codex review` on new Jules PRs
+- [x] Add a Jules PR compliance workflow for branch and title conventions
+- [x] Document the Jules branch convention:
+  - scheduled workflows use `jules/<workflow>/<change>`
+  - manual Jules tasks use `jules/<change>`
+- [x] Document the Jules comment convention:
+  - do not add explanatory comments for obvious code
+  - explain intent, validation, and tradeoffs in PR bodies
+- [ ] Install and configure Jules before any additional optional marketplace stack
 - [ ] Enable Jules Suggested Tasks
-- [ ] Create scheduled tasks for:
-  - weekly security pass
-  - weekly dependency hygiene pass
-  - weekly UX and accessibility polish pass
-  - biweekly performance pass
+- [ ] Run and snapshot the Jules environment setup script
 - [ ] Use Jules CI fixer for Jules-created PRs
 - [ ] Set default commit authorship to co-authored
-- [ ] Add labels:
+- [x] Add labels:
   - `agent:jules`
   - `lane:maintenance`
   - `lane:security`
-  - `lane:performance`
   - `lane:docs`
+  - `lane:ux`
+  - `lane:testing`
   - `needs-human-review`
-- [ ] Document Jules allowed React lanes:
+- [x] Document Jules allowed React lanes:
   - small React UI fixes
   - MUI or Emotion theme polish
   - component-level UX cleanup
   - UI test fixes
-  - performance cleanup in React surfaces
-- [ ] Document Jules blocked React lanes:
+- [x] Document Jules blocked React lanes:
   - re-architecting the UI layer
   - swapping styling systems
   - moving logic across `ui`, `data`, `domain`, and `extension` boundaries without explicit human direction
+- [x] Defer a Jules dependency hygiene lane because Dependabot and Renovate already own dependency updates
+- [x] Defer a Jules performance lane until explicitly approved
+
+### Jules Environment Setup Script
+
+Use this script in the Jules environment setup screen, then run and snapshot it:
+
+```bash
+set -euo pipefail
+
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+fi
+
+nvm install
+nvm use
+
+node --version
+npm --version
+npm ci
+npm run check
+```
+
+Keep Jules network access enabled. Jules platform schedules should use the online Jules prompts as their source of truth,
+with `.jules/instructions.md` documenting the repo-side guardrails.
 
 ### Done When
 
+- [x] repo-side Jules platform instructions are versioned and reviewable
+- [x] Jules-created PRs have documented branch, title, label, and review conventions
+- [x] new Jules PRs request Codex review automatically through a PR comment
 - [ ] Jules can create and maintain low-risk PRs without redefining product scope
-- [ ] recurring grunt work is automated and reviewable
-- [ ] Jules-created PRs have a clear labeling and review path
+- [ ] recurring Jules platform schedules have successfully created their first lane PRs
+- [ ] Codex code review integration responds to the automated `@codex review` comments
 
 ## Phase 7: Marketplace Apps And External Tooling
 

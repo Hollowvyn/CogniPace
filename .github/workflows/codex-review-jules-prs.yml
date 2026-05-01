@@ -1,0 +1,62 @@
+name: Codex Review For Jules PRs
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  request-review:
+    name: Request Codex review
+    if: >
+      !github.event.pull_request.draft &&
+      (
+        startsWith(github.event.pull_request.head.ref, 'jules/') ||
+        contains(github.event.pull_request.user.login, 'jules') ||
+        contains(github.event.pull_request.title, 'Cartographer:') ||
+        contains(github.event.pull_request.title, 'Sentinel:') ||
+        contains(github.event.pull_request.title, 'Palette:') ||
+        contains(github.event.pull_request.title, 'Victor:')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request Codex review
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const marker = '<!-- codex-review-request:jules -->';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const alreadyRequested = comments.some((comment) =>
+              comment.body?.includes(marker),
+            );
+
+            if (alreadyRequested) {
+              core.info('Codex review was already requested for this Jules PR.');
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body: [
+                marker,
+                '@codex review',
+                '',
+                'Please review this Jules-created maintenance PR against AGENTS.md, with extra attention to scope boundaries, branch conventions, unnecessary code comments, validation claims, and whether the PR is exactly one small high-confidence change.',
+              ].join('\n'),
+            });

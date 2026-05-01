@@ -1,0 +1,79 @@
+name: Jules PR Compliance
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    name: Check Jules PR conventions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate title and branch
+        shell: bash
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          LABELS_JSON: ${{ toJson(github.event.pull_request.labels.*.name) }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          is_jules=false
+          author_lc="$(printf "%s" "$AUTHOR" | tr "[:upper:]" "[:lower:]")"
+
+          if [[ "$HEAD_REF" == jules/* ]]; then
+            is_jules=true
+          fi
+          if [[ "$author_lc" == *jules* ]]; then
+            is_jules=true
+          fi
+          if [[ "$LABELS_JSON" == *'"agent:jules"'* ]]; then
+            is_jules=true
+          fi
+          if [[ "$PR_TITLE" == *"Cartographer:"* || "$PR_TITLE" == *"Sentinel:"* || "$PR_TITLE" == *"Palette:"* || "$PR_TITLE" == *"Victor:"* || "$PR_TITLE" == *"Jules:"* ]]; then
+            is_jules=true
+          fi
+
+          if [[ "$is_jules" != true ]]; then
+            echo "Not a Jules PR; skipping."
+            exit 0
+          fi
+
+          scheduled_branch_pattern='^jules/(cartographer|sentinel|palette|victor)/[a-z0-9][a-z0-9-]*$'
+          manual_branch_pattern='^jules/[a-z0-9][a-z0-9-]*$'
+
+          expected_workflow=""
+          expected_manual=false
+          if [[ "$PR_TITLE" == *"Cartographer:"* ]]; then
+            expected_workflow="cartographer"
+          elif [[ "$PR_TITLE" == *"Sentinel:"* ]]; then
+            expected_workflow="sentinel"
+          elif [[ "$PR_TITLE" == *"Palette:"* ]]; then
+            expected_workflow="palette"
+          elif [[ "$PR_TITLE" == *"Victor:"* ]]; then
+            expected_workflow="victor"
+          elif [[ "$PR_TITLE" == *"Jules:"* ]]; then
+            expected_manual=true
+          else
+            echo "Jules PR titles must include one of: Cartographer:, Sentinel:, Palette:, Victor:, Jules:."
+            exit 1
+          fi
+
+          if [[ -n "$expected_workflow" ]]; then
+            expected_pattern="^jules/${expected_workflow}/[a-z0-9][a-z0-9-]*$"
+            if [[ ! "$HEAD_REF" =~ $expected_pattern ]]; then
+              echo "Expected branch matching jules/${expected_workflow}/<change>; got ${HEAD_REF}."
+              exit 1
+            fi
+          elif [[ "$expected_manual" == true && ! "$HEAD_REF" =~ $manual_branch_pattern ]]; then
+            echo "Expected manual Jules branch matching jules/<change>; got ${HEAD_REF}."
+            exit 1
+          elif [[ ! "$HEAD_REF" =~ $scheduled_branch_pattern && ! "$HEAD_REF" =~ $manual_branch_pattern ]]; then
+            echo "Expected branch matching jules/<workflow>/<change> or jules/<change>; got ${HEAD_REF}."
+            exit 1
+          fi
+
+          echo "Jules PR conventions look valid."
