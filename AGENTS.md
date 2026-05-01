@@ -45,13 +45,21 @@ Read these in order before planning or implementing changes:
 
 - Maintenance only.
 - Allowed lanes:
-  - recurring low-risk maintenance
+  - Cartographer docs drift checks
+  - Sentinel security hardening
+  - Palette micro-UX and accessibility polish
+  - Victor test reliability improvements
   - CI repair on Jules-created PRs
-  - dependency hygiene
-  - small React UI polish
-  - performance cleanup
   - docs cleanup
 - Jules may not self-start roadmap work.
+- Jules schedules and lane prompts are configured in the Jules platform. Repo guidance for Jules platform setup lives in
+  `.jules/instructions.md`.
+- Jules branch names should follow `jules/<workflow>/<change>` for scheduled workflows or `jules/<change>` for
+  manual tasks.
+- Jules should not add explanatory comments for obvious code. Prefer clear implementation and explain intent,
+  validation, and tradeoffs in the PR body.
+- Dependency hygiene is currently handled by Dependabot and Renovate, not a Jules lane.
+- Performance automation is deferred until explicitly approved.
 
 ### Codex And Similar Interactive Agents
 
@@ -62,6 +70,18 @@ Read these in order before planning or implementing changes:
   - bug fixes
   - test improvements
   - documentation updates tied to requested work
+
+## Review Guidelines
+
+Codex reviews should prioritize:
+
+- product-scope drift, especially auth, backend, sync, or broad SaaS behavior
+- Chrome extension permission changes and runtime-message validation risks
+- layer-boundary violations across `src/ui/*`, `src/data/*`, `src/domain/*`, and `src/extension/*`
+- direct Chrome storage or runtime access from React UI instead of repositories/runtime clients
+- unnecessary code comments where clear code would be enough
+- validation claims that do not match the files changed
+- Jules PRs that are more than one small, high-confidence maintenance change
 
 ## Blocked Work Without Human Approval
 
@@ -122,8 +142,6 @@ Read these in order before planning or implementing changes:
 
 This file does not authorize or perform later setup phases.
 
-- No actual Jules scheduled-task setup in this phase
 - No GitHub Marketplace app installs in this phase
 - No `CLAUDE.md` in this phase
-- No CI workflow files in this phase
 - No branch protection or org-transfer work in this phase
