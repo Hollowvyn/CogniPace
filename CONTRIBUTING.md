@@ -17,7 +17,10 @@ npm run check
 - Branch from `main`
 - Keep one logical change per pull request
 - Summarize the problem and solution clearly in the PR
-- Read [AGENTS.md](AGENTS.md) and the core docs for product, architecture, or process-sensitive changes
+- For product or feature behavior, read [docs/product.md](docs/product.md) and [docs/features.md](docs/features.md)
+- For boundaries, runtime flow, storage, or message contracts, read [docs/architecture.md](docs/architecture.md)
+- For visible UI changes, read [docs/DESIGN_GUIDELINES.md](docs/DESIGN_GUIDELINES.md)
+- Coding agents must also follow [AGENTS.md](AGENTS.md)
 
 ## Project Guardrails
 
@@ -31,9 +34,15 @@ npm run check
 
 - Run `npm run check` before opening a PR that touches code, tests, public assets, build config, or runtime/tooling config
 - For docs-only or governance-only changes, run `npm run format:check`
+- If validation fails or cannot be run, say so in the PR and include the relevant failure
 - Update tests when behavior changes
 - Include screenshots for visible popup, dashboard, or overlay changes
-- Keep docs in sync with code changes
+- Use the doc-update rules below when behavior, architecture, design, setup, or process changes
+
+## Security And License
+
+- Do not open public issues or pull requests for vulnerabilities; follow [SECURITY.md](SECURITY.md)
+- Contributions should be compatible with the repository's [MIT License](LICENSE)
 
 ## Doc Updates
 
