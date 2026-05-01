@@ -1,21 +1,23 @@
 name: Bug report
-description: Report a reproducible defect in the extension.
-title: "[Bug]: "
+description: Report a problem in the extension.
 labels:
   - bug
 body:
   - type: textarea
-    id: summary
+    id: issue
     attributes:
-      label: Summary
-      description: What is broken?
-      placeholder: The popup opens, but the recommended problem card is blank.
+      label: Issue
     validations:
       required: true
-  - type: dropdown
-    id: area
+  - type: textarea
+    id: steps
     attributes:
-      label: Affected area
+      label: Steps to reproduce
+  - type: dropdown
+    id: affected-areas
+    attributes:
+      label: Affected areas
+      multiple: true
       options:
         - Popup
         - Dashboard
@@ -25,38 +27,9 @@ body:
         - Import/export
         - Build/test/docs
         - Other
-    validations:
-      required: true
+        - Not sure
   - type: textarea
-    id: steps
+    id: details
     attributes:
-      label: Steps to reproduce
-      placeholder: |
-        1. Open ...
-        2. Click ...
-        3. Observe ...
-    validations:
-      required: true
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected behavior
-    validations:
-      required: true
-  - type: textarea
-    id: actual
-    attributes:
-      label: Actual behavior
-    validations:
-      required: true
-  - type: textarea
-    id: environment
-    attributes:
-      label: Environment
-      description: Browser version, OS, branch, or commit if known.
-      placeholder: Chrome 135 on macOS, main at abc123
-  - type: textarea
-    id: evidence
-    attributes:
-      label: Screenshots or logs
-      description: Paste screenshots, stack traces, or console logs if relevant.
+      label: Details
+      description: Versions, screenshots/logs, expected vs actual, attributes, or anything else useful.
