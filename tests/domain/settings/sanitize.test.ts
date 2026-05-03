@@ -5,8 +5,8 @@ import { describe, it } from "vitest";
 import {
   isPersistedUserSettings,
   sanitizeStoredUserSettings,
-} from "../../../src/domain/settings";
-import { createInitialUserSettings } from "../../../src/domain/settings";
+} from "../../../src/domain/settings/sanitize";
+import { createInitialUserSettings } from "../../../src/domain/settings/seed";
 
 describe("settings sanitization", () => {
   const initial = createInitialUserSettings();

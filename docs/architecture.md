@@ -253,8 +253,12 @@ Important persisted areas:
 - `settings`
   Stores the current grouped user settings model. Top-level fields hold the daily question goal, study mode, active
   course, and enabled source sets. Nested groups hold notification preferences, memory-review settings, question
-  filters, timing goals, and experimental flags. Missing or malformed settings are seeded once into the current model;
-  removed legacy fields are not preserved.
+  filters, timing goals, and experimental flags. Missing or malformed settings are seeded once into the current model.
+  This grouped shape is the only supported persisted settings contract.
+  Short-lived migration code is acceptable when explicitly approved for a release boundary, but legacy compatibility is
+  not meant to linger in the runtime model or sanitizer indefinitely.
+  After the migration window closes, removed legacy fields are not preserved and should be deleted from runtime,
+  validation, import, and test paths.
 - background-only notification bookkeeping
   Daily reminder dedupe state is stored separately in local extension storage so startup checks do not re-send the same
   due notification multiple times in one local day.
