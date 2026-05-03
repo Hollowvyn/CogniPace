@@ -41,6 +41,8 @@ Responsibilities:
 - show due count, streak, recommended problem, and course-next state
 - toggle study mode
 - open problems or the dashboard
+- load through the narrow `GET_POPUP_SHELL_DATA` runtime read model so opening the popup does not require dashboard-only
+  library, analytics, or course-option projections
 
 ### Dashboard
 
@@ -195,6 +197,14 @@ The intended runtime path for React surfaces is:
 
 This keeps React screens free of direct Chrome API calls and keeps domain logic free of UI concerns.
 
+The popup uses `GET_POPUP_SHELL_DATA` for its startup read. That payload contains only `settings`, `popup`, and
+`activeCourse`; dashboard and overlay surfaces continue to use the broader app-shell read model when they need queue,
+analytics, library, course-option, or dashboard-specific data.
+
+React app-shell surfaces also subscribe to app-data storage changes through a data repository so cross-surface mutations
+stay coherent. Each surface reloads its own read model after a persisted app-data change instead of sharing stale
+in-memory payloads or reading `chrome.storage` directly from UI code.
+
 ## Where To Change Things
 
 - Popup UI: `src/ui/screens/popup/*`
@@ -208,6 +218,7 @@ This keeps React screens free of direct Chrome API calls and keeps domain logic 
 - Course ingest normalization: `src/ui/presentation/courseIngest.ts`
 - App-shell query state: `src/ui/state/useAppShellQuery.ts`
 - Runtime-backed popup/dashboard reads: `src/data/repositories/appShellRepository.ts`
+- Cross-surface app-data change observation: `src/data/repositories/appDataChangeRepository.ts`
 - Storage and persisted app data: `src/data/repositories/appDataRepository.ts`
 - Raw Chrome storage access: `src/data/datasources/chrome/storage.ts`
 - Backup import/export: `src/data/importexport/backup.ts`
@@ -275,6 +286,8 @@ Export payload remains:
 
 Review and history runtime contracts now include:
 
+- `GET_POPUP_SHELL_DATA`
+  returns the popup-specific startup read model without dashboard-only projections
 - `SAVE_REVIEW_RESULT`
 - `SAVE_OVERLAY_LOG_DRAFT`
   appends a new FSRS review event and stores the current structured log fields

@@ -1,3 +1,4 @@
+import { PopupShellPayload } from "../../../src/domain/views";
 import { PopupApp } from "../../../src/ui/screens/popup/PopupApp";
 import { makePayload } from "../support/appShellFixtures";
 import { render } from "../support/render";
@@ -16,8 +17,17 @@ export function openedProblemResponse(request: unknown) {
   return Promise.resolve({ ok: true, data: { opened: true }, request });
 }
 
+export function makePopupPayload(): PopupShellPayload {
+  const payload = makePayload();
+  return {
+    activeCourse: payload.activeCourse,
+    popup: payload.popup,
+    settings: payload.settings,
+  };
+}
+
 export function renderPopupWithPayload(
-  payload = makePayload(),
+  payload = makePopupPayload(),
   override?: PopupRuntimeOverride
 ) {
   sendMessageMock.mockImplementation((type: string, request: unknown) => {
@@ -25,7 +35,7 @@ export function renderPopupWithPayload(
     if (overridden !== undefined) {
       return overridden;
     }
-    if (type === "GET_APP_SHELL_DATA") {
+    if (type === "GET_POPUP_SHELL_DATA") {
       return okResponse(payload);
     }
     return okResponse();

@@ -86,6 +86,15 @@ describe("runtime validation", () => {
     );
   });
 
+  it("accepts popup shell reads with empty payloads", () => {
+    assert.doesNotThrow(() =>
+      validateRuntimeMessage({
+        type: "GET_POPUP_SHELL_DATA",
+        payload: {},
+      })
+    );
+  });
+
   it("accepts allowed content-script senders", () => {
     const message = validateRuntimeMessage({
       type: "SAVE_REVIEW_RESULT",

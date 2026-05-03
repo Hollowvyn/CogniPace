@@ -1,11 +1,36 @@
 import { describe, expect, it } from "vitest";
 
-import { makePayload } from "../support/appShellFixtures";
-import { screen } from "../support/render";
+import { deferred, makePayload } from "../support/appShellFixtures";
+import { act, screen } from "../support/render";
 
-import { renderPopupWithPayload } from "./support";
+import { makePopupPayload, renderPopupWithPayload } from "./support";
 
 describe("Popup States", () => {
+  it("shows loading state before the initial popup payload arrives", async () => {
+    const loadResponse = deferred<{
+      ok: boolean;
+      data: ReturnType<typeof makePopupPayload>;
+    }>();
+
+    renderPopupWithPayload(makePopupPayload(), (type) =>
+      type === "GET_POPUP_SHELL_DATA" ? loadResponse.promise : undefined
+    );
+
+    expect(screen.getByText("Loading Queue")).toBeInTheDocument();
+    expect(screen.getByText("Loading Course")).toBeInTheDocument();
+    expect(screen.queryByText("Queue Clear")).not.toBeInTheDocument();
+    expect(screen.queryByText("No Active Course")).not.toBeInTheDocument();
+
+    act(() => {
+      loadResponse.resolve({
+        ok: true,
+        data: makePopupPayload(),
+      });
+    });
+
+    expect(await screen.findByText("Two Sum")).toBeInTheDocument();
+  });
+
   it("renders a compact empty state when no recommendation exists", async () => {
     const payload = makePayload();
     payload.popup.recommended = null;

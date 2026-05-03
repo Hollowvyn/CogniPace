@@ -6,7 +6,10 @@ function collectAllStates(data: AppData): Array<[string, StudyState]> {
   return Object.entries(data.studyStatesBySlug);
 }
 
-function computeStreak(data: AppData): number {
+export function computeReviewStreakDays(
+  data: AppData,
+  now = new Date()
+): number {
   const reviewDays = new Set<string>();
 
   for (const [, state] of collectAllStates(data)) {
@@ -16,7 +19,7 @@ function computeStreak(data: AppData): number {
   }
 
   let streak = 0;
-  let cursor = startOfDay(new Date());
+  let cursor = startOfDay(now);
 
   while (reviewDays.has(ymd(cursor))) {
     streak += 1;
@@ -118,7 +121,7 @@ export function summarizeAnalytics(data: AppData): AnalyticsSummary {
     .slice(0, 10);
 
   return {
-    streakDays: computeStreak(data),
+    streakDays: computeReviewStreakDays(data),
     totalReviews,
     phaseCounts,
     retentionProxy: computeRetentionProxy(data),

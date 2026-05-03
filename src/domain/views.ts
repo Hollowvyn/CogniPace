@@ -111,14 +111,17 @@ export interface PopupViewData {
   activeCourse: CourseCardView | null;
 }
 
-export interface AppShellPayload {
-  queue: TodayQueue;
-  analytics: AnalyticsSummary;
+export interface PopupShellPayload {
   settings: UserSettings;
   popup: PopupViewData;
+  activeCourse: ActiveCourseView | null;
+}
+
+export interface AppShellPayload extends PopupShellPayload {
+  queue: TodayQueue;
+  analytics: AnalyticsSummary;
   recommendedCandidates: RecommendedProblemView[];
   courses: CourseCardView[];
-  activeCourse: ActiveCourseView | null;
   library: LibraryProblemRow[];
   courseOptions: CourseOption[];
 }

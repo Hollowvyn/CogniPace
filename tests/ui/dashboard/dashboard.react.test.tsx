@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { STORAGE_KEY } from "../../../src/domain/common/constants";
 import { DashboardApp } from "../../../src/ui/screens/dashboard/DashboardApp";
 import { makePayload } from "../support/appShellFixtures";
 import { render, screen, waitFor, fireEvent } from "../support/render";
-import { sendMessageMock } from "../support/setup";
+import { emitLocalStorageChange, sendMessageMock } from "../support/setup";
 
 type DashboardRuntimeOverride = (
   type: string,
@@ -61,7 +62,9 @@ describe("DashboardApp", () => {
 
     await user.click(await screen.findByRole("button", { name: "Settings" }));
 
-    expect(screen.getByRole("button", { name: "Save Settings" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Save Settings" })
+    ).toBeDisabled();
 
     const dailyQuestionGoalInput = await screen.findByLabelText(
       "Daily Question Goal"
@@ -82,6 +85,43 @@ describe("DashboardApp", () => {
           dailyQuestionGoal: 24,
           activeCourseId: "Blind75",
         })
+      );
+    });
+  });
+
+  it("refreshes settings when another extension surface updates app data", async () => {
+    let payload = makePayload();
+    const { user } = renderDashboardWithPayload(payload, (type) =>
+      type === "GET_APP_SHELL_DATA"
+        ? Promise.resolve({ ok: true, data: payload })
+        : undefined
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Settings" }));
+
+    expect(screen.getByRole("button", { name: "Study plan" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    payload = {
+      ...payload,
+      settings: {
+        ...payload.settings,
+        studyMode: "freestyle",
+      },
+    };
+    emitLocalStorageChange({
+      [STORAGE_KEY]: {
+        newValue: payload,
+        oldValue: {},
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Freestyle" })).toHaveAttribute(
+        "aria-pressed",
+        "true"
       );
     });
   });
@@ -153,7 +193,9 @@ describe("DashboardApp", () => {
     ).toBeInTheDocument();
 
     expect(screen.getByLabelText("Hard goal")).toHaveValue(50);
-    expect(screen.getByRole("button", { name: "Save Settings" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Save Settings" })
+    ).toBeDisabled();
     expect(
       screen.getByRole("button", { name: "Discard Changes" })
     ).toBeDisabled();
@@ -177,7 +219,9 @@ describe("DashboardApp", () => {
     await user.click(screen.getByRole("button", { name: "Discard Changes" }));
 
     expect(screen.getByLabelText("Notification Time")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Save Settings" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Save Settings" })
+    ).toBeDisabled();
   });
 
   it("confirms before resetting study history", async () => {

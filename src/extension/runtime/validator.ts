@@ -22,6 +22,7 @@ const MESSAGE_TYPES = {
   GET_TODAY_QUEUE: true,
   GET_DASHBOARD_DATA: true,
   GET_APP_SHELL_DATA: true,
+  GET_POPUP_SHELL_DATA: true,
   SWITCH_ACTIVE_COURSE: true,
   SET_ACTIVE_COURSE_CHAPTER: true,
   TRACK_COURSE_QUESTION_LAUNCH: true,
@@ -45,6 +46,7 @@ const CONTENT_SCRIPT_MESSAGE_TYPES = new Set<MessageType>([
   "OVERRIDE_LAST_REVIEW_RESULT",
   "OPEN_EXTENSION_PAGE",
   "GET_APP_SHELL_DATA",
+  "GET_POPUP_SHELL_DATA",
   "OPEN_PROBLEM_PAGE",
 ]);
 
@@ -229,8 +231,15 @@ function validateMemoryReview(value: unknown): void {
   if (!isRecord(value)) {
     throw new Error('Invalid field "memoryReview": expected an object.');
   }
-  hasExactKeys(value, ["targetRetention", "reviewOrder"], 'Field "memoryReview"');
-  requireOptionalFiniteNumber(value.targetRetention, "memoryReview.targetRetention");
+  hasExactKeys(
+    value,
+    ["targetRetention", "reviewOrder"],
+    'Field "memoryReview"'
+  );
+  requireOptionalFiniteNumber(
+    value.targetRetention,
+    "memoryReview.targetRetention"
+  );
   requireOptionalReviewOrder(value.reviewOrder, "memoryReview.reviewOrder");
 }
 
@@ -251,7 +260,11 @@ function validateTiming(value: unknown): void {
   if (!isRecord(value)) {
     throw new Error('Invalid field "timing": expected an object.');
   }
-  hasExactKeys(value, ["requireSolveTime", "difficultyGoalMs"], 'Field "timing"');
+  hasExactKeys(
+    value,
+    ["requireSolveTime", "difficultyGoalMs"],
+    'Field "timing"'
+  );
   requireOptionalBoolean(value.requireSolveTime, "timing.requireSolveTime");
   if (value.difficultyGoalMs !== undefined) {
     validateDifficultyGoalMs(value.difficultyGoalMs);
@@ -263,7 +276,10 @@ function validateExperimental(value: unknown): void {
     throw new Error('Invalid field "experimental": expected an object.');
   }
   hasExactKeys(value, ["autoDetectSolved"], 'Field "experimental"');
-  requireOptionalBoolean(value.autoDetectSolved, "experimental.autoDetectSolved");
+  requireOptionalBoolean(
+    value.autoDetectSolved,
+    "experimental.autoDetectSolved"
+  );
 }
 
 function validateCustomSetItems(value: unknown): void {
@@ -416,6 +432,7 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "GET_TODAY_QUEUE":
     case "GET_DASHBOARD_DATA":
     case "GET_APP_SHELL_DATA":
+    case "GET_POPUP_SHELL_DATA":
     case "EXPORT_DATA":
     case "RESET_STUDY_HISTORY":
       hasExactKeys(payload, EMPTY_KEYS, `Payload for ${type}`);
