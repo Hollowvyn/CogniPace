@@ -71,8 +71,8 @@ function booleanValue(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function settingsRecord(value: unknown, fallback: UnknownRecord): UnknownRecord {
-  return isRecord(value) ? value : fallback;
+function settingsRecord(value: unknown, fallback: object): UnknownRecord {
+  return isRecord(value) ? value : (fallback as UnknownRecord);
 }
 
 function sanitizeSetsEnabled(value: unknown): Record<string, boolean> {

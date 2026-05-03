@@ -57,9 +57,9 @@ function isImportPayloadCandidate(
 
 /** Coordinates dashboard screen state while keeping transport concerns in repositories. */
 export function useDashboardController() {
-  const { load, payload, setPayload, setStatus, status } = useAppShellQuery(
-    createMockAppShellPayload()
-  );
+  const mockPayload = useMemo(() => createMockAppShellPayload(), []);
+  const { load, payload, setPayload, setStatus, status } =
+    useAppShellQuery(mockPayload);
   const [view, setView] = useState<DashboardView>(() =>
     readDashboardViewFromSearch(window.location.search)
   );
