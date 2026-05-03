@@ -70,10 +70,11 @@ function activeCourseCard(
 
 /** Builds the narrow popup payload without dashboard-only library or analytics data. */
 export function buildPopupShellPayload(
-  data: Awaited<ReturnType<typeof getAppData>>
+  data: Awaited<ReturnType<typeof getAppData>>,
+  now = new Date()
 ): PopupShellPayload {
-  const queue = buildTodayQueue(data);
-  const activeCourse = buildActiveCourseView(data);
+  const queue = buildTodayQueue(data, now);
+  const activeCourse = buildActiveCourseView(data, data.settings.activeCourseId, now);
   const candidates = buildRecommendedCandidates(
     queue,
     activeCourse?.nextQuestion?.slug
@@ -83,7 +84,7 @@ export function buildPopupShellPayload(
     settings: data.settings,
     popup: {
       dueCount: queue.dueCount,
-      streakDays: computeReviewStreakDays(data),
+      streakDays: computeReviewStreakDays(data, now),
       recommended: candidates[0] ?? null,
       recommendedCandidates: candidates,
       courseNext: activeCourse?.nextQuestion ?? null,
@@ -102,9 +103,10 @@ export async function getPopupShellData() {
 /** Builds the popup/dashboard app shell payload from the current persisted state. */
 export async function getAppShellData() {
   const data = await getAppData();
-  const popupShell = buildPopupShellPayload(data);
-  const queue = buildTodayQueue(data);
-  const analytics = summarizeAnalytics(data);
+  const now = new Date();
+  const popupShell = buildPopupShellPayload(data, now);
+  const queue = buildTodayQueue(data, now);
+  const analytics = summarizeAnalytics(data, now);
 
   return ok<AppShellPayload>({
     ...popupShell,
@@ -112,7 +114,7 @@ export async function getAppShellData() {
     analytics,
     recommendedCandidates: popupShell.popup.recommendedCandidates,
     courses: buildCourseCards(data),
-    library: libraryRows(data),
+    library: libraryRows(data, now),
     courseOptions: buildCourseOptions(data),
   });
 }
