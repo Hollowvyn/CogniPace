@@ -189,4 +189,46 @@ describe("FSRS scheduler", () => {
     assert.equal(overridden.languages, "TypeScript");
     assert.equal(overridden.notes, "Use mirrored indices.");
   });
+
+  it.each([
+    { now: "2026-03-01T15:05:00.000Z", target: 0.85, expectedDue: false },
+    { now: "2026-03-03T15:00:00.000Z", target: 0.95, expectedDue: true },
+    { now: "2026-03-02T15:00:00.000Z", target: 0.70, expectedDue: false },
+  ])(
+    "calculates isDue as $expectedDue for target $target at $now",
+    ({ now, target, expectedDue }) => {
+      const state = applyReview({
+        rating: 2,
+        settings,
+        now: "2026-03-01T15:00:00.000Z",
+      });
+      const summary = getStudyStateSummary(state, new Date(now), target);
+      assert.equal(summary.isDue, expectedDue);
+    }
+  );
+
+  it("enforces solve-time requirement when enabled in settings", () => {
+    const activeSettings = {
+      ...settings,
+      timing: { ...settings.timing, requireSolveTime: true },
+    };
+
+    assert.throws(
+      () =>
+        applyReview({
+          rating: 2,
+          settings: activeSettings,
+          now: "2026-03-01T15:00:00.000Z",
+        }),
+      /solve time is required/i
+    );
+
+    const valid = applyReview({
+      rating: 2,
+      solveTimeMs: 120000,
+      settings: activeSettings,
+      now: "2026-03-01T15:00:00.000Z",
+    });
+    assert.equal(valid.lastSolveTimeMs, 120000);
+  });
 });

@@ -9,6 +9,7 @@ import {
 } from "../../src/domain/courses/courseProgress";
 import { buildRecommendedCandidates } from "../../src/domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../src/domain/queue/buildTodayQueue";
+import { applyReview } from "../../src/domain/fsrs/scheduler";
 import { createInitialUserSettings } from "../../src/domain/settings";
 import { makeProblem, makeScheduledState } from "../support/domainFixtures";
 
@@ -95,4 +96,27 @@ describe("queue recommendations", () => {
       ["two-sum", "group-anagrams"]
     );
   });
+
+  it.each([
+    { target: 0.85, expectedDueCount: 0 },
+    { target: 0.95, expectedDueCount: 1 },
+  ])(
+    "adjusts due queue size to $expectedDueCount for target $target",
+    ({ target, expectedDueCount }) => {
+      const settings = createInitialUserSettings();
+      settings.dailyQuestionGoal = 10;
+      settings.memoryReview.targetRetention = target;
+
+      const data = normalizeStoredAppData({ settings });
+      data.problemsBySlug["two-sum"] = makeProblem("two-sum", "Two Sum", "Easy");
+      data.studyStatesBySlug["two-sum"] = applyReview({
+        rating: 2,
+        settings,
+        now: "2026-03-01T00:00:00.000Z",
+      });
+
+      const queue = buildTodayQueue(data, new Date("2026-03-03T00:00:00.000Z"));
+      assert.equal(queue.dueCount, expectedDueCount);
+    }
+  );
 });

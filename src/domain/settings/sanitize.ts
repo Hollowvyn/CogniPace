@@ -71,11 +71,8 @@ function booleanValue(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function settingsRecord(value: unknown): UnknownRecord {
-  if (!isRecord(value)) {
-    throw new Error("Stored settings are missing or malformed.");
-  }
-  return value;
+function settingsRecord(value: unknown, fallback: UnknownRecord): UnknownRecord {
+  return isRecord(value) ? value : fallback;
 }
 
 function sanitizeSetsEnabled(value: unknown): Record<string, boolean> {
@@ -187,76 +184,78 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
 
 export function sanitizeStoredUserSettings(value: unknown): UserSettings {
   const initial = createInitialUserSettings();
+  const source = isRecord(value) ? value : {};
 
-  try {
-    const source = settingsRecord(value);
-    const notifications = settingsRecord(source.notifications);
-    const memoryReview = settingsRecord(source.memoryReview);
-    const questionFilters = settingsRecord(source.questionFilters);
-    const timing = settingsRecord(source.timing);
-    const experimental = settingsRecord(source.experimental);
+  const notifications = settingsRecord(
+    source.notifications,
+    initial.notifications
+  );
+  const memoryReview = settingsRecord(source.memoryReview, initial.memoryReview);
+  const questionFilters = settingsRecord(
+    source.questionFilters,
+    initial.questionFilters
+  );
+  const timing = settingsRecord(source.timing, initial.timing);
+  const experimental = settingsRecord(source.experimental, initial.experimental);
 
-    return {
-      dailyQuestionGoal: nonNegativeInteger(
-        source.dailyQuestionGoal,
-        initial.dailyQuestionGoal
+  return {
+    dailyQuestionGoal: nonNegativeInteger(
+      source.dailyQuestionGoal,
+      initial.dailyQuestionGoal
+    ),
+    studyMode: studyMode(source.studyMode, initial.studyMode),
+    activeCourseId:
+      typeof source.activeCourseId === "string" && source.activeCourseId.trim()
+        ? source.activeCourseId
+        : DEFAULT_COURSE_ID,
+    setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
+    notifications: {
+      enabled: booleanValue(
+        notifications.enabled,
+        initial.notifications.enabled
       ),
-      studyMode: studyMode(source.studyMode, initial.studyMode),
-      activeCourseId:
-        typeof source.activeCourseId === "string" && source.activeCourseId.trim()
-          ? source.activeCourseId
-          : DEFAULT_COURSE_ID,
-      setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
-      notifications: {
-        enabled: booleanValue(
-          notifications.enabled,
-          initial.notifications.enabled
-        ),
-        dailyTime: timeString(
-          notifications.dailyTime,
-          initial.notifications.dailyTime
-        ),
-      },
-      memoryReview: {
-        targetRetention: numberInRange(
-          memoryReview.targetRetention,
-          initial.memoryReview.targetRetention,
-          0.7,
-          0.95
-        ),
-        reviewOrder: reviewOrder(
-          memoryReview.reviewOrder,
-          initial.memoryReview.reviewOrder
-        ),
-      },
-      questionFilters: {
-        skipIgnored: booleanValue(
-          questionFilters.skipIgnored,
-          initial.questionFilters.skipIgnored
-        ),
-        skipPremium: booleanValue(
-          questionFilters.skipPremium,
-          initial.questionFilters.skipPremium
-        ),
-      },
-      timing: {
-        requireSolveTime: booleanValue(
-          timing.requireSolveTime,
-          initial.timing.requireSolveTime
-        ),
-        difficultyGoalMs: sanitizeDifficultyGoalMs(
-          timing.difficultyGoalMs,
-          initial.timing.difficultyGoalMs
-        ),
-      },
-      experimental: {
-        autoDetectSolved: booleanValue(
-          experimental.autoDetectSolved,
-          initial.experimental.autoDetectSolved
-        ),
-      },
-    };
-  } catch {
-    return initial;
-  }
+      dailyTime: timeString(
+        notifications.dailyTime,
+        initial.notifications.dailyTime
+      ),
+    },
+    memoryReview: {
+      targetRetention: numberInRange(
+        memoryReview.targetRetention,
+        initial.memoryReview.targetRetention,
+        0.7,
+        0.95
+      ),
+      reviewOrder: reviewOrder(
+        memoryReview.reviewOrder,
+        initial.memoryReview.reviewOrder
+      ),
+    },
+    questionFilters: {
+      skipIgnored: booleanValue(
+        questionFilters.skipIgnored,
+        initial.questionFilters.skipIgnored
+      ),
+      skipPremium: booleanValue(
+        questionFilters.skipPremium,
+        initial.questionFilters.skipPremium
+      ),
+    },
+    timing: {
+      requireSolveTime: booleanValue(
+        timing.requireSolveTime,
+        initial.timing.requireSolveTime
+      ),
+      difficultyGoalMs: sanitizeDifficultyGoalMs(
+        timing.difficultyGoalMs,
+        initial.timing.difficultyGoalMs
+      ),
+    },
+    experimental: {
+      autoDetectSolved: booleanValue(
+        experimental.autoDetectSolved,
+        initial.experimental.autoDetectSolved
+      ),
+    },
+  };
 }
