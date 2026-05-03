@@ -26,16 +26,20 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { ChangeEvent, ReactNode, useState } from "react";
 
-import { ReviewOrder, StudyMode, UserSettings } from "../../../../domain/types";
+import { ReviewOrder, StudyMode, UserSettings } from "../../../../domain/settings";
 import { SurfaceSectionLabel } from "../../../components";
 import { kineticTokens } from "../../../theme";
 import { DashboardChromePanel } from "../components/DashboardSurface";
 
 export interface SettingsViewProps {
+  canDiscardSettings: boolean;
+  canResetSettingsToDefaults: boolean;
+  canSaveSettings: boolean;
   importFile: File | null;
+  onDiscardSettings: () => void;
   onExportData: () => Promise<void>;
   onImportData: () => Promise<void>;
-  onResetSettings: () => void;
+  onResetSettingsToDefaults: () => void;
   onResetStudyHistory: () => void;
   onSaveSettings: () => void;
   onSetImportFile: (file: File | null) => void;
@@ -153,7 +157,11 @@ export function SettingsView(props: SettingsViewProps) {
 
         <Box sx={{ gridColumn: "1 / -1", minWidth: 0 }}>
           <SettingsSaveBar
-            onResetSettings={props.onResetSettings}
+            canDiscardSettings={props.canDiscardSettings}
+            canResetSettingsToDefaults={props.canResetSettingsToDefaults}
+            canSaveSettings={props.canSaveSettings}
+            onDiscardSettings={props.onDiscardSettings}
+            onResetSettingsToDefaults={props.onResetSettingsToDefaults}
             onSaveSettings={props.onSaveSettings}
           />
         </Box>
@@ -698,17 +706,23 @@ function MemoryReviewSection(props: {
         onChange={(value) => {
           props.onUpdateSettings((current) => ({
             ...current,
-            targetRetention: value,
+            memoryReview: {
+              ...current.memoryReview,
+              targetRetention: value,
+            },
           }));
         }}
-        value={props.settingsDraft.targetRetention}
+        value={props.settingsDraft.memoryReview.targetRetention}
       />
       <SelectSetting<ReviewOrder>
         label="Review Order"
         onChange={(value) => {
           props.onUpdateSettings((current) => ({
             ...current,
-            reviewOrder: value,
+            memoryReview: {
+              ...current.memoryReview,
+              reviewOrder: value,
+            },
           }));
         }}
         options={[
@@ -716,7 +730,7 @@ function MemoryReviewSection(props: {
           { label: "Mix By Difficulty", value: "mixByDifficulty" },
           { label: "Weakest First", value: "weakestFirst" },
         ]}
-        value={props.settingsDraft.reviewOrder}
+        value={props.settingsDraft.memoryReview.reviewOrder}
       />
     </Stack>
   );
@@ -729,26 +743,32 @@ function QuestionFiltersSection(props: {
   return (
     <Stack spacing={1 * settingsSpaceScale}>
       <SwitchSetting
-        checked={props.settingsDraft.skipIgnoredQuestions}
+        checked={props.settingsDraft.questionFilters.skipIgnored}
         helper="Keeps suspended questions out of generated practice queues."
         label="Skip ignored questions"
         name="Skip ignored questions"
         onChange={(checked) => {
           props.onUpdateSettings((current) => ({
             ...current,
-            skipIgnoredQuestions: checked,
+            questionFilters: {
+              ...current.questionFilters,
+              skipIgnored: checked,
+            },
           }));
         }}
       />
       <SwitchSetting
-        checked={props.settingsDraft.skipPremiumQuestions}
+        checked={props.settingsDraft.questionFilters.skipPremium}
         helper="Only applies when a problem has premium-only metadata."
         label="Skip premium questions"
         name="Skip premium questions"
         onChange={(checked) => {
           props.onUpdateSettings((current) => ({
             ...current,
-            skipPremiumQuestions: checked,
+            questionFilters: {
+              ...current.questionFilters,
+              skipPremium: checked,
+            },
           }));
         }}
       />
@@ -763,14 +783,17 @@ function TimingGoalsSection(props: {
   return (
     <Stack spacing={1 * settingsSpaceScale}>
       <SwitchSetting
-        checked={props.settingsDraft.requireSolveTime}
+        checked={props.settingsDraft.timing.requireSolveTime}
         helper="Overlay submissions can require a recorded timer value."
         label="Require solve time"
         name="Require solve time"
         onChange={(checked) => {
           props.onUpdateSettings((current) => ({
             ...current,
-            requireSolveTime: checked,
+            timing: {
+              ...current.timing,
+              requireSolveTime: checked,
+            },
           }));
         }}
       />
@@ -781,14 +804,17 @@ function TimingGoalsSection(props: {
           onChange={(value) => {
             props.onUpdateSettings((current) => ({
               ...current,
-              difficultyGoalMs: {
-                ...current.difficultyGoalMs,
-                Easy: minutesToMs(value),
+              timing: {
+                ...current.timing,
+                difficultyGoalMs: {
+                  ...current.timing.difficultyGoalMs,
+                  Easy: minutesToMs(value),
+                },
               },
             }));
           }}
           suffix="min"
-          value={msToMinutes(props.settingsDraft.difficultyGoalMs.Easy)}
+          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Easy)}
         />
         <NumberSetting
           label="Medium goal"
@@ -796,14 +822,17 @@ function TimingGoalsSection(props: {
           onChange={(value) => {
             props.onUpdateSettings((current) => ({
               ...current,
-              difficultyGoalMs: {
-                ...current.difficultyGoalMs,
-                Medium: minutesToMs(value),
+              timing: {
+                ...current.timing,
+                difficultyGoalMs: {
+                  ...current.timing.difficultyGoalMs,
+                  Medium: minutesToMs(value),
+                },
               },
             }));
           }}
           suffix="min"
-          value={msToMinutes(props.settingsDraft.difficultyGoalMs.Medium)}
+          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Medium)}
         />
         <NumberSetting
           label="Hard goal"
@@ -811,14 +840,17 @@ function TimingGoalsSection(props: {
           onChange={(value) => {
             props.onUpdateSettings((current) => ({
               ...current,
-              difficultyGoalMs: {
-                ...current.difficultyGoalMs,
-                Hard: minutesToMs(value),
+              timing: {
+                ...current.timing,
+                difficultyGoalMs: {
+                  ...current.timing.difficultyGoalMs,
+                  Hard: minutesToMs(value),
+                },
               },
             }));
           }}
           suffix="min"
-          value={msToMinutes(props.settingsDraft.difficultyGoalMs.Hard)}
+          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Hard)}
         />
       </SettingsFieldGrid>
       <Typography
@@ -836,19 +868,22 @@ function NotificationsSection(props: {
   onUpdateSettings: SettingsUpdate;
   settingsDraft: UserSettings;
 }) {
-  const disabled = !props.settingsDraft.notifications;
+  const disabled = !props.settingsDraft.notifications.enabled;
 
   return (
     <Stack spacing={1 * settingsSpaceScale}>
       <SwitchSetting
-        checked={props.settingsDraft.notifications}
+        checked={props.settingsDraft.notifications.enabled}
         helper="Runs once per day at the local reminder time."
         label="Enable reminders"
         name="Enable reminders"
         onChange={(checked) => {
           props.onUpdateSettings((current) => ({
             ...current,
-            notifications: checked,
+            notifications: {
+              ...current.notifications,
+              enabled: checked,
+            },
           }));
         }}
       />
@@ -858,10 +893,13 @@ function NotificationsSection(props: {
         onChange={(value) => {
           props.onUpdateSettings((current) => ({
             ...current,
-            notificationTime: value,
+            notifications: {
+              ...current.notifications,
+              dailyTime: value,
+            },
           }));
         }}
-        value={props.settingsDraft.notificationTime}
+        value={props.settingsDraft.notifications.dailyTime}
       />
     </Stack>
   );
@@ -951,7 +989,11 @@ function LocalDataSection(props: {
 }
 
 function SettingsSaveBar(props: {
-  onResetSettings: () => void;
+  canDiscardSettings: boolean;
+  canResetSettingsToDefaults: boolean;
+  canSaveSettings: boolean;
+  onDiscardSettings: () => void;
+  onResetSettingsToDefaults: () => void;
   onSaveSettings: () => void;
 }) {
   return (
@@ -973,10 +1015,23 @@ function SettingsSaveBar(props: {
         Save persists all settings sections in one local update.
       </Typography>
       <SettingsActionSection>
-        <Button onClick={props.onResetSettings} variant="outlined">
+        <Button
+          disabled={!props.canResetSettingsToDefaults}
+          onClick={props.onResetSettingsToDefaults}
+          startIcon={<RestartAltRounded />}
+          variant="outlined"
+        >
+          Reset Defaults
+        </Button>
+        <Button
+          disabled={!props.canDiscardSettings}
+          onClick={props.onDiscardSettings}
+          variant="outlined"
+        >
           Discard Changes
         </Button>
         <Button
+          disabled={!props.canSaveSettings}
           onClick={props.onSaveSettings}
           startIcon={<SaveRounded />}
           variant="contained"

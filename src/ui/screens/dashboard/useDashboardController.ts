@@ -22,8 +22,12 @@ import {
   resetStudyHistory,
   updateSettings,
 } from "../../../data/repositories/settingsRepository";
-import { DEFAULT_SETTINGS } from "../../../domain/common/constants";
-import { UserSettings } from "../../../domain/types";
+import {
+  areUserSettingsEqual,
+  cloneUserSettings,
+  createInitialUserSettings,
+  UserSettings,
+} from "../../../domain/settings";
 import { createMockAppShellPayload } from "../../mockData";
 import {
   buildDashboardUrl,
@@ -40,16 +44,10 @@ import {
   filterLibraryRows,
   LibraryFilters,
 } from "../../presentation/library";
-import { useAppShellQuery } from "../../state/useAppShellQuery";
-
-function cloneSettings(settings: UserSettings): UserSettings {
-  return {
-    ...settings,
-    difficultyGoalMs: { ...settings.difficultyGoalMs },
-    quietHours: { ...settings.quietHours },
-    setsEnabled: { ...settings.setsEnabled },
-  };
-}
+import {
+  isExtensionContext,
+  useAppShellQuery,
+} from "../../state/useAppShellQuery";
 
 function isImportPayloadCandidate(
   value: unknown
@@ -59,7 +57,7 @@ function isImportPayloadCandidate(
 
 /** Coordinates dashboard screen state while keeping transport concerns in repositories. */
 export function useDashboardController() {
-  const { load, payload, setStatus, status } = useAppShellQuery(
+  const { load, payload, setPayload, setStatus, status } = useAppShellQuery(
     createMockAppShellPayload()
   );
   const [view, setView] = useState<DashboardView>(() =>
@@ -88,9 +86,17 @@ export function useDashboardController() {
   }, []);
 
   const draftSettings = useMemo(() => {
-    const source = settingsDraftState ?? payload?.settings ?? DEFAULT_SETTINGS;
-    return cloneSettings(source);
+    const source = settingsDraftState ?? payload?.settings;
+    return source ? cloneUserSettings(source) : null;
   }, [payload?.settings, settingsDraftState]);
+
+  const hasSettingsChanges =
+    payload?.settings && draftSettings
+      ? !areUserSettingsEqual(draftSettings, payload.settings)
+      : false;
+  const isDefaultSettingsDraft = draftSettings
+    ? areUserSettingsEqual(draftSettings, createInitialUserSettings())
+    : true;
 
   const rows = useMemo(
     () =>
@@ -172,13 +178,82 @@ export function useDashboardController() {
     updater: (current: UserSettings) => UserSettings
   ) {
     setSettingsDraftState((current) =>
-      updater(cloneSettings(current ?? payload?.settings ?? DEFAULT_SETTINGS))
+      updater(
+        cloneUserSettings(
+          current ?? payload?.settings ?? createInitialUserSettings()
+        )
+      )
     );
   }
 
   async function onSaveSettings(): Promise<void> {
-    await runMutation(updateSettings(draftSettings), "Settings saved.");
+    if (!hasSettingsChanges || !draftSettings) {
+      return;
+    }
+
+    const nextSettings = cloneUserSettings(draftSettings);
+    const response = await updateSettings(nextSettings);
+    if (!response.ok) {
+      setStatus({
+        message: response.error ?? "Action failed.",
+        isError: true,
+      });
+      return;
+    }
+
+    const savedSettings = response.data?.settings ?? nextSettings;
+    setPayload((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        settings: cloneUserSettings(savedSettings),
+      };
+    });
     setSettingsDraftState(null);
+    setStatus({
+      message: "Settings saved.",
+      isError: false,
+    });
+    if (isExtensionContext()) {
+      await load({ clearStatusOnSuccess: false });
+    }
+  }
+
+  function onDiscardSettings(): void {
+    setSettingsDraftState(null);
+  }
+
+  async function onResetSettingsToDefaults(): Promise<void> {
+    const nextSettings = createInitialUserSettings();
+    const response = await updateSettings(nextSettings);
+    if (!response.ok) {
+      setStatus({
+        message: response.error ?? "Failed to reset settings.",
+        isError: true,
+      });
+      return;
+    }
+
+    setPayload((current) => {
+      if (!current) {
+        return current;
+      }
+      return {
+        ...current,
+        settings: cloneUserSettings(nextSettings),
+      };
+    });
+    setSettingsDraftState(null);
+    setStatus({
+      message: "Settings reset to defaults.",
+      isError: false,
+    });
+    if (isExtensionContext()) {
+      await load({ clearStatusOnSuccess: false });
+    }
   }
 
   async function onResetStudyHistory(): Promise<void> {
@@ -272,12 +347,16 @@ export function useDashboardController() {
   return {
     draftSettings,
     filters,
+    hasSettingsChanges,
     importFile,
+    isDefaultSettingsDraft,
     navigateToView,
     onExportData,
+    onDiscardSettings,
     onImportData,
     onOpenProblem,
     onSaveSettings,
+    onResetSettingsToDefaults,
     onResetStudyHistory,
     onSetChapter,
     onSubmitCourseForm,

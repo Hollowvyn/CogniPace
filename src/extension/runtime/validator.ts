@@ -58,22 +58,15 @@ const ALLOWED_DASHBOARD_VIEWS = new Set([
 
 const EMPTY_KEYS: readonly string[] = [];
 const SETTINGS_KEYS = [
-  "dailyNewLimit",
-  "dailyReviewLimit",
   "dailyQuestionGoal",
-  "reviewOrder",
   "studyMode",
   "activeCourseId",
   "setsEnabled",
-  "requireSolveTime",
-  "difficultyGoalMs",
-  "skipIgnoredQuestions",
-  "skipPremiumQuestions",
-  "autoDetectSolved",
   "notifications",
-  "notificationTime",
-  "quietHours",
-  "activeStudyPlanId",
+  "memoryReview",
+  "questionFilters",
+  "timing",
+  "experimental",
 ] as const;
 
 type UnknownRecord = Record<string, unknown>;
@@ -200,15 +193,6 @@ function requireOptionalStudyMode(value: unknown, field: string): void {
   }
 }
 
-function validateQuietHours(value: unknown): void {
-  if (!isRecord(value)) {
-    throw new Error('Invalid field "quietHours": expected an object.');
-  }
-  hasExactKeys(value, ["startHour", "endHour"], 'Field "quietHours"');
-  requireOptionalFiniteNumber(value.startHour, "quietHours.startHour");
-  requireOptionalFiniteNumber(value.endHour, "quietHours.endHour");
-}
-
 function validateSetsEnabled(value: unknown): void {
   if (!isRecord(value)) {
     throw new Error('Invalid field "setsEnabled": expected an object.');
@@ -232,6 +216,56 @@ function validateDifficultyGoalMs(value: unknown): void {
   requireOptionalFiniteNumber(value.Hard, "difficultyGoalMs.Hard");
 }
 
+function validateNotifications(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "notifications": expected an object.');
+  }
+  hasExactKeys(value, ["enabled", "dailyTime"], 'Field "notifications"');
+  requireOptionalBoolean(value.enabled, "notifications.enabled");
+  requireOptionalTimeString(value.dailyTime, "notifications.dailyTime");
+}
+
+function validateMemoryReview(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "memoryReview": expected an object.');
+  }
+  hasExactKeys(value, ["targetRetention", "reviewOrder"], 'Field "memoryReview"');
+  requireOptionalFiniteNumber(value.targetRetention, "memoryReview.targetRetention");
+  requireOptionalReviewOrder(value.reviewOrder, "memoryReview.reviewOrder");
+}
+
+function validateQuestionFilters(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "questionFilters": expected an object.');
+  }
+  hasExactKeys(
+    value,
+    ["skipIgnored", "skipPremium"],
+    'Field "questionFilters"'
+  );
+  requireOptionalBoolean(value.skipIgnored, "questionFilters.skipIgnored");
+  requireOptionalBoolean(value.skipPremium, "questionFilters.skipPremium");
+}
+
+function validateTiming(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "timing": expected an object.');
+  }
+  hasExactKeys(value, ["requireSolveTime", "difficultyGoalMs"], 'Field "timing"');
+  requireOptionalBoolean(value.requireSolveTime, "timing.requireSolveTime");
+  if (value.difficultyGoalMs !== undefined) {
+    validateDifficultyGoalMs(value.difficultyGoalMs);
+  }
+}
+
+function validateExperimental(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "experimental": expected an object.');
+  }
+  hasExactKeys(value, ["autoDetectSolved"], 'Field "experimental"');
+  requireOptionalBoolean(value.autoDetectSolved, "experimental.autoDetectSolved");
+}
+
 function validateCustomSetItems(value: unknown): void {
   if (!Array.isArray(value)) {
     throw new Error('Invalid field "items": expected an array.');
@@ -243,12 +277,13 @@ function validateCustomSetItems(value: unknown): void {
     }
     hasExactKeys(
       item,
-      ["slug", "title", "difficulty", "tags"],
+      ["slug", "title", "difficulty", "isPremium", "tags"],
       'Field "items[]"'
     );
     requireString(item.slug, "items[].slug");
     requireOptionalString(item.title, "items[].title");
     requireOptionalDifficulty(item.difficulty, "items[].difficulty");
+    requireOptionalBoolean(item.isPremium, "items[].isPremium");
     requireOptionalStringArray(item.tags, "items[].tags");
   }
 }
@@ -258,12 +293,21 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "UPSERT_PROBLEM_FROM_PAGE":
       hasExactKeys(
         payload,
-        ["slug", "title", "difficulty", "url", "topics", "solvedDetected"],
+        [
+          "slug",
+          "title",
+          "difficulty",
+          "isPremium",
+          "url",
+          "topics",
+          "solvedDetected",
+        ],
         `Payload for ${type}`
       );
       requireString(payload.slug, "slug");
       requireOptionalString(payload.title, "title");
       requireOptionalDifficulty(payload.difficulty, "difficulty");
+      requireOptionalBoolean(payload.isPremium, "isPremium");
       requireOptionalString(payload.url, "url");
       requireOptionalStringArray(payload.topics, "topics");
       requireOptionalBoolean(payload.solvedDetected, "solvedDetected");
@@ -413,32 +457,25 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
         payload.dailyQuestionGoal,
         "dailyQuestionGoal"
       );
-      requireOptionalFiniteNumber(payload.dailyNewLimit, "dailyNewLimit");
-      requireOptionalFiniteNumber(payload.dailyReviewLimit, "dailyReviewLimit");
-      requireOptionalReviewOrder(payload.reviewOrder, "reviewOrder");
       requireOptionalStudyMode(payload.studyMode, "studyMode");
       requireOptionalString(payload.activeCourseId, "activeCourseId");
-      requireOptionalString(payload.activeStudyPlanId, "activeStudyPlanId");
-      requireOptionalBoolean(payload.requireSolveTime, "requireSolveTime");
-      requireOptionalBoolean(
-        payload.skipIgnoredQuestions,
-        "skipIgnoredQuestions"
-      );
-      requireOptionalBoolean(
-        payload.skipPremiumQuestions,
-        "skipPremiumQuestions"
-      );
-      requireOptionalBoolean(payload.autoDetectSolved, "autoDetectSolved");
-      requireOptionalBoolean(payload.notifications, "notifications");
-      requireOptionalTimeString(payload.notificationTime, "notificationTime");
-      if (payload.difficultyGoalMs !== undefined) {
-        validateDifficultyGoalMs(payload.difficultyGoalMs);
-      }
-      if (payload.quietHours !== undefined) {
-        validateQuietHours(payload.quietHours);
-      }
       if (payload.setsEnabled !== undefined) {
         validateSetsEnabled(payload.setsEnabled);
+      }
+      if (payload.notifications !== undefined) {
+        validateNotifications(payload.notifications);
+      }
+      if (payload.memoryReview !== undefined) {
+        validateMemoryReview(payload.memoryReview);
+      }
+      if (payload.questionFilters !== undefined) {
+        validateQuestionFilters(payload.questionFilters);
+      }
+      if (payload.timing !== undefined) {
+        validateTiming(payload.timing);
+      }
+      if (payload.experimental !== undefined) {
+        validateExperimental(payload.experimental);
       }
       return;
     case "ADD_PROBLEM_BY_INPUT":

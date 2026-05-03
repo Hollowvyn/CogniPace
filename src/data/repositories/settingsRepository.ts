@@ -1,11 +1,9 @@
 /** Repository for settings mutations. */
-import { UserSettings } from "../../domain/types";
+import { UserSettingsPatch } from "../../domain/settings";
 import { sendMessage } from "../../extension/runtime/client";
 
 /** Persists a partial settings update through the background worker. */
-export async function updateSettings(
-  payload: Partial<UserSettings> & { activeStudyPlanId?: string }
-) {
+export async function updateSettings(payload: UserSettingsPatch) {
   return sendMessage("UPDATE_SETTINGS", payload);
 }
 

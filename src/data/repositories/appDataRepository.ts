@@ -1,166 +1,30 @@
 /** Repository for persisted app data stored in `chrome.storage.local`. */
 import {
-  BUILT_IN_SETS,
   CURRENT_STORAGE_SCHEMA_VERSION,
-  DEFAULT_COURSE_ID,
-  DEFAULT_SETTINGS,
   LEGACY_STORAGE_KEY,
   STORAGE_KEY,
 } from "../../domain/common/constants";
 import { ensureCourseData } from "../../domain/courses/courseProgress";
 import { normalizeStudyState } from "../../domain/fsrs/studyState";
-import { AppData, UserSettings } from "../../domain/types";
+import {
+  areUserSettingsEqual,
+  createInitialUserSettings,
+  isPersistedUserSettings,
+  mergeUserSettings,
+  sanitizeStoredUserSettings,
+  UserSettingsPatch,
+} from "../../domain/settings";
+import { AppData } from "../../domain/types";
 import {
   readLocalStorage,
   removeLocalStorage,
   writeLocalStorage,
 } from "../datasources/chrome/storage";
 
-export type LegacySettingsPatch = Partial<UserSettings> & {
-  activeStudyPlanId?: string;
-  scheduleIntensity?: "chill" | "normal" | "aggressive";
-  slowSolveDowngradeEnabled?: boolean;
-  slowSolveThresholdMs?: number;
-};
-
 export type StoredAppData = Partial<AppData> & {
-  settings?: LegacySettingsPatch;
+  settings?: unknown;
   schemaVersion?: number;
 };
-
-function normalizeSettings(input?: LegacySettingsPatch): UserSettings {
-  const nextActiveCourseId =
-    input?.activeCourseId || input?.activeStudyPlanId || DEFAULT_COURSE_ID;
-  const legacyDailyGoal =
-    typeof input?.dailyNewLimit === "number" &&
-    Number.isFinite(input.dailyNewLimit) &&
-    typeof input?.dailyReviewLimit === "number" &&
-    Number.isFinite(input.dailyReviewLimit)
-      ? Math.max(0, Math.round(input.dailyNewLimit + input.dailyReviewLimit))
-      : DEFAULT_SETTINGS.dailyQuestionGoal;
-  const merged: UserSettings = {
-    ...DEFAULT_SETTINGS,
-    ...(input ?? {}),
-    dailyQuestionGoal:
-      typeof input?.dailyQuestionGoal === "number" &&
-      Number.isFinite(input.dailyQuestionGoal)
-        ? Math.max(0, Math.round(input.dailyQuestionGoal))
-        : legacyDailyGoal,
-    activeCourseId: nextActiveCourseId,
-    difficultyGoalMs: {
-      ...DEFAULT_SETTINGS.difficultyGoalMs,
-      ...(input?.difficultyGoalMs ?? {}),
-    },
-    quietHours: {
-      ...DEFAULT_SETTINGS.quietHours,
-      ...(input?.quietHours ?? {}),
-    },
-    setsEnabled: {
-      ...DEFAULT_SETTINGS.setsEnabled,
-      ...(input?.setsEnabled ?? {}),
-    },
-  };
-  const normalizedNotificationTime = normalizeNotificationTime(
-    merged.notificationTime
-  );
-
-  if (merged.studyMode !== "freestyle" && merged.studyMode !== "studyPlan") {
-    merged.studyMode = DEFAULT_SETTINGS.studyMode;
-  }
-
-  merged.dailyQuestionGoal = normalizeNonNegativeInteger(
-    merged.dailyQuestionGoal,
-    DEFAULT_SETTINGS.dailyQuestionGoal
-  );
-  merged.dailyNewLimit = normalizeNonNegativeInteger(
-    merged.dailyNewLimit,
-    DEFAULT_SETTINGS.dailyNewLimit
-  );
-  merged.dailyReviewLimit = normalizeNonNegativeInteger(
-    merged.dailyReviewLimit,
-    DEFAULT_SETTINGS.dailyReviewLimit
-  );
-  merged.targetRetention = normalizeNumberInRange(
-    merged.targetRetention,
-    DEFAULT_SETTINGS.targetRetention,
-    0.7,
-    0.95
-  );
-  merged.notificationTime =
-    normalizedNotificationTime ?? DEFAULT_SETTINGS.notificationTime;
-  merged.autoDetectSolved = false;
-
-  merged.difficultyGoalMs = {
-    Easy: normalizePositiveInteger(
-      merged.difficultyGoalMs.Easy,
-      DEFAULT_SETTINGS.difficultyGoalMs.Easy
-    ),
-    Medium: normalizePositiveInteger(
-      merged.difficultyGoalMs.Medium,
-      DEFAULT_SETTINGS.difficultyGoalMs.Medium
-    ),
-    Hard: normalizePositiveInteger(
-      merged.difficultyGoalMs.Hard,
-      DEFAULT_SETTINGS.difficultyGoalMs.Hard
-    ),
-  };
-
-  if (
-    typeof merged.activeCourseId !== "string" ||
-    !merged.activeCourseId.trim()
-  ) {
-    merged.activeCourseId = DEFAULT_COURSE_ID;
-  }
-
-  for (const setName of BUILT_IN_SETS) {
-    if (typeof merged.setsEnabled[setName] !== "boolean") {
-      merged.setsEnabled[setName] = true;
-    }
-  }
-
-  if (typeof merged.setsEnabled.LeetCode150 !== "boolean") {
-    merged.setsEnabled.LeetCode150 = true;
-  }
-
-  if (typeof merged.setsEnabled.Custom !== "boolean") {
-    merged.setsEnabled.Custom = true;
-  }
-
-  return merged;
-}
-
-function normalizeNonNegativeInteger(value: unknown, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value)
-    ? Math.max(0, Math.round(value))
-    : fallback;
-}
-
-function normalizePositiveInteger(value: unknown, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value)
-    ? Math.max(1, Math.round(value))
-    : fallback;
-}
-
-function normalizeNumberInRange(
-  value: unknown,
-  fallback: number,
-  min: number,
-  max: number
-): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return fallback;
-  }
-  return Math.max(min, Math.min(max, value));
-}
-
-function normalizeNotificationTime(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
-  return match ? value.trim() : null;
-}
 
 /** Normalizes the stored payload into the current `AppData` runtime shape. */
 export function normalizeStoredAppData(stored?: StoredAppData): AppData {
@@ -176,7 +40,10 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
     coursesById: stored?.coursesById ?? {},
     courseOrder: Array.isArray(stored?.courseOrder) ? stored.courseOrder : [],
     courseProgressById: stored?.courseProgressById ?? {},
-    settings: normalizeSettings(stored?.settings),
+    settings:
+      stored?.settings === undefined
+        ? createInitialUserSettings()
+        : sanitizeStoredUserSettings(stored.settings),
   };
 
   ensureCourseData(data);
@@ -192,6 +59,10 @@ export async function getAppData(): Promise<AppData> {
   const stored = current ?? legacy;
 
   const normalized = normalizeStoredAppData(stored);
+  const storedSettings = stored?.settings;
+  const settingsNeedsWriteBack =
+    !isPersistedUserSettings(storedSettings) ||
+    !areUserSettingsEqual(normalized.settings, storedSettings);
   const needsWriteBack =
     !stored ||
     usingLegacy ||
@@ -199,7 +70,7 @@ export async function getAppData(): Promise<AppData> {
     !stored.coursesById ||
     !stored.courseOrder ||
     !stored.courseProgressById ||
-    (stored.settings && "activeStudyPlanId" in stored.settings);
+    settingsNeedsWriteBack;
 
   if (needsWriteBack) {
     await saveAppData(normalized);
@@ -217,7 +88,7 @@ export async function saveAppData(data: AppData): Promise<void> {
     coursesById: data.coursesById,
     courseOrder: data.courseOrder,
     courseProgressById: data.courseProgressById,
-    settings: normalizeSettings(data.settings),
+    settings: sanitizeStoredUserSettings(data.settings),
   };
 
   ensureCourseData(payload);
@@ -236,39 +107,12 @@ export async function mutateAppData(
   return updated;
 }
 
-/** Merges a settings patch while preserving normalized nested defaults. */
+/** Merges a settings patch while preserving grouped persisted settings. */
 export function mergeSettings(
-  current: UserSettings,
-  patch: LegacySettingsPatch
-): UserSettings {
-  const patchDailyQuestionGoal =
-    patch.dailyQuestionGoal ??
-    (typeof patch.dailyNewLimit === "number" &&
-    Number.isFinite(patch.dailyNewLimit) &&
-    typeof patch.dailyReviewLimit === "number" &&
-    Number.isFinite(patch.dailyReviewLimit)
-      ? patch.dailyNewLimit + patch.dailyReviewLimit
-      : current.dailyQuestionGoal);
-
-  return normalizeSettings({
-    ...current,
-    ...patch,
-    dailyQuestionGoal: patchDailyQuestionGoal,
-    activeCourseId:
-      patch.activeCourseId || patch.activeStudyPlanId || current.activeCourseId,
-    difficultyGoalMs: {
-      ...current.difficultyGoalMs,
-      ...(patch.difficultyGoalMs ?? {}),
-    },
-    quietHours: {
-      ...current.quietHours,
-      ...(patch.quietHours ?? {}),
-    },
-    setsEnabled: {
-      ...current.setsEnabled,
-      ...(patch.setsEnabled ?? {}),
-    },
-  });
+  current: AppData["settings"],
+  patch: UserSettingsPatch
+): AppData["settings"] {
+  return mergeUserSettings(current, patch);
 }
 
 export { STORAGE_KEY };

@@ -7,6 +7,7 @@ import {
   createDefaultStudyState,
   CURRENT_STORAGE_SCHEMA_VERSION,
 } from "../../src/domain/common/constants";
+import { createInitialUserSettings } from "../../src/domain/settings";
 import { Problem } from "../../src/domain/types";
 import { makeProblem } from "../support/domainFixtures";
 
@@ -17,6 +18,7 @@ describe("backup import sanitization", () => {
       problems: [
         {
           ...makeProblem("two-sum", "Two Sum", "Easy"),
+          isPremium: true,
           url: "https://evil.example.com/not-allowed",
         },
       ],
@@ -27,6 +29,7 @@ describe("backup import sanitization", () => {
       sanitized.problems[0]?.url,
       "https://leetcode.com/problems/two-sum/"
     );
+    assert.equal(sanitized.problems[0]?.isPremium, true);
   });
 
   it("drops malformed entries and normalizes keys", () => {
@@ -48,19 +51,41 @@ describe("backup import sanitization", () => {
     assert.deepEqual(Object.keys(sanitized.studyStatesBySlug), ["two-sum"]);
   });
 
-  it("sanitizes current and legacy settings fields", () => {
+  it("sanitizes current grouped settings fields", () => {
+    const settings = createInitialUserSettings();
+    settings.dailyQuestionGoal = 22;
+    settings.notifications.enabled = true;
+    settings.notifications.dailyTime = "09:30";
+    settings.questionFilters.skipIgnored = true;
+    settings.questionFilters.skipPremium = false;
+    settings.timing.difficultyGoalMs = {
+      Easy: 25 * 60 * 1000,
+      Medium: 40 * 60 * 1000,
+      Hard: 55 * 60 * 1000,
+    };
+
+    const sanitized = sanitizeImportPayload({
+      problems: [],
+      settings,
+      studyStatesBySlug: {},
+    });
+
+    assert.equal(sanitized.settings?.dailyQuestionGoal, 22);
+    assert.equal(
+      sanitized.settings?.timing.difficultyGoalMs.Easy,
+      25 * 60 * 1000
+    );
+    assert.equal(sanitized.settings?.notifications.dailyTime, "09:30");
+    assert.equal(sanitized.settings?.questionFilters.skipIgnored, true);
+  });
+
+  it("ignores removed legacy settings fields on import", () => {
     const sanitized = sanitizeImportPayload({
       problems: [],
       settings: {
-        dailyQuestionGoal: 22,
-        difficultyGoalMs: {
-          Easy: 25 * 60 * 1000,
-          Medium: 40 * 60 * 1000,
-          Hard: 55 * 60 * 1000,
-        },
+        dailyNewLimit: 6,
+        dailyReviewLimit: 14,
         notificationTime: "09:30",
-        skipIgnoredQuestions: true,
-        skipPremiumQuestions: false,
         quietHours: {
           startHour: 21,
           endHour: 7,
@@ -69,11 +94,7 @@ describe("backup import sanitization", () => {
       studyStatesBySlug: {},
     });
 
-    assert.equal(sanitized.settings?.dailyQuestionGoal, 22);
-    assert.equal(sanitized.settings?.difficultyGoalMs?.Easy, 25 * 60 * 1000);
-    assert.equal(sanitized.settings?.notificationTime, "09:30");
-    assert.equal(sanitized.settings?.skipIgnoredQuestions, true);
-    assert.equal(sanitized.settings?.quietHours?.startHour, 21);
+    assert.equal(sanitized.settings, undefined);
   });
 
   describe("version handling", () => {

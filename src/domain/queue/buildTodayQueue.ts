@@ -17,20 +17,6 @@ function isSetEnabled(
   return problem.sourceSet.some((set) => setsEnabled[set] !== false);
 }
 
-function hasPremiumMetadata(problem: Problem): boolean {
-  const candidate = problem as Problem & {
-    isPremium?: boolean;
-    paidOnly?: boolean;
-    premium?: boolean;
-  };
-
-  return (
-    candidate.isPremium === true ||
-    candidate.paidOnly === true ||
-    candidate.premium === true
-  );
-}
-
 function sortByDueDateAsc(items: QueueItem[]): QueueItem[] {
   return [...items].sort((a, b) => {
     const aTs = a.studyStateSummary.nextReviewAt
@@ -104,7 +90,7 @@ function interleaveByDifficulty(items: QueueItem[]): QueueItem[] {
 
 function orderItems(
   items: QueueItem[],
-  strategy: AppData["settings"]["reviewOrder"]
+  strategy: AppData["settings"]["memoryReview"]["reviewOrder"]
 ): QueueItem[] {
   if (strategy === "weakestFirst") {
     return sortWeakest(items);
@@ -134,7 +120,10 @@ export function buildTodayQueue(
       return false;
     }
 
-    if (data.settings.skipPremiumQuestions && hasPremiumMetadata(problem)) {
+    if (
+      data.settings.questionFilters.skipPremium &&
+      problem.isPremium === true
+    ) {
       return false;
     }
 
@@ -152,9 +141,9 @@ export function buildTodayQueue(
     const studyStateSummary = getStudyStateSummary(
       state,
       now,
-      data.settings.targetRetention
+      data.settings.memoryReview.targetRetention
     );
-    if (data.settings.skipIgnoredQuestions && studyStateSummary.suspended) {
+    if (data.settings.questionFilters.skipIgnored && studyStateSummary.suspended) {
       continue;
     }
 
@@ -192,18 +181,18 @@ export function buildTodayQueue(
     });
   }
 
-  const dueOrdered = orderItems(due, data.settings.reviewOrder);
+  const dueOrdered = orderItems(due, data.settings.memoryReview.reviewOrder);
   const dueForQueue = dueOrdered.slice(0, dailyQuestionGoal);
   const slotsAfterDue = Math.max(0, dailyQuestionGoal - dueForQueue.length);
-  const newOrdered = orderItems(newCandidates, data.settings.reviewOrder).slice(
-    0,
-    slotsAfterDue
-  );
+  const newOrdered = orderItems(
+    newCandidates,
+    data.settings.memoryReview.reviewOrder
+  ).slice(0, slotsAfterDue);
 
   const reinforcementSlots = Math.max(0, slotsAfterDue - newOrdered.length);
   const reinforcementOrdered = orderItems(
     reinforcementCandidates,
-    data.settings.reviewOrder
+    data.settings.memoryReview.reviewOrder
   ).slice(0, reinforcementSlots);
 
   return {

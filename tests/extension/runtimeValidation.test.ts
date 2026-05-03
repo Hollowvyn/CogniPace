@@ -108,20 +108,47 @@ describe("runtime validation", () => {
     );
   });
 
+  it("accepts premium metadata on page upserts", () => {
+    assert.doesNotThrow(() =>
+      validateRuntimeMessage({
+        type: "UPSERT_PROBLEM_FROM_PAGE",
+        payload: {
+          slug: "two-sum",
+          title: "Two Sum",
+          difficulty: "Easy",
+          isPremium: true,
+          url: "https://leetcode.com/problems/two-sum/",
+        },
+      })
+    );
+  });
+
   it("accepts the current settings payload and global history reset", () => {
     assert.doesNotThrow(() =>
       validateRuntimeMessage({
         type: "UPDATE_SETTINGS",
         payload: {
           dailyQuestionGoal: 18,
-          difficultyGoalMs: {
-            Easy: 20 * 60 * 1000,
-            Medium: 35 * 60 * 1000,
-            Hard: 50 * 60 * 1000,
+          memoryReview: {
+            targetRetention: 0.85,
+            reviewOrder: "dueFirst",
           },
-          notificationTime: "09:00",
-          skipIgnoredQuestions: true,
-          skipPremiumQuestions: false,
+          notifications: {
+            enabled: true,
+            dailyTime: "09:00",
+          },
+          questionFilters: {
+            skipIgnored: true,
+            skipPremium: false,
+          },
+          timing: {
+            requireSolveTime: false,
+            difficultyGoalMs: {
+              Easy: 20 * 60 * 1000,
+              Medium: 35 * 60 * 1000,
+              Hard: 50 * 60 * 1000,
+            },
+          },
         },
       })
     );
@@ -131,6 +158,21 @@ describe("runtime validation", () => {
         type: "RESET_STUDY_HISTORY",
         payload: {},
       })
+    );
+  });
+
+  it("rejects removed legacy settings fields", () => {
+    assert.throws(
+      () =>
+        validateRuntimeMessage({
+          type: "UPDATE_SETTINGS",
+          payload: {
+            dailyNewLimit: 6,
+            dailyReviewLimit: 14,
+            notificationTime: "09:00",
+          },
+        }),
+      /unexpected field "dailyNewLimit"/i
     );
   });
 

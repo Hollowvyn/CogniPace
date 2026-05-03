@@ -219,6 +219,7 @@ This keeps React screens free of direct Chrome API calls and keeps domain logic 
 - Queue logic: `src/domain/queue/*`
 - Runtime contracts: `src/extension/runtime/contracts.ts`
 - Background router and handlers: `src/extension/background/*`
+- Reminder scheduling and due notifications: `src/extension/background/notifications.ts`
 - Overlay controller orchestration: `src/ui/screens/overlay/useOverlayController.ts`
 - Overlay controller helpers/hooks: `src/ui/screens/overlay/controller/*`
 - Overlay surface variants and sections: `src/ui/screens/overlay/OverlayPanel.tsx`,
@@ -239,6 +240,8 @@ This keeps React screens free of direct Chrome API calls and keeps domain logic 
 Important persisted areas:
 
 - `problemsBySlug`
+  Problem entries may include persisted metadata such as `isPremium` when the overlay can positively detect a
+  premium-only LeetCode page.
 - `studyStatesBySlug`
   This now includes top-level saved log fields such as interview pattern, time complexity, space complexity, languages,
   and notes.
@@ -248,9 +251,13 @@ Important persisted areas:
 - `courseOrder`
 - `courseProgressById`
 - `settings`
-  Includes current settings such as `dailyQuestionGoal`, `targetRetention`, `reviewOrder`, `studyMode`,
-  `difficultyGoalMs`, notification preferences, question filters, and legacy-readable fields used by existing course
-  and source-set flows.
+  Stores the current grouped user settings model. Top-level fields hold the daily question goal, study mode, active
+  course, and enabled source sets. Nested groups hold notification preferences, memory-review settings, question
+  filters, timing goals, and experimental flags. Missing or malformed settings are seeded once into the current model;
+  removed legacy fields are not preserved.
+- background-only notification bookkeeping
+  Daily reminder dedupe state is stored separately in local extension storage so startup checks do not re-send the same
+  due notification multiple times in one local day.
 
 Export payload remains:
 

@@ -150,7 +150,10 @@ export function OverviewView(props: OverviewViewProps) {
             <Stack spacing={1.5}>
               <Typography color="text.secondary" variant="body2">
                 Study mode: {props.payload?.settings.studyMode ?? "studyPlan"} ·
-                Order: {props.payload?.settings.reviewOrder ?? "dueFirst"} ·
+                Order:{" "}
+                {props.payload?.settings.memoryReview.reviewOrder ??
+                  "dueFirst"}{" "}
+                ·
                 Timer + submit is fully manual.
               </Typography>
               <Stack direction={{ md: "row", xs: "column" }} spacing={1}>

@@ -8,13 +8,13 @@ import {
   openProblemPage,
   upsertProblemFromPage,
 } from "../../../data/repositories/problemSessionRepository";
-import { DEFAULT_SETTINGS } from "../../../domain/common/constants";
 import { formatClock } from "../../../domain/common/time";
 import {
   defaultReviewMode,
   deriveQuickRating,
   goalForDifficulty,
 } from "../../../domain/fsrs/reviewPolicy";
+import { createInitialUserSettings } from "../../../domain/settings";
 import { Rating, UserSettings } from "../../../domain/types";
 import { AppShellPayload } from "../../../domain/views";
 
@@ -49,7 +49,9 @@ export function useOverlayController(
   const timer = useOverlayTimer(windowRef);
   const [postSubmitNext, setPostSubmitNext] =
     useState<OverlayPostSubmitNextViewModel | null>(null);
-  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<UserSettings>(() =>
+    createInitialUserSettings()
+  );
   const {
     activateProblem,
     applyProblemContext,
@@ -196,6 +198,7 @@ export function useOverlayController(
         slug,
         title: pageSnapshot.title,
         difficulty: pageSnapshot.difficulty,
+        isPremium: pageSnapshot.isPremium,
         url: `https://leetcode.com/problems/${slug}/`,
       });
 
@@ -414,7 +417,7 @@ export function useOverlayController(
       timer.readElapsedMs() > 0 ? timer.readElapsedMs() : undefined,
       goalForDifficulty(
         currentState.currentDifficulty,
-        settings.difficultyGoalMs
+        settings.timing.difficultyGoalMs
       )
     );
     void submitRating(rating);
@@ -577,7 +580,7 @@ export function useOverlayController(
           targetDisplay: formatClock(
             goalForDifficulty(
               currentState.currentDifficulty,
-              settings.difficultyGoalMs
+              settings.timing.difficultyGoalMs
             )
           ),
         },

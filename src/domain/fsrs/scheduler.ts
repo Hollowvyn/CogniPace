@@ -1,4 +1,4 @@
-import {createDefaultStudyState} from "./constants";
+import { createDefaultStudyState } from "./constants";
 import {
   getFsrsCard,
   getFsrsScheduler,
@@ -8,8 +8,16 @@ import {
   serializeFsrsCard,
   toFsrsRating,
 } from "./studyState";
-import {AttemptHistoryEntry, Difficulty, Rating, ReviewLogFields, ReviewMode, StudyState, UserSettings,} from "./types";
-import {nowIso} from "./utils";
+import {
+  AttemptHistoryEntry,
+  Difficulty,
+  Rating,
+  ReviewLogFields,
+  ReviewMode,
+  StudyState,
+  UserSettings,
+} from "./types";
+import { nowIso } from "./utils";
 
 export interface ApplyReviewInput {
   state?: StudyState;
@@ -24,10 +32,10 @@ export interface ApplyReviewInput {
 
 export function applyReview(input: ApplyReviewInput): StudyState {
   const now = input.now ?? nowIso();
-  const state = input.state ? {...input.state} : createDefaultStudyState();
+  const state = input.state ? { ...input.state } : createDefaultStudyState();
 
   if (
-    input.settings.requireSolveTime &&
+    input.settings.timing.requireSolveTime &&
     typeof input.solveTimeMs !== "number"
   ) {
     throw new Error("Solve time is required by your settings.");
@@ -37,7 +45,7 @@ export function applyReview(input: ApplyReviewInput): StudyState {
   const currentCard = getFsrsCard(state, now);
   const nextCard = scheduler.repeat(currentCard, new Date(now))[
     toFsrsRating(input.rating)
-    ].card;
+  ].card;
   const normalizedLogSnapshot = normalizeReviewLogFields(input.logSnapshot);
 
   const historyEntry: AttemptHistoryEntry = {
@@ -59,9 +67,9 @@ export function applyReview(input: ApplyReviewInput): StudyState {
     bestTimeMs:
       typeof input.solveTimeMs === "number"
         ? Math.min(
-          state.bestTimeMs ?? Number.MAX_SAFE_INTEGER,
-          input.solveTimeMs
-        )
+            state.bestTimeMs ?? Number.MAX_SAFE_INTEGER,
+            input.solveTimeMs
+          )
         : state.bestTimeMs,
     attemptHistory: [...state.attemptHistory, historyEntry],
     fsrsCard: serializeFsrsCard(nextCard),
@@ -80,7 +88,7 @@ export interface OverrideLastReviewInput {
 
 export function overrideLastReview(input: OverrideLastReviewInput): StudyState {
   const now = input.now ?? nowIso();
-  const state = input.state ? {...input.state} : createDefaultStudyState();
+  const state = input.state ? { ...input.state } : createDefaultStudyState();
   const previousEntry = state.attemptHistory[state.attemptHistory.length - 1];
 
   if (!previousEntry) {
@@ -89,7 +97,7 @@ export function overrideLastReview(input: OverrideLastReviewInput): StudyState {
 
   const solveTimeMs = input.solveTimeMs ?? previousEntry.solveTimeMs;
   if (
-    input.settings.requireSolveTime &&
+    input.settings.timing.requireSolveTime &&
     typeof solveTimeMs !== "number"
   ) {
     throw new Error("Solve time is required by your settings.");

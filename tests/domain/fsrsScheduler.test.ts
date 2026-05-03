@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { createEmptyCard } from "ts-fsrs";
 import { describe, it } from "vitest";
 
-import { DEFAULT_SETTINGS } from "../../src/domain/common/constants";
 import {
   applyReview,
   overrideLastReview,
@@ -14,14 +13,17 @@ import {
   serializeFsrsCard,
   toFsrsRating,
 } from "../../src/domain/fsrs/studyState";
+import { createInitialUserSettings } from "../../src/domain/settings";
 import { Rating, StudyState } from "../../src/domain/types";
+
+const settings = createInitialUserSettings();
 
 describe("FSRS scheduler", () => {
   it("uses a short-term learning step for the first Good review", () => {
     const first = applyReview({
       rating: 2,
       difficulty: "Medium",
-      settings: DEFAULT_SETTINGS,
+      settings,
       now: "2026-03-01T15:00:00.000Z",
     });
 
@@ -38,7 +40,7 @@ describe("FSRS scheduler", () => {
       state: first,
       rating: 2,
       difficulty: "Medium",
-      settings: DEFAULT_SETTINGS,
+      settings,
       now: "2026-03-01T15:10:00.000Z",
     });
     const secondSummary = getStudyStateSummary(
@@ -57,7 +59,7 @@ describe("FSRS scheduler", () => {
     const first = applyReview({
       rating: 2,
       difficulty: "Medium",
-      settings: DEFAULT_SETTINGS,
+      settings,
       now: "2026-03-25T15:00:00.000Z",
     });
     rawCard = scheduler.repeat(rawCard, new Date("2026-03-25T15:00:00.000Z"))[
@@ -68,7 +70,7 @@ describe("FSRS scheduler", () => {
       state: first,
       rating: 2,
       difficulty: "Medium",
-      settings: DEFAULT_SETTINGS,
+      settings,
       now: "2026-03-25T18:00:00.000Z",
     });
     rawCard = scheduler.repeat(rawCard, new Date("2026-03-25T18:00:00.000Z"))[
@@ -95,7 +97,7 @@ describe("FSRS scheduler", () => {
       appState = applyReview({
         state: appState,
         rating,
-        settings: DEFAULT_SETTINGS,
+        settings,
         now: reviewAt.toISOString(),
       });
 
@@ -116,7 +118,7 @@ describe("FSRS scheduler", () => {
       appState = applyReview({
         state: appState,
         rating,
-        settings: DEFAULT_SETTINGS,
+        settings,
         now: reviewAt.toISOString(),
       });
 
@@ -131,7 +133,7 @@ describe("FSRS scheduler", () => {
         interviewPattern: "Hash map lookup",
         notes: "Track complements.",
       },
-      settings: DEFAULT_SETTINGS,
+      settings,
       now: "2026-03-01T15:00:00.000Z",
     });
 
@@ -143,7 +145,7 @@ describe("FSRS scheduler", () => {
         languages: "TypeScript",
         notes: "Missed a boundary case.",
       },
-      settings: DEFAULT_SETTINGS,
+      settings,
       now: "2026-03-03T15:00:00.000Z",
     });
 
@@ -157,7 +159,7 @@ describe("FSRS scheduler", () => {
         languages: "TypeScript",
         notes: "Use mirrored indices.",
       },
-      settings: DEFAULT_SETTINGS,
+      settings,
       now: "2026-03-03T15:00:00.000Z",
     });
 
@@ -171,7 +173,7 @@ describe("FSRS scheduler", () => {
         languages: "TypeScript",
         notes: "Use mirrored indices.",
       },
-      settings: DEFAULT_SETTINGS,
+      settings,
       now: "2026-03-03T15:00:00.000Z",
     });
 

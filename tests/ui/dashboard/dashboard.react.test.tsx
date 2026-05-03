@@ -61,11 +61,17 @@ describe("DashboardApp", () => {
 
     await user.click(await screen.findByRole("button", { name: "Settings" }));
 
+    expect(screen.getByRole("button", { name: "Save Settings" })).toBeDisabled();
+
     const dailyQuestionGoalInput = await screen.findByLabelText(
       "Daily Question Goal"
     );
     await user.clear(dailyQuestionGoalInput);
     await user.type(dailyQuestionGoalInput, "24");
+
+    expect(
+      screen.getByRole("button", { name: "Save Settings" })
+    ).not.toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: "Save Settings" }));
 
@@ -78,6 +84,48 @@ describe("DashboardApp", () => {
         })
       );
     });
+  });
+
+  it("keeps saved settings visible in non-extension mode", async () => {
+    const previousChrome = globalThis.chrome;
+    Object.defineProperty(globalThis, "chrome", {
+      configurable: true,
+      value: {
+        runtime: {
+          getURL: (path: string) => `chrome-extension://test/${path}`,
+        },
+        tabs: {
+          create: () => Promise.resolve(),
+        },
+      },
+    });
+
+    try {
+      const { user } = renderDashboardWithPayload(makePayload(), (type) =>
+        type === "UPDATE_SETTINGS"
+          ? Promise.resolve({ ok: true, data: {} })
+          : undefined
+      );
+
+      await user.click(await screen.findByRole("button", { name: "Settings" }));
+
+      const dailyQuestionGoalInput = await screen.findByLabelText(
+        "Daily Question Goal"
+      );
+      await user.clear(dailyQuestionGoalInput);
+      await user.type(dailyQuestionGoalInput, "24");
+
+      await user.click(screen.getByRole("button", { name: "Save Settings" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Daily Question Goal")).toHaveValue(24);
+      });
+    } finally {
+      Object.defineProperty(globalThis, "chrome", {
+        configurable: true,
+        value: previousChrome,
+      });
+    }
   });
 
   it("renders settings sections with the new grouped controls", async () => {
@@ -117,10 +165,31 @@ describe("DashboardApp", () => {
     expect(screen.getByLabelText("Easy goal")).toHaveValue(20);
     expect(screen.getByLabelText("Medium goal")).toHaveValue(35);
     expect(screen.getByLabelText("Hard goal")).toHaveValue(50);
+    expect(screen.getByRole("button", { name: "Save Settings" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Discard Changes" })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Reset Defaults" })
+    ).toBeDisabled();
 
     await user.click(screen.getByLabelText("Enable reminders"));
 
     expect(screen.getByLabelText("Notification Time")).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Save Settings" })
+    ).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Discard Changes" })
+    ).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Reset Defaults" })
+    ).not.toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Discard Changes" }));
+
+    expect(screen.getByLabelText("Notification Time")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save Settings" })).toBeDisabled();
   });
 
   it("confirms before resetting study history", async () => {

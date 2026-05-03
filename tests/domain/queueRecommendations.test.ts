@@ -9,14 +9,16 @@ import {
 } from "../../src/domain/courses/courseProgress";
 import { buildRecommendedCandidates } from "../../src/domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../src/domain/queue/buildTodayQueue";
+import { createInitialUserSettings } from "../../src/domain/settings";
 import { makeProblem, makeScheduledState } from "../support/domainFixtures";
 
 describe("queue recommendations", () => {
   it("keeps the recommended review and course-next problem separate", () => {
+    const settings = createInitialUserSettings();
+    settings.activeCourseId = "Blind75";
+
     const data = normalizeStoredAppData({
-      settings: {
-        activeCourseId: "Blind75",
-      },
+      settings,
     });
 
     data.problemsBySlug["two-sum"] = makeProblem("two-sum", "Two Sum", "Easy");
@@ -46,12 +48,13 @@ describe("queue recommendations", () => {
   });
 
   it("uses the total daily question goal and skips ignored or premium problems", () => {
+    const settings = createInitialUserSettings();
+    settings.dailyQuestionGoal = 2;
+    settings.questionFilters.skipIgnored = true;
+    settings.questionFilters.skipPremium = true;
+
     const data = normalizeStoredAppData({
-      settings: {
-        dailyQuestionGoal: 2,
-        skipIgnoredQuestions: true,
-        skipPremiumQuestions: true,
-      },
+      settings,
     });
 
     data.problemsBySlug["two-sum"] = makeProblem("two-sum", "Two Sum", "Easy");

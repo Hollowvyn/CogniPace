@@ -1,9 +1,18 @@
 import assert from "node:assert/strict";
 
-import { describe, it } from "vitest";
+import { beforeEach, describe, it, vi } from "vitest";
 
-import { normalizeStoredAppData } from "../../src/data/repositories/appDataRepository";
+import {
+  getAppData,
+  normalizeStoredAppData,
+  STORAGE_KEY,
+} from "../../src/data/repositories/appDataRepository";
+import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../src/domain/common/constants";
 import { getStudyStateSummary } from "../../src/domain/fsrs/studyState";
+import {
+  createInitialUserSettings,
+  INITIAL_USER_SETTINGS,
+} from "../../src/domain/settings";
 import { StudyState } from "../../src/domain/types";
 import {
   makeLegacyReviewedFixture,
@@ -11,8 +20,29 @@ import {
   makeScheduledState,
 } from "../support/domainFixtures";
 
+const storageMocks = vi.hoisted(() => ({
+  readLocalStorage: vi.fn(),
+  removeLocalStorage: vi.fn(),
+  writeLocalStorage: vi.fn(),
+}));
+
+vi.mock("../../src/data/datasources/chrome/storage", () => ({
+  readLocalStorage: storageMocks.readLocalStorage,
+  removeLocalStorage: storageMocks.removeLocalStorage,
+  writeLocalStorage: storageMocks.writeLocalStorage,
+}));
+
 describe("storage migration", () => {
+  beforeEach(() => {
+    storageMocks.readLocalStorage.mockReset();
+    storageMocks.removeLocalStorage.mockReset();
+    storageMocks.writeLocalStorage.mockReset();
+  });
+
   it("rebuilds legacy review history into an FSRS card", () => {
+    const settings = createInitialUserSettings();
+    settings.activeCourseId = "Blind75";
+
     const migrated = normalizeStoredAppData({
       problemsBySlug: {
         "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
@@ -20,10 +50,7 @@ describe("storage migration", () => {
       studyStatesBySlug: {
         "two-sum": makeLegacyReviewedFixture("2026-03-12T00:00:00.000Z", true),
       },
-      settings: {
-        activeCourseId: "Blind75",
-        dailyNewLimit: 5,
-      },
+      settings,
     });
 
     assert.equal(migrated.settings.activeCourseId, "Blind75");
@@ -53,7 +80,13 @@ describe("storage migration", () => {
     assert.equal(summary.phase, "Review");
   });
 
-  it("derives the total daily question goal from complete legacy limits", () => {
+  it("seeds initial settings when stored settings are missing", () => {
+    const migrated = normalizeStoredAppData();
+
+    assert.deepEqual(migrated.settings, createInitialUserSettings());
+  });
+
+  it("does not preserve removed legacy settings fields", () => {
     const migrated = normalizeStoredAppData({
       settings: {
         dailyNewLimit: 6,
@@ -61,7 +94,50 @@ describe("storage migration", () => {
       },
     });
 
-    assert.equal(migrated.settings.dailyQuestionGoal, 20);
+    assert.equal(
+      migrated.settings.dailyQuestionGoal,
+      INITIAL_USER_SETTINGS.dailyQuestionGoal
+    );
+    assert.equal(
+      "dailyNewLimit" in (migrated.settings as unknown as object),
+      false
+    );
+  });
+
+  it("writes current grouped settings over malformed stored settings once", async () => {
+    storageMocks.readLocalStorage.mockResolvedValue({
+      [STORAGE_KEY]: {
+        schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
+        problemsBySlug: {},
+        studyStatesBySlug: {},
+        coursesById: {},
+        courseOrder: [],
+        courseProgressById: {},
+        settings: {
+          dailyNewLimit: 6,
+          dailyReviewLimit: 14,
+        },
+      },
+    });
+
+    const data = await getAppData();
+
+    assert.equal(
+      data.settings.dailyQuestionGoal,
+      INITIAL_USER_SETTINGS.dailyQuestionGoal
+    );
+    assert.equal(storageMocks.writeLocalStorage.mock.calls.length, 1);
+    const savedPayload = storageMocks.writeLocalStorage.mock.calls[0]?.[0] as {
+      [STORAGE_KEY]?: { settings?: Record<string, unknown> };
+    };
+    assert.equal(
+      savedPayload[STORAGE_KEY]?.settings?.dailyQuestionGoal,
+      INITIAL_USER_SETTINGS.dailyQuestionGoal
+    );
+    assert.equal(
+      savedPayload[STORAGE_KEY]?.settings?.dailyNewLimit,
+      undefined
+    );
   });
 
   it("converts legacy fallback schedule data without history", () => {

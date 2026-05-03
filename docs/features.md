@@ -498,6 +498,8 @@ Let users tune study behavior and optional alerting.
 
 - notifications disabled
 - notification time controls are disabled until reminders are enabled
+- save and discard actions are disabled until the draft differs from persisted settings
+- reset defaults uses the initial settings seed intentionally instead of reloading defaults on every read
 - invalid or missing active course falls back to defaults
 - history reset preserves settings, courses, source data, and the problem library
 

@@ -59,6 +59,7 @@ export async function importData(payload: ExportPayload) {
         leetcodeId: problem.leetcodeId,
         title: problem.title?.trim() || slugToTitle(slug),
         difficulty: problem.difficulty ?? "Unknown",
+        isPremium: problem.isPremium,
         url: slugToUrl(slug),
         topics: uniqueStrings(problem.topics ?? []),
         sourceSet: uniqueStrings(problem.sourceSet ?? []),

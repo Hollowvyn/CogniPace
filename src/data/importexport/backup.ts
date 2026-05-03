@@ -1,3 +1,8 @@
+import {
+  hasGroupedUserSettings,
+  sanitizeStoredUserSettings,
+} from "../../domain/settings";
+
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "./constants";
 import {
   CourseChapter,
@@ -64,20 +69,8 @@ function safeInteger(value: unknown, fallback: number): number {
     : fallback;
 }
 
-function safeNumber(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value)
-    ? value
-    : undefined;
-}
-
 function safeBoolean(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
-}
-
-function safeTimeString(value: unknown): string | undefined {
-  return typeof value === "string" && /^([01]\d|2[0-3]):([0-5]\d)$/.test(value)
-    ? value
-    : undefined;
 }
 
 function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
@@ -106,6 +99,7 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
     difficulty: parseDifficulty(
       typeof problem.difficulty === "string" ? problem.difficulty : undefined
     ),
+    isPremium: safeBoolean(problem.isPremium),
     url: slugToUrl(slug),
     topics: uniqueStrings(isStringArray(problem.topics) ? problem.topics : []),
     sourceSet: uniqueStrings(
@@ -138,94 +132,11 @@ function sanitizeStudyStatesBySlug(value: unknown): Record<string, StudyState> {
   return result;
 }
 
-function sanitizeSettings(
-  value: unknown
-): (Partial<UserSettings> & { activeStudyPlanId?: string }) | undefined {
-  if (!isRecord(value)) {
+function sanitizeSettings(value: unknown): UserSettings | undefined {
+  if (!hasGroupedUserSettings(value)) {
     return undefined;
   }
-
-  const settings: Partial<UserSettings> & { activeStudyPlanId?: string } = {};
-  const dailyQuestionGoal = safeNumber(value.dailyQuestionGoal);
-  const dailyNewLimit = safeNumber(value.dailyNewLimit);
-  const dailyReviewLimit = safeNumber(value.dailyReviewLimit);
-  const targetRetention = safeNumber(value.targetRetention);
-
-  if (dailyQuestionGoal !== undefined) {
-    settings.dailyQuestionGoal = dailyQuestionGoal;
-  }
-  if (dailyNewLimit !== undefined) {
-    settings.dailyNewLimit = dailyNewLimit;
-  }
-  if (dailyReviewLimit !== undefined) {
-    settings.dailyReviewLimit = dailyReviewLimit;
-  }
-  if (targetRetention !== undefined) {
-    settings.targetRetention = targetRetention;
-  }
-  if (
-    value.reviewOrder === "dueFirst" ||
-    value.reviewOrder === "mixByDifficulty" ||
-    value.reviewOrder === "weakestFirst"
-  ) {
-    settings.reviewOrder = value.reviewOrder;
-  }
-  if (value.studyMode === "studyPlan" || value.studyMode === "freestyle") {
-    settings.studyMode = value.studyMode;
-  }
-  settings.activeCourseId = safeOptionalString(value.activeCourseId);
-  settings.activeStudyPlanId = safeOptionalString(value.activeStudyPlanId);
-
-  const requireSolveTime = safeBoolean(value.requireSolveTime);
-  const autoDetectSolved = safeBoolean(value.autoDetectSolved);
-  const notifications = safeBoolean(value.notifications);
-  const skipIgnoredQuestions = safeBoolean(value.skipIgnoredQuestions);
-  const skipPremiumQuestions = safeBoolean(value.skipPremiumQuestions);
-  const notificationTime = safeTimeString(value.notificationTime);
-
-  if (requireSolveTime !== undefined) {
-    settings.requireSolveTime = requireSolveTime;
-  }
-  if (autoDetectSolved !== undefined) {
-    settings.autoDetectSolved = autoDetectSolved;
-  }
-  if (notifications !== undefined) {
-    settings.notifications = notifications;
-  }
-  if (skipIgnoredQuestions !== undefined) {
-    settings.skipIgnoredQuestions = skipIgnoredQuestions;
-  }
-  if (skipPremiumQuestions !== undefined) {
-    settings.skipPremiumQuestions = skipPremiumQuestions;
-  }
-  if (notificationTime !== undefined) {
-    settings.notificationTime = notificationTime;
-  }
-
-  if (isRecord(value.difficultyGoalMs)) {
-    settings.difficultyGoalMs = {
-      Easy: safeNumber(value.difficultyGoalMs.Easy) ?? 20 * 60 * 1000,
-      Medium: safeNumber(value.difficultyGoalMs.Medium) ?? 35 * 60 * 1000,
-      Hard: safeNumber(value.difficultyGoalMs.Hard) ?? 50 * 60 * 1000,
-    };
-  }
-
-  if (isRecord(value.quietHours)) {
-    settings.quietHours = {
-      startHour: safeInteger(value.quietHours.startHour, 22),
-      endHour: safeInteger(value.quietHours.endHour, 8),
-    };
-  }
-
-  if (isRecord(value.setsEnabled)) {
-    settings.setsEnabled = Object.fromEntries(
-      Object.entries(value.setsEnabled).filter(
-        (entry): entry is [string, boolean] => typeof entry[1] === "boolean"
-      )
-    );
-  }
-
-  return settings;
+  return sanitizeStoredUserSettings(value);
 }
 
 function sanitizeCourseChapter(

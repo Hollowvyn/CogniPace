@@ -1,4 +1,19 @@
-export const STORAGE_SCHEMA_VERSION = 5;
+import type { UserSettings } from "./settings/model";
+
+export type {
+  DifficultyGoalSettings,
+  ExperimentalSettings,
+  MemoryReviewSettings,
+  NotificationSettings,
+  QuestionFilterSettings,
+  ReviewOrder,
+  StudyMode,
+  TimingSettings,
+  UserSettings,
+  UserSettingsPatch,
+} from "./settings/model";
+
+export const STORAGE_SCHEMA_VERSION = 6;
 
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
 
@@ -8,10 +23,6 @@ export type StudyPhase =
   | "Review"
   | "Relearning"
   | "Suspended";
-
-export type ReviewOrder = "dueFirst" | "mixByDifficulty" | "weakestFirst";
-
-export type StudyMode = "freestyle" | "studyPlan";
 
 export type Rating = 0 | 1 | 2 | 3;
 
@@ -41,6 +52,7 @@ export interface Problem {
   leetcodeId?: string;
   title: string;
   difficulty: Difficulty;
+  isPremium?: boolean;
   url: string;
   topics: string[];
   sourceSet: string[];
@@ -80,37 +92,6 @@ export interface StudyState extends ReviewLogFields {
   tags: string[];
   attemptHistory: AttemptHistoryEntry[];
   fsrsCard?: FsrsCardSnapshot;
-}
-
-export interface QuietHours {
-  startHour: number;
-  endHour: number;
-}
-
-export interface DifficultyGoalSettings {
-  Easy: number;
-  Medium: number;
-  Hard: number;
-}
-
-export interface UserSettings {
-  dailyQuestionGoal: number;
-  dailyNewLimit: number;
-  dailyReviewLimit: number;
-  reviewOrder: ReviewOrder;
-  studyMode: StudyMode;
-  activeCourseId: string;
-  setsEnabled: Record<string, boolean>;
-  requireSolveTime: boolean;
-  difficultyGoalMs: DifficultyGoalSettings;
-  skipIgnoredQuestions: boolean;
-  skipPremiumQuestions: boolean;
-  autoDetectSolved: boolean;
-  notifications: boolean;
-  notificationTime: string;
-  quietHours: QuietHours;
-  /** Target retention rate (0-1). Cards become due when retrievability drops below this. Default 0.85 */
-  targetRetention: number;
 }
 
 export interface CourseQuestionRef {
@@ -231,6 +212,7 @@ export interface CuratedProblemInput {
   slug: string;
   title?: string;
   difficulty?: Difficulty;
+  isPremium?: boolean;
   tags?: string[];
 }
 
@@ -238,9 +220,7 @@ export interface ExportPayload {
   version?: number;
   problems: Problem[];
   studyStatesBySlug: Record<string, StudyState>;
-  settings?: Partial<UserSettings> & {
-    activeStudyPlanId?: string;
-  };
+  settings?: Partial<UserSettings>;
   coursesById?: Record<string, CourseDefinition>;
   courseOrder?: string[];
   courseProgressById?: Record<string, CourseProgress>;

@@ -9,7 +9,11 @@ import {
   validateRuntimeMessage,
 } from "../runtime/validator";
 
-import { maybeNotifyDueQueue, scheduleNextDueAlarm } from "./notifications";
+import {
+  handleStartupDueCheck,
+  maybeNotifyDueQueue,
+  scheduleNextDueAlarm,
+} from "./notifications";
 import { fail } from "./responses";
 import { handleMessage } from "./router";
 
@@ -22,7 +26,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  void scheduleNextDueAlarm();
+  void handleStartupDueCheck();
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
