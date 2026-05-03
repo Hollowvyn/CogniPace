@@ -4,6 +4,7 @@ import Stack from "@mui/material/Stack";
 
 import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardRail } from "./components/DashboardRail";
+import { DashboardFrame } from "./components/DashboardSurface";
 import { useDashboardController } from "./useDashboardController";
 import { AnalyticsView } from "./views/AnalyticsView";
 import { CoursesView } from "./views/CoursesView";
@@ -15,8 +16,12 @@ export function DashboardApp() {
   const controller = useDashboardController();
 
   return (
-    <Box sx={{ maxWidth: 1440, mx: "auto", p: 2.5 }}>
-      <Stack direction={{ lg: "row", xs: "column" }} spacing={2}>
+    <DashboardFrame>
+      <Stack
+        alignItems={{ lg: "flex-start", xs: "stretch" }}
+        direction={{ lg: "row", xs: "column" }}
+        spacing={2}
+      >
         <DashboardRail
           activeView={controller.view}
           onNavigate={controller.navigateToView}
@@ -64,19 +69,26 @@ export function DashboardApp() {
               />
             ) : null}
 
-            {controller.view === "settings" ? (
+            {controller.view === "settings" && controller.draftSettings ? (
               <SettingsView
+                canDiscardSettings={controller.hasSettingsChanges}
+                canResetSettingsToDefaults={!controller.isDefaultSettingsDraft}
+                canSaveSettings={controller.hasSettingsChanges}
+                importFile={controller.importFile}
+                onDiscardSettings={controller.onDiscardSettings}
                 onExportData={controller.onExportData}
                 onImportData={controller.onImportData}
-                onResetSettings={() => {
-                  controller.setSettingsDraftState(null);
+                onResetSettingsToDefaults={() => {
+                  void controller.onResetSettingsToDefaults();
+                }}
+                onResetStudyHistory={() => {
+                  void controller.onResetStudyHistory();
                 }}
                 onSaveSettings={() => {
                   void controller.onSaveSettings();
                 }}
                 onSetImportFile={controller.setImportFile}
                 onUpdateSettings={controller.updateSettingsDraft}
-                payload={controller.payload}
                 settingsDraft={controller.draftSettings}
               />
             ) : null}
@@ -93,6 +105,6 @@ export function DashboardApp() {
           </Stack>
         </Box>
       </Stack>
-    </Box>
+    </DashboardFrame>
   );
 }

@@ -70,6 +70,7 @@ export async function upsertFromPage(payload: {
   slug: string;
   title?: string;
   difficulty?: string;
+  isPremium?: boolean;
   url?: string;
   topics?: string[];
 }) {
@@ -78,6 +79,7 @@ export async function upsertFromPage(payload: {
       slug: payload.slug,
       title: payload.title,
       difficulty: normalizeDifficulty(payload.difficulty),
+      isPremium: payload.isPremium,
       url: payload.url,
       topics: payload.topics,
     });

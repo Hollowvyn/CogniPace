@@ -20,6 +20,7 @@ export interface UpsertProblemInput {
   slug: string;
   title?: string;
   difficulty?: Difficulty;
+  isPremium?: boolean;
   url?: string;
   topics?: string[];
   sourceSet?: string;
@@ -43,6 +44,7 @@ export function ensureProblem(
       leetcodeSlug: slug,
       title: input.title?.trim() || slugToTitle(slug),
       difficulty: input.difficulty ?? "Unknown",
+      isPremium: input.isPremium,
       url: input.url?.trim() || slugToUrl(slug),
       topics: uniqueStrings(input.topics ?? []),
       sourceSet: input.sourceSet ? [input.sourceSet] : [],
@@ -61,6 +63,10 @@ export function ensureProblem(
       input.difficulty && input.difficulty !== "Unknown"
         ? input.difficulty
         : existing.difficulty,
+    isPremium:
+      typeof input.isPremium === "boolean"
+        ? input.isPremium
+        : existing.isPremium,
     url: input.url?.trim() || existing.url,
     topics: uniqueStrings([
       ...(existing.topics ?? []),
@@ -108,6 +114,7 @@ export function importProblemsIntoSet(
       slug,
       title: item.title,
       difficulty: item.difficulty,
+      isPremium: item.isPremium,
       topics: item.tags,
       sourceSet: setName,
     });

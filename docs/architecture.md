@@ -219,6 +219,7 @@ This keeps React screens free of direct Chrome API calls and keeps domain logic 
 - Queue logic: `src/domain/queue/*`
 - Runtime contracts: `src/extension/runtime/contracts.ts`
 - Background router and handlers: `src/extension/background/*`
+- Reminder scheduling and due notifications: `src/extension/background/notifications.ts`
 - Overlay controller orchestration: `src/ui/screens/overlay/useOverlayController.ts`
 - Overlay controller helpers/hooks: `src/ui/screens/overlay/controller/*`
 - Overlay surface variants and sections: `src/ui/screens/overlay/OverlayPanel.tsx`,
@@ -239,6 +240,8 @@ This keeps React screens free of direct Chrome API calls and keeps domain logic 
 Important persisted areas:
 
 - `problemsBySlug`
+  Problem entries may include persisted metadata such as `isPremium` when the overlay can positively detect a
+  premium-only LeetCode page.
 - `studyStatesBySlug`
   This now includes top-level saved log fields such as interview pattern, time complexity, space complexity, languages,
   and notes.
@@ -248,6 +251,17 @@ Important persisted areas:
 - `courseOrder`
 - `courseProgressById`
 - `settings`
+  Stores the current grouped user settings model. Top-level fields hold the daily question goal, study mode, active
+  course, and enabled source sets. Nested groups hold notification preferences, memory-review settings, question
+  filters, timing goals, and experimental flags. Missing or malformed settings are seeded once into the current model.
+  This grouped shape is the only supported persisted settings contract.
+  Short-lived migration code is acceptable when explicitly approved for a release boundary, but legacy compatibility is
+  not meant to linger in the runtime model or sanitizer indefinitely.
+  After the migration window closes, removed legacy fields are not preserved and should be deleted from runtime,
+  validation, import, and test paths.
+- background-only notification bookkeeping
+  Daily reminder dedupe state is stored separately in local extension storage so startup checks do not re-send the same
+  due notification multiple times in one local day.
 
 Export payload remains:
 
@@ -259,13 +273,16 @@ Export payload remains:
 - `courseOrder`
 - `courseProgressById`
 
-Overlay-specific runtime contracts now include:
+Review and history runtime contracts now include:
 
 - `SAVE_REVIEW_RESULT`
 - `SAVE_OVERLAY_LOG_DRAFT`
   appends a new FSRS review event and stores the current structured log fields
 - `OVERRIDE_LAST_REVIEW_RESULT`
   replaces the latest attempt entry and rebuilds the FSRS card from review history
+- `RESET_STUDY_HISTORY`
+  clears review history, FSRS cards, solve-time/rating state, suspended flags, and course progress derived from study
+  history while preserving settings, courses, source data, and the problem library
 
 ## Constraints
 

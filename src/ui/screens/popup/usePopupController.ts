@@ -35,9 +35,9 @@ function popupErrorMessage(error: unknown): string {
 
 /** Coordinates popup data loading, recommendation rotation, and user actions. */
 export function usePopupController() {
-  const {load, payload, setPayload, setStatus, status} = useAppShellQuery(
-    createMockAppShellPayload()
-  );
+  const mockPayload = useMemo(() => createMockAppShellPayload(), []);
+  const {load, payload, setPayload, setStatus, status} =
+    useAppShellQuery(mockPayload);
   const [recommendedIndex, setRecommendedIndex] = useState(0);
   const [pendingStudyMode, setPendingStudyMode] = useState<StudyMode | null>(
     null

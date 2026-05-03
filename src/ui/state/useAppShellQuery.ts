@@ -30,7 +30,7 @@ export function useAppShellQuery(mockData: AppShellPayload) {
 
       if (!isExtensionContext()) {
         startTransition(() => {
-          setPayload(mockData);
+          setPayload((current) => current ?? mockData);
           if (clearStatusOnSuccess) {
             setStatus({message: "", isError: false, scope: "surface"});
           }

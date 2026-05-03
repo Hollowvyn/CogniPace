@@ -18,7 +18,7 @@ function libraryRows(
   payload: Awaited<ReturnType<typeof getAppData>>,
   now = new Date()
 ): LibraryProblemRow[] {
-  const targetRetention = payload.settings.targetRetention;
+  const targetRetention = payload.settings.memoryReview.targetRetention;
   return Object.values(payload.problemsBySlug)
     .map((problem) => ({
       problem,

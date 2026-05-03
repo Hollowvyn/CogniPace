@@ -1,3 +1,8 @@
+import {
+  hasGroupedUserSettings,
+  sanitizeStoredUserSettings,
+} from "../../domain/settings";
+
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "./constants";
 import {
   CourseChapter,
@@ -9,6 +14,7 @@ import {
   ExportPayload,
   Problem,
   StudyState,
+  UserSettings,
 } from "./types";
 import {
   normalizeSlug,
@@ -44,13 +50,12 @@ function ensureAllowedKeys(payload: UnknownRecord): void {
 }
 
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
 }
 
-function safeString(
-  value: unknown,
-  fallback: string
-): string {
+function safeString(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
@@ -62,6 +67,10 @@ function safeInteger(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value)
     ? Math.max(0, Math.round(value))
     : fallback;
+}
+
+function safeBoolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
 }
 
 function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
@@ -90,6 +99,7 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
     difficulty: parseDifficulty(
       typeof problem.difficulty === "string" ? problem.difficulty : undefined
     ),
+    isPremium: safeBoolean(problem.isPremium),
     url: slugToUrl(slug),
     topics: uniqueStrings(isStringArray(problem.topics) ? problem.topics : []),
     sourceSet: uniqueStrings(
@@ -106,9 +116,7 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
   };
 }
 
-function sanitizeStudyStatesBySlug(
-  value: unknown
-): Record<string, StudyState> {
+function sanitizeStudyStatesBySlug(value: unknown): Record<string, StudyState> {
   if (!isRecord(value)) {
     return {};
   }
@@ -122,6 +130,13 @@ function sanitizeStudyStatesBySlug(
     result[normalizedSlug] = state as unknown as StudyState;
   }
   return result;
+}
+
+function sanitizeSettings(value: unknown): UserSettings | undefined {
+  if (!hasGroupedUserSettings(value)) {
+    return undefined;
+  }
+  return sanitizeStoredUserSettings(value);
 }
 
 function sanitizeCourseChapter(
@@ -155,9 +170,7 @@ function sanitizeCourseQuestionRef(
     return null;
   }
 
-  const slug = normalizeSlug(
-    typeof ref.slug === "string" ? ref.slug : slugKey
-  );
+  const slug = normalizeSlug(typeof ref.slug === "string" ? ref.slug : slugKey);
   if (!slug) {
     return null;
   }
@@ -282,7 +295,9 @@ function sanitizeChapterProgress(
   }
 
   const questionProgressBySlug: Record<string, CourseQuestionProgress> = {};
-  for (const [slugKey, progress] of Object.entries(value.questionProgressBySlug)) {
+  for (const [slugKey, progress] of Object.entries(
+    value.questionProgressBySlug
+  )) {
     const sanitized = sanitizeQuestionProgress(slugKey, progress);
     if (!sanitized) {
       continue;
@@ -339,7 +354,9 @@ function sanitizeCourseProgressById(
   return result;
 }
 
-export function assertImportPayloadShape(payload: unknown): asserts payload is ExportPayload {
+export function assertImportPayloadShape(
+  payload: unknown
+): asserts payload is ExportPayload {
   if (!isRecord(payload)) {
     throw new Error("Invalid import format: expected an object payload.");
   }
@@ -389,7 +406,9 @@ export function assertImportPayloadShape(payload: unknown): asserts payload is E
     payload.courseOrder !== undefined &&
     !isStringArray(payload.courseOrder)
   ) {
-    throw new Error("Invalid import format: courseOrder must be a string array.");
+    throw new Error(
+      "Invalid import format: courseOrder must be a string array."
+    );
   }
 
   if (
@@ -427,7 +446,7 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
         : CURRENT_STORAGE_SCHEMA_VERSION,
     problems,
     studyStatesBySlug: sanitizeStudyStatesBySlug(payload.studyStatesBySlug),
-    settings: payload.settings,
+    settings: sanitizeSettings(payload.settings),
     coursesById,
     courseOrder: uniqueStrings(
       (Array.isArray(payload.courseOrder) ? payload.courseOrder : [])

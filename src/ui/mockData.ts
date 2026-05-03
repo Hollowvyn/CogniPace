@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from "../shared/constants";
+import { createInitialUserSettings } from "../domain/settings";
 import { AppShellPayload } from "../shared/types";
 
 export function createMockAppShellPayload(): AppShellPayload {
@@ -49,10 +49,6 @@ export function createMockAppShellPayload(): AppShellPayload {
     recommendedCandidates: [],
     library: [],
     courseOptions: [],
-    settings: {
-      ...DEFAULT_SETTINGS,
-      studyMode: "studyPlan",
-      reviewOrder: "dueFirst",
-    },
+    settings: createInitialUserSettings(),
   };
 }

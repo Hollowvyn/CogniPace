@@ -1,4 +1,5 @@
 /** Runtime message contracts shared by the extension UI and background router. */
+import type { UserSettingsPatch } from "../../domain/settings";
 import type {
   CuratedProblemInput,
   Difficulty,
@@ -7,7 +8,6 @@ import type {
   ReviewLogFields,
   ReviewMode,
   TodayQueue,
-  UserSettings,
 } from "../../domain/types";
 import type {
   AppShellPayload,
@@ -22,6 +22,7 @@ import type {
   ProblemMutationResponse,
   SaveReviewResultResponse,
   SettingsUpdateResponse,
+  StudyHistoryResetResponse,
   StudyStateMutationResponse,
 } from "../../domain/views";
 
@@ -30,6 +31,7 @@ export interface MessageRequestMap {
     slug: string;
     title?: string;
     difficulty?: Difficulty;
+    isPremium?: boolean;
     url?: string;
     topics?: string[];
     solvedDetected?: boolean;
@@ -120,9 +122,8 @@ export interface MessageRequestMap {
   };
   EXPORT_DATA: Record<string, never>;
   IMPORT_DATA: ExportPayload;
-  UPDATE_SETTINGS: Partial<UserSettings> & {
-    activeStudyPlanId?: string;
-  };
+  RESET_STUDY_HISTORY: Record<string, never>;
+  UPDATE_SETTINGS: UserSettingsPatch;
   ADD_PROBLEM_BY_INPUT: {
     input: string;
     sourceSet?: string;
@@ -173,6 +174,7 @@ export interface MessageResponseMap {
   IMPORT_CUSTOM_SET: ImportSummaryResponse;
   EXPORT_DATA: ExportPayload;
   IMPORT_DATA: ImportedResponse;
+  RESET_STUDY_HISTORY: StudyHistoryResetResponse;
   UPDATE_SETTINGS: SettingsUpdateResponse;
   ADD_PROBLEM_BY_INPUT: ProblemMutationResponse & { slug: string };
   ADD_PROBLEM_TO_COURSE: CourseMutationResponse;

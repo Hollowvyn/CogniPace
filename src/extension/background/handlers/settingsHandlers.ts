@@ -6,9 +6,7 @@ import {
   mutateAppData,
 } from "../../../data/repositories/appDataRepository";
 import { uniqueStrings } from "../../../domain/common/collections";
-import {
-  CURRENT_STORAGE_SCHEMA_VERSION,
-} from "../../../domain/common/constants";
+import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
 import { nowIso } from "../../../domain/common/time";
 import {
   ensureCourseData,
@@ -61,6 +59,7 @@ export async function importData(payload: ExportPayload) {
         leetcodeId: problem.leetcodeId,
         title: problem.title?.trim() || slugToTitle(slug),
         difficulty: problem.difficulty ?? "Unknown",
+        isPremium: problem.isPremium,
         url: slugToUrl(slug),
         topics: uniqueStrings(problem.topics ?? []),
         sourceSet: uniqueStrings(problem.sourceSet ?? []),
@@ -100,4 +99,17 @@ export async function updateSettings(payload: Record<string, unknown>) {
   });
 
   return ok({ settings: updated.settings });
+}
+
+/** Clears all local study history while preserving settings, courses, and the problem library. */
+export async function resetStudyHistory() {
+  await mutateAppData((data) => {
+    data.studyStatesBySlug = {};
+    data.courseProgressById = {};
+    ensureCourseData(data);
+    syncCourseProgress(data);
+    return data;
+  });
+
+  return ok({ reset: true });
 }

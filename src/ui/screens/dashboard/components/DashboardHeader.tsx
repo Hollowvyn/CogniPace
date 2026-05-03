@@ -2,15 +2,18 @@
 import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import {StatusBanner} from "../../../components";
+import {
+  InlineStatusRegion,
+  SurfaceIconButton,
+  SurfaceTooltip,
+} from "../../../components";
 import {DashboardRoute} from "../../../navigation/dashboardRoutes";
 import {UiStatus} from "../../../state/useAppShellQuery";
+
+import {DashboardHeaderPanel} from "./DashboardSurface";
 
 export interface DashboardHeaderProps {
   onOpenSettings: () => void;
@@ -21,7 +24,7 @@ export interface DashboardHeaderProps {
 
 export function DashboardHeader(props: DashboardHeaderProps) {
   return (
-    <Paper sx={{p: 2.25}}>
+    <DashboardHeaderPanel>
       <Stack spacing={2}>
         <Stack
           alignItems={{md: "center", xs: "flex-start"}}
@@ -29,36 +32,43 @@ export function DashboardHeader(props: DashboardHeaderProps) {
           justifyContent="space-between"
           spacing={2}
         >
-          <Box>
+          <Box sx={{maxWidth: "100%", minWidth: 0}}>
             <Typography color="text.secondary" variant="overline">
-              {props.route.title.toUpperCase()}
+              {props.route.label.toUpperCase()}
             </Typography>
             <Typography variant="h4">{props.route.title}</Typography>
-            <Typography color="text.secondary" variant="body2">
+            <Typography
+              color="text.secondary"
+              sx={{overflowWrap: "anywhere"}}
+              variant="body2"
+            >
               {props.route.copy}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
-            <Tooltip title="Refresh dashboard">
-              <IconButton
+            <SurfaceTooltip title="Refresh dashboard">
+              <SurfaceIconButton
                 aria-label="Refresh dashboard"
                 onClick={props.onRefresh}
               >
-                <RefreshRounded/>
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Open settings">
-              <IconButton
+                <RefreshRounded aria-hidden="true" fontSize="small"/>
+              </SurfaceIconButton>
+            </SurfaceTooltip>
+            <SurfaceTooltip title="Open settings">
+              <SurfaceIconButton
                 aria-label="Open settings"
                 onClick={props.onOpenSettings}
               >
-                <SettingsRounded/>
-              </IconButton>
-            </Tooltip>
+                <SettingsRounded aria-hidden="true" fontSize="small"/>
+              </SurfaceIconButton>
+            </SurfaceTooltip>
           </Stack>
         </Stack>
-        <StatusBanner isError={props.status.isError} message={props.status.message}/>
+        <InlineStatusRegion
+          isError={props.status.isError}
+          message={props.status.message}
+        />
       </Stack>
-    </Paper>
+    </DashboardHeaderPanel>
   );
 }

@@ -1,12 +1,19 @@
 /** Service-worker bootstrap for background lifecycle, alarms, and runtime routing. */
-import { mutateAppData, STORAGE_KEY } from "../../data/repositories/appDataRepository";
+import {
+  mutateAppData,
+  STORAGE_KEY,
+} from "../../data/repositories/appDataRepository";
 import { ensureCourseData } from "../../domain/courses/courseProgress";
 import {
   assertAuthorizedRuntimeMessage,
   validateRuntimeMessage,
 } from "../runtime/validator";
 
-import { maybeNotifyDueQueue, scheduleNextDueAlarm } from "./notifications";
+import {
+  handleStartupDueCheck,
+  maybeNotifyDueQueue,
+  scheduleNextDueAlarm,
+} from "./notifications";
 import { fail } from "./responses";
 import { handleMessage } from "./router";
 
@@ -15,13 +22,11 @@ chrome.runtime.onInstalled.addListener(async () => {
     ensureCourseData(data);
     return data;
   });
-  void maybeNotifyDueQueue();
   void scheduleNextDueAlarm();
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  void maybeNotifyDueQueue();
-  void scheduleNextDueAlarm();
+  void handleStartupDueCheck();
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {

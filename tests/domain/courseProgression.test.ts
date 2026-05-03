@@ -8,14 +8,16 @@ import {
   syncCourseProgress,
 } from "../../src/domain/courses/courseProgress";
 import { listStudyPlans } from "../../src/domain/courses/curatedSets";
+import { createInitialUserSettings } from "../../src/domain/settings";
 import { makeProblem, makeScheduledState } from "../support/domainFixtures";
 
 describe("course progression", () => {
   it("selects the next course question after reviewed problems", () => {
+    const settings = createInitialUserSettings();
+    settings.activeCourseId = "Blind75";
+
     const data = normalizeStoredAppData({
-      settings: {
-        activeCourseId: "Blind75",
-      },
+      settings,
     });
 
     data.problemsBySlug["two-sum"] = makeProblem("two-sum", "Two Sum", "Easy");

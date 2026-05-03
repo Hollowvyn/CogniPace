@@ -4,13 +4,15 @@ import { Problem, StudyState } from "../../src/domain/types";
 export function makeProblem(
   slug: string,
   title: string,
-  difficulty: Problem["difficulty"] = "Medium"
+  difficulty: Problem["difficulty"] = "Medium",
+  isPremium?: boolean
 ): Problem {
   return {
     id: slug,
     leetcodeSlug: slug,
     title,
     difficulty,
+    isPremium,
     url: `https://leetcode.com/problems/${slug}/`,
     topics: [],
     sourceSet: ["Blind75"],

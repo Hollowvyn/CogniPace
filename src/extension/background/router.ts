@@ -1,8 +1,12 @@
 /** Central runtime router that dispatches validated messages to grouped handlers. */
-import {ExportPayload} from "../../domain/types";
-import {MessageType, RuntimeMessage} from "../runtime/contracts";
+import { ExportPayload } from "../../domain/types";
+import { MessageType, RuntimeMessage } from "../runtime/contracts";
 
-import {getAppShellData, getQueue, openExtensionPage} from "./handlers/appShellHandlers";
+import {
+  getAppShellData,
+  getQueue,
+  openExtensionPage,
+} from "./handlers/appShellHandlers";
 import {
   activateCourseChapter,
   addProblemByInput,
@@ -25,7 +29,12 @@ import {
   updateTags,
   upsertFromPage,
 } from "./handlers/problemHandlers";
-import {exportData, importData, updateSettings} from "./handlers/settingsHandlers";
+import {
+  exportData,
+  importData,
+  resetStudyHistory,
+  updateSettings,
+} from "./handlers/settingsHandlers";
 
 /** Routes a validated runtime message to the appropriate grouped handler. */
 export async function handleMessage(
@@ -34,7 +43,9 @@ export async function handleMessage(
 ) {
   switch (message.type as MessageType) {
     case "UPSERT_PROBLEM_FROM_PAGE":
-      return upsertFromPage(message.payload as Parameters<typeof upsertFromPage>[0]);
+      return upsertFromPage(
+        message.payload as Parameters<typeof upsertFromPage>[0]
+      );
     case "GET_PROBLEM_CONTEXT":
       return getProblemContext(
         message.payload as Parameters<typeof getProblemContext>[0]
@@ -84,13 +95,19 @@ export async function handleMessage(
         message.payload as Parameters<typeof trackCourseQuestionLaunch>[0]
       );
     case "IMPORT_CURATED_SET":
-      return importCurated(message.payload as Parameters<typeof importCurated>[0]);
+      return importCurated(
+        message.payload as Parameters<typeof importCurated>[0]
+      );
     case "IMPORT_CUSTOM_SET":
-      return importCustom(message.payload as Parameters<typeof importCustom>[0]);
+      return importCustom(
+        message.payload as Parameters<typeof importCustom>[0]
+      );
     case "EXPORT_DATA":
       return exportData();
     case "IMPORT_DATA":
       return importData(message.payload as ExportPayload);
+    case "RESET_STUDY_HISTORY":
+      return resetStudyHistory();
     case "UPDATE_SETTINGS":
       return updateSettings(message.payload as Record<string, unknown>);
     case "ADD_PROBLEM_BY_INPUT":
@@ -106,7 +123,9 @@ export async function handleMessage(
         message.payload as Parameters<typeof suspendProblem>[0]
       );
     case "RESET_PROBLEM_SCHEDULE":
-      return resetProblem(message.payload as Parameters<typeof resetProblem>[0]);
+      return resetProblem(
+        message.payload as Parameters<typeof resetProblem>[0]
+      );
     default:
       throw new Error(`Unknown message type: ${message.type}`);
   }

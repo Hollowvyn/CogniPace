@@ -108,9 +108,80 @@ describe("runtime validation", () => {
     );
   });
 
+  it("accepts premium metadata on page upserts", () => {
+    assert.doesNotThrow(() =>
+      validateRuntimeMessage({
+        type: "UPSERT_PROBLEM_FROM_PAGE",
+        payload: {
+          slug: "two-sum",
+          title: "Two Sum",
+          difficulty: "Easy",
+          isPremium: true,
+          url: "https://leetcode.com/problems/two-sum/",
+        },
+      })
+    );
+  });
+
+  it("accepts the current settings payload and global history reset", () => {
+    assert.doesNotThrow(() =>
+      validateRuntimeMessage({
+        type: "UPDATE_SETTINGS",
+        payload: {
+          dailyQuestionGoal: 18,
+          memoryReview: {
+            targetRetention: 0.85,
+            reviewOrder: "dueFirst",
+          },
+          notifications: {
+            enabled: true,
+            dailyTime: "09:00",
+          },
+          questionFilters: {
+            skipIgnored: true,
+            skipPremium: false,
+          },
+          timing: {
+            requireSolveTime: false,
+            difficultyGoalMs: {
+              Easy: 20 * 60 * 1000,
+              Medium: 35 * 60 * 1000,
+              Hard: 50 * 60 * 1000,
+            },
+          },
+        },
+      })
+    );
+
+    assert.doesNotThrow(() =>
+      validateRuntimeMessage({
+        type: "RESET_STUDY_HISTORY",
+        payload: {},
+      })
+    );
+  });
+
+  it("rejects removed legacy settings fields", () => {
+    assert.throws(
+      () =>
+        validateRuntimeMessage({
+          type: "UPDATE_SETTINGS",
+          payload: {
+            dailyNewLimit: 6,
+            dailyReviewLimit: 14,
+            notificationTime: "09:00",
+          },
+        }),
+      /unexpected field "dailyNewLimit"/i
+    );
+  });
+
   describe("safe-open targets", () => {
     it.each([
-      { input: "dashboard.html?view=settings", expected: "dashboard.html?view=settings" },
+      {
+        input: "dashboard.html?view=settings",
+        expected: "dashboard.html?view=settings",
+      },
       { input: "database.html", expected: "database.html" },
     ])("accepts valid path $input", ({ input, expected }) => {
       assert.equal(validateExtensionPagePath(input), expected);
@@ -120,7 +191,10 @@ describe("runtime validation", () => {
       { input: "https://evil.example.com", error: /invalid extension path/i },
       { input: "dashboard.html?view=hax", error: /invalid dashboard view/i },
       { input: "dashboard.html?foo=bar", error: /invalid dashboard path/i },
-      { input: "dashboard.html?view=settings&view=analytics", error: /invalid dashboard path/i },
+      {
+        input: "dashboard.html?view=settings&view=analytics",
+        error: /invalid dashboard path/i,
+      },
       { input: "../dashboard.html", error: /invalid extension path/i },
       { input: "settings.html", error: /unknown extension path/i },
     ])("rejects invalid path $input", ({ input, error }) => {

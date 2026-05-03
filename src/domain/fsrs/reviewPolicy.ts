@@ -1,6 +1,12 @@
 /** Review policy helpers used by the overlay quick-submit UX. */
 import { difficultyGoalMs } from "../problem/difficulty";
-import { Difficulty, Rating, ReviewMode, StudyState } from "../types";
+import {
+  Difficulty,
+  DifficultyGoalSettings,
+  Rating,
+  ReviewMode,
+  StudyState,
+} from "../types";
 
 import { getStudyStateSummary } from "./studyState";
 
@@ -34,6 +40,9 @@ export function deriveQuickRating(
 }
 
 /** Returns the target solve-time budget for a given difficulty. */
-export function goalForDifficulty(difficulty: Difficulty): number {
-  return difficultyGoalMs(difficulty);
+export function goalForDifficulty(
+  difficulty: Difficulty,
+  goals?: DifficultyGoalSettings
+): number {
+  return difficultyGoalMs(difficulty, goals);
 }

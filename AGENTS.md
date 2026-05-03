@@ -79,6 +79,8 @@ Codex reviews should prioritize:
 - Chrome extension permission changes and runtime-message validation risks
 - layer-boundary violations across `src/ui/*`, `src/data/*`, `src/domain/*`, and `src/extension/*`
 - direct Chrome storage or runtime access from React UI instead of repositories/runtime clients
+- long-lived legacy compatibility paths that keep removed persisted shapes or deprecated runtime contracts alive without
+  an explicit current migration window
 - unnecessary code comments where clear code would be enough
 - validation claims that do not match the files changed
 - Jules PRs that are more than one small, high-confidence maintenance change
@@ -136,6 +138,10 @@ Codex reviews should prioritize:
 - If docs conflict, follow the higher-precedence product, feature, or architecture doc and stop for human clarification on the conflicting part.
 - Future ideas are not implementation approval.
 - `In Scope` in `docs/features.md` means directionally allowed if explicitly requested and reviewed, not self-starting backlog permission.
+- Current persisted models and runtime contracts are authoritative. Do not keep legacy compatibility code longer than the
+  explicitly intended migration window.
+- If a temporary migration path is added for safety, document the exit condition in the PR and remove the compatibility
+  code once that window closes instead of normalizing it into the long-term architecture.
 - If a task would cross blocked lanes, stop and ask for explicit human approval first.
 
 ## Explicitly Deferred

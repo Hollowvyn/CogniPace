@@ -1,5 +1,7 @@
 /** Problem difficulty parsing and difficulty-derived study heuristics. */
-import { Difficulty } from "../types";
+import { Difficulty, DifficultyGoalSettings } from "../types";
+
+export const UNKNOWN_DIFFICULTY_GOAL_MS = 30 * 60 * 1000;
 
 /** Parses a raw difficulty label into the supported domain difficulty union. */
 export function parseDifficulty(input?: string): Difficulty {
@@ -21,15 +23,18 @@ export function parseDifficulty(input?: string): Difficulty {
 }
 
 /** Returns the baseline solve-time goal used by the overlay quick-rating heuristics. */
-export function difficultyGoalMs(difficulty: Difficulty): number {
+export function difficultyGoalMs(
+  difficulty: Difficulty,
+  goals?: DifficultyGoalSettings
+): number {
   if (difficulty === "Easy") {
-    return 20 * 60 * 1000;
+    return goals?.Easy ?? 20 * 60 * 1000;
   }
   if (difficulty === "Medium") {
-    return 35 * 60 * 1000;
+    return goals?.Medium ?? 35 * 60 * 1000;
   }
   if (difficulty === "Hard") {
-    return 50 * 60 * 1000;
+    return goals?.Hard ?? 50 * 60 * 1000;
   }
-  return 30 * 60 * 1000;
+  return UNKNOWN_DIFFICULTY_GOAL_MS;
 }

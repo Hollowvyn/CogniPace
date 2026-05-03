@@ -1,8 +1,12 @@
 /** Runtime message validation and sender authorization safeguards. */
-import {assertImportPayloadShape} from "../../data/importexport/backup";
-import {isProblemPage, normalizeSlug, slugToUrl} from "../../domain/problem/slug";
+import { assertImportPayloadShape } from "../../data/importexport/backup";
+import {
+  isProblemPage,
+  normalizeSlug,
+  slugToUrl,
+} from "../../domain/problem/slug";
 
-import {MessageType, RuntimeMessage} from "./contracts";
+import { MessageType, RuntimeMessage } from "./contracts";
 
 const MESSAGE_TYPES = {
   UPSERT_PROBLEM_FROM_PAGE: true,
@@ -25,6 +29,7 @@ const MESSAGE_TYPES = {
   IMPORT_CUSTOM_SET: true,
   EXPORT_DATA: true,
   IMPORT_DATA: true,
+  RESET_STUDY_HISTORY: true,
   UPDATE_SETTINGS: true,
   ADD_PROBLEM_BY_INPUT: true,
   ADD_PROBLEM_TO_COURSE: true,
@@ -53,17 +58,15 @@ const ALLOWED_DASHBOARD_VIEWS = new Set([
 
 const EMPTY_KEYS: readonly string[] = [];
 const SETTINGS_KEYS = [
-  "dailyNewLimit",
-  "dailyReviewLimit",
-  "reviewOrder",
+  "dailyQuestionGoal",
   "studyMode",
   "activeCourseId",
   "setsEnabled",
-  "requireSolveTime",
-  "autoDetectSolved",
   "notifications",
-  "quietHours",
-  "activeStudyPlanId",
+  "memoryReview",
+  "questionFilters",
+  "timing",
+  "experimental",
 ] as const;
 
 type UnknownRecord = Record<string, unknown>;
@@ -125,6 +128,15 @@ function requireOptionalFiniteNumber(value: unknown, field: string): void {
   }
 }
 
+function requireOptionalTimeString(value: unknown, field: string): void {
+  if (value === undefined) {
+    return;
+  }
+  if (typeof value !== "string" || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(value)) {
+    throw new Error(`Invalid field "${field}": expected HH:mm time.`);
+  }
+}
+
 function requireStringArray(value: unknown, field: string): void {
   if (
     !Array.isArray(value) ||
@@ -181,24 +193,77 @@ function requireOptionalStudyMode(value: unknown, field: string): void {
   }
 }
 
-function validateQuietHours(value: unknown): void {
-  if (!isRecord(value)) {
-    throw new Error('Invalid field "quietHours": expected an object.');
-  }
-  hasExactKeys(value, ["startHour", "endHour"], 'Field "quietHours"');
-  requireOptionalFiniteNumber(value.startHour, "quietHours.startHour");
-  requireOptionalFiniteNumber(value.endHour, "quietHours.endHour");
-}
-
 function validateSetsEnabled(value: unknown): void {
   if (!isRecord(value)) {
     throw new Error('Invalid field "setsEnabled": expected an object.');
   }
   for (const [key, enabled] of Object.entries(value)) {
     if (typeof enabled !== "boolean") {
-      throw new Error(`Invalid field "setsEnabled.${key}": expected a boolean.`);
+      throw new Error(
+        `Invalid field "setsEnabled.${key}": expected a boolean.`
+      );
     }
   }
+}
+
+function validateDifficultyGoalMs(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "difficultyGoalMs": expected an object.');
+  }
+  hasExactKeys(value, ["Easy", "Medium", "Hard"], 'Field "difficultyGoalMs"');
+  requireOptionalFiniteNumber(value.Easy, "difficultyGoalMs.Easy");
+  requireOptionalFiniteNumber(value.Medium, "difficultyGoalMs.Medium");
+  requireOptionalFiniteNumber(value.Hard, "difficultyGoalMs.Hard");
+}
+
+function validateNotifications(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "notifications": expected an object.');
+  }
+  hasExactKeys(value, ["enabled", "dailyTime"], 'Field "notifications"');
+  requireOptionalBoolean(value.enabled, "notifications.enabled");
+  requireOptionalTimeString(value.dailyTime, "notifications.dailyTime");
+}
+
+function validateMemoryReview(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "memoryReview": expected an object.');
+  }
+  hasExactKeys(value, ["targetRetention", "reviewOrder"], 'Field "memoryReview"');
+  requireOptionalFiniteNumber(value.targetRetention, "memoryReview.targetRetention");
+  requireOptionalReviewOrder(value.reviewOrder, "memoryReview.reviewOrder");
+}
+
+function validateQuestionFilters(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "questionFilters": expected an object.');
+  }
+  hasExactKeys(
+    value,
+    ["skipIgnored", "skipPremium"],
+    'Field "questionFilters"'
+  );
+  requireOptionalBoolean(value.skipIgnored, "questionFilters.skipIgnored");
+  requireOptionalBoolean(value.skipPremium, "questionFilters.skipPremium");
+}
+
+function validateTiming(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "timing": expected an object.');
+  }
+  hasExactKeys(value, ["requireSolveTime", "difficultyGoalMs"], 'Field "timing"');
+  requireOptionalBoolean(value.requireSolveTime, "timing.requireSolveTime");
+  if (value.difficultyGoalMs !== undefined) {
+    validateDifficultyGoalMs(value.difficultyGoalMs);
+  }
+}
+
+function validateExperimental(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('Invalid field "experimental": expected an object.');
+  }
+  hasExactKeys(value, ["autoDetectSolved"], 'Field "experimental"');
+  requireOptionalBoolean(value.autoDetectSolved, "experimental.autoDetectSolved");
 }
 
 function validateCustomSetItems(value: unknown): void {
@@ -210,10 +275,15 @@ function validateCustomSetItems(value: unknown): void {
     if (!isRecord(item)) {
       throw new Error('Invalid field "items": expected object entries.');
     }
-    hasExactKeys(item, ["slug", "title", "difficulty", "tags"], 'Field "items[]"');
+    hasExactKeys(
+      item,
+      ["slug", "title", "difficulty", "isPremium", "tags"],
+      'Field "items[]"'
+    );
     requireString(item.slug, "items[].slug");
     requireOptionalString(item.title, "items[].title");
     requireOptionalDifficulty(item.difficulty, "items[].difficulty");
+    requireOptionalBoolean(item.isPremium, "items[].isPremium");
     requireOptionalStringArray(item.tags, "items[].tags");
   }
 }
@@ -223,12 +293,21 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "UPSERT_PROBLEM_FROM_PAGE":
       hasExactKeys(
         payload,
-        ["slug", "title", "difficulty", "url", "topics", "solvedDetected"],
+        [
+          "slug",
+          "title",
+          "difficulty",
+          "isPremium",
+          "url",
+          "topics",
+          "solvedDetected",
+        ],
         `Payload for ${type}`
       );
       requireString(payload.slug, "slug");
       requireOptionalString(payload.title, "title");
       requireOptionalDifficulty(payload.difficulty, "difficulty");
+      requireOptionalBoolean(payload.isPremium, "isPremium");
       requireOptionalString(payload.url, "url");
       requireOptionalStringArray(payload.topics, "topics");
       requireOptionalBoolean(payload.solvedDetected, "solvedDetected");
@@ -285,7 +364,9 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
         payload.source !== "overlay" &&
         payload.source !== "dashboard"
       ) {
-        throw new Error('Invalid field "source": expected "overlay" or "dashboard".');
+        throw new Error(
+          'Invalid field "source": expected "overlay" or "dashboard".'
+        );
       }
       return;
     case "SAVE_OVERLAY_LOG_DRAFT":
@@ -313,7 +394,11 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.path, "path");
       return;
     case "OPEN_PROBLEM_PAGE":
-      hasExactKeys(payload, ["slug", "courseId", "chapterId"], `Payload for ${type}`);
+      hasExactKeys(
+        payload,
+        ["slug", "courseId", "chapterId"],
+        `Payload for ${type}`
+      );
       requireString(payload.slug, "slug");
       requireOptionalString(payload.courseId, "courseId");
       requireOptionalString(payload.chapterId, "chapterId");
@@ -332,6 +417,7 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "GET_DASHBOARD_DATA":
     case "GET_APP_SHELL_DATA":
     case "EXPORT_DATA":
+    case "RESET_STUDY_HISTORY":
       hasExactKeys(payload, EMPTY_KEYS, `Payload for ${type}`);
       return;
     case "SWITCH_ACTIVE_COURSE":
@@ -344,7 +430,11 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.chapterId, "chapterId");
       return;
     case "TRACK_COURSE_QUESTION_LAUNCH":
-      hasExactKeys(payload, ["slug", "courseId", "chapterId"], `Payload for ${type}`);
+      hasExactKeys(
+        payload,
+        ["slug", "courseId", "chapterId"],
+        `Payload for ${type}`
+      );
       requireString(payload.slug, "slug");
       requireOptionalString(payload.courseId, "courseId");
       requireOptionalString(payload.chapterId, "chapterId");
@@ -363,20 +453,29 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       return;
     case "UPDATE_SETTINGS":
       hasExactKeys(payload, SETTINGS_KEYS, `Payload for ${type}`);
-      requireOptionalFiniteNumber(payload.dailyNewLimit, "dailyNewLimit");
-      requireOptionalFiniteNumber(payload.dailyReviewLimit, "dailyReviewLimit");
-      requireOptionalReviewOrder(payload.reviewOrder, "reviewOrder");
+      requireOptionalFiniteNumber(
+        payload.dailyQuestionGoal,
+        "dailyQuestionGoal"
+      );
       requireOptionalStudyMode(payload.studyMode, "studyMode");
       requireOptionalString(payload.activeCourseId, "activeCourseId");
-      requireOptionalString(payload.activeStudyPlanId, "activeStudyPlanId");
-      requireOptionalBoolean(payload.requireSolveTime, "requireSolveTime");
-      requireOptionalBoolean(payload.autoDetectSolved, "autoDetectSolved");
-      requireOptionalBoolean(payload.notifications, "notifications");
-      if (payload.quietHours !== undefined) {
-        validateQuietHours(payload.quietHours);
-      }
       if (payload.setsEnabled !== undefined) {
         validateSetsEnabled(payload.setsEnabled);
+      }
+      if (payload.notifications !== undefined) {
+        validateNotifications(payload.notifications);
+      }
+      if (payload.memoryReview !== undefined) {
+        validateMemoryReview(payload.memoryReview);
+      }
+      if (payload.questionFilters !== undefined) {
+        validateQuestionFilters(payload.questionFilters);
+      }
+      if (payload.timing !== undefined) {
+        validateTiming(payload.timing);
+      }
+      if (payload.experimental !== undefined) {
+        validateExperimental(payload.experimental);
       }
       return;
     case "ADD_PROBLEM_BY_INPUT":
@@ -423,7 +522,7 @@ export function validateRuntimeMessage(message: unknown): RuntimeMessage {
 
   hasExactKeys(message, ["type", "payload"], "Runtime message");
 
-  const {type, payload} = message;
+  const { type, payload } = message;
   if (
     typeof type !== "string" ||
     !Object.prototype.hasOwnProperty.call(MESSAGE_TYPES, type)
@@ -490,7 +589,12 @@ export function validateExtensionPagePath(pathInput: string): string {
   if (!value) {
     throw new Error("Missing extension path.");
   }
-  if (/^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("/") || value.includes("\\") || value.includes("..")) {
+  if (
+    /^[a-z][a-z0-9+.-]*:/i.test(value) ||
+    value.startsWith("/") ||
+    value.includes("\\") ||
+    value.includes("..")
+  ) {
     throw new Error("Invalid extension path.");
   }
 

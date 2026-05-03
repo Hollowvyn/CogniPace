@@ -57,6 +57,7 @@ export async function importCustom(payload: {
     slug: string;
     title?: string;
     difficulty?: "Easy" | "Medium" | "Hard" | "Unknown";
+    isPremium?: boolean;
     tags?: string[];
   }>;
 }) {

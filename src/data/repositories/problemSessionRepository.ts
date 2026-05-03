@@ -7,6 +7,7 @@ export async function upsertProblemFromPage(input: {
   slug: string;
   title?: string;
   difficulty?: Difficulty;
+  isPremium?: boolean;
   url?: string;
 }) {
   return sendMessage("UPSERT_PROBLEM_FROM_PAGE", input);

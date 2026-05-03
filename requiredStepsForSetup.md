@@ -32,6 +32,9 @@ Rules:
 - Any PR that changes runtime boundaries, persisted data, or message contracts should update `docs/architecture.md`.
 - Any PR that changes design conventions should update `docs/DESIGN_GUIDELINES.md`.
 - Any PR that changes setup or process expectations should update this file.
+- Temporary compatibility or migration code for removed persisted shapes or runtime contracts should also document its
+  cleanup expectation in the same PR or follow-up approval. Legacy support is a short-term safety tool, not a standing
+  repo default.
 
 ## Current Baseline Snapshot
 
