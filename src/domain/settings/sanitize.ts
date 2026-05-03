@@ -94,15 +94,23 @@ function sanitizeDifficultyGoalMs(
   value: unknown,
   fallback: DifficultyGoalSettings
 ): DifficultyGoalSettings {
+  let base: DifficultyGoalSettings;
   if (!isRecord(value)) {
-    return { ...fallback };
+    base = { ...fallback };
+  } else {
+    base = {
+      Easy: positiveInteger(value.Easy, fallback.Easy),
+      Medium: positiveInteger(value.Medium, fallback.Medium),
+      Hard: positiveInteger(value.Hard, fallback.Hard),
+    };
   }
 
-  return {
-    Easy: positiveInteger(value.Easy, fallback.Easy),
-    Medium: positiveInteger(value.Medium, fallback.Medium),
-    Hard: positiveInteger(value.Hard, fallback.Hard),
-  };
+  const STEP_MS = 60000;
+  base.Easy = Math.max(10 * STEP_MS, Math.min(base.Easy, 58 * STEP_MS));
+  base.Medium = Math.max(base.Easy + STEP_MS, Math.min(base.Medium, 59 * STEP_MS));
+  base.Hard = Math.max(base.Medium + STEP_MS, Math.min(base.Hard, 60 * STEP_MS));
+
+  return base;
 }
 
 function isNonNegativeInteger(value: unknown): value is number {

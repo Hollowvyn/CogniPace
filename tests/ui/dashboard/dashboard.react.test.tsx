@@ -192,7 +192,7 @@ describe("DashboardApp", () => {
       screen.getByRole("heading", { name: "Data Management" })
     ).toBeInTheDocument();
 
-    expect(screen.getByLabelText("Hard goal")).toHaveValue(50);
+    expect(screen.getByLabelText("Hard goal")).toHaveValue("50");
     expect(
       screen.getByRole("button", { name: "Save Settings" })
     ).toBeDisabled();

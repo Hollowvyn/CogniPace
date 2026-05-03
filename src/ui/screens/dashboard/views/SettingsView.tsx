@@ -24,7 +24,7 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
-import { ChangeEvent, ReactNode, useState } from "react";
+import { ChangeEvent, ReactNode, useRef, useState } from "react";
 
 import { ReviewOrder, StudyMode, UserSettings } from "../../../../domain/settings";
 import { SurfaceSectionLabel } from "../../../components";
@@ -271,6 +271,8 @@ function SettingsFieldGrid(props: {
 }
 
 function NumberSetting(props: {
+  error?: boolean;
+  helperText?: string;
   label: string;
   max?: number;
   min?: number;
@@ -280,10 +282,14 @@ function NumberSetting(props: {
 }) {
   return (
     <TextField
+      error={props.error}
       fullWidth
+      helperText={props.helperText}
       label={props.label}
       onChange={(event) => {
-        props.onChange(Number(event.target.value) || 0);
+        const raw = event.target.value;
+        const parsed = parseInt(raw, 10);
+        props.onChange(isNaN(parsed) ? 0 : parsed);
       }}
       size="small"
       slotProps={{
@@ -300,8 +306,17 @@ function NumberSetting(props: {
             }
           : undefined,
       }}
+      sx={{
+        "& input[type=number]": {
+          MozAppearance: "textfield",
+        },
+        "& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button": {
+          WebkitAppearance: "none",
+          margin: 0,
+        },
+      }}
       type="number"
-      value={props.value}
+      value={props.value === 0 ? "" : props.value}
     />
   );
 }
@@ -763,6 +778,77 @@ function TimingGoalsSection(props: {
   onUpdateSettings: SettingsUpdate;
   settingsDraft: UserSettings;
 }) {
+  const draftEasyMs = props.settingsDraft.timing.difficultyGoalMs.Easy;
+  const draftMediumMs = props.settingsDraft.timing.difficultyGoalMs.Medium;
+  const draftHardMs = props.settingsDraft.timing.difficultyGoalMs.Hard;
+
+  const [easyStr, setEasyStr] = useState(String(Math.round(draftEasyMs / 60000)));
+  const [mediumStr, setMediumStr] = useState(String(Math.round(draftMediumMs / 60000)));
+  const [hardStr, setHardStr] = useState(String(Math.round(draftHardMs / 60000)));
+
+  const lastEasyMs = useRef(draftEasyMs);
+  const lastMediumMs = useRef(draftMediumMs);
+  const lastHardMs = useRef(draftHardMs);
+
+  if (draftEasyMs !== lastEasyMs.current) {
+    lastEasyMs.current = draftEasyMs;
+    const parsedStr = easyStr === "" ? 0 : parseInt(easyStr, 10);
+    if (Math.round(draftEasyMs / 60000) !== parsedStr) {
+      setEasyStr(String(Math.round(draftEasyMs / 60000)));
+    }
+  }
+  if (draftMediumMs !== lastMediumMs.current) {
+    lastMediumMs.current = draftMediumMs;
+    const parsedStr = mediumStr === "" ? 0 : parseInt(mediumStr, 10);
+    if (Math.round(draftMediumMs / 60000) !== parsedStr) {
+      setMediumStr(String(Math.round(draftMediumMs / 60000)));
+    }
+  }
+  if (draftHardMs !== lastHardMs.current) {
+    lastHardMs.current = draftHardMs;
+    const parsedStr = hardStr === "" ? 0 : parseInt(hardStr, 10);
+    if (Math.round(draftHardMs / 60000) !== parsedStr) {
+      setHardStr(String(Math.round(draftHardMs / 60000)));
+    }
+  }
+
+  const easyMin = easyStr === "" ? 0 : parseInt(easyStr, 10);
+  const mediumMin = mediumStr === "" ? 0 : parseInt(mediumStr, 10);
+  const hardMin = hardStr === "" ? 0 : parseInt(hardStr, 10);
+
+  const easyError = easyStr === "" ? "Required" : easyMin < 10 ? "Min 10" : easyMin > 58 ? "Max 58" : mediumStr !== "" && easyMin >= mediumMin ? "Must be < Medium" : undefined;
+  const mediumError = mediumStr === "" ? "Required" : mediumMin > 59 ? "Max 59" : easyStr !== "" && mediumMin <= easyMin ? "Must be > Easy" : hardStr !== "" && mediumMin >= hardMin ? "Must be < Hard" : undefined;
+  const hardError = hardStr === "" ? "Required" : hardMin > 60 ? "Max 60" : mediumStr !== "" && hardMin <= mediumMin ? "Must be > Medium" : undefined;
+
+  const updateDraftMs = (eMin: number, mMin: number, hMin: number) => {
+    props.onUpdateSettings((current) => ({
+      ...current,
+      timing: {
+        ...current.timing,
+        difficultyGoalMs: {
+          ...current.timing.difficultyGoalMs,
+          Easy: eMin * 60000,
+          Medium: mMin * 60000,
+          Hard: hMin * 60000,
+        },
+      },
+    }));
+  };
+
+  const commonTextFieldProps = {
+    fullWidth: true,
+    size: "small" as const,
+    type: "text",
+    slotProps: {
+      input: {
+        endAdornment: <InputAdornment position="end">min</InputAdornment>,
+      },
+    },
+    inputProps: {
+      inputMode: "numeric" as const,
+    },
+  };
+
   return (
     <Stack spacing={1 * settingsSpaceScale}>
       <SwitchSetting
@@ -781,59 +867,44 @@ function TimingGoalsSection(props: {
         }}
       />
       <SettingsFieldGrid columns={3}>
-        <NumberSetting
+        <TextField
+          {...commonTextFieldProps}
+          error={Boolean(easyError)}
+          helperText={easyError}
           label="Easy goal"
-          min={1}
-          onChange={(value) => {
-            props.onUpdateSettings((current) => ({
-              ...current,
-              timing: {
-                ...current.timing,
-                difficultyGoalMs: {
-                  ...current.timing.difficultyGoalMs,
-                  Easy: minutesToMs(value),
-                },
-              },
-            }));
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw !== "" && !/^\d+$/.test(raw)) return;
+            setEasyStr(raw);
+            updateDraftMs(raw === "" ? 0 : parseInt(raw, 10), mediumMin, hardMin);
           }}
-          suffix="min"
-          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Easy)}
+          value={easyStr}
         />
-        <NumberSetting
+        <TextField
+          {...commonTextFieldProps}
+          error={Boolean(mediumError)}
+          helperText={mediumError}
           label="Medium goal"
-          min={1}
-          onChange={(value) => {
-            props.onUpdateSettings((current) => ({
-              ...current,
-              timing: {
-                ...current.timing,
-                difficultyGoalMs: {
-                  ...current.timing.difficultyGoalMs,
-                  Medium: minutesToMs(value),
-                },
-              },
-            }));
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw !== "" && !/^\d+$/.test(raw)) return;
+            setMediumStr(raw);
+            updateDraftMs(easyMin, raw === "" ? 0 : parseInt(raw, 10), hardMin);
           }}
-          suffix="min"
-          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Medium)}
+          value={mediumStr}
         />
-        <NumberSetting
+        <TextField
+          {...commonTextFieldProps}
+          error={Boolean(hardError)}
+          helperText={hardError}
           label="Hard goal"
-          min={1}
-          onChange={(value) => {
-            props.onUpdateSettings((current) => ({
-              ...current,
-              timing: {
-                ...current.timing,
-                difficultyGoalMs: {
-                  ...current.timing.difficultyGoalMs,
-                  Hard: minutesToMs(value),
-                },
-              },
-            }));
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw !== "" && !/^\d+$/.test(raw)) return;
+            setHardStr(raw);
+            updateDraftMs(easyMin, mediumMin, raw === "" ? 0 : parseInt(raw, 10));
           }}
-          suffix="min"
-          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Hard)}
+          value={hardStr}
         />
       </SettingsFieldGrid>
       <Typography
@@ -841,7 +912,7 @@ function TimingGoalsSection(props: {
         sx={{ fontSize: `${0.75 * settingsTypeScale}rem` }}
         variant="caption"
       >
-        Unknown difficulty keeps the internal 30 minute fallback.
+        Unknown difficulty keeps the internal 30 minute fallback. Invalid goals are coerced when saving.
       </Typography>
     </Stack>
   );
@@ -1017,9 +1088,9 @@ function SettingsSaveBar(props: {
 }
 
 function msToMinutes(value: number): number {
-  return Math.max(1, Math.round(value / 60000));
+  return Math.round(value / 60000);
 }
 
 function minutesToMs(value: number): number {
-  return Math.max(1, Math.round(value)) * 60000;
+  return Math.round(value) * 60000;
 }
