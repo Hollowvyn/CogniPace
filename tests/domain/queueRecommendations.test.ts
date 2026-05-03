@@ -7,9 +7,9 @@ import {
   buildActiveCourseView,
   syncCourseProgress,
 } from "../../src/domain/courses/courseProgress";
+import { applyReview } from "../../src/domain/fsrs/scheduler";
 import { buildRecommendedCandidates } from "../../src/domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../src/domain/queue/buildTodayQueue";
-import { applyReview } from "../../src/domain/fsrs/scheduler";
 import { createInitialUserSettings } from "../../src/domain/settings";
 import { makeProblem, makeScheduledState } from "../support/domainFixtures";
 

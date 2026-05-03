@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+
 import { beforeEach, describe, it, vi } from "vitest";
-import { 
-  getAppData, 
-  STORAGE_KEY 
+
+import {
+  getAppData,
+  STORAGE_KEY,
 } from "../../../../src/data/repositories/appDataRepository";
 import { resetStudyHistory } from "../../../../src/extension/background/handlers/settingsHandlers";
 import { makeProblem, makeScheduledState } from "../../../support/domainFixtures";
