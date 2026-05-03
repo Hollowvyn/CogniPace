@@ -205,22 +205,23 @@ function mergeCourseDefinition(
   };
 }
 
-function isStarted(state?: StudyState | null): boolean {
-  return getStudyStateSummary(state).isStarted;
+function isStarted(state?: StudyState | null, now?: Date): boolean {
+  return getStudyStateSummary(state, now).isStarted;
 }
 
-function isDue(state?: StudyState | null): boolean {
-  return getStudyStateSummary(state).isDue;
+function isDue(state?: StudyState | null, now?: Date): boolean {
+  return getStudyStateSummary(state, now).isDue;
 }
 
 function firstIncompleteChapterId(
   data: AppData,
-  course: CourseDefinition
+  course: CourseDefinition,
+  now?: Date
 ): string | null {
   for (const chapterIdValue of course.chapterIds) {
     const chapter = course.chaptersById[chapterIdValue];
     const complete = chapter.questionSlugs.every((slug) =>
-      isStarted(data.studyStatesBySlug[slug])
+      isStarted(data.studyStatesBySlug[slug], now)
     );
     if (!complete) {
       return chapterIdValue;
@@ -231,10 +232,11 @@ function firstIncompleteChapterId(
 
 function findCurrentQuestionSlug(
   data: AppData,
-  chapter: CourseChapter
+  chapter: CourseChapter,
+  now?: Date
 ): string | null {
   const current = chapter.questionSlugs.find(
-    (slug) => !isStarted(data.studyStatesBySlug[slug])
+    (slug) => !isStarted(data.studyStatesBySlug[slug], now)
   );
   return current ?? null;
 }
@@ -243,17 +245,18 @@ function courseQuestionStatus(
   data: AppData,
   chapter: CourseChapter,
   slug: string,
-  chapterStatus: CourseChapterView["status"]
+  chapterStatus: CourseChapterView["status"],
+  now?: Date
 ): CourseQuestionStatusView {
   const state = data.studyStatesBySlug[slug];
   const inLibrary = Boolean(data.problemsBySlug[slug]);
-  const currentSlug = findCurrentQuestionSlug(data, chapter);
+  const currentSlug = findCurrentQuestionSlug(data, chapter, now);
 
-  if (isDue(state)) {
+  if (isDue(state, now)) {
     return "DUE_NOW";
   }
 
-  if (isStarted(state)) {
+  if (isStarted(state, now)) {
     return "QUEUED";
   }
 
@@ -348,6 +351,8 @@ export function ensureCourseData(data: AppData, now = nowIso()): void {
 }
 
 export function syncCourseProgress(data: AppData, now = nowIso()): void {
+  const nowDate = new Date(now);
+
   for (const courseIdValue of data.courseOrder) {
     const course = data.coursesById[courseIdValue];
     if (!course) {
@@ -357,14 +362,14 @@ export function syncCourseProgress(data: AppData, now = nowIso()): void {
     const progress =
       data.courseProgressById[courseIdValue] ??
       createCourseProgress(course, now);
-    const firstIncomplete = firstIncompleteChapterId(data, course);
+    const firstIncomplete = firstIncompleteChapterId(data, course, nowDate);
 
     for (const chapterIdValue of course.chapterIds) {
       const chapter = course.chaptersById[chapterIdValue];
       const chapterProgress =
         progress.chapterProgressById[chapterIdValue] ??
         createChapterProgress(chapter);
-      const currentQuestionSlug = findCurrentQuestionSlug(data, chapter);
+      const currentQuestionSlug = findCurrentQuestionSlug(data, chapter, nowDate);
 
       chapterProgress.currentQuestionSlug =
         currentQuestionSlug ??
@@ -387,7 +392,7 @@ export function syncCourseProgress(data: AppData, now = nowIso()): void {
           questionProgress.lastReviewedAt = lastReviewedAt;
         }
 
-        if (isStarted(state)) {
+        if (isStarted(state, nowDate)) {
           questionProgress.completedAt =
             questionProgress.completedAt ?? lastReviewedAt ?? now;
         } else {
@@ -521,6 +526,7 @@ export function ensureProblemInCourse(
 
 export function buildCourseCards(data: AppData): CourseCardView[] {
   const cards: CourseCardView[] = [];
+  const nowDate = new Date();
 
   for (const courseIdValue of data.courseOrder) {
     const course = data.coursesById[courseIdValue];
@@ -538,7 +544,7 @@ export function buildCourseCards(data: AppData): CourseCardView[] {
     for (const chapterIdValue of course.chapterIds) {
       const chapter = course.chaptersById[chapterIdValue];
       const chapterComplete = chapter.questionSlugs.every((slug) =>
-        isStarted(data.studyStatesBySlug[slug])
+        isStarted(data.studyStatesBySlug[slug], nowDate)
       );
       if (chapterComplete) {
         completedChapters += 1;
@@ -546,7 +552,7 @@ export function buildCourseCards(data: AppData): CourseCardView[] {
 
       for (const slug of chapter.questionSlugs) {
         totalQuestions += 1;
-        if (isStarted(data.studyStatesBySlug[slug])) {
+        if (isStarted(data.studyStatesBySlug[slug], nowDate)) {
           completedQuestions += 1;
         } else if (!nextQuestionTitle) {
           nextQuestionTitle =
@@ -554,7 +560,7 @@ export function buildCourseCards(data: AppData): CourseCardView[] {
           nextChapterTitle = chapter.title;
         }
 
-        if (isDue(data.studyStatesBySlug[slug])) {
+        if (isDue(data.studyStatesBySlug[slug], nowDate)) {
           dueCount += 1;
         }
       }
@@ -585,7 +591,8 @@ export function buildCourseCards(data: AppData): CourseCardView[] {
 
 export function buildActiveCourseView(
   data: AppData,
-  courseId = data.settings.activeCourseId
+  courseId = data.settings.activeCourseId,
+  nowDate = new Date()
 ): ActiveCourseView | null {
   const course = data.coursesById[courseId];
   if (!course) {
@@ -593,7 +600,7 @@ export function buildActiveCourseView(
   }
 
   const card = buildCourseCards(data).find((entry) => entry.id === courseId);
-  const firstIncomplete = firstIncompleteChapterId(data, course);
+  const firstIncomplete = firstIncompleteChapterId(data, course, nowDate);
   const activeChapterIdValue = firstIncomplete ?? course.chapterIds[0] ?? null;
   const activeChapterTitle = activeChapterIdValue
     ? (course.chaptersById[activeChapterIdValue]?.title ?? null)
@@ -604,7 +611,7 @@ export function buildActiveCourseView(
     (chapterIdValue) => {
       const chapter = course.chaptersById[chapterIdValue];
       const completedQuestions = chapter.questionSlugs.filter((slug) =>
-        isStarted(data.studyStatesBySlug[slug])
+        isStarted(data.studyStatesBySlug[slug], nowDate)
       ).length;
       const status: CourseChapterView["status"] =
         completedQuestions === chapter.questionSlugs.length
@@ -617,12 +624,13 @@ export function buildActiveCourseView(
         const problem = data.problemsBySlug[slug];
         const ref = course.questionRefsBySlug[slug];
         const state = data.studyStatesBySlug[slug];
-        const studyStateSummary = getStudyStateSummary(state);
+        const studyStateSummary = getStudyStateSummary(state, nowDate);
         const questionStatus = courseQuestionStatus(
           data,
           chapter,
           slug,
-          status
+          status,
+          nowDate
         );
         const view: CourseQuestionView = {
           slug,

@@ -18,6 +18,7 @@ import type {
   ImportedResponse,
   ImportSummaryResponse,
   OpenedResponse,
+  PopupShellPayload,
   ProblemContextResponse,
   ProblemMutationResponse,
   SaveReviewResultResponse,
@@ -101,6 +102,7 @@ export interface MessageRequestMap {
   GET_TODAY_QUEUE: Record<string, never>;
   GET_DASHBOARD_DATA: Record<string, never>;
   GET_APP_SHELL_DATA: Record<string, never>;
+  GET_POPUP_SHELL_DATA: Record<string, never>;
   SWITCH_ACTIVE_COURSE: {
     courseId: string;
   };
@@ -167,6 +169,7 @@ export interface MessageResponseMap {
   GET_TODAY_QUEUE: TodayQueue;
   GET_DASHBOARD_DATA: AppShellPayload;
   GET_APP_SHELL_DATA: AppShellPayload;
+  GET_POPUP_SHELL_DATA: PopupShellPayload;
   SWITCH_ACTIVE_COURSE: CourseActivationResponse;
   SET_ACTIVE_COURSE_CHAPTER: CourseChapterActivationResponse;
   TRACK_COURSE_QUESTION_LAUNCH: CourseLaunchTrackingResponse;

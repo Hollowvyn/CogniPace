@@ -4,6 +4,7 @@ import { MessageType, RuntimeMessage } from "../runtime/contracts";
 
 import {
   getAppShellData,
+  getPopupShellData,
   getQueue,
   openExtensionPage,
 } from "./handlers/appShellHandlers";
@@ -82,6 +83,8 @@ export async function handleMessage(
     case "GET_DASHBOARD_DATA":
     case "GET_APP_SHELL_DATA":
       return getAppShellData();
+    case "GET_POPUP_SHELL_DATA":
+      return getPopupShellData();
     case "SWITCH_ACTIVE_COURSE":
       return switchActiveCourseHandler(
         message.payload as Parameters<typeof switchActiveCourseHandler>[0]

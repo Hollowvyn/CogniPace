@@ -3,10 +3,7 @@ import { describe, expect, it } from "vitest";
 import { screen, waitFor } from "../support/render";
 import { sendMessageMock, tabsCreateMock } from "../support/setup";
 
-import {
-  openedProblemResponse,
-  renderPopupWithPayload,
-} from "./support";
+import { openedProblemResponse, renderPopupWithPayload } from "./support";
 
 describe("Popup Recommendations", () => {
   it("renders the compact header and opens the recommended problem", async () => {
@@ -15,8 +12,13 @@ describe("Popup Recommendations", () => {
     );
 
     expect(await screen.findByText("Two Sum")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Refresh popup" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open settings" })).toBeInTheDocument();
+    expect(sendMessageMock).toHaveBeenCalledWith("GET_POPUP_SHELL_DATA", {});
+    expect(
+      screen.getByRole("button", { name: "Refresh popup" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open settings" })
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Start freestyle mode" })
     ).toBeInTheDocument();
@@ -24,7 +26,7 @@ describe("Popup Recommendations", () => {
     expect(
       screen.getByRole("button", { name: "Shuffle recommendation" })
     ).toBeInTheDocument();
-    
+
     await user.click(screen.getByRole("button", { name: "Open Problem" }));
 
     await waitFor(() => {

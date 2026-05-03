@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {ActiveCourseView, CourseQuestionView} from "../../../../domain/views";
+import { ActiveCourseView, CourseQuestionView } from "../../../../domain/views";
 import {
   FieldAssistRow,
   InlineStatusRegion,
@@ -14,13 +14,13 @@ import {
   SurfaceIconButton,
   SurfaceSectionLabel,
   SurfaceTooltip,
-  ToneChip
+  ToneChip,
 } from "../../../components";
-import {UiStatus} from "../../../state/useAppShellQuery";
+import { UiStatus } from "../../../state/useAppShellQuery";
 
-import {popupSmallButtonSx} from "./popupStyles";
+import { popupSmallButtonSx } from "./popupStyles";
 
-import type {ReactNode} from "react";
+import type { ReactNode } from "react";
 
 function CourseFooter(props: {
   disabled?: boolean;
@@ -52,9 +52,9 @@ function CourseFooter(props: {
         <SurfaceIconButton
           aria-label="Open courses dashboard"
           onClick={props.onOpenDashboard}
-          sx={{color: "primary.light"}}
+          sx={{ color: "primary.light" }}
         >
-          <CallMadeRounded aria-hidden="true" fontSize="small"/>
+          <CallMadeRounded aria-hidden="true" fontSize="small" />
         </SurfaceIconButton>
       </SurfaceTooltip>
     </Stack>
@@ -73,7 +73,11 @@ function CourseStateCard(props: {
   title: string;
 }) {
   return (
-    <SurfaceCard action={props.action} label="Active Course" title={props.title}>
+    <SurfaceCard
+      action={props.action}
+      label="Active Course"
+      title={props.title}
+    >
       <Stack spacing={1.5}>
         {props.children}
         <FieldAssistRow>{props.helper}</FieldAssistRow>
@@ -133,9 +137,9 @@ function CourseNextInset(props: {
                   slug: props.nextQuestion.slug,
                 });
               }}
-              sx={{color: "primary.light", height: 28, width: 28}}
+              sx={{ color: "primary.light", height: 28, width: 28 }}
             >
-              <ChevronRightRounded aria-hidden="true" fontSize="small"/>
+              <ChevronRightRounded aria-hidden="true" fontSize="small" />
             </SurfaceIconButton>
           </SurfaceTooltip>
         </Stack>
@@ -164,6 +168,35 @@ export function CoursePanelEmpty(props: {
         Choose a course in the dashboard to restore the guided path.
       </Typography>
     </CourseStateCard>
+  );
+}
+
+export function CoursePanelLoading(props: {
+  onOpenDashboard: () => void;
+  status?: UiStatus;
+}) {
+  return (
+    <SurfaceCard label="Active Course" title="Loading Course">
+      <Stack spacing={1.5}>
+        <Typography color="text.secondary" variant="body2">
+          Fetching course context.
+        </Typography>
+        <FieldAssistRow>Course data is loading.</FieldAssistRow>
+        <InlineStatusRegion
+          isError={props.status?.isError}
+          message={props.status?.message}
+        />
+        <SurfaceTooltip title="Open courses dashboard">
+          <SurfaceIconButton
+            aria-label="Open courses dashboard"
+            onClick={props.onOpenDashboard}
+            sx={{ alignSelf: "flex-end", color: "primary.light" }}
+          >
+            <CallMadeRounded aria-hidden="true" fontSize="small" />
+          </SurfaceIconButton>
+        </SurfaceTooltip>
+      </Stack>
+    </SurfaceCard>
   );
 }
 
@@ -232,7 +265,9 @@ export function CoursePanelStudyPlan(props: {
 }) {
   return (
     <CourseStateCard
-      action={<ToneChip label={`${props.course.completionPercent}%`} tone="accent"/>}
+      action={
+        <ToneChip label={`${props.course.completionPercent}%`} tone="accent" />
+      }
       disabled={props.disabled}
       helper="Study mode advances the active path. Use freestyle if you want queue-only review without changing course next."
       onModeAction={props.actions.onEnterFreestyle}
@@ -245,9 +280,10 @@ export function CoursePanelStudyPlan(props: {
         <Typography color="text.secondary" variant="body2">
           {props.course.description}
         </Typography>
-        <ProgressTrack value={props.course.completionPercent}/>
+        <ProgressTrack value={props.course.completionPercent} />
         <Typography color="text.secondary" variant="body2">
-          {props.course.completedQuestions}/{props.course.totalQuestions} questions traversed
+          {props.course.completedQuestions}/{props.course.totalQuestions}{" "}
+          questions traversed
         </Typography>
         <CourseNextInset
           courseId={props.course.id}

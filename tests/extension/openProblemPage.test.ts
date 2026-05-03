@@ -90,4 +90,22 @@ describe("openProblemPage", () => {
     ]);
     assert.equal(tabsMock.updatedTabs.length, 0);
   });
+
+  it("opens a new tab from the popup sender", async () => {
+    const tabsMock = installChromeTabsMock();
+
+    try {
+      await openProblemPage({ slug: "two-sum" }, {
+        id: "test-extension",
+        url: "chrome-extension://test-extension/popup.html",
+      } as chrome.runtime.MessageSender);
+    } finally {
+      tabsMock.restore();
+    }
+
+    assert.deepEqual(tabsMock.createdTabs, [
+      { url: "https://leetcode.com/problems/two-sum/" },
+    ]);
+    assert.equal(tabsMock.updatedTabs.length, 0);
+  });
 });

@@ -6,7 +6,10 @@ function collectAllStates(data: AppData): Array<[string, StudyState]> {
   return Object.entries(data.studyStatesBySlug);
 }
 
-function computeStreak(data: AppData): number {
+export function computeReviewStreakDays(
+  data: AppData,
+  now = new Date()
+): number {
   const reviewDays = new Set<string>();
 
   for (const [, state] of collectAllStates(data)) {
@@ -16,7 +19,7 @@ function computeStreak(data: AppData): number {
   }
 
   let streak = 0;
-  let cursor = startOfDay(new Date());
+  let cursor = startOfDay(now);
 
   while (reviewDays.has(ymd(cursor))) {
     streak += 1;
@@ -26,8 +29,8 @@ function computeStreak(data: AppData): number {
   return streak;
 }
 
-function computeRetentionProxy(data: AppData): number {
-  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+function computeRetentionProxy(data: AppData, now = new Date()): number {
+  const cutoff = now.getTime() - 14 * 24 * 60 * 60 * 1000;
   let positive = 0;
   let negative = 0;
 
@@ -50,18 +53,19 @@ function computeRetentionProxy(data: AppData): number {
 
 function dueByDay(
   data: AppData,
-  days = 14
+  days = 14,
+  now = new Date()
 ): Array<{ date: string; count: number }> {
   const map = new Map<string, number>();
-  const now = startOfDay(new Date());
+  const start = startOfDay(now);
 
   for (let offset = 0; offset < days; offset += 1) {
-    const day = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
+    const day = new Date(start.getTime() + offset * 24 * 60 * 60 * 1000);
     map.set(ymd(day), 0);
   }
 
   for (const [, state] of collectAllStates(data)) {
-    const summary = getStudyStateSummary(state, now);
+    const summary = getStudyStateSummary(state, start);
     if (!summary.nextReviewAt || summary.suspended) {
       continue;
     }
@@ -77,12 +81,12 @@ function dueByDay(
   return Array.from(map.entries()).map(([date, count]) => ({ date, count }));
 }
 
-export function summarizeAnalytics(data: AppData): AnalyticsSummary {
+export function summarizeAnalytics(data: AppData, now = new Date()): AnalyticsSummary {
   const states = collectAllStates(data);
   const summaries = states.map(([slug, studyState]) => ({
     slug,
     studyState,
-    summary: getStudyStateSummary(studyState),
+    summary: getStudyStateSummary(studyState, now),
   }));
   const totalReviews = summaries.reduce(
     (sum, item) => sum + item.summary.reviewCount,
@@ -118,11 +122,11 @@ export function summarizeAnalytics(data: AppData): AnalyticsSummary {
     .slice(0, 10);
 
   return {
-    streakDays: computeStreak(data),
+    streakDays: computeReviewStreakDays(data, now),
     totalReviews,
     phaseCounts,
-    retentionProxy: computeRetentionProxy(data),
+    retentionProxy: computeRetentionProxy(data, now),
     weakestProblems,
-    dueByDay: dueByDay(data),
+    dueByDay: dueByDay(data, 14, now),
   };
 }

@@ -1,11 +1,17 @@
 import ShuffleRounded from "@mui/icons-material/ShuffleRounded";
 import Stack from "@mui/material/Stack";
 
-import {RecommendedProblemView} from "../../../../domain/views";
-import {FieldAssistRow, InlineStatusRegion, SurfaceIconButton, SurfaceTooltip, ToneChip} from "../../../components";
-import {RecommendedProblemCard} from "../../../features/recommended/RecommendedProblemCard";
-import {difficultyTone} from "../../../presentation/studyState";
-import {UiStatus} from "../../../state/useAppShellQuery";
+import { RecommendedProblemView } from "../../../../domain/views";
+import {
+  FieldAssistRow,
+  InlineStatusRegion,
+  SurfaceIconButton,
+  SurfaceTooltip,
+  ToneChip,
+} from "../../../components";
+import { RecommendedProblemCard } from "../../../features/recommended/RecommendedProblemCard";
+import { difficultyTone } from "../../../presentation/studyState";
+import { UiStatus } from "../../../state/useAppShellQuery";
 
 function RecommendationHeaderAction(props: {
   canShuffle: boolean;
@@ -23,9 +29,9 @@ function RecommendationHeaderAction(props: {
           <SurfaceIconButton
             aria-label="Shuffle recommendation"
             onClick={props.onShuffle}
-            sx={{ml: 0.75}}
+            sx={{ ml: 0.75 }}
           >
-            <ShuffleRounded aria-hidden="true" fontSize="small"/>
+            <ShuffleRounded aria-hidden="true" fontSize="small" />
           </SurfaceIconButton>
         </SurfaceTooltip>
       ) : null}
@@ -49,7 +55,7 @@ export function RecommendationEmpty(props: {
               aria-label="Shuffle recommendation"
               onClick={props.onShuffle}
             >
-              <ShuffleRounded aria-hidden="true" fontSize="small"/>
+              <ShuffleRounded aria-hidden="true" fontSize="small" />
             </SurfaceIconButton>
           </SurfaceTooltip>
         ) : undefined
@@ -60,6 +66,27 @@ export function RecommendationEmpty(props: {
             Review is clear for now. Shuffle only rotates among current
             recommendation candidates.
           </FieldAssistRow>
+          <InlineStatusRegion
+            isError={props.status?.isError}
+            message={props.status?.message}
+          />
+        </Stack>
+      }
+      onOpenProblem={() => undefined}
+      recommended={null}
+      showNextReviewDate={false}
+    />
+  );
+}
+
+export function RecommendationLoading(props: { status?: UiStatus }) {
+  return (
+    <RecommendedProblemCard
+      emptyCopy="Fetching the current recommendation."
+      emptyTitle="Loading Queue"
+      helper={
+        <Stack spacing={0.8}>
+          <FieldAssistRow>Recommendation data is loading.</FieldAssistRow>
           <InlineStatusRegion
             isError={props.status?.isError}
             message={props.status?.message}

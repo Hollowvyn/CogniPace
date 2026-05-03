@@ -1,7 +1,7 @@
 import { createInitialUserSettings } from "../domain/settings";
-import { AppShellPayload } from "../shared/types";
+import { AppShellPayload, PopupShellPayload } from "../shared/types";
 
-export function createMockAppShellPayload(): AppShellPayload {
+export function createMockPopupShellPayload(): PopupShellPayload {
   return {
     popup: {
       dueCount: 5,
@@ -12,6 +12,15 @@ export function createMockAppShellPayload(): AppShellPayload {
       activeCourse: null,
     },
     activeCourse: null,
+    settings: createInitialUserSettings(),
+  };
+}
+
+export function createMockAppShellPayload(): AppShellPayload {
+  const popupShell = createMockPopupShellPayload();
+
+  return {
+    ...popupShell,
     queue: {
       generatedAt: "2026-03-29T00:00:00.000Z",
       dueCount: 5,
@@ -49,6 +58,5 @@ export function createMockAppShellPayload(): AppShellPayload {
     recommendedCandidates: [],
     library: [],
     courseOptions: [],
-    settings: createInitialUserSettings(),
   };
 }

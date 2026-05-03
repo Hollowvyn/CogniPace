@@ -1,13 +1,17 @@
 /** Popup-local state and actions for the recommendation-first surface. */
-import {startTransition, useMemo, useRef, useState} from "react";
+import { startTransition, useMemo, useRef, useState } from "react";
 
-import {openDashboardPage, openSettingsPage,} from "../../../data/repositories/extensionNavigationRepository";
-import {openProblemPage} from "../../../data/repositories/problemSessionRepository";
-import {updateSettings} from "../../../data/repositories/settingsRepository";
-import {StudyMode} from "../../../domain/types";
-import {RecommendedProblemView} from "../../../domain/views";
-import {createMockAppShellPayload} from "../../mockData";
-import {useAppShellQuery} from "../../state/useAppShellQuery";
+import { fetchPopupShellPayload } from "../../../data/repositories/appShellRepository";
+import {
+  openDashboardPage,
+  openSettingsPage,
+} from "../../../data/repositories/extensionNavigationRepository";
+import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
+import { updateSettings } from "../../../data/repositories/settingsRepository";
+import { StudyMode } from "../../../domain/types";
+import { RecommendedProblemView } from "../../../domain/views";
+import { createMockPopupShellPayload } from "../../mockData";
+import { useAppShellQuery } from "../../state/useAppShellQuery";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],
@@ -35,9 +39,11 @@ function popupErrorMessage(error: unknown): string {
 
 /** Coordinates popup data loading, recommendation rotation, and user actions. */
 export function usePopupController() {
-  const mockPayload = useMemo(() => createMockAppShellPayload(), []);
-  const {load, payload, setPayload, setStatus, status} =
-    useAppShellQuery(mockPayload);
+  const mockPayload = useMemo(() => createMockPopupShellPayload(), []);
+  const { load, payload, setPayload, setStatus, status } = useAppShellQuery(
+    mockPayload,
+    fetchPopupShellPayload
+  );
   const [recommendedIndex, setRecommendedIndex] = useState(0);
   const [pendingStudyMode, setPendingStudyMode] = useState<StudyMode | null>(
     null
@@ -101,7 +107,7 @@ export function usePopupController() {
 
     let response: Awaited<ReturnType<typeof updateSettings>>;
     try {
-      response = await updateSettings({studyMode: mode});
+      response = await updateSettings({ studyMode: mode });
     } catch (error) {
       response = {
         ok: false,
@@ -151,6 +157,7 @@ export function usePopupController() {
     courseNext: payload?.popup.courseNext ?? null,
     hasMultipleRecommended:
       (payload?.popup.recommendedCandidates.length ?? 0) > 1,
+    isInitialLoading: payload === null && !status.message,
     isUpdatingStudyMode,
     isCourseMode: studyMode === "studyPlan",
     studyMode,
