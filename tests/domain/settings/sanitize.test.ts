@@ -5,8 +5,8 @@ import { describe, it } from "vitest";
 import {
   isPersistedUserSettings,
   sanitizeStoredUserSettings,
-} from "../../../src/domain/settings/sanitize";
-import { createInitialUserSettings } from "../../../src/domain/settings/seed";
+} from "../../../src/domain/settings";
+import { createInitialUserSettings } from "../../../src/domain/settings";
 
 describe("settings sanitization", () => {
   const initial = createInitialUserSettings();
@@ -23,7 +23,7 @@ describe("settings sanitization", () => {
       // missing timing, notifications, etc.
     };
     const sanitized = sanitizeStoredUserSettings(malformed);
-    
+
     assert.equal(sanitized.dailyQuestionGoal, 5);
     assert.deepEqual(sanitized.timing, initial.timing);
     assert.deepEqual(sanitized.notifications, initial.notifications);
@@ -39,7 +39,7 @@ describe("settings sanitization", () => {
       memoryReview: { targetRetention: 1.0 }
     });
     assert.equal(high.memoryReview.targetRetention, 0.95);
-    
+
     const valid = sanitizeStoredUserSettings({
       memoryReview: { targetRetention: 0.9 }
     });
@@ -79,7 +79,7 @@ describe("settings sanitization", () => {
     const sanitized = sanitizeStoredUserSettings({
       setsEnabled: customSets
     });
-    
+
     assert.equal(sanitized.setsEnabled.Blind75, true);
     assert.equal(sanitized.setsEnabled.NeetCode150, false);
   });
