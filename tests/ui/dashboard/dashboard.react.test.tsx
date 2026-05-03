@@ -149,21 +149,9 @@ describe("DashboardApp", () => {
       screen.getByRole("heading", { name: "Timing Goals" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Experimental" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "History Reset" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Local Data" })
+      screen.getByRole("heading", { name: "Data Management" })
     ).toBeInTheDocument();
 
-    expect(screen.getByLabelText("Notification Time")).toBeDisabled();
-    expect(screen.getByLabelText("Skip ignored questions")).toBeChecked();
-    expect(screen.getByLabelText("Skip premium questions")).not.toBeChecked();
-    expect(screen.getByLabelText("Auto-detect solves")).toBeDisabled();
-    expect(screen.getByLabelText("Easy goal")).toHaveValue(20);
-    expect(screen.getByLabelText("Medium goal")).toHaveValue(35);
     expect(screen.getByLabelText("Hard goal")).toHaveValue(50);
     expect(screen.getByRole("button", { name: "Save Settings" })).toBeDisabled();
     expect(

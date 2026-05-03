@@ -6,11 +6,11 @@ import UploadFileRounded from "@mui/icons-material/UploadFileRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
@@ -73,6 +73,17 @@ export function SettingsView(props: SettingsViewProps) {
   return (
     <SettingsCanvas>
       <SettingsGrid>
+        <Box sx={{ gridColumn: "1 / -1", minWidth: 0 }}>
+          <SettingsSaveBar
+            canDiscardSettings={props.canDiscardSettings}
+            canResetSettingsToDefaults={props.canResetSettingsToDefaults}
+            canSaveSettings={props.canSaveSettings}
+            onDiscardSettings={props.onDiscardSettings}
+            onResetSettingsToDefaults={props.onResetSettingsToDefaults}
+            onSaveSettings={props.onSaveSettings}
+          />
+        </Box>
+
         <SettingsSection
           description="Set the size and mode of the daily practice queue."
           eyebrow="Practice"
@@ -134,42 +145,9 @@ export function SettingsView(props: SettingsViewProps) {
         </SettingsSection>
 
         <SettingsSection
-          description="Reserved for signals that need more validation before release."
-          eyebrow="Lab"
-          title="Experimental"
-          width="half"
-        >
-          <ExperimentalSection />
-        </SettingsSection>
-
-        <SettingsSection
-          description="Clear local review history without deleting your library or courses."
-          eyebrow="Protected"
-          title="History Reset"
-          tone="danger"
-          width="half"
-        >
-          <HistoryResetSection
-            onExportData={props.onExportData}
-            onResetStudyHistory={props.onResetStudyHistory}
-          />
-        </SettingsSection>
-
-        <Box sx={{ gridColumn: "1 / -1", minWidth: 0 }}>
-          <SettingsSaveBar
-            canDiscardSettings={props.canDiscardSettings}
-            canResetSettingsToDefaults={props.canResetSettingsToDefaults}
-            canSaveSettings={props.canSaveSettings}
-            onDiscardSettings={props.onDiscardSettings}
-            onResetSettingsToDefaults={props.onResetSettingsToDefaults}
-            onSaveSettings={props.onSaveSettings}
-          />
-        </Box>
-
-        <SettingsSection
-          description="Export local state or restore it from a backup JSON file."
-          eyebrow="Backup"
-          title="Local Data"
+          description="Export local state, restore from backup, or completely clear your review history."
+          eyebrow="Data"
+          title="Data Management"
           width="full"
         >
           <LocalDataSection
@@ -177,6 +155,11 @@ export function SettingsView(props: SettingsViewProps) {
             onExportData={props.onExportData}
             onImportData={props.onImportData}
             onSetImportFile={props.onSetImportFile}
+          />
+          <Divider sx={{ my: 1.5 * settingsSpaceScale, borderColor: alpha(kineticTokens.outlineStrong, 0.2) }} />
+          <HistoryResetSection
+            onExportData={props.onExportData}
+            onResetStudyHistory={props.onResetStudyHistory}
           />
         </SettingsSection>
       </SettingsGrid>
@@ -905,17 +888,7 @@ function NotificationsSection(props: {
   );
 }
 
-function ExperimentalSection() {
-  return (
-    <SwitchSetting
-      checked={false}
-      disabled
-      helper="Solve detection stays disabled for v2."
-      label={<SettingLabelWithChip chip="v2" label="Auto-detect solves" />}
-      name="Auto-detect solves"
-    />
-  );
-}
+
 
 function HistoryResetSection(props: {
   onExportData: () => Promise<void>;
@@ -1040,27 +1013,6 @@ function SettingsSaveBar(props: {
         </Button>
       </SettingsActionSection>
     </DashboardChromePanel>
-  );
-}
-
-function SettingLabelWithChip(props: { chip: string; label: string }) {
-  return (
-    <Stack
-      alignItems="center"
-      direction="row"
-      spacing={0.75 * settingsSpaceScale}
-    >
-      <span>{props.label}</span>
-      <Chip
-        label={props.chip}
-        size="small"
-        sx={{
-          borderRadius: 1,
-          height: 18,
-          letterSpacing: "0.06em",
-        }}
-      />
-    </Stack>
   );
 }
 

@@ -2,7 +2,6 @@
 import { STORAGE_SCHEMA_VERSION, StudyState } from "../types";
 
 export const STORAGE_KEY = "leetcode_spaced_repetition_data_v2";
-export const LEGACY_STORAGE_KEY = "leetcode_spaced_repetition_data_v1";
 export const CURRENT_STORAGE_SCHEMA_VERSION = STORAGE_SCHEMA_VERSION;
 
 export const DEFAULT_COURSE_ID = "Blind75";

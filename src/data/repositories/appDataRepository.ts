@@ -1,7 +1,6 @@
 /** Repository for persisted app data stored in `chrome.storage.local`. */
 import {
   CURRENT_STORAGE_SCHEMA_VERSION,
-  LEGACY_STORAGE_KEY,
   STORAGE_KEY,
 } from "../../domain/common/constants";
 import { ensureCourseData } from "../../domain/courses/courseProgress";
@@ -17,7 +16,6 @@ import {
 import { AppData } from "../../domain/types";
 import {
   readLocalStorage,
-  removeLocalStorage,
   writeLocalStorage,
 } from "../datasources/chrome/storage";
 
@@ -52,11 +50,8 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
 
 /** Reads, migrates, and returns the current persisted app data snapshot. */
 export async function getAppData(): Promise<AppData> {
-  const result = await readLocalStorage([STORAGE_KEY, LEGACY_STORAGE_KEY]);
-  const current = result[STORAGE_KEY] as StoredAppData | undefined;
-  const legacy = result[LEGACY_STORAGE_KEY] as StoredAppData | undefined;
-  const usingLegacy = !current && !!legacy;
-  const stored = current ?? legacy;
+  const result = await readLocalStorage([STORAGE_KEY]);
+  const stored = result[STORAGE_KEY] as StoredAppData | undefined;
 
   const normalized = normalizeStoredAppData(stored);
   const storedSettings = stored?.settings;
@@ -65,7 +60,6 @@ export async function getAppData(): Promise<AppData> {
     !areUserSettingsEqual(normalized.settings, storedSettings);
   const needsWriteBack =
     !stored ||
-    usingLegacy ||
     stored.schemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION ||
     !stored.coursesById ||
     !stored.courseOrder ||
@@ -93,7 +87,6 @@ export async function saveAppData(data: AppData): Promise<void> {
 
   ensureCourseData(payload);
   await writeLocalStorage({ [STORAGE_KEY]: payload });
-  await removeLocalStorage([LEGACY_STORAGE_KEY]);
 }
 
 /** Reads, mutates, and persists the app data in a single repository operation. */
