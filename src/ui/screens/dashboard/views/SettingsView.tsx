@@ -912,7 +912,7 @@ function TimingGoalsSection(props: {
         sx={{ fontSize: `${0.75 * settingsTypeScale}rem` }}
         variant="caption"
       >
-        Unknown difficulty keeps the internal 30 minute fallback. Invalid goals are coerced when saving.
+        Questions with unknown difficulty use the Hard goal. Invalid goals are coerced when saving.
       </Typography>
     </Stack>
   );
