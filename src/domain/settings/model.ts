@@ -25,6 +25,7 @@ export interface QuestionFilterSettings {
 
 export interface TimingSettings {
   requireSolveTime: boolean;
+  hardMode: boolean;
   difficultyGoalMs: DifficultyGoalSettings;
 }
 

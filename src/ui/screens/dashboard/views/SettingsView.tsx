@@ -851,21 +851,38 @@ function TimingGoalsSection(props: {
 
   return (
     <Stack spacing={1 * settingsSpaceScale}>
-      <SwitchSetting
-        checked={props.settingsDraft.timing.requireSolveTime}
-        helper="Overlay submissions can require a recorded timer value."
-        label="Require solve time"
-        name="Require solve time"
-        onChange={(checked) => {
-          props.onUpdateSettings((current) => ({
-            ...current,
-            timing: {
-              ...current.timing,
-              requireSolveTime: checked,
-            },
-          }));
-        }}
-      />
+      <SettingsFieldGrid columns={2}>
+        <SwitchSetting
+          checked={props.settingsDraft.timing.requireSolveTime}
+          helper="Overlay submissions can require a recorded timer value."
+          label="Require solve time"
+          name="Require solve time"
+          onChange={(checked) => {
+            props.onUpdateSettings((current) => ({
+              ...current,
+              timing: {
+                ...current.timing,
+                requireSolveTime: checked,
+              },
+            }));
+          }}
+        />
+        <SwitchSetting
+          checked={props.settingsDraft.timing.hardMode}
+          helper="Enables stricter assessment criteria."
+          label="Hard mode"
+          name="Hard mode"
+          onChange={(checked) => {
+            props.onUpdateSettings((current) => ({
+              ...current,
+              timing: {
+                ...current.timing,
+                hardMode: checked,
+              },
+            }));
+          }}
+        />
+      </SettingsFieldGrid>
       <SettingsFieldGrid columns={3}>
         <TextField
           {...commonTextFieldProps}

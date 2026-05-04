@@ -185,6 +185,7 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
     typeof questionFilters.skipIgnored === "boolean" &&
     typeof questionFilters.skipPremium === "boolean" &&
     typeof timing.requireSolveTime === "boolean" &&
+    typeof timing.hardMode === "boolean" &&
     isDifficultyGoalSettings(timing.difficultyGoalMs) &&
     typeof experimental.autoDetectSolved === "boolean"
   );
@@ -253,6 +254,10 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       requireSolveTime: booleanValue(
         timing.requireSolveTime,
         initial.timing.requireSolveTime
+      ),
+      hardMode: booleanValue(
+        timing.hardMode,
+        initial.timing.hardMode
       ),
       difficultyGoalMs: sanitizeDifficultyGoalMs(
         timing.difficultyGoalMs,

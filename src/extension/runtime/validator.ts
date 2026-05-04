@@ -262,10 +262,11 @@ function validateTiming(value: unknown): void {
   }
   hasExactKeys(
     value,
-    ["requireSolveTime", "difficultyGoalMs"],
+    ["requireSolveTime", "hardMode", "difficultyGoalMs"],
     'Field "timing"'
   );
   requireOptionalBoolean(value.requireSolveTime, "timing.requireSolveTime");
+  requireOptionalBoolean(value.hardMode, "timing.hardMode");
   if (value.difficultyGoalMs !== undefined) {
     validateDifficultyGoalMs(value.difficultyGoalMs);
   }

@@ -30,6 +30,7 @@ export const INITIAL_USER_SETTINGS: UserSettings = {
   },
   timing: {
     requireSolveTime: false,
+    hardMode: false,
     difficultyGoalMs: {
       Easy: 20 * 60 * 1000,
       Medium: 35 * 60 * 1000,
