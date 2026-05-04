@@ -207,6 +207,11 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
   const timing = settingsRecord(source.timing, initial.timing);
   const experimental = settingsRecord(source.experimental, initial.experimental);
 
+  const sanitizedRequireSolveTime = booleanValue(
+    timing.requireSolveTime,
+    initial.timing.requireSolveTime
+  );
+
   return {
     dailyQuestionGoal: nonNegativeInteger(
       source.dailyQuestionGoal,
@@ -251,11 +256,8 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       ),
     },
     timing: {
-      requireSolveTime: booleanValue(
-        timing.requireSolveTime,
-        initial.timing.requireSolveTime
-      ),
-      hardMode: booleanValue(
+      requireSolveTime: sanitizedRequireSolveTime,
+      hardMode: sanitizedRequireSolveTime && booleanValue(
         timing.hardMode,
         initial.timing.hardMode
       ),

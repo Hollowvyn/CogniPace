@@ -869,6 +869,7 @@ function TimingGoalsSection(props: {
         />
         <SwitchSetting
           checked={props.settingsDraft.timing.hardMode}
+          disabled={!props.settingsDraft.timing.requireSolveTime}
           helper="Enables stricter assessment criteria."
           label="Hard mode"
           name="Hard mode"
