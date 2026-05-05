@@ -42,7 +42,7 @@ jobs:
             exit 0
           fi
 
-          scheduled_branch_pattern='^jules/(cartographer|sentinel|palette|victor)/[a-z0-9][a-z0-9-]*$'
+          scheduled_branch_pattern='^jules/(cartographer|sentinel|palette|victor)[/-][a-z0-9][a-z0-9-]*$'
           manual_branch_pattern='^jules/[a-z0-9][a-z0-9-]*$'
 
           expected_workflow=""
@@ -64,8 +64,9 @@ jobs:
 
           if [[ -n "$expected_workflow" ]]; then
             expected_pattern="^jules/${expected_workflow}/[a-z0-9][a-z0-9-]*$"
-            if [[ ! "$HEAD_REF" =~ $expected_pattern ]]; then
-              echo "Expected branch matching jules/${expected_workflow}/<change>; got ${HEAD_REF}."
+            alt_pattern="^jules/${expected_workflow}-[a-z0-9][a-z0-9-]*$"
+            if [[ ! "$HEAD_REF" =~ $expected_pattern && ! "$HEAD_REF" =~ $alt_pattern ]]; then
+              echo "Expected branch matching jules/${expected_workflow}/<change> or jules/${expected_workflow}-<change>; got ${HEAD_REF}."
               exit 1
             fi
           elif [[ "$expected_manual" == true && ! "$HEAD_REF" =~ $manual_branch_pattern ]]; then
