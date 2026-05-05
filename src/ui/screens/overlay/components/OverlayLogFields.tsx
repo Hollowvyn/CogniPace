@@ -4,7 +4,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 
-import {SurfaceSectionLabel} from "../../../components";
+import {SurfaceSectionLabel, SurfaceTooltip} from "../../../components";
 import {OverlayDraftLogFields, OverlayLogSectionViewModel} from "../overlayPanel.types";
 
 function DraftField(
@@ -27,19 +27,21 @@ function DraftField(
       InputProps={{
         endAdornment: hasValue ? (
           <InputAdornment position="end">
-            <IconButton
-              aria-label={`Clear ${props.label}`}
-              edge="end"
-              onClick={() => {
-                props.log.onChange(props.field, "");
-              }}
-              onMouseDown={(event) => {
-                event.preventDefault();
-              }}
-              size="small"
-            >
-              <ClearRounded fontSize="small"/>
-            </IconButton>
+            <SurfaceTooltip title={`Clear ${props.label}`}>
+              <IconButton
+                aria-label={`Clear ${props.label}`}
+                edge="end"
+                onClick={() => {
+                  props.log.onChange(props.field, "");
+                }}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                }}
+                size="small"
+              >
+                <ClearRounded fontSize="small"/>
+              </IconButton>
+            </SurfaceTooltip>
           </InputAdornment>
         ) : undefined,
       }}
