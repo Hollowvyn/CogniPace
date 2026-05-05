@@ -60,6 +60,7 @@ Rules:
   - `test:ui`
   - `typecheck`
   - `test:logic`
+  - `version`
 - Current docs:
   - `AGENTS.md`
   - `README.md`
@@ -108,6 +109,8 @@ Rules:
 - Dependabot is configured for weekly npm and GitHub Actions updates
 - Vulnerability alerts and automated security fixes are enabled for the current repo model
 - CodeQL remains deferred until the repo becomes public
+- SonarQube Cloud, Semgrep, and Codecov are now configured and running in CI
+- Release automation using Changesets is enabled
 - Repo-side Jules platform instructions now exist in `.jules/instructions.md`
 - New Jules PRs are automatically commented with `@codex review` so Codex can review them when the Codex GitHub
   integration is enabled
@@ -522,14 +525,17 @@ Only start this phase after the repo already has:
 ### Install First
 
 1. `SonarQube Cloud`
+   - [x] Installed and configured
    - strong PR quality and security feedback
    - free or open-source-friendly entry point
 
 2. `Semgrep`
+   - [x] Installed and configured
    - useful for browser-extension security and custom code rules
    - free community option
 
 3. `Codecov`
+   - [x] Installed and configured
    - only after coverage reporting exists
    - free for public repos
 
@@ -549,7 +555,7 @@ Only start this phase after the repo already has:
 
 ### Rules
 
-- [ ] Do not add Codecov before real coverage exists
+- [x] Do not add Codecov before real coverage exists
 - [ ] Do not add Mergify before PR throughput justifies it
 - [ ] Do not add optional third-party bots before the repo can already sustain its native workflow cleanly
 
@@ -586,7 +592,6 @@ Only start this phase after the repo already has:
 These are intentionally deferred for later:
 
 - `CLAUDE.md`
-- release automation with Changesets
 - merge queue
 - advanced coverage gating
 - browser cloud visual testing
