@@ -1,0 +1,38 @@
+--- src/extension/runtime/validator.ts
++++ src/extension/runtime/validator.ts
+@@ -575,7 +575,7 @@
+         : undefined;
+
+   if (!senderUrl) {
+-    return;
++    throw new Error("Unauthorized runtime sender.");
+   }
+
+   if (senderUrl.startsWith(extensionOrigin)) {
+--- tests/extension/runtimeValidation.test.ts
++++ tests/extension/runtimeValidation.test.ts
+@@ -62,7 +62,7 @@
+     );
+   });
+
+-  it("accepts extension senders without urls", () => {
++  it("rejects extension senders without urls", () => {
+     const message = validateRuntimeMessage({
+       type: "GET_APP_SHELL_DATA",
+       payload: {},
+@@ -70,7 +70,7 @@
+
+-    assert.doesNotThrow(() =>
++    assert.throws(() =>
+       assertAuthorizedRuntimeMessage(
+         message,
+         {
+           id: "test-extension",
+         },
+         "test-extension",
+         "chrome-extension://test-extension/"
+-      )
++      ),
++      /unauthorized runtime sender/i
+     );
+   });

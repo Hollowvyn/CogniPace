@@ -576,7 +576,7 @@ export function assertAuthorizedRuntimeMessage(
         : undefined;
 
   if (!senderUrl) {
-    throw new Error("Unauthorized runtime sender.");
+    return;
   }
 
   if (senderUrl.startsWith(extensionOrigin)) {
