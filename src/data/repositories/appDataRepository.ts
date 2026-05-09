@@ -1,4 +1,5 @@
 /** Repository for persisted app data stored in `chrome.storage.local`. */
+import { nowIso } from "../../domain/common/time";
 import {
   CURRENT_STORAGE_SCHEMA_VERSION,
   STORAGE_KEY,
@@ -18,14 +19,43 @@ import {
   readLocalStorage,
   writeLocalStorage,
 } from "../datasources/chrome/storage";
+import { buildCompanySeed } from "../catalog/companiesSeed";
+import { listCatalogPlans } from "../catalog/curatedSets";
+import { buildStudySetSeed } from "../catalog/studySetsSeed";
+import { buildTopicSeed } from "../catalog/topicsSeed";
+
+/** Sidecar key holding the pre-v7 blob (auto-export-then-wipe migration). */
+export const PRE_V7_BACKUP_KEY = `${STORAGE_KEY}_pre_v7_backup` as const;
 
 export type StoredAppData = Partial<AppData> & {
   settings?: unknown;
   schemaVersion?: number;
 };
 
+/** True when the stored blob lacks the v7 aggregate fields. */
+function needsV7SeedMigration(stored?: StoredAppData): boolean {
+  if (!stored) return true;
+  const hasTopics = stored.topicsById && Object.keys(stored.topicsById).length > 0;
+  const hasCompanies =
+    stored.companiesById && Object.keys(stored.companiesById).length > 0;
+  const hasSets =
+    stored.studySetsById && Object.keys(stored.studySetsById).length > 0;
+  return !(hasTopics && hasCompanies && hasSets);
+}
+
 /** Normalizes the stored payload into the current `AppData` runtime shape. */
 export function normalizeStoredAppData(stored?: StoredAppData): AppData {
+  const seedNow = nowIso();
+  const runMigration = needsV7SeedMigration(stored);
+
+  // Seed the v7 aggregates from catalog data when missing. The seed is
+  // idempotent — subsequent reads keep the stored values intact.
+  const seededTopics = runMigration ? buildTopicSeed(seedNow) : {};
+  const seededCompanies = runMigration ? buildCompanySeed(seedNow) : {};
+  const seededStudySets = runMigration
+    ? buildStudySetSeed(listCatalogPlans(), seedNow)
+    : { studySetsById: {}, studySetOrder: [] };
+
   const data: AppData = {
     schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
     problemsBySlug: stored?.problemsBySlug ?? {},
@@ -39,20 +69,26 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
     coursesById: stored?.coursesById ?? {},
     courseOrder: Array.isArray(stored?.courseOrder) ? stored.courseOrder : [],
     courseProgressById: stored?.courseProgressById ?? {},
-    // v7 aggregate fields (initialised empty during cutover; populated by
-    // the v7 migration runner once Phase 5 handlers wire it up).
-    topicsById: stored?.topicsById ?? {},
-    companiesById: stored?.companiesById ?? {},
-    studySetsById: stored?.studySetsById ?? {},
-    studySetOrder: Array.isArray(stored?.studySetOrder)
-      ? stored.studySetOrder
-      : [],
+    // v7 aggregate fields. Seeded on first encounter (curated topics +
+    // companies + courses); preserved as-is once the user has any data.
+    topicsById: { ...seededTopics, ...(stored?.topicsById ?? {}) },
+    companiesById: { ...seededCompanies, ...(stored?.companiesById ?? {}) },
+    studySetsById: {
+      ...seededStudySets.studySetsById,
+      ...(stored?.studySetsById ?? {}),
+    },
+    studySetOrder:
+      Array.isArray(stored?.studySetOrder) && stored.studySetOrder.length > 0
+        ? stored.studySetOrder
+        : seededStudySets.studySetOrder,
     studySetProgressById: stored?.studySetProgressById ?? {},
     settings:
       stored?.settings === undefined
         ? createInitialUserSettings()
         : sanitizeStoredUserSettings(stored.settings),
-    lastMigrationAt: stored?.lastMigrationAt,
+    lastMigrationAt: runMigration
+      ? (stored?.lastMigrationAt ?? seedNow)
+      : stored?.lastMigrationAt,
   };
 
   ensureCourseData(data);

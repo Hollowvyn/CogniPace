@@ -24,6 +24,21 @@ import {
   slugToUrl,
   uniqueStrings,
 } from "./utils";
+import { resolveSeedTopicId } from "../catalog/topicsSeed";
+
+/**
+ * Cross-walks legacy `topics: string[]` into v7 `topicIds: TopicId[]`.
+ * Unknown topic strings are dropped — custom topics enter the registry
+ * via the v7 topicRepository, not implicit imports.
+ */
+function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
+  const out: string[] = [];
+  for (const label of labels) {
+    const resolved = resolveSeedTopicId(label);
+    if (resolved && !out.includes(resolved)) out.push(resolved);
+  }
+  return out;
+}
 
 const ALLOWED_IMPORT_KEYS = new Set([
   "version",
@@ -103,11 +118,19 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
     isPremium: safeBoolean(problem.isPremium),
     url: slugToUrl(slug),
     topics: uniqueStrings(isStringArray(problem.topics) ? problem.topics : []),
-    topicIds: uniqueStrings(
-      isStringArray((problem as { topicIds?: unknown }).topicIds)
-        ? ((problem as { topicIds: string[] }).topicIds)
-        : []
-    ),
+    topicIds: (() => {
+      const labels = uniqueStrings(
+        isStringArray(problem.topics) ? problem.topics : []
+      );
+      const explicit = uniqueStrings(
+        isStringArray((problem as { topicIds?: unknown }).topicIds)
+          ? (problem as { topicIds: string[] }).topicIds
+          : []
+      );
+      // If the import already carries v7 topicIds, trust them; otherwise
+      // derive from the legacy `topics` labels via the curated seed.
+      return explicit.length > 0 ? explicit : deriveTopicIdsFromLabels(labels);
+    })(),
     companyIds: uniqueStrings(
       isStringArray((problem as { companyIds?: unknown }).companyIds)
         ? ((problem as { companyIds: string[] }).companyIds)
