@@ -2,11 +2,12 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 
 import {FieldAssistRow} from "../../../components";
+import {cognipaceControlScale} from "../../../theme";
 import {ExpandedOverlayActionsViewModel, OverlayAssistViewModel} from "../overlayPanel.types";
 
 const actionButtonSx = {
   flex: 1,
-  minHeight: 44,
+  minHeight: cognipaceControlScale.overlayActionMinHeight,
   minWidth: 0,
   overflow: "hidden",
   textOverflow: "ellipsis",
@@ -61,6 +62,8 @@ export function ExpandedOverlayActions(
         disabled={!props.actions.canFail}
         fullWidth
         onClick={props.actions.onFail}
+        size="small"
+        sx={{minHeight: cognipaceControlScale.compactButtonMinHeight}}
         variant="outlined"
       >
         I couldn&apos;t finish :(
