@@ -4,10 +4,12 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import type { ReviewOrder, UserSettings } from "../../../../../../domain/settings";
+
 import { SurfaceControlRow } from "../../../../../components";
 import { SelectSetting } from "../components/SettingsInputs";
 import { SettingsUpdate } from "../settingsTypes";
+
+import type { ReviewOrder, UserSettings } from "../../../../../../domain/settings";
 
 const retentionMarks = [
   { label: "70%", value: 0.7 },
