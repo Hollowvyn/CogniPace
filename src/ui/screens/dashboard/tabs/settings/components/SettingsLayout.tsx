@@ -6,7 +6,6 @@ import { ReactNode } from "react";
 import { SurfaceCard } from "../../../../../components";
 
 type SettingsSectionWidth = "full" | "half" | "narrow" | "wide";
-type SettingsSectionTone = "danger" | "default";
 
 const sectionColumns: Record<SettingsSectionWidth, { md: string; xs: string }> =
   {
@@ -44,7 +43,6 @@ export function SettingsSection(props: {
   description: string;
   eyebrow: string;
   title: string;
-  tone?: SettingsSectionTone;
   width: SettingsSectionWidth;
 }) {
   return (

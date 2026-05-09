@@ -1,6 +1,7 @@
 /** Dashboard-local controller for route state, filters, settings draft, and runtime mutations. */
 import {
   startTransition,
+  useCallback,
   useDeferredValue,
   useEffect,
   useMemo,
@@ -110,11 +111,14 @@ export function useDashboardController() {
     [courseId, deferredQuery, difficulty, filterStatus, payload?.library]
   );
 
-  async function refresh(clearStatus = true): Promise<void> {
-    await load({ clearStatusOnSuccess: clearStatus });
-  }
+  const refresh = useCallback(
+    async (clearStatus = true): Promise<void> => {
+      await load({ clearStatusOnSuccess: clearStatus });
+    },
+    [load]
+  );
 
-  function navigateToView(nextView: DashboardView): void {
+  const navigateToView = useCallback((nextView: DashboardView): void => {
     startTransition(() => {
       setView(nextView);
     });
@@ -123,46 +127,52 @@ export function useDashboardController() {
       "",
       buildDashboardUrl(window.location.href, nextView)
     );
-  }
+  }, []);
 
-  async function runMutation<T extends { ok: boolean; error?: string }>(
-    action: Promise<T>,
-    successMessage?: string
-  ): Promise<boolean> {
-    const response = await action;
-    if (!response.ok) {
-      setStatus({
-        message: response.error ?? "Action failed.",
-        isError: true,
-      });
-      return false;
-    }
+  const runMutation = useCallback(
+    async <T extends { ok: boolean; error?: string }>(
+      action: Promise<T>,
+      successMessage?: string
+    ): Promise<boolean> => {
+      const response = await action;
+      if (!response.ok) {
+        setStatus({
+          message: response.error ?? "Action failed.",
+          isError: true,
+        });
+        return false;
+      }
 
-    if (successMessage) {
-      setStatus({
-        message: successMessage,
-        isError: false,
-      });
-    }
-    await load({ clearStatusOnSuccess: false });
-    return true;
-  }
+      if (successMessage) {
+        setStatus({
+          message: successMessage,
+          isError: false,
+        });
+      }
+      await load({ clearStatusOnSuccess: false });
+      return true;
+    },
+    [load, setStatus]
+  );
 
-  async function onOpenProblem(target: {
-    slug: string;
-    chapterId?: string;
-    courseId?: string;
-  }): Promise<void> {
-    const response = await openProblemPage(target);
-    if (!response.ok) {
-      setStatus({
-        message: response.error ?? "Failed to open problem.",
-        isError: true,
-      });
-    }
-  }
+  const onOpenProblem = useCallback(
+    async (target: {
+      slug: string;
+      chapterId?: string;
+      courseId?: string;
+    }): Promise<void> => {
+      const response = await openProblemPage(target);
+      if (!response.ok) {
+        setStatus({
+          message: response.error ?? "Failed to open problem.",
+          isError: true,
+        });
+      }
+    },
+    [setStatus]
+  );
 
-  async function onToggleMode(): Promise<void> {
+  const onToggleMode = useCallback(async (): Promise<void> => {
     const nextMode =
       payload?.settings.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
     if (!nextMode) {
@@ -173,21 +183,22 @@ export function useDashboardController() {
       updateSettings({ studyMode: nextMode }),
       "Study mode updated."
     );
-  }
+  }, [payload?.settings.studyMode, runMutation]);
 
-  function updateSettingsDraft(
-    updater: (current: UserSettings) => UserSettings
-  ) {
-    setSettingsDraftState((current) =>
-      updater(
-        cloneUserSettings(
-          current ?? payload?.settings ?? createInitialUserSettings()
+  const updateSettingsDraft = useCallback(
+    (updater: (current: UserSettings) => UserSettings) => {
+      setSettingsDraftState((current) =>
+        updater(
+          cloneUserSettings(
+            current ?? payload?.settings ?? createInitialUserSettings()
+          )
         )
-      )
-    );
-  }
+      );
+    },
+    [payload?.settings, setSettingsDraftState]
+  );
 
-  async function onSaveSettings(): Promise<void> {
+  const onSaveSettings = useCallback(async (): Promise<void> => {
     if (!hasSettingsChanges || !draftSettings) {
       return;
     }
@@ -221,13 +232,20 @@ export function useDashboardController() {
     if (isExtensionContext()) {
       await load({ clearStatusOnSuccess: false });
     }
-  }
+  }, [
+    draftSettings,
+    hasSettingsChanges,
+    load,
+    setPayload,
+    setSettingsDraftState,
+    setStatus,
+  ]);
 
-  function onDiscardSettings(): void {
+  const onDiscardSettings = useCallback((): void => {
     setSettingsDraftState(null);
-  }
+  }, [setSettingsDraftState]);
 
-  async function onResetSettingsToDefaults(): Promise<void> {
+  const onResetSettingsToDefaults = useCallback(async (): Promise<void> => {
     const nextSettings = createInitialUserSettings();
     const response = await updateSettings(nextSettings);
     if (!response.ok) {
@@ -255,13 +273,13 @@ export function useDashboardController() {
     if (isExtensionContext()) {
       await load({ clearStatusOnSuccess: false });
     }
-  }
+  }, [load, setPayload, setSettingsDraftState, setStatus]);
 
-  async function onResetStudyHistory(): Promise<void> {
+  const onResetStudyHistory = useCallback(async (): Promise<void> => {
     await runMutation(resetStudyHistory(), "Study history reset.");
-  }
+  }, [runMutation]);
 
-  async function onExportData(): Promise<void> {
+  const onExportData = useCallback(async (): Promise<void> => {
     const response = await exportData();
     if (!response.ok || !response.data) {
       setStatus({
@@ -276,9 +294,9 @@ export function useDashboardController() {
       message: "Backup exported.",
       isError: false,
     });
-  }
+  }, [setStatus]);
 
-  async function onImportData(): Promise<void> {
+  const onImportData = useCallback(async (): Promise<void> => {
     if (!importFile) {
       setStatus({
         message: "Choose a backup file first.",
@@ -308,42 +326,48 @@ export function useDashboardController() {
     }
 
     await runMutation(importData(parsed), "Backup imported.");
-  }
+  }, [importFile, runMutation, setStatus]);
 
-  async function onSubmitCourseForm(form: CourseFormState): Promise<boolean> {
-    const resolvedForm = resolveCourseForm(payload, form);
-    if (!resolvedForm.input.trim()) {
-      setStatus({
-        message: "Provide a LeetCode slug or URL.",
-        isError: true,
-      });
-      return false;
-    }
+  const onSubmitCourseForm = useCallback(
+    async (form: CourseFormState): Promise<boolean> => {
+      const resolvedForm = resolveCourseForm(payload, form);
+      if (!resolvedForm.input.trim()) {
+        setStatus({
+          message: "Provide a LeetCode slug or URL.",
+          isError: true,
+        });
+        return false;
+      }
 
-    return runMutation(
-      addProblemToCourse({
-        courseId: resolvedForm.courseId,
-        chapterId: resolvedForm.chapterId,
-        input: resolvedForm.input.trim(),
-        markAsStarted: resolvedForm.markAsStarted,
-      }),
-      "Question appended to the course."
-    );
-  }
+      return runMutation(
+        addProblemToCourse({
+          courseId: resolvedForm.courseId,
+          chapterId: resolvedForm.chapterId,
+          input: resolvedForm.input.trim(),
+          markAsStarted: resolvedForm.markAsStarted,
+        }),
+        "Question appended to the course."
+      );
+    },
+    [payload, runMutation, setStatus]
+  );
 
-  async function onSwitchCourse(courseId: string): Promise<void> {
-    await runMutation(switchActiveCourse(courseId), "Active course updated.");
-  }
+  const onSwitchCourse = useCallback(
+    async (courseId: string): Promise<void> => {
+      await runMutation(switchActiveCourse(courseId), "Active course updated.");
+    },
+    [runMutation]
+  );
 
-  async function onSetChapter(
-    courseId: string,
-    chapterId: string
-  ): Promise<void> {
-    await runMutation(
-      setActiveCourseChapter(courseId, chapterId),
-      "Active chapter updated."
-    );
-  }
+  const onSetChapter = useCallback(
+    async (courseId: string, chapterId: string): Promise<void> => {
+      await runMutation(
+        setActiveCourseChapter(courseId, chapterId),
+        "Active chapter updated."
+      );
+    },
+    [runMutation]
+  );
 
   return {
     draftSettings,
