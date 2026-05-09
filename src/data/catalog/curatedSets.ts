@@ -1728,3 +1728,22 @@ export function getCurriculumRecommendations(
     completed: false,
   };
 }
+
+/**
+ * v7 helper — returns the curated plan inputs in the structural shape
+ * expected by `studySetsSeed.buildStudySetSeed`. Kept here so the original
+ * STUDY_PLAN_INPUTS list remains the single catalog source of truth.
+ */
+export function listCatalogPlans(): Array<{
+  id: string;
+  name: string;
+  description: string;
+  sections: TopicPathSection[];
+}> {
+  return STUDY_PLAN_INPUTS.map((plan) => ({
+    id: plan.id,
+    name: plan.name,
+    description: plan.description,
+    sections: plan.sections,
+  }));
+}
