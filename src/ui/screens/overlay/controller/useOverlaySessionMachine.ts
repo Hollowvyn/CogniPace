@@ -294,6 +294,7 @@ export function useOverlaySessionMachine(
       rating: Rating,
       options?: {
         lockFailureRating?: boolean;
+        solveTimeMs?: number;
       }
     ): Promise<string | null> => {
       if (!state.activeSlug || state.submittedSession) {
@@ -304,7 +305,7 @@ export function useOverlaySessionMachine(
         timer.pause();
       }
 
-      const elapsedMs = timer.readElapsedMs();
+      const elapsedMs = options?.solveTimeMs ?? timer.readElapsedMs();
       const solveTimeMs = elapsedMs > 0 ? elapsedMs : undefined;
       const mode = defaultReviewMode(state.currentState);
       const draftSnapshot = cloneDraft(state.draft);

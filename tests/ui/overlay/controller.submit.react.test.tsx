@@ -12,6 +12,22 @@ import {
   runtimeOk,
 } from "./controller.support";
 
+const EASY_GOAL_MS = 20 * 60 * 1000;
+
+function makePayloadWithHardMode(hardMode: boolean) {
+  const payload = makePayload();
+  payload.settings.timing = {
+    ...payload.settings.timing,
+    difficultyGoalMs: {
+      ...payload.settings.timing.difficultyGoalMs,
+      Easy: EASY_GOAL_MS,
+    },
+    hardMode,
+    requireSolveTime: hardMode,
+  };
+  return payload;
+}
+
 describe("Overlay Controller Submission", () => {
   it("saves from compact mode and expands while preserving elapsed time", async () => {
     let nowMs = 1000;
@@ -108,6 +124,147 @@ describe("Overlay Controller Submission", () => {
 
       const againButton = await screen.findByRole("button", { name: /Again/i });
       expect(againButton).toHaveAttribute("aria-pressed", "true");
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
+
+  it("forces compact Hard Mode overtime submissions to Again and locks higher ratings", async () => {
+    let nowMs = 1000;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => nowMs);
+
+    try {
+      mockCountingBitsRuntime({
+        handle: (type) => {
+          if (type === "SAVE_REVIEW_RESULT") return runtimeOk();
+          if (type === "GET_APP_SHELL_DATA") {
+            return runtimeOk(makePayloadWithHardMode(true));
+          }
+          return undefined;
+        },
+      });
+
+      const { harness, user } = renderOverlayRoot(
+        createOverlayHarness(COUNTING_BITS_PAGE)
+      );
+
+      await user.click(
+        await screen.findByRole("button", { name: "Start timer" })
+      );
+      nowMs = 1000 + EASY_GOAL_MS + 1000;
+      harness.runIntervalTick();
+
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      await waitFor(() => {
+        expect(sendMessageMock).toHaveBeenCalledWith(
+          "SAVE_REVIEW_RESULT",
+          expect.objectContaining({
+            rating: 0,
+            solveTimeMs: EASY_GOAL_MS + 1000,
+          })
+        );
+      });
+
+      expect(
+        await screen.findByText("Overtime in Hard Mode forces an Again assessment.")
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Again Failed" })).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+      expect(screen.getByRole("button", { name: "Easy Fast" })).toBeDisabled();
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
+
+  it("uses the latest elapsed time for expanded Hard Mode overtime submissions", async () => {
+    let nowMs = 1000;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => nowMs);
+
+    try {
+      mockCountingBitsRuntime({
+        handle: (type) => {
+          if (type === "SAVE_REVIEW_RESULT") return runtimeOk();
+          if (type === "GET_APP_SHELL_DATA") {
+            return runtimeOk(makePayloadWithHardMode(true));
+          }
+          return undefined;
+        },
+      });
+
+      const { user } = renderOverlayRoot(createOverlayHarness(COUNTING_BITS_PAGE));
+
+      await user.click(
+        await screen.findByRole("button", { name: "Expand overlay" })
+      );
+      await user.click(screen.getByRole("button", { name: "Easy Fast" }));
+      await user.click(screen.getByRole("button", { name: "Start" }));
+
+      nowMs = 1000 + EASY_GOAL_MS + 1;
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      await waitFor(() => {
+        expect(sendMessageMock).toHaveBeenCalledWith(
+          "SAVE_REVIEW_RESULT",
+          expect.objectContaining({
+            rating: 0,
+            solveTimeMs: EASY_GOAL_MS + 1,
+          })
+        );
+      });
+
+      expect(
+        await screen.findByRole("button", { name: "Again Failed" })
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Good Stable" })).toBeDisabled();
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
+
+  it("keeps normal overtime as Hard without locking assessment choices", async () => {
+    let nowMs = 1000;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => nowMs);
+
+    try {
+      mockCountingBitsRuntime({
+        handle: (type) => {
+          if (type === "SAVE_REVIEW_RESULT") return runtimeOk();
+          if (type === "GET_APP_SHELL_DATA") {
+            return runtimeOk(makePayloadWithHardMode(false));
+          }
+          return undefined;
+        },
+      });
+
+      const { harness, user } = renderOverlayRoot(
+        createOverlayHarness(COUNTING_BITS_PAGE)
+      );
+
+      await user.click(
+        await screen.findByRole("button", { name: "Start timer" })
+      );
+      nowMs = 1000 + EASY_GOAL_MS + 1000;
+      harness.runIntervalTick();
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      await waitFor(() => {
+        expect(sendMessageMock).toHaveBeenCalledWith(
+          "SAVE_REVIEW_RESULT",
+          expect.objectContaining({
+            rating: 1,
+            solveTimeMs: EASY_GOAL_MS + 1000,
+          })
+        );
+      });
+
+      expect(
+        await screen.findByRole("button", { name: "Hard Lagging" })
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Easy Fast" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Good Stable" })).toBeEnabled();
     } finally {
       dateNowSpy.mockRestore();
     }

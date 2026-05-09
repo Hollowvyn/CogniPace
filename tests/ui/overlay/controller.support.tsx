@@ -1,6 +1,6 @@
 import { StudyState } from "../../../src/domain/types";
 import { OverlayRoot } from "../../../src/ui/screens/overlay/OverlayRoot";
-import { render } from "../support/render";
+import { act, render } from "../support/render";
 import { sendMessageMock } from "../support/setup";
 
 export type OverlayPageDifficulty = "Easy" | "Medium" | "Hard" | "Unknown";
@@ -146,16 +146,20 @@ export function createOverlayHarness(initialPage: OverlayPageFixture): OverlayHa
   return {
     documentRef: overlayDocument,
     runIntervalTick: () => {
-      for (const callback of intervals.values()) {
-        callback();
-      }
+      act(() => {
+        for (const callback of intervals.values()) {
+          callback();
+        }
+      });
     },
     runPendingTimeouts: () => {
-      const pending = [...timeouts.entries()];
-      timeouts.clear();
-      for (const [, callback] of pending) {
-        callback();
-      }
+      act(() => {
+        const pending = [...timeouts.entries()];
+        timeouts.clear();
+        for (const [, callback] of pending) {
+          callback();
+        }
+      });
     },
     setPage,
     windowRef,

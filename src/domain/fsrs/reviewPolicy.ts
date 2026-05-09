@@ -22,7 +22,8 @@ export function defaultReviewMode(
 /** Derives the default quick rating from the recorded solve time and difficulty target. */
 export function deriveQuickRating(
   elapsedMs: number | undefined,
-  goalMs: number
+  goalMs: number,
+  hardMode = false
 ): Rating {
   if (!elapsedMs || elapsedMs <= 0) {
     return 2;
@@ -32,11 +33,7 @@ export function deriveQuickRating(
     return 2;
   }
 
-  if (elapsedMs <= goalMs * 1.5) {
-    return 1;
-  }
-
-  return 0;
+  return hardMode ? 0 : 1;
 }
 
 /** Returns the target solve-time budget for a given difficulty. */

@@ -24,7 +24,7 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
-import { ChangeEvent, ReactNode, useRef, useState } from "react";
+import { ChangeEvent, ReactNode, useState } from "react";
 
 import { ReviewOrder, StudyMode, UserSettings } from "../../../../domain/settings";
 import { SurfaceSectionLabel } from "../../../components";
@@ -782,39 +782,23 @@ function TimingGoalsSection(props: {
   const draftMediumMs = props.settingsDraft.timing.difficultyGoalMs.Medium;
   const draftHardMs = props.settingsDraft.timing.difficultyGoalMs.Hard;
 
-  const [easyStr, setEasyStr] = useState(String(Math.round(draftEasyMs / 60000)));
-  const [mediumStr, setMediumStr] = useState(String(Math.round(draftMediumMs / 60000)));
-  const [hardStr, setHardStr] = useState(String(Math.round(draftHardMs / 60000)));
+  const [easyDraft, setEasyDraft] = useState(() =>
+    createGoalTextDraft(draftEasyMs)
+  );
+  const [mediumDraft, setMediumDraft] = useState(() =>
+    createGoalTextDraft(draftMediumMs)
+  );
+  const [hardDraft, setHardDraft] = useState(() =>
+    createGoalTextDraft(draftHardMs)
+  );
 
-  const lastEasyMs = useRef(draftEasyMs);
-  const lastMediumMs = useRef(draftMediumMs);
-  const lastHardMs = useRef(draftHardMs);
+  const easyStr = resolveGoalTextDraft(easyDraft, draftEasyMs).value;
+  const mediumStr = resolveGoalTextDraft(mediumDraft, draftMediumMs).value;
+  const hardStr = resolveGoalTextDraft(hardDraft, draftHardMs).value;
 
-  if (draftEasyMs !== lastEasyMs.current) {
-    lastEasyMs.current = draftEasyMs;
-    const parsedStr = easyStr === "" ? 0 : parseInt(easyStr, 10);
-    if (Math.round(draftEasyMs / 60000) !== parsedStr) {
-      setEasyStr(String(Math.round(draftEasyMs / 60000)));
-    }
-  }
-  if (draftMediumMs !== lastMediumMs.current) {
-    lastMediumMs.current = draftMediumMs;
-    const parsedStr = mediumStr === "" ? 0 : parseInt(mediumStr, 10);
-    if (Math.round(draftMediumMs / 60000) !== parsedStr) {
-      setMediumStr(String(Math.round(draftMediumMs / 60000)));
-    }
-  }
-  if (draftHardMs !== lastHardMs.current) {
-    lastHardMs.current = draftHardMs;
-    const parsedStr = hardStr === "" ? 0 : parseInt(hardStr, 10);
-    if (Math.round(draftHardMs / 60000) !== parsedStr) {
-      setHardStr(String(Math.round(draftHardMs / 60000)));
-    }
-  }
-
-  const easyMin = easyStr === "" ? 0 : parseInt(easyStr, 10);
-  const mediumMin = mediumStr === "" ? 0 : parseInt(mediumStr, 10);
-  const hardMin = hardStr === "" ? 0 : parseInt(hardStr, 10);
+  const easyMin = parseGoalMinutes(easyStr);
+  const mediumMin = parseGoalMinutes(mediumStr);
+  const hardMin = parseGoalMinutes(hardStr);
 
   const easyError = easyStr === "" ? "Required" : easyMin < 10 ? "Min 10" : easyMin > 58 ? "Max 58" : mediumStr !== "" && easyMin >= mediumMin ? "Must be < Medium" : undefined;
   const mediumError = mediumStr === "" ? "Required" : mediumMin > 59 ? "Max 59" : easyStr !== "" && mediumMin <= easyMin ? "Must be > Easy" : hardStr !== "" && mediumMin >= hardMin ? "Must be < Hard" : undefined;
@@ -827,9 +811,9 @@ function TimingGoalsSection(props: {
         ...current.timing,
         difficultyGoalMs: {
           ...current.timing.difficultyGoalMs,
-          Easy: eMin * 60000,
-          Medium: mMin * 60000,
-          Hard: hMin * 60000,
+          Easy: minutesToMs(eMin),
+          Medium: minutesToMs(mMin),
+          Hard: minutesToMs(hMin),
         },
       },
     }));
@@ -893,8 +877,9 @@ function TimingGoalsSection(props: {
           onChange={(event) => {
             const raw = event.target.value;
             if (raw !== "" && !/^\d+$/.test(raw)) return;
-            setEasyStr(raw);
-            updateDraftMs(raw === "" ? 0 : parseInt(raw, 10), mediumMin, hardMin);
+            const minutes = parseGoalMinutes(raw);
+            setEasyDraft({ sourceMs: minutesToMs(minutes), value: raw });
+            updateDraftMs(minutes, mediumMin, hardMin);
           }}
           value={easyStr}
         />
@@ -906,8 +891,9 @@ function TimingGoalsSection(props: {
           onChange={(event) => {
             const raw = event.target.value;
             if (raw !== "" && !/^\d+$/.test(raw)) return;
-            setMediumStr(raw);
-            updateDraftMs(easyMin, raw === "" ? 0 : parseInt(raw, 10), hardMin);
+            const minutes = parseGoalMinutes(raw);
+            setMediumDraft({ sourceMs: minutesToMs(minutes), value: raw });
+            updateDraftMs(easyMin, minutes, hardMin);
           }}
           value={mediumStr}
         />
@@ -919,8 +905,9 @@ function TimingGoalsSection(props: {
           onChange={(event) => {
             const raw = event.target.value;
             if (raw !== "" && !/^\d+$/.test(raw)) return;
-            setHardStr(raw);
-            updateDraftMs(easyMin, mediumMin, raw === "" ? 0 : parseInt(raw, 10));
+            const minutes = parseGoalMinutes(raw);
+            setHardDraft({ sourceMs: minutesToMs(minutes), value: raw });
+            updateDraftMs(easyMin, mediumMin, minutes);
           }}
           value={hardStr}
         />
@@ -1111,4 +1098,39 @@ function msToMinutes(value: number): number {
 
 function minutesToMs(value: number): number {
   return Math.round(value) * 60000;
+}
+
+interface GoalTextDraft {
+  sourceMs: number;
+  value: string;
+}
+
+function createGoalTextDraft(sourceMs: number): GoalTextDraft {
+  return {
+    sourceMs,
+    value: String(msToMinutes(sourceMs)),
+  };
+}
+
+function parseGoalMinutes(value: string): number {
+  return value === "" ? 0 : parseInt(value, 10);
+}
+
+function resolveGoalTextDraft(
+  draft: GoalTextDraft,
+  sourceMs: number
+): GoalTextDraft {
+  if (draft.sourceMs === sourceMs) {
+    return draft;
+  }
+
+  const nextMinutes = msToMinutes(sourceMs);
+  if (parseGoalMinutes(draft.value) === nextMinutes) {
+    return {
+      sourceMs,
+      value: draft.value,
+    };
+  }
+
+  return createGoalTextDraft(sourceMs);
 }
