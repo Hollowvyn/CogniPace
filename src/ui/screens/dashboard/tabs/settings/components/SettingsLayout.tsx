@@ -5,10 +5,9 @@ import { ReactNode } from "react";
 
 import {
   SurfaceActionBar,
+  SurfaceCard,
   SurfaceControlRow,
   SurfaceFieldGrid,
-  SurfacePanel,
-  SurfaceSectionLabel,
 } from "../../../../../components";
 
 type SettingsSectionWidth = "full" | "half" | "narrow" | "wide";
@@ -35,7 +34,7 @@ export function SettingsGrid(props: { children: ReactNode }) {
     <Box
       sx={{
         display: "grid",
-        gap: { md: 1.75, xs: 1.4 },
+        gap: { md: 2, xs: 2 },
         gridTemplateColumns: { md: "repeat(12, minmax(0, 1fr))", xs: "1fr" },
         width: "100%",
       }}
@@ -53,33 +52,24 @@ export function SettingsSection(props: {
   tone?: SettingsSectionTone;
   width: SettingsSectionWidth;
 }) {
-  const isDanger = props.tone === "danger";
-
   return (
-    <SurfacePanel
-      variant={isDanger ? "solid" : "chrome"}
+    <SurfaceCard
+      label={props.eyebrow}
+      title={props.title}
       sx={{
         gridColumn: {
           md: sectionColumns[props.width].md,
           xs: sectionColumns[props.width].xs,
         },
-        minWidth: 0,
-        p: { md: 2.25, xs: 1.75 },
       }}
     >
-      <Stack spacing={1.55}>
-        <Box>
-          <SurfaceSectionLabel>{props.eyebrow}</SurfaceSectionLabel>
-          <Typography component="h2" variant="h6">
-            {props.title}
-          </Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.35 }} variant="body2">
-            {props.description}
-          </Typography>
-        </Box>
+      <Typography color="text.secondary" variant="body2" sx={{ mt: -0.5, mb: 1.5 }}>
+        {props.description}
+      </Typography>
+      <Stack spacing={1.5}>
         {props.children}
       </Stack>
-    </SurfacePanel>
+    </SurfaceCard>
   );
 }
 

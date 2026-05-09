@@ -190,7 +190,7 @@ export function SurfacePanel(props: {
       ? alpha(cognipaceTokens.backgroundAlt, 0.72)
       : variant === "solid"
         ? alpha(cognipaceTokens.paperStrong, 0.84)
-        : alpha(cognipaceTokens.backgroundAlt, 0.86);
+        : alpha(cognipaceTokens.paperStrong, 0.88);
   const borderColor =
     variant === "nested"
       ? alpha(cognipaceTokens.outlineStrong, 0.22)
@@ -489,6 +489,7 @@ export function SurfaceNavButton(props: {
       sx={{
         backgroundColor: active ? alpha(cognipaceTokens.accent, 0.12) : "transparent",
         borderColor: active ? "primary.light" : alpha(cognipaceTokens.outlineStrong, 0.22),
+        boxShadow: "none",
         color: active ? "primary.light" : "text.secondary",
         justifyContent: "flex-start",
         minHeight: 38,
