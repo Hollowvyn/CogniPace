@@ -68,13 +68,13 @@ describe("runtime validation", () => {
     );
   });
 
-  it("accepts extension senders without urls", () => {
+  it("rejects extension senders without urls", () => {
     const message = validateRuntimeMessage({
       type: "GET_APP_SHELL_DATA",
       payload: {},
     });
 
-    assert.doesNotThrow(() =>
+    assert.throws(() =>
       assertAuthorizedRuntimeMessage(
         message,
         {
