@@ -2,19 +2,22 @@
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import LinearProgress from "@mui/material/LinearProgress";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
-import { AppShellPayload } from "../../../../domain/views";
-import { MetricCard, SurfaceCard } from "../../../components";
-import { CourseRosterCard } from "../components/CourseRosterCard";
+import { AppShellPayload } from "../../../../../domain/views";
+import {
+  InsetSurface,
+  MetricCard,
+  SurfaceCard,
+  SurfaceTableContainer,
+} from "../../../../components";
+import { CourseRosterCard } from "../../components/CourseRosterCard";
 
 export interface AnalyticsViewProps {
   onSwitchCourse: (courseId: string) => Promise<void>;
@@ -29,7 +32,7 @@ export function AnalyticsView(props: AnalyticsViewProps) {
 
   return (
     <Stack spacing={2}>
-      <Grid container spacing={1.5}>
+      <Grid container spacing={2}>
         <Grid size={{ md: 4, xs: 12 }}>
           <MetricCard
             caption="Consecutive active review days."
@@ -56,24 +59,25 @@ export function AnalyticsView(props: AnalyticsViewProps) {
       <SurfaceCard label="FSRS" title="Scheduler Signals">
         <Grid container spacing={2}>
           <Grid size={{ md: 6, xs: 12 }}>
-            <Paper sx={{ p: 2 }}>
-              <Stack spacing={1.5}>
+            <InsetSurface sx={{ p: 2 }}>
+              <Stack spacing={2}>
                 <Typography variant="h6">Average Retention Rate</Typography>
                 <Typography color="text.secondary" variant="body2">
-                  Percentage of recent reviews rated Good or Easy. Target is roughly
-                  85-90%.
+                  Percentage of recent reviews rated Good or Easy. Target is
+                  roughly 85-90%.
                 </Typography>
                 <Box>
                   <Typography variant="h3">
-                    {Math.round((payload?.analytics.retentionProxy ?? 0) * 100)}%
+                    {Math.round((payload?.analytics.retentionProxy ?? 0) * 100)}
+                    %
                   </Typography>
                 </Box>
               </Stack>
-            </Paper>
+            </InsetSurface>
           </Grid>
           <Grid size={{ md: 6, xs: 12 }}>
-            <Paper sx={{ p: 2 }}>
-              <Stack spacing={1.5}>
+            <InsetSurface sx={{ p: 2 }}>
+              <Stack spacing={2}>
                 <Typography variant="h6">Difficulty Spread</Typography>
                 <Typography color="text.secondary" variant="body2">
                   Higher FSRS difficulty means a problem is harder to retain.
@@ -108,16 +112,16 @@ export function AnalyticsView(props: AnalyticsViewProps) {
                   ) : null}
                 </Stack>
               </Stack>
-            </Paper>
+            </InsetSurface>
           </Grid>
         </Grid>
       </SurfaceCard>
 
       <SurfaceCard label="Due Forecast" title="Next 14 Days">
-        <Grid container spacing={1.5}>
+        <Grid container spacing={2}>
           {dueByDay.map((point) => (
             <Grid key={point.date} size={{ md: 6, xl: 4, xs: 12 }}>
-              <Paper sx={{ p: 2 }}>
+              <InsetSurface sx={{ p: 2 }}>
                 <Stack spacing={1.25}>
                   <Stack
                     alignItems="center"
@@ -135,7 +139,7 @@ export function AnalyticsView(props: AnalyticsViewProps) {
                     variant="determinate"
                   />
                 </Stack>
-              </Paper>
+              </InsetSurface>
             </Grid>
           ))}
         </Grid>
@@ -144,7 +148,7 @@ export function AnalyticsView(props: AnalyticsViewProps) {
       <Grid container spacing={2}>
         <Grid size={{ lg: 8, xs: 12 }}>
           <SurfaceCard label="Weakest Problems" title="Highest Lapse Pressure">
-            <TableContainer component={Paper}>
+            <SurfaceTableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -161,9 +165,18 @@ export function AnalyticsView(props: AnalyticsViewProps) {
                       <TableCell>{problem.difficulty.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
+                  {weakest.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Typography color="text.secondary" variant="body2">
+                          No weak-problem data yet.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </SurfaceTableContainer>
           </SurfaceCard>
         </Grid>
         <Grid size={{ lg: 4, xs: 12 }}>

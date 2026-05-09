@@ -55,6 +55,8 @@ Responsibilities:
 - mount the shared provider stack and theme
 - own dashboard-local state such as filters, settings draft, and import file
 - preserve the `?view=` deep-link contract
+- keep tab-specific UI in `src/ui/screens/dashboard/tabs/*` while shared dashboard shell and surface wrappers stay in
+  `src/ui/screens/dashboard/components/*`
 
 ### Overlay
 
@@ -208,7 +210,7 @@ in-memory payloads or reading `chrome.storage` directly from UI code.
 ## Where To Change Things
 
 - Popup UI: `src/ui/screens/popup/*`
-- Dashboard UI: `src/ui/screens/dashboard/*`
+- Dashboard UI: `src/ui/screens/dashboard/*`, with tab screens under `src/ui/screens/dashboard/tabs/*`
 - Overlay UI: `src/ui/screens/overlay/*`
 - Shared providers and theme: `src/ui/providers.tsx`, `src/ui/theme.ts`
 - Shared cards/widgets: `src/ui/features/*`

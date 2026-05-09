@@ -1,12 +1,11 @@
 /** Compact course summary card used in dashboard course roster lists. */
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { CourseCardView } from "../../../../domain/views";
-import { ProgressTrack, ToneChip } from "../../../components";
+import { InsetSurface, ProgressTrack, ToneChip } from "../../../components";
 
 export interface CourseRosterCardProps {
   course: CourseCardView;
@@ -17,8 +16,8 @@ export function CourseRosterCard(props: CourseRosterCardProps) {
   const course = props.course;
 
   return (
-    <Paper sx={{ p: 1.75 }}>
-      <Stack spacing={1.25}>
+    <InsetSurface sx={{ p: 2 }}>
+      <Stack spacing={1.5}>
         <Stack
           alignItems="center"
           direction="row"
@@ -69,6 +68,6 @@ export function CourseRosterCard(props: CourseRosterCardProps) {
           </Button>
         </Stack>
       </Stack>
-    </Paper>
+    </InsetSurface>
   );
 }

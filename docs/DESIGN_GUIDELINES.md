@@ -38,6 +38,10 @@ The UI should feel like a sharp browser tool rather than a marketing site or mob
 - dashboard shell and settings work should compose local dashboard surface primitives rather than one-off nested paper
   panels
 - dashboard sections should use inset rows and grouped controls for dense settings instead of card grids inside cards
+- dashboard cards, inset rows, tables, metrics, status regions, and action bars should be composed from the shared
+  CogniPace primitives in `src/ui/components/index.tsx`
+- screen code should rely on theme spacing and semantic palette values rather than local color literals or custom spacing
+  scales
 
 ## Overlay Guidelines
 

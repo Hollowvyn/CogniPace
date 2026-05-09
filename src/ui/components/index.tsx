@@ -1,19 +1,23 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
-import IconButton, {IconButtonProps} from "@mui/material/IconButton";
+import Divider from "@mui/material/Divider";
+import IconButton, { IconButtonProps } from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import {alpha, Theme} from "@mui/material/styles";
-import Tooltip, {TooltipProps} from "@mui/material/Tooltip";
+import { alpha, Theme } from "@mui/material/styles";
+import TableContainer from "@mui/material/TableContainer";
+import Tooltip, { TooltipProps } from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import {SxProps} from "@mui/system";
-import {memo, ReactNode} from "react";
+import { SxProps } from "@mui/system";
+import { memo, ReactNode } from "react";
 
-import {Tone} from "../presentation/studyState";
-import {cognipaceTokens} from "../theme";
+import { Tone } from "../presentation/studyState";
+import { cognipaceTokens } from "../theme";
 
 const toneStyles: Record<Tone, { background: string; color: string }> = {
   default: {
@@ -39,6 +43,7 @@ const toneStyles: Record<Tone, { background: string; color: string }> = {
 };
 
 type AssistTone = Tone | "warning";
+type SurfacePanelVariant = "chrome" | "nested" | "solid";
 
 const assistToneStyles: Record<AssistTone, { border: string; text: string }> = {
   default: {
@@ -106,7 +111,7 @@ export function SurfaceSectionLabel(props: { children: ReactNode }) {
 }
 
 export function SurfaceIconButton(props: IconButtonProps) {
-  const {sx, ...rest} = props;
+  const { sx, ...rest } = props;
   const baseSx: SxProps<Theme> = {
     backgroundColor: alpha(cognipaceTokens.mutedText, 0.08),
     border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.34)}`,
@@ -129,13 +134,7 @@ export function SurfaceIconButton(props: IconButtonProps) {
   };
   const mergedSx = (sx ? [baseSx, sx] : baseSx) as SxProps<Theme>;
 
-  return (
-    <IconButton
-      size="small"
-      sx={mergedSx}
-      {...rest}
-    />
-  );
+  return <IconButton size="small" sx={mergedSx} {...rest} />;
 }
 
 export function SurfaceTooltip(props: TooltipProps) {
@@ -177,6 +176,190 @@ export function InsetSurface(props: {
     >
       {props.children}
     </Box>
+  );
+}
+
+export function SurfacePanel(props: {
+  children: ReactNode;
+  sx?: object;
+  variant?: SurfacePanelVariant;
+}) {
+  const variant = props.variant ?? "chrome";
+  const backgroundColor =
+    variant === "nested"
+      ? alpha(cognipaceTokens.backgroundAlt, 0.72)
+      : variant === "solid"
+        ? alpha(cognipaceTokens.paperStrong, 0.84)
+        : alpha(cognipaceTokens.backgroundAlt, 0.86);
+  const borderColor =
+    variant === "nested"
+      ? alpha(cognipaceTokens.outlineStrong, 0.22)
+      : alpha(cognipaceTokens.outlineStrong, 0.38);
+  const boxShadow =
+    variant === "nested" ? "none" : "0 22px 54px rgba(0, 0, 0, 0.28)";
+
+  return (
+    <Paper
+      sx={{
+        backgroundColor,
+        border: `1px solid ${borderColor}`,
+        borderRadius: 2,
+        boxSizing: "border-box",
+        boxShadow,
+        maxWidth: "100%",
+        minWidth: 0,
+        overflow: "hidden",
+        ...(props.sx ?? {}),
+      }}
+    >
+      {props.children}
+    </Paper>
+  );
+}
+
+export function SurfaceTableContainer(props: {
+  children: ReactNode;
+  sx?: object;
+}) {
+  return (
+    <TableContainer
+      component={Paper}
+      sx={{
+        backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.86),
+        border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.38)}`,
+        borderRadius: 2,
+        boxSizing: "border-box",
+        display: "block",
+        boxShadow: "0 22px 54px rgba(0, 0, 0, 0.28)",
+        maxWidth: "100%",
+        minWidth: 0,
+        overflow: "auto",
+        width: "100%",
+        "& .MuiTableCell-root": {
+          verticalAlign: "top",
+        },
+        ...(props.sx ?? {}),
+      }}
+    >
+      {props.children}
+    </TableContainer>
+  );
+}
+
+export function SurfaceDivider(props: { sx?: object }) {
+  return (
+    <Divider
+      sx={{
+        borderColor: alpha(cognipaceTokens.outlineStrong, 0.2),
+        ...(props.sx ?? {}),
+      }}
+    />
+  );
+}
+
+export function SurfaceActionBar(props: { children: ReactNode; sx?: object }) {
+  return (
+    <Stack
+      direction={{ sm: "row", xs: "column" }}
+      spacing={1}
+      sx={{
+        alignItems: { sm: "center", xs: "stretch" },
+        flexWrap: "wrap",
+        ...(props.sx ?? {}),
+      }}
+    >
+      {props.children}
+    </Stack>
+  );
+}
+
+export function SurfaceFieldGrid(props: {
+  children: ReactNode;
+  columns?: 1 | 2 | 3;
+  sx?: object;
+}) {
+  const columns = props.columns ?? 2;
+
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gap: 1,
+        gridTemplateColumns: {
+          md: `repeat(${columns}, minmax(0, 1fr))`,
+          xs: "1fr",
+        },
+        ...(props.sx ?? {}),
+      }}
+    >
+      {props.children}
+    </Box>
+  );
+}
+
+export function SurfaceControlRow(props: {
+  control?: ReactNode;
+  helper?: ReactNode;
+  label?: ReactNode;
+  children?: ReactNode;
+  sx?: object;
+}) {
+  if (props.children) {
+    return (
+      <InsetSurface
+        sx={{
+          alignItems: "center",
+          display: "flex",
+          minHeight: 58,
+          minWidth: 0,
+          px: 1.35,
+          py: 1,
+          ...(props.sx ?? {}),
+        }}
+      >
+        {props.children}
+      </InsetSurface>
+    );
+  }
+
+  return (
+    <InsetSurface
+      sx={{
+        minHeight: 58,
+        minWidth: 0,
+        px: 1.35,
+        py: 1,
+        ...(props.sx ?? {}),
+      }}
+    >
+      <Stack
+        alignItems={{ sm: "center", xs: "stretch" }}
+        direction={{ sm: "row", xs: "column" }}
+        justifyContent="space-between"
+        spacing={1.25}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Typography component="div" variant="body2">
+            {props.label}
+          </Typography>
+          {props.helper ? (
+            <Typography color="text.secondary" variant="caption">
+              {props.helper}
+            </Typography>
+          ) : null}
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexShrink: 0,
+            justifyContent: { sm: "flex-end", xs: "flex-start" },
+            minWidth: { sm: 182, xs: "100%" },
+          }}
+        >
+          {props.control}
+        </Box>
+      </Stack>
+    </InsetSurface>
   );
 }
 
@@ -242,11 +425,7 @@ export function FieldAssistRow(props: {
         pl: 1,
       }}
     >
-      <Typography
-        color="inherit"
-        sx={{lineHeight: 1.35}}
-        variant="caption"
-      >
+      <Typography color="inherit" sx={{ lineHeight: 1.35 }} variant="caption">
         {props.children ?? "\u00A0"}
       </Typography>
     </Box>
@@ -279,22 +458,56 @@ export function InlineStatusRegion(props: {
       }}
     >
       {props.message ? (
-        <StatusSurface
-          sx={{minHeight, px: 1.2, py: 0.9}}
-          tone={tone}
-        >
+        <StatusSurface sx={{ minHeight, px: 1.2, py: 0.9 }} tone={tone}>
           <Typography
             color={props.isError ? "error.main" : "text.primary"}
-            sx={{lineHeight: 1.35}}
+            sx={{ lineHeight: 1.35 }}
             variant="body2"
           >
             {props.message}
           </Typography>
         </StatusSurface>
       ) : (
-        <Box sx={{minHeight}}/>
+        <Box sx={{ minHeight }} />
       )}
     </Box>
+  );
+}
+
+export function SurfaceNavButton(props: {
+  active?: boolean;
+  children: ReactNode;
+  onClick?: () => void;
+}) {
+  const { active, children, onClick } = props;
+
+  return (
+    <Button
+      aria-current={active ? "page" : undefined}
+      fullWidth
+      onClick={onClick}
+      sx={{
+        backgroundColor: active ? alpha(cognipaceTokens.accent, 0.12) : "transparent",
+        borderColor: active ? "primary.light" : alpha(cognipaceTokens.outlineStrong, 0.22),
+        color: active ? "primary.light" : "text.secondary",
+        justifyContent: "flex-start",
+        minHeight: 38,
+        px: 1.5,
+        transition: "all 160ms ease",
+        "&:hover": {
+          backgroundColor: active
+            ? alpha(cognipaceTokens.accent, 0.16)
+            : alpha(cognipaceTokens.mutedText, 0.08),
+          borderColor: active
+            ? alpha(cognipaceTokens.accentSoft, 0.6)
+            : alpha(cognipaceTokens.outlineStrong, 0.45),
+          color: active ? "primary.light" : "text.primary",
+        },
+      }}
+      variant={active ? "contained" : "outlined"}
+    >
+      {children}
+    </Button>
   );
 }
 
@@ -304,15 +517,16 @@ export function SurfaceCard(props: {
   action?: ReactNode;
   children: ReactNode;
   compact?: boolean;
+  sx?: object;
 }) {
-  const {action, children, compact = false, label, title} = props;
+  const { action, children, compact = false, label, sx, title } = props;
 
   return (
-    <Card>
+    <Card sx={{ minWidth: 0, ...(sx ?? {}) }}>
       <CardContent
         sx={{
           p: compact ? 2 : 2.25,
-          "&:last-child": {pb: compact ? 2 : 2.25},
+          "&:last-child": { pb: compact ? 2 : 2.25 },
         }}
       >
         <Stack spacing={compact ? 1.5 : 2}>
@@ -343,7 +557,10 @@ export function SurfaceCard(props: {
   );
 }
 
-export const ToneChip = memo(function ToneChip(props: { label: string; tone?: Tone }) {
+export const ToneChip = memo(function ToneChip(props: {
+  label: string;
+  tone?: Tone;
+}) {
   const tone = props.tone ?? "default";
 
   return (
@@ -358,7 +575,9 @@ export const ToneChip = memo(function ToneChip(props: { label: string; tone?: To
   );
 });
 
-export const ProgressTrack = memo(function ProgressTrack(props: { value: number }) {
+export const ProgressTrack = memo(function ProgressTrack(props: {
+  value: number;
+}) {
   return (
     <LinearProgress
       value={Math.max(0, Math.min(100, props.value))}
@@ -376,7 +595,9 @@ export const MetricCard = memo(function MetricCard(props: {
     <SurfaceCard compact>
       <Stack spacing={0.5}>
         <SurfaceSectionLabel>{props.label}</SurfaceSectionLabel>
-        <NumericDisplay sx={{fontSize: "1.85rem"}}>{props.value}</NumericDisplay>
+        <NumericDisplay sx={{ fontSize: "1.85rem" }}>
+          {props.value}
+        </NumericDisplay>
         {props.caption ? (
           <Typography color="text.secondary" variant="body2">
             {props.caption}
@@ -387,7 +608,10 @@ export const MetricCard = memo(function MetricCard(props: {
   );
 });
 
-export const StatusBanner = memo(function StatusBanner(props: { message: string; isError?: boolean }) {
+export const StatusBanner = memo(function StatusBanner(props: {
+  message: string;
+  isError?: boolean;
+}) {
   if (!props.message) {
     return null;
   }

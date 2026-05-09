@@ -10,10 +10,10 @@ import {
   SurfaceIconButton,
   SurfaceTooltip,
 } from "../../../components";
-import {DashboardRoute} from "../../../navigation/dashboardRoutes";
-import {UiStatus} from "../../../state/useAppShellQuery";
+import { DashboardRoute } from "../../../navigation/dashboardRoutes";
+import { UiStatus } from "../../../state/useAppShellQuery";
 
-import {DashboardHeaderPanel} from "./DashboardSurface";
+import { DashboardHeaderPanel } from "./DashboardSurface";
 
 export interface DashboardHeaderProps {
   onOpenSettings: () => void;
@@ -27,19 +27,24 @@ export function DashboardHeader(props: DashboardHeaderProps) {
     <DashboardHeaderPanel>
       <Stack spacing={2}>
         <Stack
-          alignItems={{md: "center", xs: "flex-start"}}
-          direction={{md: "row", xs: "column"}}
+          alignItems={{ md: "center", xs: "flex-start" }}
+          direction={{ md: "row", xs: "column" }}
           justifyContent="space-between"
           spacing={2}
         >
-          <Box sx={{maxWidth: "100%", minWidth: 0}}>
+          <Box sx={{ maxWidth: "100%", minWidth: 0 }}>
             <Typography color="text.secondary" variant="overline">
               {props.route.label.toUpperCase()}
             </Typography>
             <Typography variant="h4">{props.route.title}</Typography>
             <Typography
               color="text.secondary"
-              sx={{overflowWrap: "anywhere"}}
+              sx={{
+                maxWidth: { sm: "100%", xs: "32ch" },
+                overflowWrap: "anywhere",
+                whiteSpace: "normal",
+                wordBreak: "break-word",
+              }}
               variant="body2"
             >
               {props.route.copy}
@@ -51,7 +56,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
                 aria-label="Refresh dashboard"
                 onClick={props.onRefresh}
               >
-                <RefreshRounded aria-hidden="true" fontSize="small"/>
+                <RefreshRounded aria-hidden="true" fontSize="small" />
               </SurfaceIconButton>
             </SurfaceTooltip>
             <SurfaceTooltip title="Open settings">
@@ -59,7 +64,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
                 aria-label="Open settings"
                 onClick={props.onOpenSettings}
               >
-                <SettingsRounded aria-hidden="true" fontSize="small"/>
+                <SettingsRounded aria-hidden="true" fontSize="small" />
               </SurfaceIconButton>
             </SurfaceTooltip>
           </Stack>

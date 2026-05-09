@@ -5,12 +5,12 @@ import Stack from "@mui/material/Stack";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardRail } from "./components/DashboardRail";
 import { DashboardFrame } from "./components/DashboardSurface";
+import { AnalyticsView } from "./tabs/analytics/AnalyticsView";
+import { CoursesView } from "./tabs/courses/CoursesView";
+import { LibraryView } from "./tabs/library/LibraryView";
+import { OverviewView } from "./tabs/overview/OverviewView";
+import { SettingsView } from "./tabs/settings/SettingsView";
 import { useDashboardController } from "./useDashboardController";
-import { AnalyticsView } from "./views/AnalyticsView";
-import { CoursesView } from "./views/CoursesView";
-import { LibraryView } from "./views/LibraryView";
-import { OverviewView } from "./views/OverviewView";
-import { SettingsView } from "./views/SettingsView";
 
 export function DashboardApp() {
   const controller = useDashboardController();
@@ -27,8 +27,8 @@ export function DashboardApp() {
           onNavigate={controller.navigateToView}
         />
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Stack spacing={2}>
+        <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
+          <Stack spacing={2} sx={{ minWidth: 0, width: "100%" }}>
             <DashboardHeader
               onOpenSettings={() => {
                 controller.navigateToView("settings");

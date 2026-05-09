@@ -1,12 +1,11 @@
 /** Reusable queue preview list for the dashboard overview surface. */
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { AppShellPayload } from "../../../domain/views";
-import { ToneChip } from "../../components";
+import { InsetSurface, ToneChip } from "../../components";
 import {
   difficultyTone,
   formatDisplayDate,
@@ -31,7 +30,7 @@ export function QueuePreview(props: QueuePreviewProps) {
   return (
     <Stack spacing={1.25}>
       {items.map((item) => (
-        <Paper key={item.slug} sx={{ p: 1.5 }}>
+        <InsetSurface key={item.slug} sx={{ p: 1.5 }}>
           <Stack
             alignItems={{ md: "center", xs: "flex-start" }}
             direction={{ md: "row", xs: "column" }}
@@ -62,7 +61,7 @@ export function QueuePreview(props: QueuePreviewProps) {
               </Button>
             </Stack>
           </Stack>
-        </Paper>
+        </InsetSurface>
       ))}
     </Stack>
   );

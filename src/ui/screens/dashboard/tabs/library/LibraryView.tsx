@@ -4,26 +4,32 @@ import FormControl from "@mui/material/FormControl";
 import Grid from "@mui/material/Grid";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
-import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import React from "react";
 
-import { AppShellPayload, LibraryProblemRow } from "../../../../domain/views";
-import { SurfaceCard, ToneChip } from "../../../components";
-import { LibraryFilters } from "../../../presentation/library";
+import {
+  AppShellPayload,
+  LibraryProblemRow,
+} from "../../../../../domain/views";
+import {
+  InsetSurface,
+  SurfaceCard,
+  SurfaceTableContainer,
+  ToneChip,
+} from "../../../../components";
+import { LibraryFilters } from "../../../../presentation/library";
 import {
   difficultyTone,
   formatDisplayDate,
   formatStudyPhase,
-} from "../../../presentation/studyState";
+} from "../../../../presentation/studyState";
 
 export interface LibraryViewProps {
   filters: LibraryFilters;
@@ -33,88 +39,86 @@ export interface LibraryViewProps {
   rows: LibraryProblemRow[];
 }
 
-// ⚡ Bolt Optimization: extracted to memoized component to prevent re-rendering large lists on unrelated state changes
-const LibraryProblemRowView = React.memo(
-  function LibraryProblemRowView({
-    row,
-    onOpenProblem,
-  }: {
-    row: LibraryProblemRow;
-    onOpenProblem: (target: { slug: string }) => Promise<void>;
-  }) {
-    const primaryCourse = row.courses[0];
-    const studyStateSummary = row.studyStateSummary;
-    const phaseLabel = studyStateSummary
-      ? formatStudyPhase(studyStateSummary.phase)
-      : "NEW";
-    const statusLabel = studyStateSummary?.isDue
-      ? `${phaseLabel} · DUE NOW`
-      : phaseLabel;
+const LibraryProblemRowView = React.memo(function LibraryProblemRowView({
+  row,
+  onOpenProblem,
+}: {
+  row: LibraryProblemRow;
+  onOpenProblem: (target: { slug: string }) => Promise<void>;
+}) {
+  const primaryCourse = row.courses[0];
+  const studyStateSummary = row.studyStateSummary;
+  const phaseLabel = studyStateSummary
+    ? formatStudyPhase(studyStateSummary.phase)
+    : "NEW";
+  const statusLabel = studyStateSummary?.isDue
+    ? `${phaseLabel} · DUE NOW`
+    : phaseLabel;
 
-    return (
-      <TableRow>
-        <TableCell>
-          <Typography variant="subtitle2">{row.problem.title}</Typography>
-          <Typography color="text.secondary" variant="body2">
-            {row.problem.leetcodeSlug}
-          </Typography>
-        </TableCell>
-        <TableCell>
-          <ToneChip
-            label={row.problem.difficulty}
-            tone={difficultyTone(row.problem.difficulty)}
-          />
-        </TableCell>
-        <TableCell>
-          {primaryCourse ? primaryCourse.courseName : "Independent"}
-        </TableCell>
-        <TableCell>{statusLabel}</TableCell>
-        <TableCell>
-          {studyStateSummary?.retrievability !== undefined ? (
-            <Typography
-              sx={{
-                color:
-                  studyStateSummary.retrievability >= 0.85
-                    ? "success.main"
-                    : studyStateSummary.retrievability >= 0.7
-                      ? "warning.main"
-                      : "error.main",
-                fontWeight: 500,
-              }}
-              variant="body2"
-            >
-              {Math.round(studyStateSummary.retrievability * 100)}%
-            </Typography>
-          ) : (
-            <Typography color="text.secondary" variant="body2">
-              —
-            </Typography>
-          )}
-        </TableCell>
-        <TableCell>
-          {formatDisplayDate(studyStateSummary?.nextReviewAt)}
-        </TableCell>
-        <TableCell>
-          <Button
-            onClick={() => {
-              void onOpenProblem({
-                slug: row.problem.leetcodeSlug,
-              });
+  return (
+    <TableRow>
+      <TableCell>
+        <Typography variant="subtitle2">{row.problem.title}</Typography>
+        <Typography color="text.secondary" variant="body2">
+          {row.problem.leetcodeSlug}
+        </Typography>
+      </TableCell>
+      <TableCell>
+        <ToneChip
+          label={row.problem.difficulty}
+          tone={difficultyTone(row.problem.difficulty)}
+        />
+      </TableCell>
+      <TableCell>
+        {primaryCourse ? primaryCourse.courseName : "Independent"}
+      </TableCell>
+      <TableCell>{statusLabel}</TableCell>
+      <TableCell>
+        {studyStateSummary?.retrievability !== undefined ? (
+          <Typography
+            sx={{
+              color:
+                studyStateSummary.retrievability >= 0.85
+                  ? "success.main"
+                  : studyStateSummary.retrievability >= 0.7
+                    ? "warning.main"
+                    : "error.main",
+              fontWeight: 500,
             }}
-            variant="outlined"
+            variant="body2"
           >
-            Open
-          </Button>
-        </TableCell>
-      </TableRow>
-    );
-  }
-);
+            {Math.round(studyStateSummary.retrievability * 100)}%
+          </Typography>
+        ) : (
+          <Typography color="text.secondary" variant="body2">
+            —
+          </Typography>
+        )}
+      </TableCell>
+      <TableCell>
+        {formatDisplayDate(studyStateSummary?.nextReviewAt)}
+      </TableCell>
+      <TableCell>
+        <Button
+          onClick={() => {
+            void onOpenProblem({
+              slug: row.problem.leetcodeSlug,
+            });
+          }}
+          variant="outlined"
+        >
+          Open
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 export function LibraryView(props: LibraryViewProps) {
   return (
     <SurfaceCard label="Library" title="All Tracked Problems">
-      <Grid container spacing={1.5}>
+      <InsetSurface sx={{ mb: 2, p: 2 }}>
+        <Grid container spacing={2}>
         <Grid size={{ md: 4, xs: 12 }}>
           <TextField
             fullWidth
@@ -205,8 +209,9 @@ export function LibraryView(props: LibraryViewProps) {
           </FormControl>
         </Grid>
       </Grid>
+      </InsetSurface>
 
-      <TableContainer component={Paper}>
+      <SurfaceTableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -238,7 +243,7 @@ export function LibraryView(props: LibraryViewProps) {
             ) : null}
           </TableBody>
         </Table>
-      </TableContainer>
+      </SurfaceTableContainer>
     </SurfaceCard>
   );
 }
