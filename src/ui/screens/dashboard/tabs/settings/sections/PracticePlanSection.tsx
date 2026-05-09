@@ -3,8 +3,8 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 import { StudyMode, UserSettings } from "../../../../../../domain/settings";
-import { NumberSetting } from "../components/SettingsInputs";
 import { SurfaceControlRow } from "../../../../../components";
+import { NumberSetting } from "../components/SettingsInputs";
 import { SettingsUpdate } from "../settingsTypes";
 
 export function PracticePlanSection(props: {

@@ -63,8 +63,8 @@ const assistToneStyles: Record<AssistTone, { border: string; text: string }> = {
     text: cognipaceTokens.success,
   },
   warning: {
-    border: alpha(cognipaceTokens.accentSoft, 0.24),
-    text: cognipaceTokens.accentSoft,
+    border: alpha(cognipaceTokens.warning, 0.32),
+    text: cognipaceTokens.warning,
   },
   danger: {
     border: alpha(cognipaceTokens.danger, 0.24),
@@ -75,6 +75,8 @@ const assistToneStyles: Record<AssistTone, { border: string; text: string }> = {
 export const BrandMark = memo(function BrandMark() {
   return (
     <Box
+      aria-label="CogniPace"
+      role="img"
       sx={{
         alignItems: "center",
         background: `linear-gradient(135deg, ${alpha(cognipaceTokens.accent, 0.22)}, ${alpha(cognipaceTokens.accentSoft, 0.08)})`,
@@ -82,14 +84,26 @@ export const BrandMark = memo(function BrandMark() {
         boxShadow: `inset 0 0 0 1px ${alpha(cognipaceTokens.accentSoft, 0.12)}`,
         color: "primary.light",
         display: "inline-flex",
-        fontFamily: '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif',
-        fontWeight: 700,
         height: 32,
         justifyContent: "center",
         width: 32,
       }}
     >
-      ⌘
+      <Box
+        aria-hidden="true"
+        component="svg"
+        sx={{ height: 18, width: 18 }}
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M16.5 7.2A6.5 6.5 0 1 0 16.5 16.8"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="2.4"
+        />
+        <circle cx="17.2" cy="12" fill="currentColor" r="2" />
+      </Box>
     </Box>
   );
 });
@@ -117,10 +131,13 @@ export function SurfaceIconButton(props: IconButtonProps) {
     border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.34)}`,
     borderRadius: 1.15,
     color: "text.secondary",
-    height: 30,
+    height: 40,
     transition:
       "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
-    width: 30,
+    width: 40,
+    "@media (prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
     "&:hover": {
       backgroundColor: alpha(cognipaceTokens.accent, 0.1),
       borderColor: alpha(cognipaceTokens.accentSoft, 0.45),
@@ -489,9 +506,13 @@ export function SurfaceNavButton(props: SurfaceNavButtonProps) {
     boxShadow: "none",
     color: active ? "primary.light" : "text.secondary",
     justifyContent: "flex-start",
-    minHeight: 38,
+    minHeight: 44,
     px: 1.5,
-    transition: "all 160ms ease",
+    transition:
+      "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
+    "@media (prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
     "&:hover": {
       backgroundColor: active
         ? alpha(cognipaceTokens.accent, 0.16)
@@ -500,6 +521,10 @@ export function SurfaceNavButton(props: SurfaceNavButtonProps) {
         ? alpha(cognipaceTokens.accentSoft, 0.6)
         : alpha(cognipaceTokens.outlineStrong, 0.45),
       color: active ? "primary.light" : "text.primary",
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,
+      outlineOffset: 2,
     },
   };
   const mergedSx = (sx ? [baseSx, sx] : baseSx) as SxProps<Theme>;

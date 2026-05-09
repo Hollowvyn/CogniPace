@@ -5,8 +5,8 @@ import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
 import { UserSettings } from "../../../../../../domain/settings";
-import { SwitchSetting } from "../components/SettingsInputs";
 import { SurfaceFieldGrid } from "../../../../../components";
+import { SwitchSetting } from "../components/SettingsInputs";
 import {
   createGoalTextDraft,
   minutesToMs,
@@ -93,9 +93,9 @@ export function TimingGoalsSection(props: {
       input: {
         endAdornment: <InputAdornment position="end">min</InputAdornment>,
       },
-    },
-    inputProps: {
-      inputMode: "numeric" as const,
+      htmlInput: {
+        inputMode: "numeric" as const,
+      },
     },
   };
 

@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 
 import {
   BrandMark,
+  SurfaceControlRow,
   SurfaceNavButton,
   SurfaceSectionLabel,
 } from "../../../components";
@@ -13,7 +14,6 @@ import {
   DashboardView,
 } from "../../../navigation/dashboardRoutes";
 
-import { SurfaceControlRow } from "../../../components";
 import { DashboardRailPanel } from "./DashboardSurface";
 
 export interface DashboardRailProps {

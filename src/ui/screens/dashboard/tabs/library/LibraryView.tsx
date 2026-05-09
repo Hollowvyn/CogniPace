@@ -1,4 +1,8 @@
 /** Dashboard library screen for searchable and filterable tracked problems. */
+import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
+import ErrorRounded from "@mui/icons-material/ErrorRounded";
+import WarningRounded from "@mui/icons-material/WarningRounded";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import Grid from "@mui/material/Grid";
@@ -75,20 +79,52 @@ const LibraryProblemRowView = React.memo(function LibraryProblemRowView({
       <TableCell>{statusLabel}</TableCell>
       <TableCell>
         {studyStateSummary?.retrievability !== undefined ? (
-          <Typography
-            sx={{
-              color:
-                studyStateSummary.retrievability >= 0.85
-                  ? "success.main"
-                  : studyStateSummary.retrievability >= 0.7
-                    ? "warning.main"
-                    : "error.main",
-              fontWeight: 500,
-            }}
-            variant="body2"
-          >
-            {Math.round(studyStateSummary.retrievability * 100)}%
-          </Typography>
+          (() => {
+            const retention = studyStateSummary.retrievability;
+            const tier =
+              retention >= 0.85
+                ? {
+                    color: "success.main",
+                    Icon: CheckCircleRounded,
+                    srLabel: "High retention",
+                  }
+                : retention >= 0.7
+                  ? {
+                      color: "warning.main",
+                      Icon: WarningRounded,
+                      srLabel: "Moderate retention",
+                    }
+                  : {
+                      color: "error.main",
+                      Icon: ErrorRounded,
+                      srLabel: "Low retention",
+                    };
+            const { Icon } = tier;
+            return (
+              <Box
+                sx={{
+                  alignItems: "center",
+                  color: tier.color,
+                  display: "inline-flex",
+                  gap: 0.5,
+                }}
+              >
+                <Icon
+                  aria-label={tier.srLabel}
+                  fontSize="small"
+                  role="img"
+                  sx={{ fontSize: "1rem" }}
+                />
+                <Typography
+                  color="inherit"
+                  sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 500 }}
+                  variant="body2"
+                >
+                  {Math.round(retention * 100)}%
+                </Typography>
+              </Box>
+            );
+          })()
         ) : (
           <Typography color="text.secondary" variant="body2">
             —
