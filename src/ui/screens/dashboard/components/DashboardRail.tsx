@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 
 import {BrandMark, SurfaceSectionLabel} from "../../../components";
 import {dashboardRoutes, DashboardView} from "../../../navigation/dashboardRoutes";
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 
 import {DashboardControlRow, DashboardRailPanel} from "./DashboardSurface";
 
@@ -23,7 +23,7 @@ export function DashboardRail(props: DashboardRailProps) {
         <Stack alignItems="center" direction="row" spacing={1.25}>
           <BrandMark/>
           <Box>
-            <Typography variant="h6">Kinetic Terminal</Typography>
+            <Typography variant="h6">CogniPace</Typography>
             <Typography color="text.secondary" variant="body2">
               v1.0.4
             </Typography>
@@ -41,8 +41,8 @@ export function DashboardRail(props: DashboardRailProps) {
               sx={{
                 borderColor:
                   props.activeView === route.view
-                    ? alpha(kineticTokens.accentSoft, 0.72)
-                    : alpha(kineticTokens.outlineStrong, 0.44),
+                    ? alpha(cognipaceTokens.accentSoft, 0.72)
+                    : alpha(cognipaceTokens.outlineStrong, 0.44),
                 justifyContent: "flex-start",
                 minHeight: 36,
                 px: 1.25,

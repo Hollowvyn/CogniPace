@@ -23,7 +23,7 @@ export function downloadBackupJson(
   const url = URL.createObjectURL(blob);
   const link = documentRef.createElement("a");
   link.href = url;
-  link.download = "kinetic-terminal-backup.json";
+  link.download = "cognipace-backup.json";
   link.click();
   URL.revokeObjectURL(url);
 }

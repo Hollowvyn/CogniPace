@@ -5,7 +5,7 @@ import {alpha} from "@mui/material/styles";
 import {type PointerEvent, useRef, useState} from "react";
 
 import {BrandMark, SurfaceTooltip} from "../../../components";
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 import {DockedOverlayViewModel} from "../overlayPanel.types";
 
 const DOCK_BOTTOM_OFFSET_PX = 10;
@@ -162,7 +162,7 @@ export function DockedOverlayPanel(
           }}
           sx={{
             alignItems: "center",
-            backgroundColor: alpha(kineticTokens.backgroundAlt, 0.84),
+            backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.84),
             cursor: "default",
             display: "flex",
             justifyContent: "center",
@@ -173,11 +173,11 @@ export function DockedOverlayPanel(
             WebkitTapHighlightColor: "transparent",
             width: "100%",
             "&:hover": {
-              backgroundColor: alpha(kineticTokens.accent, 0.08),
+              backgroundColor: alpha(cognipaceTokens.accent, 0.08),
             },
             "&:focus-visible": {
-              backgroundColor: alpha(kineticTokens.accent, 0.12),
-              outline: `2px solid ${alpha(kineticTokens.info, 0.72)}`,
+              backgroundColor: alpha(cognipaceTokens.accent, 0.12),
+              outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,
               outlineOffset: -2,
             },
           }}

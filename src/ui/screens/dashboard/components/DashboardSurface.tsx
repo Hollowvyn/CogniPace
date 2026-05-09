@@ -1,4 +1,4 @@
-/** Dashboard-specific surface primitives composed from the shared kinetic theme. */
+/** Dashboard-specific surface primitives composed from the shared CogniPace theme. */
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
 import { InsetSurface, SurfaceSectionLabel } from "../../../components";
-import { kineticTokens } from "../../../theme";
+import { cognipaceTokens } from "../../../theme";
 
 export function DashboardFrame(props: { children: ReactNode }) {
   return (
@@ -34,8 +34,8 @@ export function DashboardChromePanel(props: {
   return (
     <Paper
       sx={{
-        backgroundColor: alpha(kineticTokens.backgroundAlt, 0.86),
-        border: `1px solid ${alpha(kineticTokens.outlineStrong, 0.38)}`,
+        backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.86),
+        border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.38)}`,
         borderRadius: 2,
         boxSizing: "border-box",
         boxShadow: "0 22px 54px rgba(0, 0, 0, 0.28)",
@@ -87,7 +87,7 @@ export function DashboardSettingsGroup(props: {
   return (
     <InsetSurface
       sx={{
-        backgroundColor: alpha(kineticTokens.backgroundAlt, 0.48),
+        backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.48),
         p: { md: 1.75, xs: 1.4 },
       }}
     >
@@ -135,7 +135,7 @@ export function DashboardActionBar(props: { children: ReactNode }) {
       direction={{ md: "row", xs: "column" }}
       spacing={1}
       sx={{
-        borderTop: `1px solid ${alpha(kineticTokens.outlineStrong, 0.18)}`,
+        borderTop: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.18)}`,
         pt: 1.5,
       }}
     >

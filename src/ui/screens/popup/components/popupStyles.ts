@@ -1,10 +1,10 @@
 import {alpha} from "@mui/material/styles";
 
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 
 export const popupShellSx = {
-  backgroundColor: alpha(kineticTokens.backgroundAlt, 0.96),
-  border: `1px solid ${alpha(kineticTokens.outlineStrong, 0.45)}`,
+  backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.96),
+  border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.45)}`,
   borderRadius: 2.4,
   boxShadow: "0 24px 52px rgba(0, 0, 0, 0.34)",
   display: "flex",
@@ -17,7 +17,7 @@ export const popupActionButtonSx = {
   minHeight: 42,
   touchAction: "manipulation",
   "&:focus-visible": {
-    outline: `2px solid ${alpha(kineticTokens.info, 0.72)}`,
+    outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,
     outlineOffset: 2,
   },
 };
@@ -29,7 +29,7 @@ export const popupSmallButtonSx = {
   py: 0.2,
   touchAction: "manipulation",
   "&:focus-visible": {
-    outline: `2px solid ${alpha(kineticTokens.info, 0.72)}`,
+    outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,
     outlineOffset: 2,
   },
 };

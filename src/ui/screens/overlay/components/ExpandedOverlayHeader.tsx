@@ -8,7 +8,7 @@ import Typography from "@mui/material/Typography";
 import {Difficulty} from "../../../../domain/types";
 import {StatusSurface, SurfaceIconButton, SurfaceSectionLabel, SurfaceTooltip, ToneChip,} from "../../../components";
 import {difficultyTone} from "../../../presentation/studyState";
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 import {OverlayHeaderSectionViewModel, OverlayHeaderStatusCard, OverlayHeaderStatusTone,} from "../overlayPanel.types";
 
 const difficultyBadgeStyles: Record<
@@ -26,19 +26,19 @@ const statusToneStyles: Record<
   { primaryColor: string; tone: "default" | "accent" | "danger" }
 > = {
   neutral: {
-    primaryColor: kineticTokens.text,
+    primaryColor: cognipaceTokens.text,
     tone: "default",
   },
   accent: {
-    primaryColor: kineticTokens.accentSoft,
+    primaryColor: cognipaceTokens.accentSoft,
     tone: "accent",
   },
   warning: {
-    primaryColor: kineticTokens.accentSoft,
+    primaryColor: cognipaceTokens.accentSoft,
     tone: "accent",
   },
   danger: {
-    primaryColor: kineticTokens.danger,
+    primaryColor: cognipaceTokens.danger,
     tone: "danger",
   },
 };

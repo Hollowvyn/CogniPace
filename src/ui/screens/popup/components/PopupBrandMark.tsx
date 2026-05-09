@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import {alpha} from "@mui/material/styles";
 
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 
 export function PopupBrandMark() {
   return (
@@ -9,7 +9,7 @@ export function PopupBrandMark() {
       aria-hidden="true"
       sx={{
         alignItems: "center",
-        color: kineticTokens.accent,
+        color: cognipaceTokens.accent,
         display: "grid",
         gap: 0.25,
         gridTemplateColumns: "repeat(2, 10px)",
@@ -24,10 +24,10 @@ export function PopupBrandMark() {
           key={index}
           sx={{
             backgroundColor: index === 3
-              ? alpha(kineticTokens.accent, 0.88)
-              : kineticTokens.accent,
+              ? alpha(cognipaceTokens.accent, 0.88)
+              : cognipaceTokens.accent,
             borderRadius: 0.15,
-            boxShadow: `0 0 0 1px ${alpha(kineticTokens.accentSoft, 0.08)}`,
+            boxShadow: `0 0 0 1px ${alpha(cognipaceTokens.accentSoft, 0.08)}`,
             height: 10,
             width: 10,
           }}
