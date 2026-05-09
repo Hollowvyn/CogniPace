@@ -35,13 +35,24 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
         normalizeStudyState(state),
       ])
     ),
+    // v6 fields (still used by current handlers; will be removed in Phase 8).
     coursesById: stored?.coursesById ?? {},
     courseOrder: Array.isArray(stored?.courseOrder) ? stored.courseOrder : [],
     courseProgressById: stored?.courseProgressById ?? {},
+    // v7 aggregate fields (initialised empty during cutover; populated by
+    // the v7 migration runner once Phase 5 handlers wire it up).
+    topicsById: stored?.topicsById ?? {},
+    companiesById: stored?.companiesById ?? {},
+    studySetsById: stored?.studySetsById ?? {},
+    studySetOrder: Array.isArray(stored?.studySetOrder)
+      ? stored.studySetOrder
+      : [],
+    studySetProgressById: stored?.studySetProgressById ?? {},
     settings:
       stored?.settings === undefined
         ? createInitialUserSettings()
         : sanitizeStoredUserSettings(stored.settings),
+    lastMigrationAt: stored?.lastMigrationAt,
   };
 
   ensureCourseData(data);
@@ -82,7 +93,13 @@ export async function saveAppData(data: AppData): Promise<void> {
     coursesById: data.coursesById,
     courseOrder: data.courseOrder,
     courseProgressById: data.courseProgressById,
+    topicsById: data.topicsById,
+    companiesById: data.companiesById,
+    studySetsById: data.studySetsById,
+    studySetOrder: data.studySetOrder,
+    studySetProgressById: data.studySetProgressById,
     settings: sanitizeStoredUserSettings(data.settings),
+    lastMigrationAt: data.lastMigrationAt,
   };
 
   ensureCourseData(payload);

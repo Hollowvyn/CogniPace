@@ -88,6 +88,7 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
   return {
     id: typeof problem.id === "string" && problem.id.trim() ? problem.id : slug,
     leetcodeSlug: slug,
+    slug,
     leetcodeId:
       typeof problem.leetcodeId === "string" && problem.leetcodeId.trim()
         ? problem.leetcodeId
@@ -102,6 +103,16 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
     isPremium: safeBoolean(problem.isPremium),
     url: slugToUrl(slug),
     topics: uniqueStrings(isStringArray(problem.topics) ? problem.topics : []),
+    topicIds: uniqueStrings(
+      isStringArray((problem as { topicIds?: unknown }).topicIds)
+        ? ((problem as { topicIds: string[] }).topicIds)
+        : []
+    ),
+    companyIds: uniqueStrings(
+      isStringArray((problem as { companyIds?: unknown }).companyIds)
+        ? ((problem as { companyIds: string[] }).companyIds)
+        : []
+    ),
     sourceSet: uniqueStrings(
       isStringArray(problem.sourceSet) ? problem.sourceSet : []
     ),

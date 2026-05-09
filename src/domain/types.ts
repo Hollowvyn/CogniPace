@@ -1,3 +1,15 @@
+/**
+ * Shared primitives + AppData root.
+ *
+ * v7 is mid-cutover: new aggregate fields (`topicsById`, `companiesById`,
+ * `studySetsById`, ...) live alongside the v6 ones (`coursesById`,
+ * `courseProgressById`, ...). Once handlers migrate to v7 the legacy
+ * fields will be removed (Phase 8 of the refactor plan).
+ *
+ * Aggregate-specific shapes live in their own folders (`problems/`,
+ * `topics/`, `companies/`, `sets/`, `study-state/`); this file re-exports
+ * them for back-compat with consumers that imported from `domain/types`.
+ */
 import type { UserSettings } from "./settings/model";
 
 export type {
@@ -13,7 +25,36 @@ export type {
   UserSettingsPatch,
 } from "./settings/model";
 
-export const STORAGE_SCHEMA_VERSION = 6;
+export type {
+  ProblemSlug,
+  TopicId,
+  CompanyId,
+  StudySetId,
+  SetGroupId,
+} from "./common/ids";
+
+export type { Topic } from "./topics/model";
+export type { Company } from "./companies/model";
+export type {
+  StudySet,
+  StudySetKind,
+  SetGroup,
+  StudySetFilter,
+  CompanyFilter,
+  TopicFilter,
+  DifficultyFilter,
+  CustomFilter,
+  CourseStudySetConfig,
+  BaseStudySetConfig,
+} from "./sets/model";
+export type { StudySetProgress, SetGroupProgress } from "./sets/progress";
+export type { ActiveFocus } from "./active-focus/model";
+
+/**
+ * Storage schema version. v7 introduces topicsById, companiesById,
+ * studySetsById, studySetProgressById; v6 fields stay during the cutover.
+ */
+export const STORAGE_SCHEMA_VERSION = 7;
 
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
 
@@ -46,16 +87,33 @@ export type SourceSet =
   | "Grind75"
   | "Custom";
 
+/**
+ * v7 Problem — `topicIds`/`companyIds` reference the new entity registries.
+ * `id` and `leetcodeSlug` are kept (deprecated) so existing v6 callers
+ * keep typechecking; new code uses `slug` only.
+ *
+ * @see {@link "../problems/model"} for the canonical type definition.
+ */
 export interface Problem {
+  /** @deprecated Use `slug`. Retained equal to `slug` for v6 callers. */
   id: string;
+  /** @deprecated Use `slug`. Retained equal to `slug` for v6 callers. */
   leetcodeSlug: string;
+  slug: string;
   leetcodeId?: string;
   title: string;
   difficulty: Difficulty;
   isPremium?: boolean;
   url: string;
+  /** @deprecated v6 string topics. Use `topicIds`. */
   topics: string[];
+  /** v7 — FK references to Topic registry. */
+  topicIds: string[];
+  /** v7 — FK references to Company registry. */
+  companyIds: string[];
+  /** @deprecated v6 set-membership string. Use StudySet.groups instead. */
   sourceSet: string[];
+  userEdits?: { [key: string]: true | undefined };
   createdAt: string;
   updatedAt: string;
 }
@@ -92,6 +150,10 @@ export interface StudyState extends ReviewLogFields {
   tags: string[];
   attemptHistory: AttemptHistoryEntry[];
   fsrsCard?: FsrsCardSnapshot;
+  /** Optional in v6 callers; required in v7-aware code. */
+  createdAt?: string;
+  /** Optional in v6 callers; required in v7-aware code. */
+  updatedAt?: string;
 }
 
 export interface CourseQuestionRef {
@@ -146,14 +208,36 @@ export interface CourseProgress {
   chapterProgressById: Record<string, CourseChapterProgress>;
 }
 
+/**
+ * v7 AppData — carries both v6 and v7 aggregate fields during the
+ * cutover. Once handlers all migrate, the v6 course fields will be
+ * removed (refactor plan, Phase 8).
+ */
 export interface AppData {
   schemaVersion: number;
+  /** Problem aggregate (carries v6 + v7 fields per Problem). */
   problemsBySlug: Record<string, Problem>;
+  /** StudyState aggregate, sparse — only present after first review. */
   studyStatesBySlug: Record<string, StudyState>;
+  /** v7 — Topic registry (curated seed + user customs). */
+  topicsById: Record<string, import("./topics/model").Topic>;
+  /** v7 — Company registry. */
+  companiesById: Record<string, import("./companies/model").Company>;
+  /** v7 — StudySet aggregate (courses + flat + derived). */
+  studySetsById: Record<string, import("./sets/model").StudySet>;
+  /** v7 — User-curated ordering across all StudySets. */
+  studySetOrder: string[];
+  /** v7 — Per-StudySet progress, lazily created when first focused. */
+  studySetProgressById: Record<string, import("./sets/progress").StudySetProgress>;
+  /** @deprecated v6 — collapsed into studySetsById in v7. */
   coursesById: Record<string, CourseDefinition>;
+  /** @deprecated v6 — replaced by studySetOrder in v7. */
   courseOrder: string[];
+  /** @deprecated v6 — replaced by studySetProgressById in v7. */
   courseProgressById: Record<string, CourseProgress>;
   settings: UserSettings;
+  /** Set by the v6→v7 migration; surfaces in support diagnostics. */
+  lastMigrationAt?: string;
 }
 
 export interface QueueItem {
@@ -224,6 +308,12 @@ export interface ExportPayload {
   coursesById?: Record<string, CourseDefinition>;
   courseOrder?: string[];
   courseProgressById?: Record<string, CourseProgress>;
+  /** v7 — present once import/export migrates to aggregateRegistry. */
+  topicsById?: Record<string, import("./topics/model").Topic>;
+  companiesById?: Record<string, import("./companies/model").Company>;
+  studySetsById?: Record<string, import("./sets/model").StudySet>;
+  studySetOrder?: string[];
+  studySetProgressById?: Record<string, import("./sets/progress").StudySetProgress>;
 }
 
 export interface ProblemSnapshot {
