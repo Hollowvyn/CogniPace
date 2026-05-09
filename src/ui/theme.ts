@@ -1,6 +1,6 @@
 import {alpha, createTheme} from "@mui/material/styles";
 
-export const kineticTokens = {
+export const cognipaceTokens = {
   background: "#131313",
   backgroundAlt: "#181818",
   paper: "#1f1e1d",
@@ -17,37 +17,37 @@ export const kineticTokens = {
   danger: "#ffb4ab",
 };
 
-export const kineticTheme = createTheme({
+export const cognipaceTheme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: kineticTokens.accent,
-      light: kineticTokens.accentSoft,
+      main: cognipaceTokens.accent,
+      light: cognipaceTokens.accentSoft,
       dark: "#bd6f00",
       contrastText: "#2b1700",
     },
     secondary: {
-      main: kineticTokens.info,
+      main: cognipaceTokens.info,
       light: "#c5ecff",
       dark: "#3b8cb3",
     },
     success: {
-      main: kineticTokens.success,
+      main: cognipaceTokens.success,
     },
     error: {
-      main: kineticTokens.danger,
+      main: cognipaceTokens.danger,
     },
     warning: {
-      main: kineticTokens.accentSoft,
+      main: cognipaceTokens.accentSoft,
     },
     background: {
-      default: kineticTokens.background,
-      paper: kineticTokens.paper,
+      default: cognipaceTokens.background,
+      paper: cognipaceTokens.paper,
     },
-    divider: kineticTokens.outline,
+    divider: cognipaceTokens.outline,
     text: {
-      primary: kineticTokens.text,
-      secondary: kineticTokens.mutedText,
+      primary: cognipaceTokens.text,
+      secondary: cognipaceTokens.mutedText,
     },
   },
   shape: {
@@ -130,11 +130,11 @@ export const kineticTheme = createTheme({
         body: {
           margin: 0,
           background: [
-            `radial-gradient(circle at top, ${alpha(kineticTokens.accent, 0.08)}, transparent 28%)`,
-            `radial-gradient(circle at 20% 20%, ${alpha(kineticTokens.info, 0.06)}, transparent 22%)`,
+            `radial-gradient(circle at top, ${alpha(cognipaceTokens.accent, 0.08)}, transparent 28%)`,
+            `radial-gradient(circle at 20% 20%, ${alpha(cognipaceTokens.info, 0.06)}, transparent 22%)`,
             "linear-gradient(180deg, #131313 0%, #111111 100%)",
           ].join(","),
-          color: kineticTokens.text,
+          color: cognipaceTokens.text,
           fontFamily: '"Inter", "Segoe UI", sans-serif',
           letterSpacing: "0.01em",
         },
@@ -170,8 +170,8 @@ export const kineticTheme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          border: `1px solid ${kineticTokens.outline}`,
-          backgroundColor: alpha(kineticTokens.paperStrong, 0.88),
+          border: `1px solid ${cognipaceTokens.outline}`,
+          backgroundColor: alpha(cognipaceTokens.paperStrong, 0.88),
         },
       },
     },
@@ -186,7 +186,7 @@ export const kineticTheme = createTheme({
           paddingInline: 12,
         },
         containedPrimary: {
-          boxShadow: `0 12px 24px ${alpha(kineticTokens.accent, 0.2)}`,
+          boxShadow: `0 12px 24px ${alpha(cognipaceTokens.accent, 0.2)}`,
         },
       },
     },
@@ -203,10 +203,10 @@ export const kineticTheme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderColor: kineticTokens.outline,
+          borderColor: cognipaceTokens.outline,
         },
         head: {
-          color: kineticTokens.mutedText,
+          color: cognipaceTokens.mutedText,
           fontSize: 12,
           textTransform: "uppercase",
           letterSpacing: "0.08em",
@@ -216,10 +216,10 @@ export const kineticTheme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          backgroundColor: alpha(kineticTokens.paperStrong, 0.6),
+          backgroundColor: alpha(cognipaceTokens.paperStrong, 0.6),
         },
         notchedOutline: {
-          borderColor: kineticTokens.outline,
+          borderColor: cognipaceTokens.outline,
         },
       },
     },
@@ -227,7 +227,7 @@ export const kineticTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          border: `1px solid ${kineticTokens.outline}`,
+          border: `1px solid ${cognipaceTokens.outline}`,
         },
       },
     },
@@ -235,7 +235,7 @@ export const kineticTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 999,
-          backgroundColor: alpha(kineticTokens.mutedText, 0.15),
+          backgroundColor: alpha(cognipaceTokens.mutedText, 0.15),
         },
         bar: {
           borderRadius: 999,

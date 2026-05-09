@@ -5,7 +5,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 
 import { InlineStatusRegion } from "../../components";
-import { kineticTokens } from "../../theme";
+import { cognipaceTokens } from "../../theme";
 
 import {
   CoursePanelCompleted,
@@ -80,7 +80,7 @@ export function PopupApp() {
             <Grid container spacing={1.25}>
               <Grid size={6}>
                 <PopupMetricTile
-                  accent={kineticTokens.danger}
+                  accent={cognipaceTokens.danger}
                   label="Due Today"
                   value={
                     controller.isInitialLoading
@@ -91,7 +91,7 @@ export function PopupApp() {
               </Grid>
               <Grid size={6}>
                 <PopupMetricTile
-                  accent={kineticTokens.accentSoft}
+                  accent={cognipaceTokens.accentSoft}
                   label="Streak"
                   suffix="days"
                   value={

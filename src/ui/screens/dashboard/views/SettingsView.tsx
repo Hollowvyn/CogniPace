@@ -28,7 +28,7 @@ import { ChangeEvent, ReactNode, useState } from "react";
 
 import { ReviewOrder, StudyMode, UserSettings } from "../../../../domain/settings";
 import { SurfaceSectionLabel } from "../../../components";
-import { kineticTokens } from "../../../theme";
+import { cognipaceTokens } from "../../../theme";
 import { DashboardChromePanel } from "../components/DashboardSurface";
 
 export interface SettingsViewProps {
@@ -156,7 +156,7 @@ export function SettingsView(props: SettingsViewProps) {
             onImportData={props.onImportData}
             onSetImportFile={props.onSetImportFile}
           />
-          <Divider sx={{ my: 1.5 * settingsSpaceScale, borderColor: alpha(kineticTokens.outlineStrong, 0.2) }} />
+          <Divider sx={{ my: 1.5 * settingsSpaceScale, borderColor: alpha(cognipaceTokens.outlineStrong, 0.2) }} />
           <HistoryResetSection
             onExportData={props.onExportData}
             onResetStudyHistory={props.onResetStudyHistory}
@@ -208,10 +208,10 @@ function SettingsSection(props: {
   return (
     <DashboardChromePanel
       sx={{
-        backgroundColor: alpha(kineticTokens.paperStrong, 0.72),
+        backgroundColor: alpha(cognipaceTokens.paperStrong, 0.72),
         borderColor: isDanger
-          ? alpha(kineticTokens.danger, 0.34)
-          : alpha(kineticTokens.outlineStrong, 0.28),
+          ? alpha(cognipaceTokens.danger, 0.34)
+          : alpha(cognipaceTokens.outlineStrong, 0.28),
         boxShadow: "0 14px 32px rgba(0, 0, 0, 0.2)",
         gridColumn: {
           md: sectionColumns[props.width].md,
@@ -638,8 +638,8 @@ function SettingsRow(props: {
 }
 
 const settingsInsetSx = {
-  backgroundColor: alpha(kineticTokens.backgroundAlt, 0.58),
-  border: `1px solid ${alpha(kineticTokens.outlineStrong, 0.2)}`,
+  backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.58),
+  border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.2)}`,
   borderRadius: 1.4,
   minHeight: 58 * settingsSpaceScale,
   minWidth: 0,

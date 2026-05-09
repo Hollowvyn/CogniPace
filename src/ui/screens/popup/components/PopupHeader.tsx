@@ -6,7 +6,7 @@ import {alpha} from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 
 import {BrandMark, SurfaceIconButton, SurfaceTooltip} from "../../../components";
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 
 export interface PopupHeaderProps {
   onOpenSettings: () => void;
@@ -18,7 +18,7 @@ export function PopupHeader(props: PopupHeaderProps) {
     <Box
       component="header"
       sx={{
-        borderBottom: `1px solid ${alpha(kineticTokens.outlineStrong, 0.24)}`,
+        borderBottom: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.24)}`,
         px: 1.4,
         py: 1.2,
       }}
@@ -35,7 +35,7 @@ export function PopupHeader(props: PopupHeaderProps) {
         <Typography
           component="h1"
           sx={{
-            color: kineticTokens.accent,
+            color: cognipaceTokens.accent,
             flex: 1,
             fontFamily:
               '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif',

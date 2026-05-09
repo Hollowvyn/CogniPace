@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 
 import {Rating} from "../../../../domain/types";
 import {FieldAssistRow, SurfaceSectionLabel} from "../../../components";
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 import {OverlayAssessmentSectionViewModel, OverlayAssistViewModel} from "../overlayPanel.types";
 
 interface AssessmentOption {
@@ -18,7 +18,7 @@ interface AssessmentOption {
 
 const assessmentOptions: AssessmentOption[] = [
   {
-    color: kineticTokens.success,
+    color: cognipaceTokens.success,
     copy: "Fast",
     label: "Easy",
     rating: 3,
@@ -30,20 +30,20 @@ const assessmentOptions: AssessmentOption[] = [
     rating: 2,
   },
   {
-    color: kineticTokens.accentSoft,
+    color: cognipaceTokens.accentSoft,
     copy: "Lagging",
     label: "Hard",
     rating: 1,
   },
   {
-    color: kineticTokens.danger,
+    color: cognipaceTokens.danger,
     copy: "Failed",
     label: "Again",
     rating: 0,
   },
 ];
 
-const assessmentRailDividerColor = alpha(kineticTokens.mutedText, 0.12);
+const assessmentRailDividerColor = alpha(cognipaceTokens.mutedText, 0.12);
 
 function assessmentToggleSx(color: string) {
   return {
@@ -66,13 +66,13 @@ function assessmentToggleSx(color: string) {
     "&.Mui-selected": {
       backgroundColor: alpha(color, 0.75),
       boxShadow: `inset 0 0 0 1px ${alpha(color, 0.85)}`,
-      color: kineticTokens.text,
+      color: cognipaceTokens.text,
     },
     "&.Mui-selected .assessment-label": {
-      color: kineticTokens.text,
+      color: cognipaceTokens.text,
     },
     "&.Mui-selected .assessment-copy": {
-      color: alpha(kineticTokens.text, 0.82),
+      color: alpha(cognipaceTokens.text, 0.82),
     },
     "&:hover": {
       backgroundColor: alpha(color, 0.12),
@@ -107,7 +107,7 @@ export function AssessmentRail(
         exclusive
         fullWidth
         sx={{
-          backgroundColor: alpha(kineticTokens.backgroundAlt, 0.52),
+          backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.52),
           border: `1px solid ${assessmentRailDividerColor}`,
           borderRadius: 2.5,
           overflow: "hidden",

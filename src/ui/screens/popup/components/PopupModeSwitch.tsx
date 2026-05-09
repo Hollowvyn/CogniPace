@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 
 import {StudyMode} from "../../../../domain/types";
 import {SurfaceCard} from "../../../components";
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 
 interface PopupModeOptionProps {
   active: boolean;
@@ -25,10 +25,10 @@ function PopupModeOption(props: PopupModeOptionProps) {
       onClick={props.onClick}
       sx={{
         backgroundColor: props.active
-          ? kineticTokens.accent
+          ? cognipaceTokens.accent
           : "transparent",
         borderRadius: 1.1,
-        color: props.active ? "#2b1700" : kineticTokens.softText,
+        color: props.active ? "#2b1700" : cognipaceTokens.softText,
         display: "flex",
         flex: 1,
         minHeight: 60,
@@ -38,12 +38,12 @@ function PopupModeOption(props: PopupModeOptionProps) {
         touchAction: "manipulation",
         "&:hover": {
           backgroundColor: props.active
-            ? kineticTokens.accent
-            : alpha(kineticTokens.paperStrong, 0.82),
-          color: props.active ? "#2b1700" : kineticTokens.text,
+            ? cognipaceTokens.accent
+            : alpha(cognipaceTokens.paperStrong, 0.82),
+          color: props.active ? "#2b1700" : cognipaceTokens.text,
         },
         "&:focus-visible": {
-          outline: `2px solid ${alpha(kineticTokens.info, 0.72)}`,
+          outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,
           outlineOffset: 2,
         },
       }}

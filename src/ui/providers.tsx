@@ -2,7 +2,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import {createTheme, ThemeProvider} from "@mui/material/styles";
 import {ReactNode, useMemo} from "react";
 
-import {kineticTheme} from "./theme";
+import {cognipaceTheme} from "./theme";
 
 export function AppProviders(props: {
   children?: ReactNode;
@@ -10,10 +10,10 @@ export function AppProviders(props: {
 }) {
   const theme = useMemo(() => {
     if (!props.portalContainer) {
-      return kineticTheme;
+      return cognipaceTheme;
     }
 
-    return createTheme(kineticTheme, {
+    return createTheme(cognipaceTheme, {
       components: {
         MuiModal: {
           defaultProps: {

@@ -13,28 +13,28 @@ import {SxProps} from "@mui/system";
 import {memo, ReactNode} from "react";
 
 import {Tone} from "../presentation/studyState";
-import {kineticTokens} from "../theme";
+import {cognipaceTokens} from "../theme";
 
 const toneStyles: Record<Tone, { background: string; color: string }> = {
   default: {
-    background: alpha(kineticTokens.mutedText, 0.12),
-    color: kineticTokens.mutedText,
+    background: alpha(cognipaceTokens.mutedText, 0.12),
+    color: cognipaceTokens.mutedText,
   },
   accent: {
-    background: alpha(kineticTokens.accent, 0.16),
-    color: kineticTokens.accentSoft,
+    background: alpha(cognipaceTokens.accent, 0.16),
+    color: cognipaceTokens.accentSoft,
   },
   info: {
-    background: alpha(kineticTokens.info, 0.16),
-    color: kineticTokens.info,
+    background: alpha(cognipaceTokens.info, 0.16),
+    color: cognipaceTokens.info,
   },
   success: {
-    background: alpha(kineticTokens.success, 0.16),
-    color: kineticTokens.success,
+    background: alpha(cognipaceTokens.success, 0.16),
+    color: cognipaceTokens.success,
   },
   danger: {
-    background: alpha(kineticTokens.danger, 0.16),
-    color: kineticTokens.danger,
+    background: alpha(cognipaceTokens.danger, 0.16),
+    color: cognipaceTokens.danger,
   },
 };
 
@@ -42,28 +42,28 @@ type AssistTone = Tone | "warning";
 
 const assistToneStyles: Record<AssistTone, { border: string; text: string }> = {
   default: {
-    border: alpha(kineticTokens.outlineStrong, 0.18),
-    text: kineticTokens.mutedText,
+    border: alpha(cognipaceTokens.outlineStrong, 0.18),
+    text: cognipaceTokens.mutedText,
   },
   accent: {
-    border: alpha(kineticTokens.accentSoft, 0.24),
-    text: kineticTokens.accentSoft,
+    border: alpha(cognipaceTokens.accentSoft, 0.24),
+    text: cognipaceTokens.accentSoft,
   },
   info: {
-    border: alpha(kineticTokens.info, 0.24),
-    text: kineticTokens.info,
+    border: alpha(cognipaceTokens.info, 0.24),
+    text: cognipaceTokens.info,
   },
   success: {
-    border: alpha(kineticTokens.success, 0.24),
-    text: kineticTokens.success,
+    border: alpha(cognipaceTokens.success, 0.24),
+    text: cognipaceTokens.success,
   },
   warning: {
-    border: alpha(kineticTokens.accentSoft, 0.24),
-    text: kineticTokens.accentSoft,
+    border: alpha(cognipaceTokens.accentSoft, 0.24),
+    text: cognipaceTokens.accentSoft,
   },
   danger: {
-    border: alpha(kineticTokens.danger, 0.24),
-    text: kineticTokens.danger,
+    border: alpha(cognipaceTokens.danger, 0.24),
+    text: cognipaceTokens.danger,
   },
 };
 
@@ -72,9 +72,9 @@ export const BrandMark = memo(function BrandMark() {
     <Box
       sx={{
         alignItems: "center",
-        background: `linear-gradient(135deg, ${alpha(kineticTokens.accent, 0.22)}, ${alpha(kineticTokens.accentSoft, 0.08)})`,
+        background: `linear-gradient(135deg, ${alpha(cognipaceTokens.accent, 0.22)}, ${alpha(cognipaceTokens.accentSoft, 0.08)})`,
         borderRadius: "10px",
-        boxShadow: `inset 0 0 0 1px ${alpha(kineticTokens.accentSoft, 0.12)}`,
+        boxShadow: `inset 0 0 0 1px ${alpha(cognipaceTokens.accentSoft, 0.12)}`,
         color: "primary.light",
         display: "inline-flex",
         fontFamily: '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif',
@@ -108,8 +108,8 @@ export function SurfaceSectionLabel(props: { children: ReactNode }) {
 export function SurfaceIconButton(props: IconButtonProps) {
   const {sx, ...rest} = props;
   const baseSx: SxProps<Theme> = {
-    backgroundColor: alpha(kineticTokens.mutedText, 0.08),
-    border: `1px solid ${alpha(kineticTokens.outlineStrong, 0.34)}`,
+    backgroundColor: alpha(cognipaceTokens.mutedText, 0.08),
+    border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.34)}`,
     borderRadius: 1.15,
     color: "text.secondary",
     height: 30,
@@ -117,13 +117,13 @@ export function SurfaceIconButton(props: IconButtonProps) {
       "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
     width: 30,
     "&:hover": {
-      backgroundColor: alpha(kineticTokens.accent, 0.1),
-      borderColor: alpha(kineticTokens.accentSoft, 0.45),
+      backgroundColor: alpha(cognipaceTokens.accent, 0.1),
+      borderColor: alpha(cognipaceTokens.accentSoft, 0.45),
       color: "primary.light",
     },
     "&:focus-visible": {
-      backgroundColor: alpha(kineticTokens.accent, 0.12),
-      outline: `2px solid ${alpha(kineticTokens.info, 0.72)}`,
+      backgroundColor: alpha(cognipaceTokens.accent, 0.12),
+      outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,
       outlineOffset: 2,
     },
   };
@@ -163,11 +163,11 @@ export function InsetSurface(props: {
       sx={{
         backgroundColor:
           tone === "default"
-            ? alpha(kineticTokens.backgroundAlt, 0.72)
+            ? alpha(cognipaceTokens.backgroundAlt, 0.72)
             : alpha(backgroundTone.color, 0.08),
         border: `1px solid ${
           tone === "default"
-            ? alpha(kineticTokens.outlineStrong, 0.22)
+            ? alpha(cognipaceTokens.outlineStrong, 0.22)
             : alpha(backgroundTone.color, 0.22)
         }`,
         borderRadius: 1.8,
@@ -188,7 +188,7 @@ export function NumericDisplay(props: {
   return (
     <Typography
       sx={{
-        color: props.color ?? kineticTokens.text,
+        color: props.color ?? cognipaceTokens.text,
         fontFamily: '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif',
         fontVariantNumeric: "tabular-nums",
         fontSize: "1.85rem",

@@ -11,7 +11,7 @@ import Stack from "@mui/material/Stack";
 import {alpha} from "@mui/material/styles";
 
 import {FieldAssistRow, NumericDisplay, SurfaceIconButton, SurfaceTooltip} from "../../../components";
-import {kineticTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 import {CollapsedOverlayViewModel} from "../overlayPanel.types";
 
 import {OverlayFeedbackSurface} from "./OverlayFeedbackSurface";
@@ -89,11 +89,11 @@ export function CollapsedOverlayPanel(
                       : props.model.timer.onStart
                   }
                   sx={{
-                    backgroundColor: alpha(kineticTokens.accent, 0.12),
-                    border: `1px solid ${alpha(kineticTokens.accentSoft, 0.2)}`,
+                    backgroundColor: alpha(cognipaceTokens.accent, 0.12),
+                    border: `1px solid ${alpha(cognipaceTokens.accentSoft, 0.2)}`,
                     color: "primary.light",
                     "&:hover": {
-                      backgroundColor: alpha(kineticTokens.accent, 0.2),
+                      backgroundColor: alpha(cognipaceTokens.accent, 0.2),
                     },
                   }}
                 >
@@ -147,10 +147,10 @@ export function CollapsedOverlayPanel(
                   disabled={!props.model.actions.canFail}
                   onClick={props.model.actions.onFail}
                   sx={{
-                    backgroundColor: kineticTokens.danger,
+                    backgroundColor: cognipaceTokens.danger,
                     borderRadius: 1.1,
-                    boxShadow: `0 12px 24px ${alpha(kineticTokens.danger, 0.18)}`,
-                    color: kineticTokens.background,
+                    boxShadow: `0 12px 24px ${alpha(cognipaceTokens.danger, 0.18)}`,
+                    color: cognipaceTokens.background,
                     height: 34,
                     width: 34,
                     "&:hover": {

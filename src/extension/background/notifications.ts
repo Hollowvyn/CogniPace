@@ -95,7 +95,7 @@ export async function maybeNotifyDueQueue(now = new Date()): Promise<boolean> {
   }
 
   /**
-   * [TODO]: ÍReplace with Cognipace icon when available. Using a 1x1 transparent PNG to avoid showing the default Chrome notification icon, which can be visually jarring and doesn't fit with our branding.
+   * [TODO]: ÍReplace with CogniPace icon when available. Using a 1x1 transparent PNG to avoid showing the default Chrome notification icon, which can be visually jarring and doesn't fit with our branding.
    */
   await chrome.notifications.create("cognipace-due", {
     type: "basic",
