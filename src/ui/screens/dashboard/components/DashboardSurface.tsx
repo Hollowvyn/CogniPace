@@ -1,12 +1,16 @@
 /** Dashboard-specific surface primitives composed from the shared CogniPace theme. */
 import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { alpha } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import { InsetSurface, SurfaceSectionLabel } from "../../../components";
+import {
+  InsetSurface,
+  SurfaceActionBar,
+  SurfacePanel,
+  SurfaceSectionLabel,
+} from "../../../components";
 import { cognipaceTokens } from "../../../theme";
 
 export function DashboardFrame(props: { children: ReactNode }) {
@@ -16,10 +20,23 @@ export function DashboardFrame(props: { children: ReactNode }) {
         boxSizing: "border-box",
         maxWidth: 1440,
         mx: "auto",
+        minHeight: "100vh",
         overflowX: "hidden",
-        px: { md: 2.5, xs: 1.25 },
-        py: { md: 2.5, xs: 1.25 },
+        position: "relative",
+        px: { md: 4, xs: 2 },
+        py: { md: 4, xs: 2 },
         width: "100%",
+        "&::before": {
+          content: '""',
+          position: "fixed",
+          inset: 0,
+          background: [
+            `radial-gradient(circle at 50% 0%, ${alpha(cognipaceTokens.accent, 0.05)}, transparent 40%)`,
+            `radial-gradient(circle at 0% 100%, ${alpha(cognipaceTokens.info, 0.04)}, transparent 30%)`,
+          ].join(","),
+          pointerEvents: "none",
+          zIndex: -1,
+        },
       }}
     >
       {props.children}
@@ -27,54 +44,26 @@ export function DashboardFrame(props: { children: ReactNode }) {
   );
 }
 
-export function DashboardChromePanel(props: {
-  children: ReactNode;
-  sx?: object;
-}) {
-  return (
-    <Paper
-      sx={{
-        backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.86),
-        border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.38)}`,
-        borderRadius: 2,
-        boxSizing: "border-box",
-        boxShadow: "0 22px 54px rgba(0, 0, 0, 0.28)",
-        maxWidth: "100%",
-        overflow: "hidden",
-        ...(props.sx ?? {}),
-      }}
-    >
-      {props.children}
-    </Paper>
-  );
-}
-
 export function DashboardRailPanel(props: { children: ReactNode }) {
   return (
-    <DashboardChromePanel
+    <SurfacePanel
       sx={{
         alignSelf: "flex-start",
-        minWidth: { lg: 218 },
-        p: 1.75,
+        minWidth: { lg: 228 },
+        p: 2,
         position: { lg: "sticky" },
-        top: { lg: 0 },
-        width: { lg: 218, xs: "100%" },
+        top: { lg: 2 },
+        width: { lg: 228, xs: "100%" },
       }}
     >
       {props.children}
-    </DashboardChromePanel>
+    </SurfacePanel>
   );
 }
 
 export function DashboardHeaderPanel(props: { children: ReactNode }) {
   return (
-    <DashboardChromePanel
-      sx={{
-        p: { md: 2.25, xs: 1.75 },
-      }}
-    >
-      {props.children}
-    </DashboardChromePanel>
+    <SurfacePanel sx={{ p: { md: 2, xs: 2 } }}>{props.children}</SurfacePanel>
   );
 }
 
@@ -87,11 +76,10 @@ export function DashboardSettingsGroup(props: {
   return (
     <InsetSurface
       sx={{
-        backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.48),
-        p: { md: 1.75, xs: 1.4 },
+        p: { md: 2, xs: 2 },
       }}
     >
-      <Stack spacing={1.45}>
+      <Stack spacing={1.5}>
         <Box>
           <SurfaceSectionLabel>{props.label}</SurfaceSectionLabel>
           <Typography component="h3" variant="h6">
@@ -109,37 +97,10 @@ export function DashboardSettingsGroup(props: {
   );
 }
 
-export function DashboardControlRow(props: {
-  children: ReactNode;
-  sx?: object;
-}) {
-  return (
-    <InsetSurface
-      sx={{
-        alignItems: "center",
-        display: "flex",
-        minHeight: 52,
-        px: 1.25,
-        py: 1,
-        ...(props.sx ?? {}),
-      }}
-    >
-      {props.children}
-    </InsetSurface>
-  );
-}
-
 export function DashboardActionBar(props: { children: ReactNode }) {
   return (
-    <Stack
-      direction={{ md: "row", xs: "column" }}
-      spacing={1}
-      sx={{
-        borderTop: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.18)}`,
-        pt: 1.5,
-      }}
-    >
+    <SurfaceActionBar sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}>
       {props.children}
-    </Stack>
+    </SurfaceActionBar>
   );
 }

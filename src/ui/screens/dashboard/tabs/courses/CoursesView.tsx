@@ -4,14 +4,14 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { AppShellPayload } from "../../../../domain/views";
-import { MetricCard, SurfaceCard } from "../../../components";
-import { CourseNextCard } from "../../../features/courses/CourseNextCard";
-import { CourseProgressCard } from "../../../features/courses/CourseProgressCard";
-import { ProblemStatusTable } from "../../../features/questions/ProblemStatusTable";
-import { CourseFormState } from "../../../presentation/courseIngest";
-import { CourseIngestForm } from "../components/CourseIngestForm";
-import { CourseRosterCard } from "../components/CourseRosterCard";
+import { AppShellPayload } from "../../../../../domain/views";
+import { MetricCard, SurfaceCard } from "../../../../components";
+import { CourseNextCard } from "../../../../features/courses/CourseNextCard";
+import { CourseProgressCard } from "../../../../features/courses/CourseProgressCard";
+import { ProblemStatusTable } from "../../../../features/questions/ProblemStatusTable";
+import { CourseFormState } from "../../../../presentation/courseIngest";
+import { CourseIngestForm } from "../../components/CourseIngestForm";
+import { CourseRosterCard } from "../../components/CourseRosterCard";
 
 export interface CoursesViewProps {
   onOpenProblem: (target: {
@@ -42,7 +42,7 @@ export function CoursesView(props: CoursesViewProps) {
           >
             {course ? (
               <>
-                <Grid container spacing={1.5}>
+                <Grid container spacing={2}>
                   <Grid size={{ md: 4, xs: 12 }}>
                     <MetricCard
                       caption={`${course.completedChapters} completed`}
@@ -116,7 +116,7 @@ export function CoursesView(props: CoursesViewProps) {
       </Grid>
 
       <SurfaceCard label="Course Roster" title="Switch Active Track">
-        <Stack spacing={1.25}>
+        <Stack spacing={1.5}>
           {(props.payload?.courses ?? []).map((courseCard) => (
             <CourseRosterCard
               course={courseCard}
@@ -139,7 +139,9 @@ export function CoursesView(props: CoursesViewProps) {
                   }
                 }}
                 variant={
-                  chapter.id === course.activeChapterId ? "contained" : "outlined"
+                  chapter.id === course.activeChapterId
+                    ? "contained"
+                    : "outlined"
                 }
               >
                 {chapter.title} · {chapter.completedQuestions}/
@@ -155,7 +157,10 @@ export function CoursesView(props: CoursesViewProps) {
       </SurfaceCard>
 
       <SurfaceCard label="Question Matrix" title="Current Path State">
-        <ProblemStatusTable course={course} onOpenProblem={props.onOpenProblem} />
+        <ProblemStatusTable
+          course={course}
+          onOpenProblem={props.onOpenProblem}
+        />
       </SurfaceCard>
     </Stack>
   );

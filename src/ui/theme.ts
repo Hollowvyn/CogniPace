@@ -14,6 +14,7 @@ export const cognipaceTokens = {
   accentSoft: "#ffc78b",
   info: "#94dbff",
   success: "#8fe0a6",
+  warning: "#ffd24a",
   danger: "#ffb4ab",
 };
 
@@ -38,7 +39,7 @@ export const cognipaceTheme = createTheme({
       main: cognipaceTokens.danger,
     },
     warning: {
-      main: cognipaceTokens.accentSoft,
+      main: cognipaceTokens.warning,
     },
     background: {
       default: cognipaceTokens.background,

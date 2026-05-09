@@ -4,16 +4,16 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { AppShellPayload } from "../../../../domain/views";
-import { MetricCard, SurfaceCard, ToneChip } from "../../../components";
-import { CourseNextCard } from "../../../features/courses/CourseNextCard";
-import { CourseProgressCard } from "../../../features/courses/CourseProgressCard";
-import { QueuePreview } from "../../../features/queue/QueuePreview";
-import { RecommendedProblemCard } from "../../../features/recommended/RecommendedProblemCard";
-import { DashboardView } from "../../../navigation/dashboardRoutes";
-import { CourseFormState } from "../../../presentation/courseIngest";
-import { CourseIngestForm } from "../components/CourseIngestForm";
-import { CourseRosterCard } from "../components/CourseRosterCard";
+import { AppShellPayload } from "../../../../../domain/views";
+import { MetricCard, SurfaceCard, ToneChip } from "../../../../components";
+import { CourseNextCard } from "../../../../features/courses/CourseNextCard";
+import { CourseProgressCard } from "../../../../features/courses/CourseProgressCard";
+import { QueuePreview } from "../../../../features/queue/QueuePreview";
+import { RecommendedProblemCard } from "../../../../features/recommended/RecommendedProblemCard";
+import { DashboardView } from "../../../../navigation/dashboardRoutes";
+import { CourseFormState } from "../../../../presentation/courseIngest";
+import { CourseIngestForm } from "../../components/CourseIngestForm";
+import { CourseRosterCard } from "../../components/CourseRosterCard";
 
 export interface OverviewViewProps {
   onOpenProblem: (target: {
@@ -42,7 +42,7 @@ export function OverviewView(props: OverviewViewProps) {
             onOpenProblem={props.onOpenProblem}
             recommended={recommended}
           />
-          <Grid container spacing={1.5}>
+          <Grid container spacing={2}>
             <Grid size={{ md: 4, xs: 12 }}>
               <MetricCard
                 caption="Live pressure on the queue."
@@ -115,7 +115,11 @@ export function OverviewView(props: OverviewViewProps) {
             />
           ) : null}
           <SurfaceCard
-            action={<ToneChip label={`${props.payload?.queue.items.length ?? 0} items`} />}
+            action={
+              <ToneChip
+                label={`${props.payload?.queue.items.length ?? 0} items`}
+              />
+            }
             label="Today Queue"
             title="Live Intake"
           >
@@ -130,7 +134,7 @@ export function OverviewView(props: OverviewViewProps) {
       <Grid size={{ lg: 4, xs: 12 }}>
         <Stack spacing={2}>
           <SurfaceCard label="Course Roster" title="Available Tracks">
-            <Stack spacing={1.25}>
+            <Stack spacing={1.5}>
               {(props.payload?.courses ?? []).map((courseCard) => (
                 <CourseRosterCard
                   course={courseCard}
@@ -147,14 +151,12 @@ export function OverviewView(props: OverviewViewProps) {
             />
           </SurfaceCard>
           <SurfaceCard label="Protocol" title="Review Surface">
-            <Stack spacing={1.5}>
+            <Stack spacing={2}>
               <Typography color="text.secondary" variant="body2">
                 Study mode: {props.payload?.settings.studyMode ?? "studyPlan"} ·
                 Order:{" "}
-                {props.payload?.settings.memoryReview.reviewOrder ??
-                  "dueFirst"}{" "}
-                ·
-                Timer + submit is fully manual.
+                {props.payload?.settings.memoryReview.reviewOrder ?? "dueFirst"}{" "}
+                · Timer + submit is fully manual.
               </Typography>
               <Stack direction={{ md: "row", xs: "column" }} spacing={1}>
                 <Button

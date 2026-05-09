@@ -1,17 +1,15 @@
 /** Reusable course-question status table for dashboard course views. */
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import { ActiveCourseView } from "../../../domain/views";
-import { ToneChip } from "../../components";
+import { SurfaceTableContainer, ToneChip } from "../../components";
 import {
   difficultyTone,
   formatDisplayDate,
@@ -38,10 +36,12 @@ export function ProblemStatusTable(props: ProblemStatusTableProps) {
     );
   }
 
-  const questions = props.course.chapters.flatMap((chapter) => chapter.questions);
+  const questions = props.course.chapters.flatMap(
+    (chapter) => chapter.questions
+  );
 
   return (
-    <TableContainer component={Paper}>
+    <SurfaceTableContainer>
       <Table>
         <TableHead>
           <TableRow>
@@ -101,6 +101,6 @@ export function ProblemStatusTable(props: ProblemStatusTableProps) {
           ))}
         </TableBody>
       </Table>
-    </TableContainer>
+    </SurfaceTableContainer>
   );
 }
