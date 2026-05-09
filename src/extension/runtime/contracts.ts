@@ -9,6 +9,13 @@ import type {
   ReviewMode,
   TodayQueue,
 } from "../../domain/types";
+import type { ActiveFocus } from "../../domain/active-focus/model";
+import type {
+  CompanyFilter,
+  CustomFilter,
+  DifficultyFilter,
+  TopicFilter,
+} from "../../domain/sets/model";
 import type {
   AppShellPayload,
   CourseActivationResponse,
@@ -146,6 +153,78 @@ export interface MessageRequestMap {
     slug: string;
     keepNotes?: boolean;
   };
+  // v7 — additive surface for the Question-as-SSoT refactor.
+  EDIT_PROBLEM: {
+    slug: string;
+    patch: {
+      title?: string;
+      difficulty?: Difficulty;
+      url?: string;
+      isPremium?: boolean;
+      leetcodeId?: string;
+      topicIds?: string[];
+      companyIds?: string[];
+    };
+    markUserEdit?: boolean;
+  };
+  CREATE_CUSTOM_TOPIC: {
+    name: string;
+    description?: string;
+  };
+  CREATE_CUSTOM_COMPANY: {
+    name: string;
+    description?: string;
+  };
+  ASSIGN_TOPIC_TO_PROBLEM: {
+    slug: string;
+    topicId: string;
+    /** When false, removes the assignment instead. */
+    assigned?: boolean;
+  };
+  ASSIGN_COMPANY_TO_PROBLEM: {
+    slug: string;
+    companyId: string;
+    assigned?: boolean;
+  };
+  CREATE_STUDY_SET:
+    | {
+        kind: "custom";
+        name: string;
+        description?: string;
+        filter?: CustomFilter;
+        problemSlugs?: string[];
+      }
+    | {
+        kind: "company";
+        name: string;
+        description?: string;
+        filter: CompanyFilter;
+      }
+    | {
+        kind: "topic";
+        name: string;
+        description?: string;
+        filter: TopicFilter;
+      }
+    | {
+        kind: "difficulty";
+        name: string;
+        description?: string;
+        filter: DifficultyFilter;
+      };
+  UPDATE_STUDY_SET: {
+    id: string;
+    name?: string;
+    description?: string;
+    enabled?: boolean;
+  };
+  DELETE_STUDY_SET: {
+    id: string;
+  };
+  SET_ACTIVE_FOCUS: {
+    focus: ActiveFocus;
+  };
+  CONSUME_PRE_V7_BACKUP: Record<string, never>;
 }
 
 export type MessageType = keyof MessageRequestMap;
@@ -183,4 +262,14 @@ export interface MessageResponseMap {
   ADD_PROBLEM_TO_COURSE: CourseMutationResponse;
   SUSPEND_PROBLEM: StudyStateMutationResponse;
   RESET_PROBLEM_SCHEDULE: StudyStateMutationResponse;
+  EDIT_PROBLEM: ProblemMutationResponse;
+  CREATE_CUSTOM_TOPIC: { ok: true; id: string };
+  CREATE_CUSTOM_COMPANY: { ok: true; id: string };
+  ASSIGN_TOPIC_TO_PROBLEM: ProblemMutationResponse;
+  ASSIGN_COMPANY_TO_PROBLEM: ProblemMutationResponse;
+  CREATE_STUDY_SET: { ok: true; id: string };
+  UPDATE_STUDY_SET: { ok: true };
+  DELETE_STUDY_SET: { ok: true };
+  SET_ACTIVE_FOCUS: { ok: true };
+  CONSUME_PRE_V7_BACKUP: { backup: unknown | null };
 }
