@@ -168,6 +168,17 @@ describe("DashboardApp", () => {
     }
   });
 
+  it("renders a saved zero daily question goal as 0", async () => {
+    const payload = makePayload();
+    payload.settings.dailyQuestionGoal = 0;
+
+    const { user } = renderDashboardWithPayload(payload);
+
+    await user.click(await screen.findByRole("button", { name: "Settings" }));
+
+    expect(screen.getByLabelText("Daily Question Goal")).toHaveValue(0);
+  });
+
   it("renders settings sections with the new grouped controls", async () => {
     const { user } = renderDashboardWithPayload(makePayload());
 

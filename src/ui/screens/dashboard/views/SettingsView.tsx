@@ -316,7 +316,7 @@ function NumberSetting(props: {
         },
       }}
       type="number"
-      value={props.value === 0 ? "" : props.value}
+      value={props.value}
     />
   );
 }
