@@ -93,6 +93,76 @@ export interface LibraryProblemRow {
   courses: LibraryCourseReference[];
 }
 
+// ---------- v7 hydrated views ----------
+//
+// View consumers (popup / dashboard / overlay) get the entity surface
+// pre-hydrated: Topic and Company names are resolved server-side and
+// `editedFields` is flattened from `Problem.userEdits` so components
+// don't need access to the canonical registry maps.
+
+export interface TopicLabel {
+  id: string;
+  name: string;
+}
+
+export interface CompanyLabel {
+  id: string;
+  name: string;
+}
+
+/**
+ * UI-friendly view of a Problem. Identical to the entity except topic
+ * and company FKs are pre-joined to display labels and `editedFields`
+ * is a flat list (the underlying flag map is awkward to iterate).
+ */
+export interface ProblemView {
+  slug: string;
+  title: string;
+  difficulty: import("./types").Difficulty;
+  isPremium: boolean;
+  url: string;
+  leetcodeId?: string;
+  topics: TopicLabel[];
+  companies: CompanyLabel[];
+  editedFields: import("./problems/model").EditableProblemField[];
+}
+
+/** Discriminated UI shape for a StudySet. Each case carries the data the
+ * matching component renderer needs without forcing it to match across
+ * variants. */
+export type StudySetView =
+  | {
+      kind: "flat";
+      id: string;
+      name: string;
+      description?: string;
+      enabled: boolean;
+      problems: ProblemView[];
+    }
+  | {
+      kind: "grouped";
+      id: string;
+      name: string;
+      description?: string;
+      enabled: boolean;
+      groups: Array<{
+        id: string;
+        name: string;
+        prerequisiteGroupIds: string[];
+        unlocked: boolean;
+        problems: ProblemView[];
+      }>;
+    }
+  | {
+      kind: "derived";
+      id: string;
+      name: string;
+      description?: string;
+      enabled: boolean;
+      filterDescription: string;
+      problems: ProblemView[];
+    };
+
 export interface CourseOption {
   id: string;
   name: string;
