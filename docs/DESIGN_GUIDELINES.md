@@ -24,6 +24,7 @@ The UI should feel like a sharp browser tool rather than a marketing site or mob
 - the layout should remain narrow, compact, and single-column
 - dense is acceptable if the information order is clear
 - the popup should prefer surface-specific sections over generic dashboard cards
+- buttons, icon actions, segmented controls, and dock triggers should use compact desktop sizing rather than mobile-style tap targets
 - compact icon actions are preferred over oversized footer buttons when the destination is secondary
 - study-mode actions in the popup should name the next action explicitly, for example `Start study mode` or
   `Start freestyle mode`

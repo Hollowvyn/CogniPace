@@ -2,7 +2,7 @@ import Button, { ButtonProps } from "@mui/material/Button";
 import { alpha, Theme } from "@mui/material/styles";
 import { SxProps } from "@mui/system";
 
-import { cognipaceTokens } from "../../theme";
+import { cognipaceControlScale, cognipaceTokens } from "../../theme";
 
 export interface SurfaceNavButtonProps extends Omit<ButtonProps, "variant"> {
   active?: boolean;
@@ -19,8 +19,8 @@ export function SurfaceNavButton(props: SurfaceNavButtonProps) {
     boxShadow: "none",
     color: active ? "primary.light" : "text.secondary",
     justifyContent: "flex-start",
-    minHeight: 44,
-    px: 1.5,
+    minHeight: cognipaceControlScale.navButtonMinHeight,
+    paddingInline: cognipaceControlScale.navButtonInlinePadding,
     transition:
       "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
     "@media (prefers-reduced-motion: reduce)": {

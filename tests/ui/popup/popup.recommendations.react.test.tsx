@@ -15,13 +15,13 @@ describe("Popup Recommendations", () => {
     expect(sendMessageMock).toHaveBeenCalledWith("GET_POPUP_SHELL_DATA", {});
     expect(
       screen.getByRole("button", { name: "Refresh popup" })
-    ).toBeInTheDocument();
+    ).toHaveStyle({ height: "34px", width: "34px" });
     expect(
       screen.getByRole("button", { name: "Open settings" })
-    ).toBeInTheDocument();
+    ).toHaveStyle({ height: "34px", width: "34px" });
     expect(
       screen.getByRole("button", { name: "Start freestyle mode" })
-    ).toBeInTheDocument();
+    ).toHaveStyle({ minHeight: "26px" });
     expect(screen.queryByText(/Next review day:/i)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Shuffle recommendation" })

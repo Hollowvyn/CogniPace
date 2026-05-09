@@ -5,7 +5,7 @@ import {alpha} from "@mui/material/styles";
 import {type PointerEvent, useRef, useState} from "react";
 
 import {BrandMark, SurfaceTooltip} from "../../../components";
-import {cognipaceTokens} from "../../../theme";
+import {cognipaceControlScale, cognipaceTokens} from "../../../theme";
 import {DockedOverlayViewModel} from "../overlayPanel.types";
 
 const DOCK_BOTTOM_OFFSET_PX = 10;
@@ -75,9 +75,9 @@ export function DockedOverlayPanel(
       style={{transform: `translateY(${dockOffsetY}px)`}}
       sx={{
         border: (theme) => `1px solid ${theme.palette.divider}`,
-        borderRadius: "18px 0 0 18px",
+        borderRadius: "16px 0 0 16px",
         overflow: "hidden",
-        width: 48,
+        width: cognipaceControlScale.dockWidth,
       }}
     >
       <SurfaceTooltip
@@ -163,10 +163,10 @@ export function DockedOverlayPanel(
           sx={{
             alignItems: "center",
             backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.84),
-            cursor: "default",
+            cursor: "pointer",
             display: "flex",
             justifyContent: "center",
-            minHeight: 72,
+            minHeight: cognipaceControlScale.dockMinHeight,
             touchAction: "none",
             transition: "background-color 160ms ease",
             userSelect: "none",
@@ -186,7 +186,7 @@ export function DockedOverlayPanel(
             sx={{
               display: "flex",
               justifyContent: "center",
-              transform: "scale(0.88)",
+              transform: "scale(0.82)",
             }}
           >
             <BrandMark/>

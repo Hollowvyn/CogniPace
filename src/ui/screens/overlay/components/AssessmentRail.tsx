@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 
 import {Rating} from "../../../../domain/types";
 import {FieldAssistRow, SurfaceSectionLabel} from "../../../components";
-import {cognipaceTokens} from "../../../theme";
+import {cognipaceControlScale, cognipaceTokens} from "../../../theme";
 import {OverlayAssessmentSectionViewModel, OverlayAssistViewModel} from "../overlayPanel.types";
 
 interface AssessmentOption {
@@ -51,10 +51,10 @@ function assessmentToggleSx(color: string) {
     backgroundColor: alpha(color, 0.08),
     color: alpha(color, 0.94),
     flex: 1,
-    minHeight: 76,
+    minHeight: cognipaceControlScale.assessmentMinHeight,
     minWidth: 0,
-    px: 1.1,
-    py: 1.05,
+    px: 0.9,
+    py: 0.9,
     textAlign: "center",
     transition: "background-color 160ms ease, border-color 160ms ease, color 160ms ease",
     "& .assessment-label": {

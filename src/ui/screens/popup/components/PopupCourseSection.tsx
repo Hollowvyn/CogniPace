@@ -17,6 +17,7 @@ import {
   ToneChip,
 } from "../../../components";
 import { UiStatus } from "../../../state/useAppShellQuery";
+import { cognipaceControlScale } from "../../../theme";
 
 import { popupSmallButtonSx } from "./popupStyles";
 
@@ -137,7 +138,11 @@ function CourseNextInset(props: {
                   slug: props.nextQuestion.slug,
                 });
               }}
-              sx={{ color: "primary.light", height: 28, width: 28 }}
+              sx={{
+                color: "primary.light",
+                height: cognipaceControlScale.compactPillMinHeight,
+                width: cognipaceControlScale.compactPillMinWidth,
+              }}
             >
               <ChevronRightRounded aria-hidden="true" fontSize="small" />
             </SurfaceIconButton>
