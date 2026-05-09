@@ -89,15 +89,30 @@ export async function saveAppData(data: AppData): Promise<void> {
   await writeLocalStorage({ [STORAGE_KEY]: payload });
 }
 
+/**
+ * Serialised mutation pipeline. Without this, parallel `mutateAppData`
+ * calls (e.g. UI fires while a background alarm fires) both read the
+ * same baseline and one write clobbers the other. The chain forces each
+ * read/transform/write cycle to run after the previous has resolved;
+ * errors are swallowed at the chain level so one rejected mutation does
+ * not poison subsequent ones (the original promise still rejects to its
+ * caller).
+ */
+let mutationChain: Promise<unknown> = Promise.resolve();
+
 /** Reads, mutates, and persists the app data in a single repository operation. */
 export async function mutateAppData(
   updater: (data: AppData) => AppData | Promise<AppData>
 ): Promise<AppData> {
-  const current = await getAppData();
-  const updated = await updater(current);
-  ensureCourseData(updated);
-  await saveAppData(updated);
-  return updated;
+  const next = mutationChain.then(async () => {
+    const current = await getAppData();
+    const updated = await updater(current);
+    ensureCourseData(updated);
+    await saveAppData(updated);
+    return updated;
+  });
+  mutationChain = next.catch(() => undefined);
+  return next;
 }
 
 /** Merges a settings patch while preserving grouped persisted settings. */
