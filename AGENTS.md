@@ -47,7 +47,7 @@ Read these in order before planning or implementing changes:
 - Allowed lanes:
   - Cartographer docs drift checks
   - Sentinel security hardening
-  - Palette micro-UX and accessibility polish
+  - Palette micro-UX and accessibility polish (desktop-only scope per docs/decisions/0006-desktop-only-scope.md)
   - Victor test reliability improvements
   - CI repair on Jules-created PRs
   - docs cleanup
