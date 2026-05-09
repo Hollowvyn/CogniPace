@@ -94,15 +94,23 @@ function sanitizeDifficultyGoalMs(
   value: unknown,
   fallback: DifficultyGoalSettings
 ): DifficultyGoalSettings {
+  let base: DifficultyGoalSettings;
   if (!isRecord(value)) {
-    return { ...fallback };
+    base = { ...fallback };
+  } else {
+    base = {
+      Easy: positiveInteger(value.Easy, fallback.Easy),
+      Medium: positiveInteger(value.Medium, fallback.Medium),
+      Hard: positiveInteger(value.Hard, fallback.Hard),
+    };
   }
 
-  return {
-    Easy: positiveInteger(value.Easy, fallback.Easy),
-    Medium: positiveInteger(value.Medium, fallback.Medium),
-    Hard: positiveInteger(value.Hard, fallback.Hard),
-  };
+  const STEP_MS = 60000;
+  base.Easy = Math.max(10 * STEP_MS, Math.min(base.Easy, 58 * STEP_MS));
+  base.Medium = Math.max(base.Easy + STEP_MS, Math.min(base.Medium, 59 * STEP_MS));
+  base.Hard = Math.max(base.Medium + STEP_MS, Math.min(base.Hard, 60 * STEP_MS));
+
+  return base;
 }
 
 function isNonNegativeInteger(value: unknown): value is number {
@@ -177,6 +185,7 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
     typeof questionFilters.skipIgnored === "boolean" &&
     typeof questionFilters.skipPremium === "boolean" &&
     typeof timing.requireSolveTime === "boolean" &&
+    typeof timing.hardMode === "boolean" &&
     isDifficultyGoalSettings(timing.difficultyGoalMs) &&
     typeof experimental.autoDetectSolved === "boolean"
   );
@@ -197,6 +206,11 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
   );
   const timing = settingsRecord(source.timing, initial.timing);
   const experimental = settingsRecord(source.experimental, initial.experimental);
+
+  const sanitizedRequireSolveTime = booleanValue(
+    timing.requireSolveTime,
+    initial.timing.requireSolveTime
+  );
 
   return {
     dailyQuestionGoal: nonNegativeInteger(
@@ -242,9 +256,10 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       ),
     },
     timing: {
-      requireSolveTime: booleanValue(
-        timing.requireSolveTime,
-        initial.timing.requireSolveTime
+      requireSolveTime: sanitizedRequireSolveTime,
+      hardMode: sanitizedRequireSolveTime && booleanValue(
+        timing.hardMode,
+        initial.timing.hardMode
       ),
       difficultyGoalMs: sanitizeDifficultyGoalMs(
         timing.difficultyGoalMs,

@@ -271,6 +271,8 @@ function SettingsFieldGrid(props: {
 }
 
 function NumberSetting(props: {
+  error?: boolean;
+  helperText?: string;
   label: string;
   max?: number;
   min?: number;
@@ -280,10 +282,14 @@ function NumberSetting(props: {
 }) {
   return (
     <TextField
+      error={props.error}
       fullWidth
+      helperText={props.helperText}
       label={props.label}
       onChange={(event) => {
-        props.onChange(Number(event.target.value) || 0);
+        const raw = event.target.value;
+        const parsed = parseInt(raw, 10);
+        props.onChange(isNaN(parsed) ? 0 : parsed);
       }}
       size="small"
       slotProps={{
@@ -299,6 +305,15 @@ function NumberSetting(props: {
               ),
             }
           : undefined,
+      }}
+      sx={{
+        "& input[type=number]": {
+          MozAppearance: "textfield",
+        },
+        "& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button": {
+          WebkitAppearance: "none",
+          margin: 0,
+        },
       }}
       type="number"
       value={props.value}
@@ -763,77 +778,138 @@ function TimingGoalsSection(props: {
   onUpdateSettings: SettingsUpdate;
   settingsDraft: UserSettings;
 }) {
+  const draftEasyMs = props.settingsDraft.timing.difficultyGoalMs.Easy;
+  const draftMediumMs = props.settingsDraft.timing.difficultyGoalMs.Medium;
+  const draftHardMs = props.settingsDraft.timing.difficultyGoalMs.Hard;
+
+  const [easyDraft, setEasyDraft] = useState(() =>
+    createGoalTextDraft(draftEasyMs)
+  );
+  const [mediumDraft, setMediumDraft] = useState(() =>
+    createGoalTextDraft(draftMediumMs)
+  );
+  const [hardDraft, setHardDraft] = useState(() =>
+    createGoalTextDraft(draftHardMs)
+  );
+
+  const easyStr = resolveGoalTextDraft(easyDraft, draftEasyMs).value;
+  const mediumStr = resolveGoalTextDraft(mediumDraft, draftMediumMs).value;
+  const hardStr = resolveGoalTextDraft(hardDraft, draftHardMs).value;
+
+  const easyMin = parseGoalMinutes(easyStr);
+  const mediumMin = parseGoalMinutes(mediumStr);
+  const hardMin = parseGoalMinutes(hardStr);
+
+  const easyError = easyStr === "" ? "Required" : easyMin < 10 ? "Min 10" : easyMin > 58 ? "Max 58" : mediumStr !== "" && easyMin >= mediumMin ? "Must be < Medium" : undefined;
+  const mediumError = mediumStr === "" ? "Required" : mediumMin > 59 ? "Max 59" : easyStr !== "" && mediumMin <= easyMin ? "Must be > Easy" : hardStr !== "" && mediumMin >= hardMin ? "Must be < Hard" : undefined;
+  const hardError = hardStr === "" ? "Required" : hardMin > 60 ? "Max 60" : mediumStr !== "" && hardMin <= mediumMin ? "Must be > Medium" : undefined;
+
+  const updateDraftMs = (eMin: number, mMin: number, hMin: number) => {
+    props.onUpdateSettings((current) => ({
+      ...current,
+      timing: {
+        ...current.timing,
+        difficultyGoalMs: {
+          ...current.timing.difficultyGoalMs,
+          Easy: minutesToMs(eMin),
+          Medium: minutesToMs(mMin),
+          Hard: minutesToMs(hMin),
+        },
+      },
+    }));
+  };
+
+  const commonTextFieldProps = {
+    fullWidth: true,
+    size: "small" as const,
+    type: "text",
+    slotProps: {
+      input: {
+        endAdornment: <InputAdornment position="end">min</InputAdornment>,
+      },
+    },
+    inputProps: {
+      inputMode: "numeric" as const,
+    },
+  };
+
   return (
     <Stack spacing={1 * settingsSpaceScale}>
-      <SwitchSetting
-        checked={props.settingsDraft.timing.requireSolveTime}
-        helper="Overlay submissions can require a recorded timer value."
-        label="Require solve time"
-        name="Require solve time"
-        onChange={(checked) => {
-          props.onUpdateSettings((current) => ({
-            ...current,
-            timing: {
-              ...current.timing,
-              requireSolveTime: checked,
-            },
-          }));
-        }}
-      />
+      <SettingsFieldGrid columns={2}>
+        <SwitchSetting
+          checked={props.settingsDraft.timing.requireSolveTime}
+          helper="Overlay submissions can require a recorded timer value."
+          label="Require solve time"
+          name="Require solve time"
+          onChange={(checked) => {
+            props.onUpdateSettings((current) => ({
+              ...current,
+              timing: {
+                ...current.timing,
+                requireSolveTime: checked,
+              },
+            }));
+          }}
+        />
+        <SwitchSetting
+          checked={props.settingsDraft.timing.hardMode}
+          disabled={!props.settingsDraft.timing.requireSolveTime}
+          helper="Enables stricter assessment criteria."
+          label="Hard mode"
+          name="Hard mode"
+          onChange={(checked) => {
+            props.onUpdateSettings((current) => ({
+              ...current,
+              timing: {
+                ...current.timing,
+                hardMode: checked,
+              },
+            }));
+          }}
+        />
+      </SettingsFieldGrid>
       <SettingsFieldGrid columns={3}>
-        <NumberSetting
+        <TextField
+          {...commonTextFieldProps}
+          error={Boolean(easyError)}
+          helperText={easyError}
           label="Easy goal"
-          min={1}
-          onChange={(value) => {
-            props.onUpdateSettings((current) => ({
-              ...current,
-              timing: {
-                ...current.timing,
-                difficultyGoalMs: {
-                  ...current.timing.difficultyGoalMs,
-                  Easy: minutesToMs(value),
-                },
-              },
-            }));
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw !== "" && !/^\d+$/.test(raw)) return;
+            const minutes = parseGoalMinutes(raw);
+            setEasyDraft({ sourceMs: minutesToMs(minutes), value: raw });
+            updateDraftMs(minutes, mediumMin, hardMin);
           }}
-          suffix="min"
-          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Easy)}
+          value={easyStr}
         />
-        <NumberSetting
+        <TextField
+          {...commonTextFieldProps}
+          error={Boolean(mediumError)}
+          helperText={mediumError}
           label="Medium goal"
-          min={1}
-          onChange={(value) => {
-            props.onUpdateSettings((current) => ({
-              ...current,
-              timing: {
-                ...current.timing,
-                difficultyGoalMs: {
-                  ...current.timing.difficultyGoalMs,
-                  Medium: minutesToMs(value),
-                },
-              },
-            }));
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw !== "" && !/^\d+$/.test(raw)) return;
+            const minutes = parseGoalMinutes(raw);
+            setMediumDraft({ sourceMs: minutesToMs(minutes), value: raw });
+            updateDraftMs(easyMin, minutes, hardMin);
           }}
-          suffix="min"
-          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Medium)}
+          value={mediumStr}
         />
-        <NumberSetting
+        <TextField
+          {...commonTextFieldProps}
+          error={Boolean(hardError)}
+          helperText={hardError}
           label="Hard goal"
-          min={1}
-          onChange={(value) => {
-            props.onUpdateSettings((current) => ({
-              ...current,
-              timing: {
-                ...current.timing,
-                difficultyGoalMs: {
-                  ...current.timing.difficultyGoalMs,
-                  Hard: minutesToMs(value),
-                },
-              },
-            }));
+          onChange={(event) => {
+            const raw = event.target.value;
+            if (raw !== "" && !/^\d+$/.test(raw)) return;
+            const minutes = parseGoalMinutes(raw);
+            setHardDraft({ sourceMs: minutesToMs(minutes), value: raw });
+            updateDraftMs(easyMin, mediumMin, minutes);
           }}
-          suffix="min"
-          value={msToMinutes(props.settingsDraft.timing.difficultyGoalMs.Hard)}
+          value={hardStr}
         />
       </SettingsFieldGrid>
       <Typography
@@ -841,7 +917,7 @@ function TimingGoalsSection(props: {
         sx={{ fontSize: `${0.75 * settingsTypeScale}rem` }}
         variant="caption"
       >
-        Unknown difficulty keeps the internal 30 minute fallback.
+        Questions with unknown difficulty use the Hard goal. Invalid goals are coerced when saving.
       </Typography>
     </Stack>
   );
@@ -1017,9 +1093,44 @@ function SettingsSaveBar(props: {
 }
 
 function msToMinutes(value: number): number {
-  return Math.max(1, Math.round(value / 60000));
+  return Math.round(value / 60000);
 }
 
 function minutesToMs(value: number): number {
-  return Math.max(1, Math.round(value)) * 60000;
+  return Math.round(value) * 60000;
+}
+
+interface GoalTextDraft {
+  sourceMs: number;
+  value: string;
+}
+
+function createGoalTextDraft(sourceMs: number): GoalTextDraft {
+  return {
+    sourceMs,
+    value: String(msToMinutes(sourceMs)),
+  };
+}
+
+function parseGoalMinutes(value: string): number {
+  return value === "" ? 0 : parseInt(value, 10);
+}
+
+function resolveGoalTextDraft(
+  draft: GoalTextDraft,
+  sourceMs: number
+): GoalTextDraft {
+  if (draft.sourceMs === sourceMs) {
+    return draft;
+  }
+
+  const nextMinutes = msToMinutes(sourceMs);
+  if (parseGoalMinutes(draft.value) === nextMinutes) {
+    return {
+      sourceMs,
+      value: draft.value,
+    };
+  }
+
+  return createGoalTextDraft(sourceMs);
 }

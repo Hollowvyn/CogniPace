@@ -28,6 +28,7 @@ import {
   isStaleOverlayRequest,
   readProblemPageSnapshot,
 } from "./controller/pageContext";
+import { deriveOverlaySubmitDecision } from "./controller/submitDecision";
 import { useOverlaySessionMachine } from "./controller/useOverlaySessionMachine";
 import { useOverlayTimer } from "./controller/useOverlayTimer";
 import {
@@ -354,26 +355,35 @@ export function useOverlayController(
         message: currentState.feedbackMessage,
       }
     : null;
+
+  const goalMs = goalForDifficulty(
+    currentState.currentDifficulty,
+    settings.timing.difficultyGoalMs
+  );
+  const isOvertime = timer.elapsedMs > goalMs;
+  const hardMode = settings.timing.hardMode;
+  const isHardModeOvertime = isOvertime && hardMode;
+
   const assessmentAssist = {
     id: "overlay-assessment-help",
-    message: currentState.failureLocked
-      ? "Failed sessions stay locked to Again until you restart and open a fresh attempt."
-      : currentState.selectedRating === 3
-        ? "Easy means the solution felt immediate and you can trust the recall."
-        : currentState.selectedRating === 2
-          ? "Good means you finished with steady recall but not instantly."
-          : currentState.selectedRating === 1
-            ? "Hard means you got there with friction and should expect a sooner review."
-            : "Again means you could not complete it and want the shortest review interval.",
-    tone: currentState.failureLocked
+    message: isHardModeOvertime
+      ? "Overtime in Hard Mode forces an Again assessment."
+      : currentState.failureLocked
+        ? "Failed sessions stay locked to Again until you restart and open a fresh attempt."
+        : currentState.selectedRating === 3
+          ? "Easy means the solution felt immediate and you can trust the recall."
+          : currentState.selectedRating === 2
+            ? "Good means you finished with steady recall but not instantly."
+            : currentState.selectedRating === 1
+              ? "Hard means you got there with friction and should expect a sooner review."
+              : "Again means you could not complete it and want the shortest review interval.",
+    tone: isHardModeOvertime || currentState.failureLocked || currentState.selectedRating === 0
       ? "danger"
-      : currentState.selectedRating === 0
-        ? "danger"
-        : currentState.selectedRating === 1
-          ? "warning"
-          : currentState.selectedRating === 3
-            ? "success"
-            : "accent",
+      : currentState.selectedRating === 1
+        ? "warning"
+        : currentState.selectedRating === 3
+          ? "success"
+          : "accent",
   } as const;
   const actionAssist = {
     id: "overlay-action-help",
@@ -400,6 +410,7 @@ export function useOverlayController(
     rating: Rating,
     options?: {
       lockFailureRating?: boolean;
+      solveTimeMs?: number;
     }
   ) => {
     const persistedSlug = await persistSubmittedRating(rating, options);
@@ -412,19 +423,35 @@ export function useOverlayController(
     await refreshPostSubmitNext(persistedSlug);
   };
 
+  const performAssessmentSubmission = (rating?: Rating, forceLock = false) => {
+    const elapsedMs = timer.readElapsedMs();
+    const decision = deriveOverlaySubmitDecision({
+      elapsedMs,
+      explicitRating: rating,
+      forceLock,
+      goalMs,
+      hardMode,
+      selectedRating: currentState.selectedRating,
+    });
+
+    void submitRating(decision.rating, {
+      lockFailureRating: decision.lockFailureRating,
+      solveTimeMs: elapsedMs,
+    });
+  };
+
   const onCompactSubmit = () => {
+    const elapsedMs = timer.readElapsedMs();
     const rating = deriveQuickRating(
-      timer.readElapsedMs() > 0 ? timer.readElapsedMs() : undefined,
-      goalForDifficulty(
-        currentState.currentDifficulty,
-        settings.timing.difficultyGoalMs
-      )
+      elapsedMs > 0 ? elapsedMs : undefined,
+      goalMs,
+      hardMode
     );
-    void submitRating(rating);
+    performAssessmentSubmission(rating);
   };
 
   const onFailReview = () => {
-    void submitRating(0, { lockFailureRating: true });
+    performAssessmentSubmission(0, true);
   };
 
   const onSaveOverride = () => {
@@ -523,6 +550,9 @@ export function useOverlayController(
     };
   }
 
+  const isAssessmentLocked = currentState.failureLocked || isHardModeOvertime;
+  const effectiveRating = isHardModeOvertime ? 0 : currentState.selectedRating;
+
   return {
     renderModel: {
       model: {
@@ -537,14 +567,14 @@ export function useOverlayController(
             restartSession(false);
           },
           onSubmit: () => {
-            void submitRating(currentState.selectedRating);
+            performAssessmentSubmission();
           },
           onUpdate: onSaveOverride,
         },
         assessment: {
-          disabledRatings: currentState.failureLocked ? [1, 2, 3] : [],
+          disabledRatings: isAssessmentLocked ? [1, 2, 3] : [],
           onSelectRating: selectRating,
-          selectedRating: currentState.selectedRating,
+          selectedRating: effectiveRating,
         },
         assessmentAssist,
         actionAssist,

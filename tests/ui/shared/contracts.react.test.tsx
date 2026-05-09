@@ -50,10 +50,12 @@ describe("route and selector contracts", () => {
   });
 
   it.each([
-    { elapsed: 0, goal: 10_000, expected: 2 },
-    { elapsed: 12_000, goal: 10_000, expected: 1 },
-  ])("derives quick rating: $elapsed ms vs $goal ms goal -> $expected", ({ elapsed, goal, expected }) => {
-    expect(deriveQuickRating(elapsed, goal)).toBe(expected);
+    { elapsed: 0, goal: 10_000, hard: false, expected: 2 },
+    { elapsed: 12_000, goal: 10_000, hard: false, expected: 1 },
+    { elapsed: 12_000, goal: 10_000, hard: true, expected: 0 },
+    { elapsed: 30_000, goal: 10_000, hard: false, expected: 1 },
+  ])("derives quick rating: $elapsed ms vs $goal ms goal (hard: $hard) -> $expected", ({ elapsed, goal, hard, expected }) => {
+    expect(deriveQuickRating(elapsed, goal, hard)).toBe(expected);
   });
 
   it.each([

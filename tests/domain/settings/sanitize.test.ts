@@ -58,7 +58,7 @@ describe("settings sanitization", () => {
     assert.equal(valid.notifications.dailyTime, "08:30");
   });
 
-  it("sanitizes difficulty goals to positive integers", () => {
+  it("sanitizes difficulty goals to positive integers within boundaries", () => {
     const sanitized = sanitizeStoredUserSettings({
       timing: {
         difficultyGoalMs: {
@@ -69,8 +69,8 @@ describe("settings sanitization", () => {
       }
     });
 
-    assert.equal(sanitized.timing.difficultyGoalMs.Easy, 1);
-    assert.equal(sanitized.timing.difficultyGoalMs.Medium, 1);
+    assert.equal(sanitized.timing.difficultyGoalMs.Easy, 600000); // 10 minutes min
+    assert.equal(sanitized.timing.difficultyGoalMs.Medium, 660000); // Easy + 1 min
     assert.equal(sanitized.timing.difficultyGoalMs.Hard, initial.timing.difficultyGoalMs.Hard);
   });
 

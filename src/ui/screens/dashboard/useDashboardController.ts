@@ -28,6 +28,7 @@ import {
   createInitialUserSettings,
   UserSettings,
 } from "../../../domain/settings";
+import { sanitizeStoredUserSettings } from "../../../domain/settings/sanitize";
 import { createMockAppShellPayload } from "../../mockData";
 import {
   buildDashboardUrl,
@@ -191,7 +192,7 @@ export function useDashboardController() {
       return;
     }
 
-    const nextSettings = cloneUserSettings(draftSettings);
+    const nextSettings = sanitizeStoredUserSettings(cloneUserSettings(draftSettings));
     const response = await updateSettings(nextSettings);
     if (!response.ok) {
       setStatus({

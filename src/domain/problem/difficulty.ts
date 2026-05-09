@@ -1,8 +1,6 @@
 /** Problem difficulty parsing and difficulty-derived study heuristics. */
 import { Difficulty, DifficultyGoalSettings } from "../types";
 
-export const UNKNOWN_DIFFICULTY_GOAL_MS = 30 * 60 * 1000;
-
 /** Parses a raw difficulty label into the supported domain difficulty union. */
 export function parseDifficulty(input?: string): Difficulty {
   if (!input) {
@@ -33,8 +31,5 @@ export function difficultyGoalMs(
   if (difficulty === "Medium") {
     return goals?.Medium ?? 35 * 60 * 1000;
   }
-  if (difficulty === "Hard") {
-    return goals?.Hard ?? 50 * 60 * 1000;
-  }
-  return UNKNOWN_DIFFICULTY_GOAL_MS;
+  return goals?.Hard ?? 50 * 60 * 1000;
 }
