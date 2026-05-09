@@ -83,7 +83,7 @@ Rules:
 ### Still Missing
 
 - Phase 6 external Jules setup remains pending:
-  - online Jules prompts for Cartographer, Sentinel, Palette, and Victor
+  - online Jules prompts for Cartographer, Sentinel, Palette, and Victor (Palette: desktop-only a11y scope; see ADR 0006)
   - Jules environment setup run and snapshot
   - Jules Suggested Tasks
   - Jules CI fixer for Jules-created PRs
@@ -431,12 +431,12 @@ Status: in progress as of 2026-05-01
 - [ ] Update online Jules platform prompts for:
   - Cartographer docs drift checks
   - Sentinel security hardening
-  - Palette micro-UX and accessibility polish
+  - Palette micro-UX and accessibility polish (desktop-only a11y scope; see ADR 0006)
   - Victor test reliability improvements
 - [ ] Configure Friday-morning Jules platform schedules for:
   - weekly Cartographer docs pass
   - weekly Sentinel security pass
-  - weekly Palette UX and accessibility polish pass
+  - weekly Palette UX and accessibility polish pass (desktop-only a11y scope; see ADR 0006)
   - weekly Victor testing reliability pass
 - [x] Add a GitHub Action that requests `@codex review` on new Jules PRs
 - [x] Add a Jules PR compliance workflow for branch and title conventions

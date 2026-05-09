@@ -29,6 +29,7 @@ The UI should feel like a sharp browser tool rather than a marketing site or mob
   `Start freestyle mode`
 - popup sections should reserve space for helper copy and inline status so action feedback does not shift the layout
 - mode changes should update the existing course panel in place instead of swapping between visually unrelated cards
+- accessibility scope is desktop-only; see docs/decisions/0006-desktop-only-scope.md
 
 ## Dashboard Guidelines
 
