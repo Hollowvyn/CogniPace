@@ -5,14 +5,14 @@ import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
 import { UserSettings } from "../../../../../../domain/settings";
+import { SwitchSetting } from "../components/SettingsInputs";
+import { SettingsFieldGrid } from "../components/SettingsLayout";
 import {
   createGoalTextDraft,
   minutesToMs,
   parseGoalMinutes,
   resolveGoalTextDraft,
 } from "../GoalTextDraft";
-import { SwitchSetting } from "../components/SettingsInputs";
-import { SettingsFieldGrid } from "../components/SettingsLayout";
 import { SettingsUpdate } from "../settingsTypes";
 
 export function TimingGoalsSection(props: {
