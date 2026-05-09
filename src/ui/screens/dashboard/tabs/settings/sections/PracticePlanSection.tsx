@@ -4,7 +4,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 import { StudyMode, UserSettings } from "../../../../../../domain/settings";
 import { NumberSetting } from "../components/SettingsInputs";
-import { SettingsRow } from "../components/SettingsLayout";
+import { SurfaceControlRow } from "../../../../../components";
 import { SettingsUpdate } from "../settingsTypes";
 
 export function PracticePlanSection(props: {
@@ -24,7 +24,7 @@ export function PracticePlanSection(props: {
         }}
         value={props.settingsDraft.dailyQuestionGoal}
       />
-      <SettingsRow
+      <SurfaceControlRow
         control={
           <ToggleButtonGroup
             aria-label="Study Mode"

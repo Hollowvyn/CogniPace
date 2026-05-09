@@ -3,12 +3,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import {
-  SurfaceActionBar,
-  SurfaceCard,
-  SurfaceControlRow,
-  SurfaceFieldGrid,
-} from "../../../../../components";
+import { SurfaceCard } from "../../../../../components";
 
 type SettingsSectionWidth = "full" | "half" | "narrow" | "wide";
 type SettingsSectionTone = "danger" | "default";
@@ -73,31 +68,3 @@ export function SettingsSection(props: {
   );
 }
 
-export function SettingsFieldGrid(props: {
-  children: ReactNode;
-  columns?: 1 | 2 | 3;
-}) {
-  return (
-    <SurfaceFieldGrid columns={props.columns}>
-      {props.children}
-    </SurfaceFieldGrid>
-  );
-}
-
-export function SettingsActionSection(props: { children: ReactNode }) {
-  return <SurfaceActionBar>{props.children}</SurfaceActionBar>;
-}
-
-export function SettingsRow(props: {
-  control: ReactNode;
-  helper?: ReactNode;
-  label: ReactNode;
-}) {
-  return (
-    <SurfaceControlRow
-      control={props.control}
-      helper={props.helper}
-      label={props.label}
-    />
-  );
-}

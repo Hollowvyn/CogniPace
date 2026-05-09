@@ -12,9 +12,9 @@ import Typography from "@mui/material/Typography";
 import { ChangeEvent, useState } from "react";
 
 import {
-  SettingsActionSection,
-  SettingsRow,
-} from "../components/SettingsLayout";
+  SurfaceActionBar,
+  SurfaceControlRow,
+} from "../../../../../components";
 
 export function HistoryResetSection(props: {
   onExportData: () => Promise<void>;
@@ -36,7 +36,7 @@ export function LocalDataSection(props: {
 }) {
   return (
     <Stack spacing={1.25}>
-      <SettingsActionSection>
+      <SurfaceActionBar>
         <Button
           onClick={() => {
             void props.onExportData();
@@ -71,7 +71,7 @@ export function LocalDataSection(props: {
         >
           Import Backup
         </Button>
-      </SettingsActionSection>
+      </SurfaceActionBar>
       <Typography
         aria-live="polite"
         color={props.importFile ? "text.primary" : "text.secondary"}
@@ -94,7 +94,7 @@ function SettingsDangerZone(props: {
 
   return (
     <>
-      <SettingsRow
+      <SurfaceControlRow
         control={
           <Button
             color="error"

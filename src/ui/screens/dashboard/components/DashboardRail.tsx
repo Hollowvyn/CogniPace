@@ -13,7 +13,8 @@ import {
   DashboardView,
 } from "../../../navigation/dashboardRoutes";
 
-import { DashboardControlRow, DashboardRailPanel } from "./DashboardSurface";
+import { SurfaceControlRow } from "../../../components";
+import { DashboardRailPanel } from "./DashboardSurface";
 
 export interface DashboardRailProps {
   activeView: DashboardView;
@@ -47,11 +48,11 @@ export function DashboardRail(props: DashboardRailProps) {
             </SurfaceNavButton>
           ))}
         </Stack>
-        <DashboardControlRow>
+        <SurfaceControlRow>
           <Typography color="text.secondary" variant="body2">
             Spaced repetition control plane
           </Typography>
-        </DashboardControlRow>
+        </SurfaceControlRow>
       </Stack>
     </DashboardRailPanel>
   );

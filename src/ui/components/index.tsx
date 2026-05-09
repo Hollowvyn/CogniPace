@@ -1,6 +1,6 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import Button, { ButtonProps } from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
@@ -310,7 +310,7 @@ export function SurfaceControlRow(props: {
         sx={{
           alignItems: "center",
           display: "flex",
-          minHeight: 58,
+          minHeight: 52,
           minWidth: 0,
           px: 1.35,
           py: 1,
@@ -325,7 +325,7 @@ export function SurfaceControlRow(props: {
   return (
     <InsetSurface
       sx={{
-        minHeight: 58,
+        minHeight: 52,
         minWidth: 0,
         px: 1.35,
         py: 1,
@@ -474,37 +474,42 @@ export function InlineStatusRegion(props: {
   );
 }
 
-export function SurfaceNavButton(props: {
+export interface SurfaceNavButtonProps extends Omit<ButtonProps, "variant"> {
   active?: boolean;
-  children: ReactNode;
-  onClick?: () => void;
-}) {
-  const { active, children, onClick } = props;
+}
+
+export function SurfaceNavButton(props: SurfaceNavButtonProps) {
+  const { active, children, sx, ...rest } = props;
+
+  const baseSx: SxProps<Theme> = {
+    backgroundColor: active ? alpha(cognipaceTokens.accent, 0.12) : "transparent",
+    borderColor: active
+      ? "primary.light"
+      : alpha(cognipaceTokens.outlineStrong, 0.22),
+    boxShadow: "none",
+    color: active ? "primary.light" : "text.secondary",
+    justifyContent: "flex-start",
+    minHeight: 38,
+    px: 1.5,
+    transition: "all 160ms ease",
+    "&:hover": {
+      backgroundColor: active
+        ? alpha(cognipaceTokens.accent, 0.16)
+        : alpha(cognipaceTokens.mutedText, 0.08),
+      borderColor: active
+        ? alpha(cognipaceTokens.accentSoft, 0.6)
+        : alpha(cognipaceTokens.outlineStrong, 0.45),
+      color: active ? "primary.light" : "text.primary",
+    },
+  };
+  const mergedSx = (sx ? [baseSx, sx] : baseSx) as SxProps<Theme>;
 
   return (
     <Button
-      aria-current={active ? "page" : undefined}
       fullWidth
-      onClick={onClick}
-      sx={{
-        backgroundColor: active ? alpha(cognipaceTokens.accent, 0.12) : "transparent",
-        borderColor: active ? "primary.light" : alpha(cognipaceTokens.outlineStrong, 0.22),
-        boxShadow: "none",
-        color: active ? "primary.light" : "text.secondary",
-        justifyContent: "flex-start",
-        minHeight: 38,
-        px: 1.5,
-        transition: "all 160ms ease",
-        "&:hover": {
-          backgroundColor: active
-            ? alpha(cognipaceTokens.accent, 0.16)
-            : alpha(cognipaceTokens.mutedText, 0.08),
-          borderColor: active
-            ? alpha(cognipaceTokens.accentSoft, 0.6)
-            : alpha(cognipaceTokens.outlineStrong, 0.45),
-          color: active ? "primary.light" : "text.primary",
-        },
-      }}
+      {...rest}
+      aria-current={active ? "page" : undefined}
+      sx={mergedSx}
       variant={active ? "contained" : "outlined"}
     >
       {children}

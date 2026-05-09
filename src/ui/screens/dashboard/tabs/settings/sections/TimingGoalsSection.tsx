@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { UserSettings } from "../../../../../../domain/settings";
 import { SwitchSetting } from "../components/SettingsInputs";
-import { SettingsFieldGrid } from "../components/SettingsLayout";
+import { SurfaceFieldGrid } from "../../../../../components";
 import {
   createGoalTextDraft,
   minutesToMs,
@@ -101,7 +101,7 @@ export function TimingGoalsSection(props: {
 
   return (
     <Stack spacing={1}>
-      <SettingsFieldGrid columns={2}>
+      <SurfaceFieldGrid columns={2}>
         <SwitchSetting
           checked={props.settingsDraft.timing.requireSolveTime}
           helper="Overlay submissions can require a recorded timer value."
@@ -133,8 +133,8 @@ export function TimingGoalsSection(props: {
             }));
           }}
         />
-      </SettingsFieldGrid>
-      <SettingsFieldGrid columns={3}>
+      </SurfaceFieldGrid>
+      <SurfaceFieldGrid columns={3}>
         <TextField
           {...commonTextFieldProps}
           error={Boolean(easyError)}
@@ -177,7 +177,7 @@ export function TimingGoalsSection(props: {
           }}
           value={hardStr}
         />
-      </SettingsFieldGrid>
+      </SurfaceFieldGrid>
       <Typography color="text.secondary" variant="caption">
         Questions with unknown difficulty use the Hard goal. Invalid goals are
         coerced when saving.

@@ -8,7 +8,6 @@ import { ReactNode } from "react";
 import {
   InsetSurface,
   SurfaceActionBar,
-  SurfaceControlRow,
   SurfacePanel,
   SurfaceSectionLabel,
 } from "../../../components";
@@ -45,16 +44,9 @@ export function DashboardFrame(props: { children: ReactNode }) {
   );
 }
 
-export function DashboardChromePanel(props: {
-  children: ReactNode;
-  sx?: object;
-}) {
-  return <SurfacePanel sx={props.sx}>{props.children}</SurfacePanel>;
-}
-
 export function DashboardRailPanel(props: { children: ReactNode }) {
   return (
-    <DashboardChromePanel
+    <SurfacePanel
       sx={{
         alignSelf: "flex-start",
         minWidth: { lg: 228 },
@@ -65,19 +57,13 @@ export function DashboardRailPanel(props: { children: ReactNode }) {
       }}
     >
       {props.children}
-    </DashboardChromePanel>
+    </SurfacePanel>
   );
 }
 
 export function DashboardHeaderPanel(props: { children: ReactNode }) {
   return (
-    <DashboardChromePanel
-      sx={{
-        p: { md: 2, xs: 2 },
-      }}
-    >
-      {props.children}
-    </DashboardChromePanel>
+    <SurfacePanel sx={{ p: { md: 2, xs: 2 } }}>{props.children}</SurfacePanel>
   );
 }
 
@@ -94,7 +80,6 @@ export function DashboardSettingsGroup(props: {
       }}
     >
       <Stack spacing={1.5}>
-
         <Box>
           <SurfaceSectionLabel>{props.label}</SurfaceSectionLabel>
           <Typography component="h3" variant="h6">
@@ -109,17 +94,6 @@ export function DashboardSettingsGroup(props: {
         {props.children}
       </Stack>
     </InsetSurface>
-  );
-}
-
-export function DashboardControlRow(props: {
-  children: ReactNode;
-  sx?: object;
-}) {
-  return (
-    <SurfaceControlRow sx={{ minHeight: 52, ...(props.sx ?? {}) }}>
-      {props.children}
-    </SurfaceControlRow>
   );
 }
 

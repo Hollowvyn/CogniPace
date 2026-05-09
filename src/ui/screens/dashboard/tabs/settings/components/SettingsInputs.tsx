@@ -7,7 +7,7 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import { ReactNode } from "react";
 
-import { SettingsRow } from "./SettingsLayout";
+import { SurfaceControlRow } from "../../../../../components";
 
 export function NumberSetting(props: {
   error?: boolean;
@@ -99,7 +99,7 @@ export function SwitchSetting(props: {
   onChange?: (checked: boolean) => void;
 }) {
   return (
-    <SettingsRow
+    <SurfaceControlRow
       control={
         <Switch
           checked={props.checked}

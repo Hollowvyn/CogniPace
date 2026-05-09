@@ -3,9 +3,7 @@ import SaveRounded from "@mui/icons-material/SaveRounded";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
-import { SurfacePanel } from "../../../../../components";
-
-import { SettingsActionSection } from "./SettingsLayout";
+import { SurfaceActionBar, SurfacePanel } from "../../../../../components";
 
 export function SettingsSaveBar(props: {
   canDiscardSettings: boolean;
@@ -29,7 +27,7 @@ export function SettingsSaveBar(props: {
       <Typography color="text.secondary" variant="body2">
         Save persists all settings sections in one local update.
       </Typography>
-      <SettingsActionSection>
+      <SurfaceActionBar>
         <Button
           disabled={!props.canResetSettingsToDefaults}
           onClick={props.onResetSettingsToDefaults}
@@ -53,7 +51,7 @@ export function SettingsSaveBar(props: {
         >
           Save Settings
         </Button>
-      </SettingsActionSection>
+      </SurfaceActionBar>
     </SurfacePanel>
   );
 }
