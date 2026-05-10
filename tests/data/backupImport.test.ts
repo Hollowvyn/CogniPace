@@ -56,8 +56,7 @@ describe("backup import sanitization", () => {
     settings.dailyQuestionGoal = 22;
     settings.notifications.enabled = true;
     settings.notifications.dailyTime = "09:30";
-    settings.questionFilters.skipIgnored = true;
-    settings.questionFilters.skipPremium = false;
+    settings.questionFilters.skipPremium = true;
     settings.timing.difficultyGoalMs = {
       Easy: 25 * 60 * 1000,
       Medium: 40 * 60 * 1000,
@@ -76,7 +75,7 @@ describe("backup import sanitization", () => {
       25 * 60 * 1000
     );
     assert.equal(sanitized.settings?.notifications.dailyTime, "09:30");
-    assert.equal(sanitized.settings?.questionFilters.skipIgnored, true);
+    assert.equal(sanitized.settings?.questionFilters.skipPremium, true);
   });
 
   it("ignores removed legacy settings fields on import", () => {

@@ -450,24 +450,39 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         </TableCell>
                       ) : null}
                       <TableCell>
-                        <Link
-                          href={row.view.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          underline="hover"
-                          color="primary"
-                          variant="body1"
-                          sx={{
-                            fontWeight: 500,
-                            display: "-webkit-box",
-                            WebkitBoxOrient: "vertical",
-                            WebkitLineClamp: isExpanded ? 5 : 2,
-                            overflow: "hidden",
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {row.view.title}
-                        </Link>
+                        <Stack direction="column" spacing={0.5}>
+                          <Link
+                            href={row.view.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            underline="hover"
+                            color={row.suspended ? "text.disabled" : "primary"}
+                            variant="body1"
+                            sx={{
+                              fontWeight: 500,
+                              display: "-webkit-box",
+                              WebkitBoxOrient: "vertical",
+                              WebkitLineClamp: isExpanded ? 5 : 2,
+                              overflow: "hidden",
+                              wordBreak: "break-word",
+                              textDecorationLine: row.suspended
+                                ? "line-through"
+                                : undefined,
+                            }}
+                          >
+                            {row.view.title}
+                          </Link>
+                          {row.suspended ? (
+                            <ToneChip
+                              label={
+                                row.suspended === "premium"
+                                  ? "Suspended · Premium"
+                                  : "Suspended"
+                              }
+                              tone="default"
+                            />
+                          ) : null}
+                        </Stack>
                       </TableCell>
                       <TableCell>
                         <ToneChip

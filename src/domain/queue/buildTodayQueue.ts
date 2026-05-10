@@ -1,4 +1,5 @@
 import { createDefaultStudyState } from "./constants";
+import { isEffectivelySuspended } from "./effectivelySuspended";
 import { getStudyStateSummary } from "./studyState";
 import { AppData, Problem, QueueItem, StudyState } from "./types";
 
@@ -115,20 +116,9 @@ export function buildTodayQueue(
     0,
     Math.round(data.settings.dailyQuestionGoal)
   );
-  const problems = Object.values(data.problemsBySlug).filter((problem) => {
-    if (!isSetEnabled(problem, data.settings.setsEnabled)) {
-      return false;
-    }
-
-    if (
-      data.settings.questionFilters.skipPremium &&
-      problem.isPremium === true
-    ) {
-      return false;
-    }
-
-    return true;
-  });
+  const problems = Object.values(data.problemsBySlug).filter((problem) =>
+    isSetEnabled(problem, data.settings.setsEnabled),
+  );
 
   const due: QueueItem[] = [];
   const newCandidates: QueueItem[] = [];
@@ -138,14 +128,14 @@ export function buildTodayQueue(
     const state = cloneStateOrDefault(
       data.studyStatesBySlug[problem.leetcodeSlug]
     );
+    if (isEffectivelySuspended(problem, state, data.settings)) {
+      continue;
+    }
     const studyStateSummary = getStudyStateSummary(
       state,
       now,
       data.settings.memoryReview.targetRetention
     );
-    if (data.settings.questionFilters.skipIgnored && studyStateSummary.suspended) {
-      continue;
-    }
 
     if (studyStateSummary.isDue) {
       due.push({

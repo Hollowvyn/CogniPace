@@ -199,7 +199,6 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
     memoryReview.targetRetention >= 0.7 &&
     memoryReview.targetRetention <= 0.95 &&
     isReviewOrder(memoryReview.reviewOrder) &&
-    typeof questionFilters.skipIgnored === "boolean" &&
     typeof questionFilters.skipPremium === "boolean" &&
     typeof timing.requireSolveTime === "boolean" &&
     typeof timing.hardMode === "boolean" &&
@@ -268,10 +267,6 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       ),
     },
     questionFilters: {
-      skipIgnored: booleanValue(
-        questionFilters.skipIgnored,
-        initial.questionFilters.skipIgnored
-      ),
       skipPremium: booleanValue(
         questionFilters.skipPremium,
         initial.questionFilters.skipPremium

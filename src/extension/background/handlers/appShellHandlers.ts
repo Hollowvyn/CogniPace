@@ -12,6 +12,7 @@ import {
 } from "../../../domain/courses/courseProgress";
 import { buildRecommendedCandidates } from "../../../domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../../domain/queue/buildTodayQueue";
+import { effectivelySuspendedFlag } from "../../../domain/queue/effectivelySuspended";
 import {
   buildProblemView,
   buildStudySetView,
@@ -118,6 +119,11 @@ function libraryRows(
     .map((slug): LibraryProblemRow => {
       const problem = payload.problemsBySlug[slug] ?? synthesizeProblem(slug);
       const studyState = payload.studyStatesBySlug[slug] ?? null;
+      const suspendFlag = effectivelySuspendedFlag(
+        problem,
+        studyState,
+        payload.settings,
+      );
       return {
         problem,
         view: buildProblemView(
@@ -134,6 +140,7 @@ function libraryRows(
         }),
         courses: getCourseMemberships(payload, slug),
         trackMemberships: getTrackMemberships(payload, slug),
+        ...(suspendFlag.suspended ? { suspended: suspendFlag.reason } : {}),
       };
     })
     .sort((a, b) => a.problem.title.localeCompare(b.problem.title));

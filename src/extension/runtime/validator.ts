@@ -257,12 +257,7 @@ function validateQuestionFilters(value: unknown): void {
   if (!isRecord(value)) {
     throw new Error('Invalid field "questionFilters": expected an object.');
   }
-  hasExactKeys(
-    value,
-    ["skipIgnored", "skipPremium"],
-    'Field "questionFilters"'
-  );
-  requireOptionalBoolean(value.skipIgnored, "questionFilters.skipIgnored");
+  hasExactKeys(value, ["skipPremium"], 'Field "questionFilters"');
   requireOptionalBoolean(value.skipPremium, "questionFilters.skipPremium");
 }
 

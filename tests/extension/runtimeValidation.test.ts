@@ -147,7 +147,6 @@ describe("runtime validation", () => {
             dailyTime: "09:00",
           },
           questionFilters: {
-            skipIgnored: true,
             skipPremium: false,
           },
           timing: {

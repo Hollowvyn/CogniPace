@@ -102,6 +102,9 @@ export interface LibraryProblemRow {
   courses: LibraryCourseReference[];
   /** v7 — explicit StudySet memberships (sets whose groups list this slug). */
   trackMemberships: TrackMembership[];
+  /** Combined queue-skip flag with reason. Computed from
+   * `studyState.suspended` (manual) or premium-when-skipPremium-on. */
+  suspended?: "manual" | "premium";
 }
 
 export interface TrackMembership {

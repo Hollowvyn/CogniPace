@@ -72,6 +72,7 @@ export function LibraryView(props: LibraryViewProps) {
         view: row.view,
         studyState: row.studyState,
         trackMemberships: row.trackMemberships,
+        suspended: row.suspended,
       })),
     [visibleRows],
   );

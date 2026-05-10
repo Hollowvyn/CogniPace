@@ -63,7 +63,10 @@ interface TracksViewProps {
  * group from `studySetView.groups[].problems` but no study state — that
  * comes from `payload.library` keyed by slug.
  */
-type SlugStudyData = ProblemRowData["studyState"];
+interface SlugStudyData {
+  studyState: ProblemRowData["studyState"];
+  suspended?: ProblemRowData["suspended"];
+}
 
 export function TracksView(props: TracksViewProps) {
   const studySetViews = props.payload?.studySetViews ?? [];
@@ -82,11 +85,15 @@ export function TracksView(props: TracksViewProps) {
   const [othersExpanded, setOthersExpanded] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
 
-  // Map slug → study state view for fast hydration in the group/flat bodies.
+  // Map slug → study state view + suspended flag for fast hydration in
+  // the group/flat bodies.
   const slugDataMap = useMemo(() => {
     const map = new Map<string, SlugStudyData>();
     for (const row of library) {
-      map.set(row.view.slug, row.studyState);
+      map.set(row.view.slug, {
+        studyState: row.studyState,
+        suspended: row.suspended,
+      });
     }
     return map;
   }, [library]);
@@ -262,7 +269,7 @@ function countDueInSet(
   }
   let count = 0;
   for (const slug of slugs) {
-    if (slugDataMap.get(slug)?.isDue) count += 1;
+    if (slugDataMap.get(slug)?.studyState?.isDue) count += 1;
   }
   return count;
 }
@@ -393,11 +400,15 @@ function hydrateRows(
   problems: ProblemView[],
   slugDataMap: Map<string, SlugStudyData>,
 ): ProblemRowData[] {
-  return problems.map((view) => ({
-    view,
-    studyState: slugDataMap.get(view.slug) ?? null,
-    trackMemberships: [],
-  }));
+  return problems.map((view) => {
+    const data = slugDataMap.get(view.slug);
+    return {
+      view,
+      studyState: data?.studyState ?? null,
+      trackMemberships: [],
+      suspended: data?.suspended,
+    };
+  });
 }
 
 function GroupedStudySetBody({

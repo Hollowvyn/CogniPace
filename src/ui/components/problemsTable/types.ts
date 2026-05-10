@@ -23,7 +23,16 @@ export interface ProblemRowData {
     groupId?: SetGroupId;
     groupName?: string;
   }>;
+  /** Combined flag: true when the problem is queue-skipped — either
+   * the user manually suspended it, or `skipPremium` is on and the
+   * problem is premium-locked. UI uses this to render a Suspended
+   * badge regardless of the underlying reason. */
+  suspended?: SuspendedReason;
 }
+
+/** Why a row reads as suspended. `manual` = user clicked Suspend.
+ * `premium` = settings.skipPremium is on and isPremium is true. */
+export type SuspendedReason = "manual" | "premium";
 
 /** Sortable column key. */
 export type SortKey =
