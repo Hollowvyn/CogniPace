@@ -270,6 +270,6 @@ export interface MessageResponseMap {
   CREATE_STUDY_SET: { ok: true; id: string };
   UPDATE_STUDY_SET: { ok: true };
   DELETE_STUDY_SET: { ok: true };
-  SET_ACTIVE_FOCUS: { ok: true };
+  SET_ACTIVE_FOCUS: SettingsUpdateResponse;
   CONSUME_PRE_V7_BACKUP: { backup: unknown | null };
 }

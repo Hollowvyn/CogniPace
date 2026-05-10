@@ -373,9 +373,27 @@ export function useDashboardController() {
 
   const onSetActiveFocus = useCallback(
     async (focus: ActiveFocus): Promise<void> => {
-      await runMutation(setActiveFocus(focus), "Active track updated.");
+      const response = await setActiveFocus(focus);
+      if (!response.ok) {
+        setStatus({
+          message: response.error ?? "Failed to update active track.",
+          isError: true,
+        });
+        return;
+      }
+      const savedSettings = response.data?.settings;
+      if (savedSettings) {
+        setPayload((current) =>
+          current
+            ? { ...current, settings: cloneUserSettings(savedSettings) }
+            : current,
+        );
+      }
+      if (isExtensionContext()) {
+        await load({ clearStatusOnSuccess: false });
+      }
     },
-    [runMutation]
+    [load, setPayload, setStatus],
   );
 
   return {

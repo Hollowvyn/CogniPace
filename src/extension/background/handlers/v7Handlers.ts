@@ -385,11 +385,11 @@ export interface SetActiveFocusPayload {
 }
 
 export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
-  await mutateAppData((data) => {
+  const updated = await mutateAppData((data) => {
     data.settings = { ...data.settings, activeFocus: payload.focus };
     return data;
   });
-  return ok({ ok: true });
+  return ok({ settings: updated.settings });
 }
 
 // ---------- Pre-v7 backup ----------

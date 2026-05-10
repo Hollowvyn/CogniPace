@@ -25,7 +25,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import type { ActiveFocus } from "../../../../../domain/active-focus/model";
 import type {
@@ -69,25 +69,15 @@ export function TracksView(props: TracksViewProps) {
   const studySetViews = props.payload?.studySetViews ?? [];
   const settings = props.payload?.settings;
   const library = props.payload?.library ?? [];
-  const serverFocus = settings?.activeFocus ?? null;
+  const activeFocus = settings?.activeFocus ?? null;
 
-  // Optimistic focus override. Click handlers set this immediately so the
-  // Tabs indicator + table re-render without waiting for the storage
-  // mutation + payload reload roundtrip. Cleared when the server confirms
-  // it (or the active set itself changes — see effect below).
-  const [pendingFocus, setPendingFocus] = useState<ActiveFocus>(null);
-  useEffect(() => {
-    if (!pendingFocus) return;
-    if (focusesEqual(pendingFocus, serverFocus)) {
-      setPendingFocus(null);
-    }
-  }, [pendingFocus, serverFocus]);
-
-  const effectiveFocus = pendingFocus ?? serverFocus;
-  const effectiveActiveView = useMemo<StudySetView | null>(() => {
-    if (effectiveFocus?.kind !== "studySet") return null;
-    return studySetViews.find((view) => view.id === effectiveFocus.id) ?? null;
-  }, [effectiveFocus, studySetViews]);
+  // Single source of truth: the persisted activeFocus. Click handlers
+  // dispatch a mutation; storage subscription propagates the new payload
+  // and re-renders this view.
+  const activeStudySetView = useMemo<StudySetView | null>(() => {
+    if (activeFocus?.kind !== "studySet") return null;
+    return studySetViews.find((view) => view.id === activeFocus.id) ?? null;
+  }, [activeFocus, studySetViews]);
 
   const [othersExpanded, setOthersExpanded] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
@@ -101,24 +91,23 @@ export function TracksView(props: TracksViewProps) {
     return map;
   }, [library]);
 
-  // Determine the user's chosen group within the effective active StudySet.
-  // Reads from the *effective* focus so optimistic group switches are
-  // reflected immediately.
+  // Determine the user's chosen group within the active StudySet, derived
+  // from the persisted activeFocus.groupId.
   const activeGroupId = useMemo<SetGroupId | null>(() => {
-    if (!effectiveActiveView || effectiveActiveView.kind !== "grouped") {
+    if (!activeStudySetView || activeStudySetView.kind !== "grouped") {
       return null;
     }
     if (
-      effectiveFocus?.kind === "studySet" &&
-      effectiveFocus.id === effectiveActiveView.id
+      activeFocus?.kind === "studySet" &&
+      activeFocus.id === activeStudySetView.id
     ) {
-      const saved = effectiveFocus.groupId;
-      if (saved && effectiveActiveView.groups.some((g) => g.id === saved)) {
+      const saved = activeFocus.groupId;
+      if (saved && activeStudySetView.groups.some((g) => g.id === saved)) {
         return saved as SetGroupId;
       }
     }
-    return asSetGroupId(effectiveActiveView.groups[0]?.id ?? "");
-  }, [effectiveActiveView, effectiveFocus]);
+    return asSetGroupId(activeStudySetView.groups[0]?.id ?? "");
+  }, [activeStudySetView, activeFocus]);
 
   const editingRow = useMemo(() => {
     if (!editingSlug) return null;
@@ -139,22 +128,19 @@ export function TracksView(props: TracksViewProps) {
   const otherStudySets = studySetViews.filter(
     (set) =>
       set.enabled &&
-      (!effectiveActiveView || set.id !== effectiveActiveView.id),
+      (!activeStudySetView || set.id !== activeStudySetView.id),
   );
 
   const switchTrack = (id: StudySetId) => {
-    setPendingFocus({ kind: "studySet", id });
     void props.onSetActiveFocus({ kind: "studySet", id });
   };
   const switchGroup = (groupId: SetGroupId) => {
-    if (!effectiveActiveView) return;
-    const focus: ActiveFocus = {
+    if (!activeStudySetView) return;
+    void props.onSetActiveFocus({
       kind: "studySet",
-      id: asStudySetId(effectiveActiveView.id),
+      id: asStudySetId(activeStudySetView.id),
       groupId,
-    };
-    setPendingFocus(focus);
-    void props.onSetActiveFocus(focus);
+    });
   };
 
   const handleEdit = (slug: ProblemSlug) => setEditingSlug(slug);
@@ -169,13 +155,13 @@ export function TracksView(props: TracksViewProps) {
 
   return (
     <Stack spacing={3}>
-      {effectiveActiveView ? (
+      {activeStudySetView ? (
         <ActiveStudySetSection
-          studySet={effectiveActiveView}
+          studySet={activeStudySetView}
           options={studySetViews}
           activeGroupId={activeGroupId}
           slugDataMap={slugDataMap}
-          dueCount={countDueInSet(effectiveActiveView, slugDataMap)}
+          dueCount={countDueInSet(activeStudySetView, slugDataMap)}
           onSwitch={switchTrack}
           onSwitchGroup={switchGroup}
           onEditProblem={handleEdit}
@@ -242,12 +228,6 @@ export function TracksView(props: TracksViewProps) {
       />
     </Stack>
   );
-}
-
-function focusesEqual(a: ActiveFocus, b: ActiveFocus): boolean {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  return a.kind === b.kind && a.id === b.id && a.groupId === b.groupId;
 }
 
 interface CompletionRollup {
