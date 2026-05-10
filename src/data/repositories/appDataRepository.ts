@@ -100,6 +100,7 @@ export async function getAppData(): Promise<AppData> {
   const result = await readLocalStorage([STORAGE_KEY]);
   const stored = result[STORAGE_KEY] as StoredAppData | undefined;
 
+  const runV7SeedMigration = stored !== undefined && needsV7SeedMigration(stored);
   const normalized = normalizeStoredAppData(stored);
   const storedSettings = stored?.settings;
   const settingsNeedsWriteBack =
@@ -107,6 +108,7 @@ export async function getAppData(): Promise<AppData> {
     !areUserSettingsEqual(normalized.settings, storedSettings);
   const needsWriteBack =
     !stored ||
+    runV7SeedMigration ||
     stored.schemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION ||
     !stored.coursesById ||
     !stored.courseOrder ||
@@ -114,6 +116,9 @@ export async function getAppData(): Promise<AppData> {
     settingsNeedsWriteBack;
 
   if (needsWriteBack) {
+    if (runV7SeedMigration) {
+      await writeLocalStorage({ [PRE_V7_BACKUP_KEY]: stored });
+    }
     await saveAppData(normalized);
   }
 

@@ -170,6 +170,20 @@ describe("runtime validation", () => {
     );
   });
 
+  it("rejects unsupported study-set kinds", () => {
+    assert.throws(
+      () =>
+        validateRuntimeMessage({
+          type: "CREATE_STUDY_SET",
+          payload: {
+            kind: "course",
+            name: "Nope",
+          },
+        } as never),
+      /supported study-set kind/i
+    );
+  });
+
   it("rejects removed legacy settings fields", () => {
     assert.throws(
       () =>

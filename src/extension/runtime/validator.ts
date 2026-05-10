@@ -67,6 +67,12 @@ const ALLOWED_DASHBOARD_VIEWS = new Set([
   "analytics",
   "settings",
 ]);
+const ALLOWED_STUDY_SET_KINDS = new Set([
+  "custom",
+  "company",
+  "topic",
+  "difficulty",
+]);
 
 const EMPTY_KEYS: readonly string[] = [];
 const SETTINGS_KEYS = [
@@ -202,6 +208,13 @@ function requireOptionalReviewOrder(value: unknown, field: string): void {
 function requireOptionalStudyMode(value: unknown, field: string): void {
   if (value !== undefined && value !== "freestyle" && value !== "studyPlan") {
     throw new Error(`Invalid field "${field}": expected a study mode.`);
+  }
+}
+
+function requireStudySetKind(value: unknown, field: string): void {
+  const kind = requireString(value, field);
+  if (!ALLOWED_STUDY_SET_KINDS.has(kind)) {
+    throw new Error(`Invalid field "${field}": expected a supported study-set kind.`);
   }
 }
 
@@ -583,7 +596,7 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
         ["kind", "name", "description", "filter", "problemSlugs"],
         `Payload for ${type}`
       );
-      requireString(payload.kind, "kind");
+      requireStudySetKind(payload.kind, "kind");
       requireString(payload.name, "name");
       requireOptionalString(payload.description, "description");
       return;
