@@ -1,4 +1,6 @@
-/** Dashboard overview screen showing recommendation, queue, and active-course summary. */
+/** Dashboard overview screen — recommendation, metrics, queue, and a
+ * consolidated active-track card (track progress + next-up problem in
+ * a single card so the page doesn't repeat track context twice). */
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
@@ -6,10 +8,9 @@ import Typography from "@mui/material/Typography";
 
 import { AppShellPayload } from "../../../../../domain/views";
 import { MetricCard, SurfaceCard, ToneChip } from "../../../../components";
-import { CourseNextCard } from "../../../../features/courses/CourseNextCard";
-import { CourseProgressCard } from "../../../../features/courses/CourseProgressCard";
 import { QueuePreview } from "../../../../features/queue/QueuePreview";
 import { RecommendedProblemCard } from "../../../../features/recommended/RecommendedProblemCard";
+import { ActiveTrackOverviewCard } from "../../../../features/tracks/ActiveTrackOverviewCard";
 import { DashboardView } from "../../../../navigation/dashboardRoutes";
 import { CourseFormState } from "../../../../presentation/courseIngest";
 import { CourseIngestForm } from "../../components/CourseIngestForm";
@@ -30,8 +31,6 @@ export interface OverviewViewProps {
 
 export function OverviewView(props: OverviewViewProps) {
   const course = props.payload?.activeCourse ?? null;
-  const activeCourseId = course?.id;
-  const nextQuestion = course?.nextQuestion ?? null;
   const recommended = props.payload?.popup.recommended ?? null;
 
   return (
@@ -65,55 +64,15 @@ export function OverviewView(props: OverviewViewProps) {
               />
             </Grid>
           </Grid>
-          <CourseProgressCard course={course}>
-            <Stack
-              alignItems="center"
-              direction={{ md: "row", xs: "column" }}
-              justifyContent="space-between"
-              spacing={1}
-            >
-              <Typography color="text.secondary" variant="body2">
-                {course?.activeChapterTitle
-                  ? `Current chapter: ${course.activeChapterTitle}`
-                  : "Course complete"}
-              </Typography>
-              <Typography color="text.secondary" variant="body2">
-                Study mode: {props.payload?.settings.studyMode ?? "studyPlan"}
-              </Typography>
-            </Stack>
-            {nextQuestion ? (
-              <Stack direction={{ md: "row", xs: "column" }} spacing={1}>
-                <Button
-                  onClick={() => {
-                    void props.onOpenProblem({
-                      slug: nextQuestion.slug,
-                      courseId: activeCourseId,
-                      chapterId: nextQuestion.chapterId,
-                    });
-                  }}
-                  variant="contained"
-                >
-                  Continue Path
-                </Button>
-                <Button
-                  onClick={() => {
-                    props.onSetView("tracks");
-                  }}
-                  variant="outlined"
-                >
-                  Open Tracks View
-                </Button>
-              </Stack>
-            ) : null}
-          </CourseProgressCard>
-          {nextQuestion ? (
-            <CourseNextCard
-              activeCourseId={activeCourseId}
-              buttonVariant="outlined"
-              onOpenProblem={props.onOpenProblem}
-              view={nextQuestion}
-            />
-          ) : null}
+          <ActiveTrackOverviewCard
+            course={course}
+            studyMode={props.payload?.settings.studyMode ?? "studyPlan"}
+            onOpenProblem={props.onOpenProblem}
+            onOpenTracks={() => props.onSetView("tracks")}
+            onToggleStudyMode={() => {
+              void props.onToggleMode();
+            }}
+          />
           <SurfaceCard
             action={
               <ToneChip
