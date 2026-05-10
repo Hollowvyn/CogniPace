@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addGroup,
   addGroupPrerequisite,
   addProblemToGroup,
   createStudySet,
   deleteStudySet,
-  removeGroupPrerequisite,
   reorderGroupProblems,
   reorderGroups,
   updateStudySet,
@@ -68,8 +66,8 @@ describe("v7 studySetRepository", () => {
   it("rejects cycles when adding a prerequisite", () => {
     const data = emptyAppDataV7();
     const set = makeCourseStudySetV7("course", "Course", [
-      { id: "a" },
-      { id: "b" },
+      { id: "course::0" },
+      { id: "course::1" },
     ]);
     data.studySetsById[set.id] = set;
     data.studySetOrder.push(set.id);

@@ -1,19 +1,19 @@
 /**
- * v7 AppData root — the single object persisted to chrome.storage.local.
+ * v7 AppData root — the single object persisted to the extension's local store.
  * Each `Record<id, Entity>` field corresponds to one aggregate's "table"
  * in the eventual SQLite migration. Background mutators read and return
  * an `AppDataV7` draft inside `mutateAppData`; only `appDataRepository`
  * performs storage IO.
  */
 import type { ActiveFocus } from "../active-focus/model";
+import type { SetGroupId, StudySetId } from "../common/ids";
 import type { Company } from "../companies/model";
 import type { Problem } from "../problems/model";
-import type { SetGroupId, StudySetId } from "../common/ids";
 import type { StudySet } from "../sets/model";
 import type { StudySetProgress } from "../sets/progress";
+import type { UserSettings } from "../settings/model";
 import type { StudyState } from "../study-state/model";
 import type { Topic } from "../topics/model";
-import type { UserSettings } from "../settings/model";
 
 export const STORAGE_SCHEMA_VERSION_V7 = 7 as const;
 

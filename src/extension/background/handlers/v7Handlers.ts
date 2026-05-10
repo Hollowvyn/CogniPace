@@ -8,12 +8,11 @@
  * fields (`courseProgressById`, etc.) stay in sync via `ensureCourseData`
  * / `syncCourseProgress` until Phase 8 deletes them.
  */
-import { mutateAppData } from "../../../data/repositories/appDataRepository";
-import { PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import {
   readLocalStorage,
   removeLocalStorage,
 } from "../../../data/datasources/chrome/storage";
+import { mutateAppData , PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import {
   asCompanyId,
   asProblemSlug,
@@ -31,12 +30,14 @@ import {
   type ProblemEditPatch,
 } from "../../../domain/problems/operations";
 import { FLAT_GROUP_ID } from "../../../domain/sets/model";
+import { ok } from "../responses";
+
+import type { ActiveFocus } from "../../../domain/active-focus/model";
+import type { Company } from "../../../domain/companies/model";
 import type { StudySet } from "../../../domain/sets/model";
 import type { Topic } from "../../../domain/topics/model";
-import type { Company } from "../../../domain/companies/model";
-import type { ActiveFocus } from "../../../domain/active-focus/model";
 import type { Difficulty } from "../../../domain/types";
-import { ok } from "../responses";
+
 
 // ---------- Problem edits ----------
 

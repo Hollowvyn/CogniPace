@@ -2,6 +2,7 @@ import {
   hasGroupedUserSettings,
   sanitizeStoredUserSettings,
 } from "../../domain/settings";
+import { resolveSeedTopicId } from "../catalog/topicsSeed";
 
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "./constants";
 import {
@@ -24,7 +25,6 @@ import {
   slugToUrl,
   uniqueStrings,
 } from "./utils";
-import { resolveSeedTopicId } from "../catalog/topicsSeed";
 
 /**
  * Cross-walks legacy `topics: string[]` into v7 `topicIds: TopicId[]`.

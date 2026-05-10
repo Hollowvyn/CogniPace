@@ -1,9 +1,9 @@
 /** Repository for persisted app data stored in `chrome.storage.local`. */
-import { nowIso } from "../../domain/common/time";
 import {
   CURRENT_STORAGE_SCHEMA_VERSION,
   STORAGE_KEY,
 } from "../../domain/common/constants";
+import { nowIso } from "../../domain/common/time";
 import { ensureCourseData } from "../../domain/courses/courseProgress";
 import { normalizeStudyState } from "../../domain/fsrs/studyState";
 import {
@@ -15,14 +15,14 @@ import {
   UserSettingsPatch,
 } from "../../domain/settings";
 import { AppData } from "../../domain/types";
-import {
-  readLocalStorage,
-  writeLocalStorage,
-} from "../datasources/chrome/storage";
 import { buildCompanySeed } from "../catalog/companiesSeed";
 import { listCatalogPlans } from "../catalog/curatedSets";
 import { buildStudySetSeed } from "../catalog/studySetsSeed";
 import { buildTopicSeed } from "../catalog/topicsSeed";
+import {
+  readLocalStorage,
+  writeLocalStorage,
+} from "../datasources/chrome/storage";
 
 /** Sidecar key holding the pre-v7 blob (auto-export-then-wipe migration). */
 export const PRE_V7_BACKUP_KEY = `${STORAGE_KEY}_pre_v7_backup` as const;

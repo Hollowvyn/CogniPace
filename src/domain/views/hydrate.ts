@@ -6,11 +6,12 @@
  * UI components must NOT call these directly — they consume the result
  * over the message channel.
  */
-import type { Company } from "../companies/model";
-import type { Problem, EditableProblemField } from "../problems/model";
 import { listEditedFields } from "../problems/operations";
 import { isGroupUnlocked } from "../sets/prerequisites";
 import { resolveStudySetSlugs } from "../sets/services/resolveSlugs";
+
+import type { Company } from "../companies/model";
+import type { Problem, EditableProblemField } from "../problems/model";
 import type { StudySet } from "../sets/model";
 import type { StudySetProgress } from "../sets/progress";
 import type { Topic } from "../topics/model";

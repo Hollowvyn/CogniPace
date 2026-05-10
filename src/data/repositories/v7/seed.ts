@@ -3,13 +3,14 @@
  * stored data) and during the v6→v7 migration (after the v6 sidecar
  * backup has been written).
  */
-import type { AppDataV7 } from "../../../domain/data/appDataV7";
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 import { createInitialUserSettings } from "../../../domain/settings";
-import { buildTopicSeed } from "../../catalog/topicsSeed";
 import { buildCompanySeed } from "../../catalog/companiesSeed";
-import { buildStudySetSeed } from "../../catalog/studySetsSeed";
 import { listCatalogPlans } from "../../catalog/curatedSets";
+import { buildStudySetSeed } from "../../catalog/studySetsSeed";
+import { buildTopicSeed } from "../../catalog/topicsSeed";
+
+import type { AppDataV7 } from "../../../domain/data/appDataV7";
 
 /** Returns the freshly-seeded v7 AppData. `now` is used as the createdAt /
  * updatedAt for every seeded entity so the snapshot is deterministic. */

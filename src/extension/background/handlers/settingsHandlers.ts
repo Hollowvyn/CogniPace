@@ -1,11 +1,11 @@
 /** Background handlers for settings and backup import/export operations. */
+import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import {
   getAppData,
   mergeSettings,
   mutateAppData,
 } from "../../../data/repositories/appDataRepository";
-import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
 import { nowIso } from "../../../domain/common/time";

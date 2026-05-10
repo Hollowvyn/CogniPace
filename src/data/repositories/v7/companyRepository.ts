@@ -3,9 +3,10 @@
  * Mirrors `topicRepository` shape; companies have no special semantics
  * beyond serving as a many-to-many tag attached to Problems.
  */
-import type { AppDataV7 } from "../../../domain/data/appDataV7";
-import type { Company } from "../../../domain/companies/model";
 import { asCompanyId, type CompanyId } from "../../../domain/common/ids";
+
+import type { Company } from "../../../domain/companies/model";
+import type { AppDataV7 } from "../../../domain/data/appDataV7";
 
 export interface CreateCompanyArgs {
   id?: CompanyId;

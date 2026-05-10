@@ -1,4 +1,11 @@
 /** Runtime message contracts shared by the extension UI and background router. */
+import type { ActiveFocus } from "../../domain/active-focus/model";
+import type {
+  CompanyFilter,
+  CustomFilter,
+  DifficultyFilter,
+  TopicFilter,
+} from "../../domain/sets/model";
 import type { UserSettingsPatch } from "../../domain/settings";
 import type {
   CuratedProblemInput,
@@ -9,13 +16,6 @@ import type {
   ReviewMode,
   TodayQueue,
 } from "../../domain/types";
-import type { ActiveFocus } from "../../domain/active-focus/model";
-import type {
-  CompanyFilter,
-  CustomFilter,
-  DifficultyFilter,
-  TopicFilter,
-} from "../../domain/sets/model";
 import type {
   AppShellPayload,
   CourseActivationResponse,
@@ -271,5 +271,5 @@ export interface MessageResponseMap {
   UPDATE_STUDY_SET: { ok: true };
   DELETE_STUDY_SET: { ok: true };
   SET_ACTIVE_FOCUS: { ok: true };
-  CONSUME_PRE_V7_BACKUP: { backup: unknown | null };
+  CONSUME_PRE_V7_BACKUP: { backup: Record<string, unknown> | null };
 }

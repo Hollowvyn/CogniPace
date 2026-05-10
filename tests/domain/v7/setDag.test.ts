@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  isDagAcyclic,
-  isGroupUnlocked,
-  topoSortGroups,
-} from "../../../src/domain/sets/prerequisites";
-import {
   asProblemSlug,
   asSetGroupId,
   asStudySetId,
 } from "../../../src/domain/common/ids";
+import {
+  isDagAcyclic,
+  isGroupUnlocked,
+  topoSortGroups,
+} from "../../../src/domain/sets/prerequisites";
+
 import type { SetGroup, StudySet } from "../../../src/domain/sets/model";
 import type { StudySetProgress } from "../../../src/domain/sets/progress";
 
