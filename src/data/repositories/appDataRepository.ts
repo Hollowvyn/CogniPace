@@ -4,7 +4,6 @@ import {
   STORAGE_KEY,
 } from "../../domain/common/constants";
 import { nowIso } from "../../domain/common/time";
-import { ensureCourseData } from "../../domain/courses/courseProgress";
 import { normalizeStudyState } from "../../domain/fsrs/studyState";
 import {
   areUserSettingsEqual,
@@ -77,10 +76,6 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
         normalizeStudyState(state),
       ])
     ),
-    // v6 fields (still used by current handlers; will be removed in Phase 8).
-    coursesById: stored?.coursesById ?? {},
-    courseOrder: Array.isArray(stored?.courseOrder) ? stored.courseOrder : [],
-    courseProgressById: stored?.courseProgressById ?? {},
     // v7 aggregate fields. Seeded on first encounter (curated topics +
     // companies + courses); preserved as-is once the user has any data.
     topicsById: { ...seededTopics, ...(stored?.topicsById ?? {}) },
@@ -103,7 +98,6 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
       : stored?.lastMigrationAt,
   };
 
-  ensureCourseData(data);
   return data;
 }
 
@@ -120,9 +114,8 @@ export async function getAppData(): Promise<AppData> {
   const needsWriteBack =
     !stored ||
     stored.schemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION ||
-    !stored.coursesById ||
-    !stored.courseOrder ||
-    !stored.courseProgressById ||
+    !stored.studySetsById ||
+    !stored.studySetOrder ||
     settingsNeedsWriteBack;
 
   if (needsWriteBack) {
@@ -138,9 +131,6 @@ export async function saveAppData(data: AppData): Promise<void> {
     schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
     problemsBySlug: data.problemsBySlug,
     studyStatesBySlug: data.studyStatesBySlug,
-    coursesById: data.coursesById,
-    courseOrder: data.courseOrder,
-    courseProgressById: data.courseProgressById,
     topicsById: data.topicsById,
     companiesById: data.companiesById,
     studySetsById: data.studySetsById,
@@ -150,7 +140,6 @@ export async function saveAppData(data: AppData): Promise<void> {
     lastMigrationAt: data.lastMigrationAt,
   };
 
-  ensureCourseData(payload);
   await writeLocalStorage({ [STORAGE_KEY]: payload });
 }
 
@@ -172,7 +161,6 @@ export async function mutateAppData(
   const next = mutationChain.then(async () => {
     const current = await getAppData();
     const updated = await updater(current);
-    ensureCourseData(updated);
     await saveAppData(updated);
     return updated;
   });

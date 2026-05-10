@@ -15,7 +15,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { getStudyPhaseLabel } from "../../../domain/fsrs/studyState";
-import { ActiveCourseView, CourseQuestionView } from "../../../domain/views";
+import { ActiveTrackView, TrackQuestionView } from "../../../domain/views";
 import { ProgressTrack, SurfaceCard, ToneChip } from "../../components";
 import {
   difficultyTone,
@@ -23,7 +23,7 @@ import {
 } from "../../presentation/studyState";
 
 export interface ActiveTrackOverviewCardProps {
-  course: ActiveCourseView | null;
+  course: ActiveTrackView | null;
   studyMode: "studyPlan" | "freestyle";
   onOpenProblem: (target: {
     slug: string;
@@ -94,7 +94,7 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
 
         {nextQuestion ? (
           <NextUpRow
-            activeCourseId={course.id}
+            activeTrackId={course.id}
             view={nextQuestion}
             onOpenProblem={onOpenProblem}
             onOpenTracks={onOpenTracks}
@@ -137,13 +137,13 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
 }
 
 function NextUpRow({
-  activeCourseId,
+  activeTrackId,
   view,
   onOpenProblem,
   onOpenTracks,
 }: {
-  activeCourseId: string;
-  view: CourseQuestionView;
+  activeTrackId: string;
+  view: TrackQuestionView;
   onOpenProblem: ActiveTrackOverviewCardProps["onOpenProblem"];
   onOpenTracks: () => void;
 }) {
@@ -189,7 +189,7 @@ function NextUpRow({
           onClick={() => {
             void onOpenProblem({
               slug: view.slug,
-              courseId: activeCourseId,
+              courseId: activeTrackId,
               chapterId: view.chapterId,
             });
           }}

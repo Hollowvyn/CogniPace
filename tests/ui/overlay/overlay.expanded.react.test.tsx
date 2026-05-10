@@ -91,8 +91,8 @@ describe("OverlayPanel Expanded", () => {
       <OverlayPanel
         renderModel={makeExpandedRenderModel({
           postSubmitNext: {
-            kind: "course",
-            activeCourseId: "Blind75",
+            kind: "track",
+            activeTrackId: "Blind75",
             onOpenProblem,
             view: {
               slug: "contains-duplicate",
@@ -112,7 +112,7 @@ describe("OverlayPanel Expanded", () => {
       />
     );
 
-    expect(screen.getByText("Next In Study Mode")).toBeInTheDocument();
+    expect(screen.getByText("Next in track")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Open next" }));
     expect(onOpenProblem).toHaveBeenCalledWith({
       slug: "contains-duplicate",

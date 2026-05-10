@@ -1,16 +1,16 @@
-/** Reusable “next in course” card shared by popup and dashboard surfaces. */
+/** Reusable "next in track" card shared by popup and overlay surfaces. */
 import Button, {ButtonProps} from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import {getStudyPhaseLabel} from "../../../domain/fsrs/studyState";
-import {CourseQuestionView} from "../../../domain/views";
+import {TrackQuestionView} from "../../../domain/views";
 import {SurfaceCard, ToneChip} from "../../components";
 import {difficultyTone, labelForStatus,} from "../../presentation/studyState";
 
-export interface CourseNextCardProps {
+export interface ActiveTrackNextCardProps {
   actionLabel?: string;
-  activeCourseId?: string;
+  activeTrackId?: string;
   buttonFullWidth?: boolean;
   buttonVariant?: ButtonProps["variant"];
   compact?: boolean;
@@ -20,17 +20,17 @@ export interface CourseNextCardProps {
     courseId?: string;
     chapterId?: string;
   }) => Promise<void> | void;
-  view: CourseQuestionView;
+  view: TrackQuestionView;
 }
 
-export function CourseNextCard(props: CourseNextCardProps) {
+export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
   const {
     actionLabel = "Continue Path",
-    activeCourseId,
+    activeTrackId,
     buttonFullWidth = false,
     buttonVariant = "outlined",
     compact = false,
-    label = "Next In Course",
+    label = "Next in track",
     onOpenProblem,
     view,
   } = props;
@@ -55,7 +55,7 @@ export function CourseNextCard(props: CourseNextCardProps) {
           onClick={() => {
             void onOpenProblem({
               slug: view.slug,
-              courseId: activeCourseId,
+              courseId: activeTrackId,
               chapterId: view.chapterId,
             });
           }}

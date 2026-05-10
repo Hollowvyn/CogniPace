@@ -1,8 +1,9 @@
 /** Background handlers for problem-context, review-session, and page actions. */
 import {getAppData, mutateAppData,} from "../../../data/repositories/appDataRepository";
 import {ensureProblem, ensureStudyState, normalizeDifficulty,} from "../../../data/repositories/problemRepository";
+import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
+import { asProblemSlug, asSetGroupId, asStudySetId } from "../../../domain/common/ids";
 import {nowIso} from "../../../domain/common/time";
-import {markCourseQuestionLaunched, syncCourseProgress,} from "../../../domain/courses/courseProgress";
 import {applyReview, overrideLastReview, resetSchedule,} from "../../../domain/fsrs/scheduler";
 import {getStudyStateSummary, normalizeReviewLogFields,} from "../../../domain/fsrs/studyState";
 import {isProblemPage, normalizeSlug} from "../../../domain/problem/slug";
@@ -10,7 +11,7 @@ import {ReviewLogFields} from "../../../domain/types";
 import {canonicalProblemUrlForOpen,} from "../../runtime/validator";
 import {ok} from "../responses";
 
-import {trackCourseQuestionLaunch} from "./courseHandlers";
+import { trackQuestionLaunch } from "./v7Handlers";
 
 function readSenderUrl(
   sender?: chrome.runtime.MessageSender
@@ -40,11 +41,11 @@ export async function openProblemPage(
     throw new Error("Invalid slug.");
   }
 
-  if (payload.courseId || payload.chapterId) {
-    await trackCourseQuestionLaunch({
+  if (payload.courseId && payload.chapterId) {
+    await trackQuestionLaunch({
       slug,
-      courseId: payload.courseId,
-      chapterId: payload.chapterId,
+      trackId: payload.courseId,
+      groupId: payload.chapterId,
     });
   }
 
@@ -85,7 +86,6 @@ export async function upsertFromPage(payload: {
     });
 
     const state = ensureStudyState(data, payload.slug);
-    syncCourseProgress(data);
 
     return {
       ...data,
@@ -176,14 +176,15 @@ export async function saveReviewResult(payload: {
     });
 
     data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
-    markCourseQuestionLaunched(
-      data,
-      normalized,
-      now,
-      payload.courseId,
-      payload.chapterId
-    );
-    syncCourseProgress(data, now);
+    if (payload.courseId && payload.chapterId) {
+      markSlugLaunched(
+        data as unknown as Parameters<typeof markSlugLaunched>[0],
+        asStudySetId(payload.courseId),
+        asSetGroupId(payload.chapterId),
+        asProblemSlug(normalized),
+        now,
+      );
+    }
     return data;
   });
 
@@ -263,14 +264,15 @@ export async function overrideLastReviewResult(payload: {
     });
 
     data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
-    markCourseQuestionLaunched(
-      data,
-      normalized,
-      now,
-      payload.courseId,
-      payload.chapterId
-    );
-    syncCourseProgress(data, now);
+    if (payload.courseId && payload.chapterId) {
+      markSlugLaunched(
+        data as unknown as Parameters<typeof markSlugLaunched>[0],
+        asStudySetId(payload.courseId),
+        asSetGroupId(payload.chapterId),
+        asProblemSlug(normalized),
+        now,
+      );
+    }
     return data;
   });
 
@@ -352,7 +354,6 @@ export async function suspendProblem(payload: {
     const state = ensureStudyState(data, normalized);
     state.suspended = payload.suspend;
     data.studyStatesBySlug[normalized] = state;
-    syncCourseProgress(data);
     return data;
   });
 
@@ -376,7 +377,6 @@ export async function resetProblem(payload: {
       state,
       payload.keepNotes ?? true
     );
-    syncCourseProgress(data);
     return data;
   });
 

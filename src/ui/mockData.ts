@@ -8,11 +8,10 @@ export function createMockPopupShellPayload(): PopupShellPayload {
       streakDays: 7,
       recommended: null,
       recommendedCandidates: [],
-      courseNext: null,
-      activeCourse: null,
+      trackNext: null,
+      activeTrack: null,
     },
-    activeCourse: null,
-    activeStudySetView: null,
+    activeTrack: null,
     settings: createInitialUserSettings(),
   };
 }
@@ -55,11 +54,9 @@ export function createMockAppShellPayload(): AppShellPayload {
         },
       ],
     },
-    courses: [],
     recommendedCandidates: [],
     library: [],
-    courseOptions: [],
-    studySetViews: [],
+    tracks: [],
     topicChoices: [],
     companyChoices: [],
   };

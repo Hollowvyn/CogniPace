@@ -4,7 +4,8 @@ import { STORAGE_SCHEMA_VERSION, StudyState } from "../types";
 export const STORAGE_KEY = "leetcode_spaced_repetition_data_v2";
 export const CURRENT_STORAGE_SCHEMA_VERSION = STORAGE_SCHEMA_VERSION;
 
-export const DEFAULT_COURSE_ID = "Blind75";
+/** Default Track to focus on a fresh install. */
+export const DEFAULT_TRACK_ID = "Blind75";
 
 export const BUILT_IN_SETS = [
   "Blind75",

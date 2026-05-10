@@ -71,7 +71,7 @@ interface SlugStudyData {
 }
 
 export function TracksView(props: TracksViewProps) {
-  const studySetViews = useMemo(() => props.payload?.studySetViews ?? [], [props.payload?.studySetViews]);
+  const tracks = useMemo(() => props.payload?.tracks ?? [], [props.payload?.tracks]);
   const settings = props.payload?.settings;
   const library = useMemo(() => props.payload?.library ?? [], [props.payload?.library]);
   const activeFocus = settings?.activeFocus ?? null;
@@ -79,10 +79,10 @@ export function TracksView(props: TracksViewProps) {
   // Single source of truth: the persisted activeFocus. Click handlers
   // dispatch a mutation; storage subscription propagates the new payload
   // and re-renders this view.
-  const activeStudySetView = useMemo<StudySetView | null>(() => {
-    if (activeFocus?.kind !== "studySet") return null;
-    return studySetViews.find((view) => view.id === activeFocus.id) ?? null;
-  }, [activeFocus, studySetViews]);
+  const activeTrack = useMemo<StudySetView | null>(() => {
+    if (activeFocus?.kind !== "track") return null;
+    return tracks.find((view) => view.id === activeFocus.id) ?? null;
+  }, [activeFocus, tracks]);
 
   const [othersExpanded, setOthersExpanded] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
@@ -103,27 +103,27 @@ export function TracksView(props: TracksViewProps) {
   // Determine the user's chosen group within the active StudySet, derived
   // from the persisted activeFocus.groupId.
   const activeGroupId = useMemo<SetGroupId | null>(() => {
-    if (!activeStudySetView || activeStudySetView.kind !== "grouped") {
+    if (!activeTrack || activeTrack.kind !== "grouped") {
       return null;
     }
     if (
-      activeFocus?.kind === "studySet" &&
-      activeFocus.id === activeStudySetView.id
+      activeFocus?.kind === "track" &&
+      activeFocus.id === activeTrack.id
     ) {
       const saved = activeFocus.groupId;
-      if (saved && activeStudySetView.groups.some((g) => g.id === saved)) {
+      if (saved && activeTrack.groups.some((g) => g.id === saved)) {
         return saved as SetGroupId;
       }
     }
-    return asSetGroupId(activeStudySetView.groups[0]?.id ?? "");
-  }, [activeStudySetView, activeFocus]);
+    return asSetGroupId(activeTrack.groups[0]?.id ?? "");
+  }, [activeTrack, activeFocus]);
 
   const editingRow = useMemo(() => {
     if (!editingSlug) return null;
     return library.find((row) => row.view.slug === editingSlug) ?? null;
   }, [editingSlug, library]);
 
-  if (studySetViews.length === 0) {
+  if (tracks.length === 0) {
     return (
       <SurfaceCard sx={{ p: 3 }}>
         <Typography variant="h6">No tracks yet</Typography>
@@ -134,20 +134,20 @@ export function TracksView(props: TracksViewProps) {
     );
   }
 
-  const otherStudySets = studySetViews.filter(
+  const otherStudySets = tracks.filter(
     (set) =>
       set.enabled &&
-      (!activeStudySetView || set.id !== activeStudySetView.id),
+      (!activeTrack || set.id !== activeTrack.id),
   );
 
   const switchTrack = (id: StudySetId) => {
-    void props.onSetActiveFocus({ kind: "studySet", id });
+    void props.onSetActiveFocus({ kind: "track", id });
   };
   const switchGroup = (groupId: SetGroupId) => {
-    if (!activeStudySetView) return;
+    if (!activeTrack) return;
     void props.onSetActiveFocus({
-      kind: "studySet",
-      id: asStudySetId(activeStudySetView.id),
+      kind: "track",
+      id: asStudySetId(activeTrack.id),
       groupId,
     });
   };
@@ -164,13 +164,13 @@ export function TracksView(props: TracksViewProps) {
 
   return (
     <Stack spacing={3}>
-      {activeStudySetView ? (
+      {activeTrack ? (
         <ActiveStudySetSection
-          studySet={activeStudySetView}
-          options={studySetViews}
+          studySet={activeTrack}
+          options={tracks}
           activeGroupId={activeGroupId}
           slugDataMap={slugDataMap}
-          dueCount={countDueInSet(activeStudySetView, slugDataMap)}
+          dueCount={countDueInSet(activeTrack, slugDataMap)}
           onSwitch={switchTrack}
           onSwitchGroup={switchGroup}
           onEditProblem={handleEdit}

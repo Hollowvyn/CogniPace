@@ -18,10 +18,6 @@ import type {
 } from "../../domain/types";
 import type {
   AppShellPayload,
-  CourseActivationResponse,
-  CourseChapterActivationResponse,
-  CourseLaunchTrackingResponse,
-  CourseMutationResponse,
   ImportedResponse,
   ImportSummaryResponse,
   OpenedResponse,
@@ -110,17 +106,10 @@ export interface MessageRequestMap {
   GET_DASHBOARD_DATA: Record<string, never>;
   GET_APP_SHELL_DATA: Record<string, never>;
   GET_POPUP_SHELL_DATA: Record<string, never>;
-  SWITCH_ACTIVE_COURSE: {
-    courseId: string;
-  };
-  SET_ACTIVE_COURSE_CHAPTER: {
-    courseId: string;
-    chapterId: string;
-  };
   TRACK_COURSE_QUESTION_LAUNCH: {
     slug: string;
-    courseId?: string;
-    chapterId?: string;
+    trackId: string;
+    groupId: string;
   };
   IMPORT_CURATED_SET: {
     setName: string;
@@ -137,12 +126,6 @@ export interface MessageRequestMap {
     input: string;
     sourceSet?: string;
     topics?: string[];
-    markAsStarted?: boolean;
-  };
-  ADD_PROBLEM_TO_COURSE: {
-    courseId: string;
-    chapterId: string;
-    input: string;
     markAsStarted?: boolean;
   };
   SUSPEND_PROBLEM: {
@@ -249,9 +232,7 @@ export interface MessageResponseMap {
   GET_DASHBOARD_DATA: AppShellPayload;
   GET_APP_SHELL_DATA: AppShellPayload;
   GET_POPUP_SHELL_DATA: PopupShellPayload;
-  SWITCH_ACTIVE_COURSE: CourseActivationResponse;
-  SET_ACTIVE_COURSE_CHAPTER: CourseChapterActivationResponse;
-  TRACK_COURSE_QUESTION_LAUNCH: CourseLaunchTrackingResponse;
+  TRACK_COURSE_QUESTION_LAUNCH: { tracked: boolean };
   IMPORT_CURATED_SET: ImportSummaryResponse;
   IMPORT_CUSTOM_SET: ImportSummaryResponse;
   EXPORT_DATA: ExportPayload;
@@ -259,7 +240,6 @@ export interface MessageResponseMap {
   RESET_STUDY_HISTORY: StudyHistoryResetResponse;
   UPDATE_SETTINGS: SettingsUpdateResponse;
   ADD_PROBLEM_BY_INPUT: ProblemMutationResponse & { slug: string };
-  ADD_PROBLEM_TO_COURSE: CourseMutationResponse;
   SUSPEND_PROBLEM: StudyStateMutationResponse;
   RESET_PROBLEM_SCHEDULE: StudyStateMutationResponse;
   EDIT_PROBLEM: ProblemMutationResponse;

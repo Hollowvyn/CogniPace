@@ -20,8 +20,7 @@ export function openedProblemResponse(request: unknown) {
 export function makePopupPayload(): PopupShellPayload {
   const payload = makePayload();
   return {
-    activeCourse: payload.activeCourse,
-    activeStudySetView: payload.activeStudySetView,
+    activeTrack: payload.activeTrack,
     popup: payload.popup,
     settings: payload.settings,
   };

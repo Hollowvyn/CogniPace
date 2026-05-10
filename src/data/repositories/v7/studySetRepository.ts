@@ -226,7 +226,7 @@ export function deleteStudySet(
   // If the deleted set was the active focus, clear it.
   if (
     data.settings.activeFocus &&
-    data.settings.activeFocus.kind === "studySet" &&
+    data.settings.activeFocus.kind === "track" &&
     data.settings.activeFocus.id === id
   ) {
     data.settings = { ...data.settings, activeFocus: null };

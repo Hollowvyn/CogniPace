@@ -25,17 +25,33 @@ describe("Popup Shell Handler", () => {
     const payload = buildPopupShellPayload(data);
 
     expect(Object.keys(payload).sort()).toEqual([
-      "activeCourse",
-      "activeStudySetView",
+      "activeTrack",
       "popup",
       "settings",
     ]);
     expect(payload).not.toHaveProperty("analytics");
-    expect(payload).not.toHaveProperty("courseOptions");
     expect(payload).not.toHaveProperty("library");
     expect(payload).not.toHaveProperty("queue");
     expect(payload.popup.dueCount).toBeGreaterThanOrEqual(1);
     expect(payload.popup.recommended?.slug).toBe("two-sum");
-    expect(payload.popup.activeCourse).not.toHaveProperty("chapters");
+    expect(payload.popup.activeTrack).not.toHaveProperty("chapters");
+  });
+
+  it("derives activeTrack from settings.activeFocus", () => {
+    const data = normalizeStoredAppData({
+      problemsBySlug: {
+        "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
+      },
+      settings: {
+        activeFocus: { kind: "track", id: "Grind75" },
+        dailyQuestionGoal: 10,
+      },
+      studyStatesBySlug: {},
+    });
+
+    const payload = buildPopupShellPayload(data);
+
+    expect(payload.activeTrack?.id).toBe("Grind75");
+    expect(payload.popup.activeTrack?.id).toBe("Grind75");
   });
 });

@@ -1,4 +1,4 @@
-/** Background handlers for course, catalog, and queue-shaping mutations. */
+/** Background handlers for catalog set imports and direct problem intake. */
 import { getCuratedSet } from "../../../data/catalog/curatedSets";
 import {
   mergeSettings,
@@ -10,16 +10,6 @@ import {
   importProblemsIntoSet,
   parseProblemInput,
 } from "../../../data/repositories/problemRepository";
-import { nowIso } from "../../../domain/common/time";
-import {
-  buildActiveCourseView,
-  ensureProblemInCourse,
-  markCourseQuestionLaunched,
-  setActiveCourse,
-  setActiveCourseChapter,
-  syncCourseProgress,
-} from "../../../domain/courses/courseProgress";
-import { normalizeSlug } from "../../../domain/problem/slug";
 import { ok } from "../responses";
 
 /** Imports a built-in curated set into the local library. */
@@ -38,7 +28,6 @@ export async function importCurated(payload: { setName: string }) {
         [payload.setName]: true,
       },
     });
-    syncCourseProgress(data);
     return data;
   });
 
@@ -77,7 +66,6 @@ export async function importCustom(payload: {
         Custom: true,
       },
     });
-    syncCourseProgress(data);
     return data;
   });
 
@@ -105,7 +93,6 @@ export async function addProblemByInput(payload: {
       topics: payload.topics,
     });
     const state = ensureStudyState(data, parsed.slug);
-    syncCourseProgress(data);
 
     return {
       ...data,
@@ -124,109 +111,5 @@ export async function addProblemByInput(payload: {
     slug: parsed.slug,
     problem: updated.problemsBySlug[parsed.slug],
     studyState: updated.studyStatesBySlug[parsed.slug],
-  });
-}
-
-/** Adds a problem into a specific course chapter and updates course progress. */
-export async function addProblemToCourse(payload: {
-  courseId: string;
-  chapterId: string;
-  input: string;
-  markAsStarted?: boolean;
-}) {
-  const parsed = parseProblemInput(payload.input);
-  const updated = await mutateAppData((data) => {
-    const course = data.coursesById[payload.courseId];
-    if (!course || !course.chaptersById[payload.chapterId]) {
-      throw new Error("Course or chapter not found.");
-    }
-
-    const chapter = course.chaptersById[payload.chapterId];
-    const problem = ensureProblem(data, {
-      slug: parsed.slug,
-      url: parsed.url,
-      sourceSet: course.sourceSet,
-      topics: [chapter.title],
-    });
-    ensureStudyState(data, parsed.slug);
-
-    ensureProblemInCourse(course, payload.chapterId, problem);
-    markCourseQuestionLaunched(
-      data,
-      problem.leetcodeSlug,
-      nowIso(),
-      payload.courseId,
-      payload.chapterId
-    );
-    syncCourseProgress(data);
-    return data;
-  });
-
-  const normalized = normalizeSlug(parsed.slug);
-  if (!normalized) {
-    throw new Error("Invalid slug.");
-  }
-
-  return ok({
-    problem: updated.problemsBySlug[normalized],
-    studyState: updated.studyStatesBySlug[normalized],
-    course: buildActiveCourseView(updated, payload.courseId),
-  });
-}
-
-/** Switches the active course in user settings. */
-export async function switchActiveCourseHandler(payload: { courseId: string }) {
-  const updated = await mutateAppData((data) => {
-    setActiveCourse(data, payload.courseId);
-    return data;
-  });
-
-  return ok({
-    activeCourseId: updated.settings.activeCourseId,
-    activeCourse: buildActiveCourseView(
-      updated,
-      updated.settings.activeCourseId
-    ),
-  });
-}
-
-/** Sets the active chapter inside the selected course. */
-export async function activateCourseChapter(payload: {
-  courseId: string;
-  chapterId: string;
-}) {
-  const updated = await mutateAppData((data) => {
-    setActiveCourseChapter(data, payload.courseId, payload.chapterId);
-    return data;
-  });
-
-  return ok({
-    activeCourse: buildActiveCourseView(updated, payload.courseId),
-  });
-}
-
-/** Tracks that a course question was launched from a popup or dashboard action. */
-export async function trackCourseQuestionLaunch(payload: {
-  slug: string;
-  courseId?: string;
-  chapterId?: string;
-}) {
-  const updated = await mutateAppData((data) => {
-    markCourseQuestionLaunched(
-      data,
-      payload.slug,
-      nowIso(),
-      payload.courseId,
-      payload.chapterId
-    );
-    return data;
-  });
-
-  return ok({
-    tracked: true,
-    activeCourse: buildActiveCourseView(
-      updated,
-      payload.courseId ?? updated.settings.activeCourseId
-    ),
   });
 }

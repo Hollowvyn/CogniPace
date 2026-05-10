@@ -45,8 +45,6 @@ export function DashboardApp() {
               <OverviewView
                 onOpenProblem={controller.onOpenProblem}
                 onSetView={controller.navigateToView}
-                onSubmitCourseForm={controller.onSubmitCourseForm}
-                onSwitchCourse={controller.onSwitchCourse}
                 onToggleMode={controller.onToggleMode}
                 payload={controller.payload}
               />
@@ -62,10 +60,7 @@ export function DashboardApp() {
             ) : null}
 
             {controller.view === "analytics" ? (
-              <AnalyticsView
-                onSwitchCourse={controller.onSwitchCourse}
-                payload={controller.payload}
-              />
+              <AnalyticsView payload={controller.payload} />
             ) : null}
 
             {controller.view === "settings" && controller.draftSettings ? (

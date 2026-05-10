@@ -92,12 +92,29 @@ export interface BuildStudySetViewInput {
   topicsById: Record<string, Topic>;
   companiesById: Record<string, Company>;
   progress: StudySetProgress | null;
+  /** SSoT for "is this slug done?" — derived from the user's review history,
+   * not the StudySetProgress aggregate, so progress matches what the rest of
+   * the app shows the moment a review is recorded. Optional for the
+   * v7-first tests that don't carry study-state context yet; treated as
+   * empty when omitted. */
+  studyStatesBySlug?: Record<string, StudyState>;
+  now?: Date;
 }
 
 /** Hydrates a StudySet into its display-ready view shape. */
 export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
-  const { studySet, problemsBySlug, topicsById, companiesById, progress } =
-    input;
+  const {
+    studySet,
+    problemsBySlug,
+    topicsById,
+    companiesById,
+    progress,
+    studyStatesBySlug,
+    now,
+  } = input;
+  const studyStates = studyStatesBySlug ?? {};
+  const isSlugDone = (slug: string): boolean =>
+    getStudyStateSummary(studyStates[slug], now).isStarted;
   // Tracks tab always shows every curated slug — even ones the user has
   // never opened. The Problem entity might not exist yet (fresh install
   // pre-seed, mid-migration, the user wiped data), so synthesize a
@@ -117,11 +134,8 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
       description: studySet.description,
       enabled: studySet.enabled,
       groups: studySet.groups.map((group) => {
-        const completedSlugs =
-          progress?.groupProgressById[group.id]?.completedSlugs ?? [];
-        const completedSet = new Set<string>(completedSlugs);
         const completedCount = group.problemSlugs.reduce(
-          (acc, slug) => (completedSet.has(slug) ? acc + 1 : acc),
+          (acc, slug) => (isSlugDone(slug) ? acc + 1 : acc),
           0,
         );
         return {

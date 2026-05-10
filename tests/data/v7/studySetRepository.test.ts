@@ -163,7 +163,7 @@ describe("v7 studySetRepository", () => {
     data.studySetOrder.push(id);
     data.settings = {
       ...data.settings,
-      activeFocus: { kind: "studySet", id },
+      activeFocus: { kind: "track", id },
     };
 
     deleteStudySet(data, id, FIXTURE_NOW);

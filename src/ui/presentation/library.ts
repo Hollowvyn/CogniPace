@@ -2,7 +2,8 @@
 import { LibraryProblemRow } from "../../domain/views";
 
 export interface LibraryFilters {
-  courseId: string;
+  /** Active track filter — "all" or a StudySetId. */
+  trackId: string;
   difficulty: string;
   query: string;
   status: string;
@@ -11,7 +12,7 @@ export interface LibraryFilters {
 /** Creates the default dashboard library filter state. */
 export function createDefaultLibraryFilters(): LibraryFilters {
   return {
-    courseId: "all",
+    trackId: "all",
     difficulty: "all",
     query: "",
     status: "all",
@@ -35,8 +36,10 @@ export function filterLibraryRows(
     }
 
     if (
-      filters.courseId !== "all" &&
-      !row.courses.some((course) => course.courseId === filters.courseId)
+      filters.trackId !== "all" &&
+      !row.trackMemberships.some(
+        (membership) => membership.trackId === filters.trackId,
+      )
     ) {
       return false;
     }

@@ -39,7 +39,7 @@ describe("route and selector contracts", () => {
   it("filters library rows with pure selector logic", () => {
     const payload = makePayload();
     const rows = filterLibraryRows(payload.library, {
-      courseId: "all",
+      trackId: "all",
       difficulty: "Easy",
       query: "two",
       status: "due",

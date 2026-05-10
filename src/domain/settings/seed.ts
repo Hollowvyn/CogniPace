@@ -1,11 +1,12 @@
-import { BUILT_IN_SETS, DEFAULT_COURSE_ID } from "../common/constants";
+import { BUILT_IN_SETS, DEFAULT_TRACK_ID } from "../common/constants";
+import { asStudySetId } from "../common/ids";
 
 import { UserSettings } from "./model";
 
 export const INITIAL_USER_SETTINGS: UserSettings = {
   dailyQuestionGoal: 18,
   studyMode: "studyPlan",
-  activeCourseId: DEFAULT_COURSE_ID,
+  activeFocus: { kind: "track", id: asStudySetId(DEFAULT_TRACK_ID) },
   setsEnabled: {
     Blind75: true,
     ByteByteGo101: true,

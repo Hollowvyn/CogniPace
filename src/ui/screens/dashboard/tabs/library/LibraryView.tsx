@@ -61,13 +61,13 @@ export function LibraryView(props: LibraryViewProps) {
   }, [props.rows]);
 
   const visibleRows = useMemo(() => {
-    if (props.filters.courseId === "all") return props.rows;
+    if (props.filters.trackId === "all") return props.rows;
     return props.rows.filter((row) =>
       (row.trackMemberships ?? []).some(
-        (member) => member.trackId === props.filters.courseId,
+        (member) => member.trackId === props.filters.trackId,
       ),
     );
-  }, [props.filters.courseId, props.rows]);
+  }, [props.filters.trackId, props.rows]);
 
   const tableRows: ProblemRowData[] = useMemo(
     () =>
@@ -119,11 +119,11 @@ export function LibraryView(props: LibraryViewProps) {
             <Select
               labelId="library-filter-track-label"
               label="Track"
-              value={props.filters.courseId}
+              value={props.filters.trackId}
               onChange={(event) => {
                 props.onFilterChange((current) => ({
                   ...current,
-                  courseId: event.target.value,
+                  trackId: event.target.value,
                 }));
               }}
             >

@@ -33,7 +33,7 @@ export interface AppDataV7 {
   studySetOrder: StudySetId[];
   /** Per-StudySet progress, lazily created when the user focuses a set. */
   studySetProgressById: Record<string, StudySetProgress>;
-  /** UserSettings (now carries `activeFocus` instead of `activeCourseId`). */
+  /** UserSettings (now carries `activeFocus` instead of `activeTrackId`). */
   settings: UserSettings;
   /** Optional ISO timestamp recorded by the v6→v7 migration. */
   lastMigrationAt?: string;

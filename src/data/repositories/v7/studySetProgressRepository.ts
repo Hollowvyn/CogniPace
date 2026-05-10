@@ -87,6 +87,23 @@ export function markCompleted(
   return data;
 }
 
+/**
+ * Stamp the moment the user opened a slug belonging to a track. Records
+ * `lastInteractedAt` and pins the active group to the requested group so
+ * the user's "where am I" pointer survives across surfaces. Idempotent.
+ */
+export function markSlugLaunched(
+  data: AppDataV7,
+  setId: StudySetId,
+  groupId: SetGroupId,
+  _slug: ProblemSlug,
+  now: string,
+): AppDataV7 {
+  ensureProgress(data, setId, now);
+  setActiveGroup(data, setId, groupId, now);
+  return data;
+}
+
 /** Reverse `markCompleted`. */
 export function unmarkCompleted(
   data: AppDataV7,

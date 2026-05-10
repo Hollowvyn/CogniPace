@@ -124,14 +124,14 @@ export function useOverlayController(
 
       if (
         payload.settings.studyMode === "studyPlan" &&
-        payload.popup.courseNext &&
-        payload.popup.courseNext.slug !== currentSlug
+        payload.popup.trackNext &&
+        payload.popup.trackNext.slug !== currentSlug
       ) {
         return {
-          kind: "course",
-          activeCourseId: payload.activeCourse?.id,
+          kind: "track",
+          activeTrackId: payload.activeTrack?.id,
           onOpenProblem: openOverlayProblem,
-          view: payload.popup.courseNext,
+          view: payload.popup.trackNext,
         };
       }
 

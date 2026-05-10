@@ -17,10 +17,8 @@ import {
   SurfaceCard,
   SurfaceTableContainer,
 } from "../../../../components";
-import { CourseRosterCard } from "../../components/CourseRosterCard";
 
 export interface AnalyticsViewProps {
-  onSwitchCourse: (courseId: string) => Promise<void>;
   payload: AppShellPayload | null;
 }
 
@@ -145,54 +143,37 @@ export function AnalyticsView(props: AnalyticsViewProps) {
         </Grid>
       </SurfaceCard>
 
-      <Grid container spacing={2}>
-        <Grid size={{ lg: 8, xs: 12 }}>
-          <SurfaceCard label="Weakest Problems" title="Highest Lapse Pressure">
-            <SurfaceTableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Problem</TableCell>
-                    <TableCell>Lapses</TableCell>
-                    <TableCell>FSRS Difficulty</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {weakest.map((problem) => (
-                    <TableRow key={problem.slug}>
-                      <TableCell>{problem.title}</TableCell>
-                      <TableCell>{problem.lapses}</TableCell>
-                      <TableCell>{problem.difficulty.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-                  {weakest.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3}>
-                        <Typography color="text.secondary" variant="body2">
-                          No weak-problem data yet.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </SurfaceTableContainer>
-          </SurfaceCard>
-        </Grid>
-        <Grid size={{ lg: 4, xs: 12 }}>
-          <SurfaceCard label="Course Completion" title="Track Status">
-            <Stack spacing={1.25}>
-              {(payload?.courses ?? []).map((course) => (
-                <CourseRosterCard
-                  course={course}
-                  key={course.id}
-                  onSwitchCourse={props.onSwitchCourse}
-                />
+      <SurfaceCard label="Weakest Problems" title="Highest Lapse Pressure">
+        <SurfaceTableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Problem</TableCell>
+                <TableCell>Lapses</TableCell>
+                <TableCell>FSRS Difficulty</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {weakest.map((problem) => (
+                <TableRow key={problem.slug}>
+                  <TableCell>{problem.title}</TableCell>
+                  <TableCell>{problem.lapses}</TableCell>
+                  <TableCell>{problem.difficulty.toFixed(2)}</TableCell>
+                </TableRow>
               ))}
-            </Stack>
-          </SurfaceCard>
-        </Grid>
-      </Grid>
+              {weakest.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3}>
+                    <Typography color="text.secondary" variant="body2">
+                      No weak-problem data yet.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </SurfaceTableContainer>
+      </SurfaceCard>
     </Stack>
   );
 }

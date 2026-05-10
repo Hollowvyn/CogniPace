@@ -1,5 +1,5 @@
 import {Difficulty, Rating} from "../../../domain/types";
-import {CourseQuestionView, RecommendedProblemView} from "../../../domain/views";
+import {TrackQuestionView, RecommendedProblemView} from "../../../domain/views";
 
 export interface OverlayDraftLogFields {
   interviewPattern: string;
@@ -115,14 +115,14 @@ export type OverlayPostSubmitNextViewModel =
   title: string;
 }
   | {
-  activeCourseId?: string;
-  kind: "course";
+  activeTrackId?: string;
+  kind: "track";
   onOpenProblem: (target: {
     slug: string;
     courseId?: string;
     chapterId?: string;
   }) => Promise<void> | void;
-  view: CourseQuestionView;
+  view: TrackQuestionView;
 }
   | {
   kind: "recommended";

@@ -4,8 +4,8 @@ import Stack from "@mui/material/Stack";
 import {useEffect, useRef} from "react";
 
 import {FieldAssistRow, SurfaceCard} from "../../../components";
-import {CourseNextCard} from "../../../features/courses/CourseNextCard";
 import {RecommendedProblemCard} from "../../../features/recommended/RecommendedProblemCard";
+import {ActiveTrackNextCard} from "../../../features/tracks/ActiveTrackNextCard";
 import {OverlayPostSubmitNextViewModel} from "../overlayPanel.types";
 
 export function OverlayPostSubmitNextCard(
@@ -30,13 +30,13 @@ export function OverlayPostSubmitNextCard(
     <Collapse in={props.nextTarget !== null} timeout={180} unmountOnExit>
       <Fade in={props.nextTarget !== null} timeout={180}>
         <div ref={sectionRef}>
-          {props.nextTarget?.kind === "course" ? (
-            <CourseNextCard
+          {props.nextTarget?.kind === "track" ? (
+            <ActiveTrackNextCard
               actionLabel="Open next"
-              activeCourseId={props.nextTarget.activeCourseId}
+              activeTrackId={props.nextTarget.activeTrackId}
               buttonFullWidth
               compact
-              label="Next In Study Mode"
+              label="Next in track"
               onOpenProblem={props.nextTarget.onOpenProblem}
               view={props.nextTarget.view}
             />

@@ -13,11 +13,6 @@ import {
   exportData,
   importData,
 } from "../../../data/repositories/backupRepository";
-import {
-  addProblemToCourse,
-  setActiveCourseChapter,
-  switchActiveCourse,
-} from "../../../data/repositories/courseActionRepository";
 import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
 import {
   resetStudyHistory,
@@ -38,10 +33,6 @@ import {
   readDashboardViewFromSearch,
   DashboardView,
 } from "../../navigation/dashboardRoutes";
-import {
-  CourseFormState,
-  resolveCourseForm,
-} from "../../presentation/courseIngest";
 import {
   createDefaultLibraryFilters,
   filterLibraryRows,
@@ -75,7 +66,7 @@ export function useDashboardController() {
     useState<UserSettings | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const deferredQuery = useDeferredValue(filters.query);
-  const { courseId, difficulty, status: filterStatus } = filters;
+  const { trackId, difficulty, status: filterStatus } = filters;
 
   useEffect(() => {
     const handlePopState = () => {
@@ -106,12 +97,12 @@ export function useDashboardController() {
   const rows = useMemo(
     () =>
       filterLibraryRows(payload?.library ?? [], {
-        courseId,
+        trackId,
         difficulty,
         status: filterStatus,
         query: deferredQuery,
       }),
-    [courseId, deferredQuery, difficulty, filterStatus, payload?.library]
+    [trackId, deferredQuery, difficulty, filterStatus, payload?.library]
   );
 
   const refresh = useCallback(
@@ -340,46 +331,6 @@ export function useDashboardController() {
     await runMutation(importData(parsed), "Backup imported.");
   }, [importFile, runMutation, setStatus]);
 
-  const onSubmitCourseForm = useCallback(
-    async (form: CourseFormState): Promise<boolean> => {
-      const resolvedForm = resolveCourseForm(payload, form);
-      if (!resolvedForm.input.trim()) {
-        setStatus({
-          message: "Provide a LeetCode slug or URL.",
-          isError: true,
-        });
-        return false;
-      }
-
-      return runMutation(
-        addProblemToCourse({
-          courseId: resolvedForm.courseId,
-          chapterId: resolvedForm.chapterId,
-          input: resolvedForm.input.trim(),
-          markAsStarted: resolvedForm.markAsStarted,
-        }),
-        "Question appended to the course."
-      );
-    },
-    [payload, runMutation, setStatus]
-  );
-
-  const onSwitchCourse = useCallback(
-    async (courseId: string): Promise<void> => {
-      await runMutation(switchActiveCourse(courseId), "Active course updated.");
-    },
-    [runMutation]
-  );
-
-  const onSetChapter = useCallback(
-    async (courseId: string, chapterId: string): Promise<void> => {
-      await runMutation(
-        setActiveCourseChapter(courseId, chapterId),
-        "Active chapter updated."
-      );
-    },
-    [runMutation]
-  );
 
   const onSetActiveFocus = useCallback(
     async (focus: ActiveFocus): Promise<void> => {
@@ -422,9 +373,6 @@ export function useDashboardController() {
     onResetSettingsToDefaults,
     onResetStudyHistory,
     onSetActiveFocus,
-    onSetChapter,
-    onSubmitCourseForm,
-    onSwitchCourse,
     onToggleMode,
     payload,
     refresh,
