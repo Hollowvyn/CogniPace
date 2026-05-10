@@ -1,3 +1,5 @@
+import type { ActiveFocus } from "../active-focus/model";
+import { asSetGroupId, asStudySetId } from "../common/ids";
 import { DEFAULT_COURSE_ID } from "../common/constants";
 
 import {
@@ -73,6 +75,21 @@ function booleanValue(value: unknown, fallback: boolean): boolean {
 
 function settingsRecord(value: unknown, fallback: object): UnknownRecord {
   return isRecord(value) ? value : (fallback as UnknownRecord);
+}
+
+function sanitizeActiveFocus(value: unknown): ActiveFocus | undefined {
+  if (value === null) return null;
+  if (!isRecord(value)) return undefined;
+  if (value.kind !== "studySet") return undefined;
+  if (typeof value.id !== "string" || !value.id.trim()) return undefined;
+  const focus: ActiveFocus = {
+    kind: "studySet",
+    id: asStudySetId(value.id),
+  };
+  if (typeof value.groupId === "string" && value.groupId.trim()) {
+    focus.groupId = asSetGroupId(value.groupId);
+  }
+  return focus;
 }
 
 function sanitizeSetsEnabled(value: unknown): Record<string, boolean> {
@@ -212,6 +229,8 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     initial.timing.requireSolveTime
   );
 
+  const sanitizedActiveFocus = sanitizeActiveFocus(source.activeFocus);
+
   return {
     dailyQuestionGoal: nonNegativeInteger(
       source.dailyQuestionGoal,
@@ -223,6 +242,9 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
         ? source.activeCourseId
         : DEFAULT_COURSE_ID,
     setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
+    ...(sanitizedActiveFocus !== undefined
+      ? { activeFocus: sanitizedActiveFocus }
+      : {}),
     notifications: {
       enabled: booleanValue(
         notifications.enabled,
