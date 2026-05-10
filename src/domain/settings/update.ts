@@ -4,6 +4,11 @@ import { sanitizeStoredUserSettings } from "./sanitize";
 export function cloneUserSettings(settings: UserSettings): UserSettings {
   return {
     ...settings,
+    ...(settings.activeFocus === undefined
+      ? {}
+      : settings.activeFocus === null
+        ? { activeFocus: null }
+        : { activeFocus: { ...settings.activeFocus } }),
     experimental: { ...settings.experimental },
     memoryReview: { ...settings.memoryReview },
     notifications: { ...settings.notifications },
