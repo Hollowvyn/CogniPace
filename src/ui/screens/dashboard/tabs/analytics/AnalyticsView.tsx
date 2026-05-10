@@ -17,6 +17,7 @@ import {
   SurfaceCard,
   SurfaceTableContainer,
 } from "../../../../components";
+
 export interface AnalyticsViewProps {
   payload: AppShellPayload | null;
 }

@@ -1,5 +1,5 @@
-import { asStudySetId } from "../common/ids";
 import { BUILT_IN_SETS, DEFAULT_TRACK_ID } from "../common/constants";
+import { asStudySetId } from "../common/ids";
 
 import { UserSettings } from "./model";
 

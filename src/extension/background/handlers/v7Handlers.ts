@@ -8,6 +8,7 @@ import {
   removeLocalStorage,
 } from "../../../data/datasources/chrome/storage";
 import { mutateAppData , PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
+import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
 import {
   asCompanyId,
   asProblemSlug,
@@ -20,7 +21,6 @@ import {
   type StudySetId,
   type TopicId,
 } from "../../../domain/common/ids";
-import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
 import { nowIso } from "../../../domain/common/time";
 import {
   applyEdit,

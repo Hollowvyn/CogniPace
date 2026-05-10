@@ -9,8 +9,8 @@ import {
 
 import type { ActiveFocus } from "../../../src/domain/active-focus/model";
 import type { StudySet } from "../../../src/domain/sets/model";
-import type { StudySetView } from "../../../src/domain/views";
 import type { Problem, StudyState } from "../../../src/domain/types";
+import type { StudySetView } from "../../../src/domain/views";
 
 function makeStudySet(): StudySet {
   return {

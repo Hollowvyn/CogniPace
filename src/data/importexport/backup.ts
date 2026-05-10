@@ -2,6 +2,12 @@ import {
   hasGroupedUserSettings,
   sanitizeStoredUserSettings,
 } from "../../domain/settings";
+import {
+  ExportPayload,
+  Problem,
+  StudyState,
+  UserSettings,
+} from "../../domain/types";
 import { resolveSeedTopicId } from "../catalog/topicsSeed";
 import {
   aggregates as v7AggregateDescriptors,
@@ -9,12 +15,6 @@ import {
 } from "../repositories/v7/aggregateRegistry";
 
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "./constants";
-import {
-  ExportPayload,
-  Problem,
-  StudyState,
-  UserSettings,
-} from "../../domain/types";
 import {
   normalizeSlug,
   nowIso,
@@ -74,20 +74,6 @@ function isStringArray(value: unknown): value is string[] {
   return (
     Array.isArray(value) && value.every((item) => typeof item === "string")
   );
-}
-
-function safeString(value: unknown, fallback: string): string {
-  return typeof value === "string" && value.trim() ? value.trim() : fallback;
-}
-
-function safeOptionalString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-function safeInteger(value: unknown, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value)
-    ? Math.max(0, Math.round(value))
-    : fallback;
 }
 
 function safeBoolean(value: unknown): boolean | undefined {

@@ -1,10 +1,10 @@
 /** Background handlers for app-shell reads and extension page navigation. */
 import { getAppData } from "../../../data/repositories/appDataRepository";
+import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import {
   computeReviewStreakDays,
   summarizeAnalytics,
 } from "../../../domain/analytics/summarizeAnalytics";
-import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
 import { buildRecommendedCandidates } from "../../../domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../../domain/queue/buildTodayQueue";
