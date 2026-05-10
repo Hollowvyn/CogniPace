@@ -26,7 +26,8 @@ import {
   StudySetView,
   TrackMembership,
 } from "../../../domain/views";
-import type { AppData } from "../../../domain/types";
+import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
+import type { AppData, Problem } from "../../../domain/types";
 import { validateExtensionPagePath } from "../../runtime/validator";
 import { ok } from "../responses";
 
@@ -103,33 +104,60 @@ function libraryRows(
   now = new Date()
 ): LibraryProblemRow[] {
   const targetRetention = payload.settings.memoryReview.targetRetention;
-  return Object.values(payload.problemsBySlug)
-    .map((problem) => {
-      const studyState =
-        payload.studyStatesBySlug[problem.leetcodeSlug] ?? null;
+  // Union of every slug the user could care about: persisted problems
+  // (anything they've ever opened or imported) + every curated track
+  // slug (so the library is non-empty even pre-seed / post-wipe).
+  const slugs = new Set<string>(Object.keys(payload.problemsBySlug));
+  for (const studySet of Object.values(payload.studySetsById)) {
+    for (const group of studySet.groups) {
+      for (const slug of group.problemSlugs) slugs.add(slug as string);
+    }
+  }
+
+  return Array.from(slugs)
+    .map((slug): LibraryProblemRow => {
+      const problem = payload.problemsBySlug[slug] ?? synthesizeProblem(slug);
+      const studyState = payload.studyStatesBySlug[slug] ?? null;
       return {
         problem,
         view: buildProblemView(
-          // v6/v7 transitional Problem carries the same fields; the v7
-          // branded slug is structurally identical at runtime.
           problem as unknown as Parameters<typeof buildProblemView>[0],
           payload.topicsById,
           payload.companiesById,
         ),
         studyState: buildStudyStateView({
-          // v6/v7 transitional StudyState is structurally compatible with
-          // the v7 strict shape the hydrator expects.
           studyState: studyState as unknown as Parameters<
             typeof buildStudyStateView
           >[0]["studyState"],
           now,
           targetRetention,
         }),
-        courses: getCourseMemberships(payload, problem.leetcodeSlug),
-        trackMemberships: getTrackMemberships(payload, problem.leetcodeSlug),
+        courses: getCourseMemberships(payload, slug),
+        trackMemberships: getTrackMemberships(payload, slug),
       };
     })
     .sort((a, b) => a.problem.title.localeCompare(b.problem.title));
+}
+
+/** Minimal Problem placeholder when the user hasn't opened the page yet
+ * but the slug shows up in a curated track. Replaced by the real entity
+ * the moment the user visits LeetCode. */
+function synthesizeProblem(slug: string): Problem {
+  return {
+    id: slug,
+    leetcodeSlug: slug,
+    slug,
+    title: slugToTitle(slug),
+    difficulty: "Unknown",
+    isPremium: false,
+    url: slugToUrl(slug),
+    topics: [],
+    topicIds: [],
+    companyIds: [],
+    sourceSet: [],
+    createdAt: "",
+    updatedAt: "",
+  };
 }
 
 function activeCourseCard(
