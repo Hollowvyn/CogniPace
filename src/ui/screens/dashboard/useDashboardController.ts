@@ -13,11 +13,7 @@ import {
   exportData,
   importData,
 } from "../../../data/repositories/backupRepository";
-import {
-  addProblemToCourse,
-  setActiveCourseChapter,
-  switchActiveCourse,
-} from "../../../data/repositories/courseActionRepository";
+import { setActiveCourseChapter } from "../../../data/repositories/courseActionRepository";
 import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
 import {
   resetStudyHistory,
@@ -38,10 +34,6 @@ import {
   readDashboardViewFromSearch,
   DashboardView,
 } from "../../navigation/dashboardRoutes";
-import {
-  CourseFormState,
-  resolveCourseForm,
-} from "../../presentation/courseIngest";
 import {
   createDefaultLibraryFilters,
   filterLibraryRows,
@@ -340,37 +332,6 @@ export function useDashboardController() {
     await runMutation(importData(parsed), "Backup imported.");
   }, [importFile, runMutation, setStatus]);
 
-  const onSubmitCourseForm = useCallback(
-    async (form: CourseFormState): Promise<boolean> => {
-      const resolvedForm = resolveCourseForm(payload, form);
-      if (!resolvedForm.input.trim()) {
-        setStatus({
-          message: "Provide a LeetCode slug or URL.",
-          isError: true,
-        });
-        return false;
-      }
-
-      return runMutation(
-        addProblemToCourse({
-          courseId: resolvedForm.courseId,
-          chapterId: resolvedForm.chapterId,
-          input: resolvedForm.input.trim(),
-          markAsStarted: resolvedForm.markAsStarted,
-        }),
-        "Question appended to the course."
-      );
-    },
-    [payload, runMutation, setStatus]
-  );
-
-  const onSwitchCourse = useCallback(
-    async (courseId: string): Promise<void> => {
-      await runMutation(switchActiveCourse(courseId), "Active course updated.");
-    },
-    [runMutation]
-  );
-
   const onSetChapter = useCallback(
     async (courseId: string, chapterId: string): Promise<void> => {
       await runMutation(
@@ -423,8 +384,6 @@ export function useDashboardController() {
     onResetStudyHistory,
     onSetActiveFocus,
     onSetChapter,
-    onSubmitCourseForm,
-    onSwitchCourse,
     onToggleMode,
     payload,
     refresh,

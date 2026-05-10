@@ -52,12 +52,12 @@ describe("Popup Recommendations", () => {
     expect(screen.getByText("Contains Duplicate")).toBeInTheDocument();
   });
 
-  it("opens the courses dashboard from the active-course panel", async () => {
+  it("opens the tracks dashboard from the active-track panel", async () => {
     const { user } = renderPopupWithPayload();
 
     expect(await screen.findByText("Blind 75")).toBeInTheDocument();
     await user.click(
-      screen.getByRole("button", { name: "Open courses dashboard" })
+      screen.getByRole("button", { name: "Open tracks dashboard" })
     );
 
     expect(tabsCreateMock).toHaveBeenCalledWith({

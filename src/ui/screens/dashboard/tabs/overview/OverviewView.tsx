@@ -12,9 +12,6 @@ import { QueuePreview } from "../../../../features/queue/QueuePreview";
 import { RecommendedProblemCard } from "../../../../features/recommended/RecommendedProblemCard";
 import { ActiveTrackOverviewCard } from "../../../../features/tracks/ActiveTrackOverviewCard";
 import { DashboardView } from "../../../../navigation/dashboardRoutes";
-import { CourseFormState } from "../../../../presentation/courseIngest";
-import { CourseIngestForm } from "../../components/CourseIngestForm";
-import { CourseRosterCard } from "../../components/CourseRosterCard";
 
 export interface OverviewViewProps {
   onOpenProblem: (target: {
@@ -23,8 +20,6 @@ export interface OverviewViewProps {
     slug: string;
   }) => Promise<void>;
   onSetView: (view: DashboardView) => void;
-  onSubmitCourseForm: (state: CourseFormState) => Promise<boolean>;
-  onSwitchCourse: (courseId: string) => Promise<void>;
   onToggleMode: () => Promise<void>;
   payload: AppShellPayload | null;
 }
@@ -92,23 +87,6 @@ export function OverviewView(props: OverviewViewProps) {
 
       <Grid size={{ lg: 4, xs: 12 }}>
         <Stack spacing={2}>
-          <SurfaceCard label="Course Roster" title="Available Tracks">
-            <Stack spacing={1.5}>
-              {(props.payload?.courses ?? []).map((courseCard) => (
-                <CourseRosterCard
-                  course={courseCard}
-                  key={courseCard.id}
-                  onSwitchCourse={props.onSwitchCourse}
-                />
-              ))}
-            </Stack>
-          </SurfaceCard>
-          <SurfaceCard label="Quick Intake" title="Add Question">
-            <CourseIngestForm
-              onSubmit={props.onSubmitCourseForm}
-              payload={props.payload}
-            />
-          </SurfaceCard>
           <SurfaceCard label="Protocol" title="Review Surface">
             <Stack spacing={2}>
               <Typography color="text.secondary" variant="body2">

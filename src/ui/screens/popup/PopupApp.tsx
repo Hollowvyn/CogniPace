@@ -8,12 +8,12 @@ import { InlineStatusRegion } from "../../components";
 import { cognipaceTokens } from "../../theme";
 
 import {
-  CoursePanelCompleted,
-  CoursePanelEmpty,
-  CoursePanelFreestyle,
-  CoursePanelLoading,
-  CoursePanelStudyPlan,
-} from "./components/PopupCourseSection";
+  TrackPanelCompleted,
+  TrackPanelEmpty,
+  TrackPanelFreestyle,
+  TrackPanelLoading,
+  TrackPanelStudyPlan,
+} from "./components/PopupActiveTrackSection";
 import { PopupHeader } from "./components/PopupHeader";
 import { PopupMetricTile } from "./components/PopupMetricTile";
 import {
@@ -121,26 +121,26 @@ export function PopupApp() {
             )}
 
             {controller.isInitialLoading ? (
-              <CoursePanelLoading
+              <TrackPanelLoading
                 onOpenDashboard={courseActions.onOpenDashboard}
                 status={courseStatus}
               />
             ) : controller.studyMode === "freestyle" ? (
-              <CoursePanelFreestyle
+              <TrackPanelFreestyle
                 disabled={controller.isUpdatingStudyMode}
                 onOpenDashboard={courseActions.onOpenDashboard}
                 onReturnToStudyMode={courseActions.onReturnToStudyMode}
                 status={courseStatus}
               />
             ) : !controller.activeCourseDetail ? (
-              <CoursePanelEmpty
+              <TrackPanelEmpty
                 disabled={controller.isUpdatingStudyMode}
                 onEnterFreestyle={courseActions.onEnterFreestyle}
                 onOpenDashboard={courseActions.onOpenDashboard}
                 status={courseStatus}
               />
             ) : !controller.courseNext ? (
-              <CoursePanelCompleted
+              <TrackPanelCompleted
                 courseName={controller.activeCourseDetail.name}
                 disabled={controller.isUpdatingStudyMode}
                 onEnterFreestyle={courseActions.onEnterFreestyle}
@@ -148,7 +148,7 @@ export function PopupApp() {
                 status={courseStatus}
               />
             ) : (
-              <CoursePanelStudyPlan
+              <TrackPanelStudyPlan
                 actions={courseActions}
                 course={controller.activeCourseDetail}
                 disabled={controller.isUpdatingStudyMode}

@@ -1,4 +1,4 @@
-/** Reusable “next in course” card shared by popup and dashboard surfaces. */
+/** Reusable "next in track" card shared by popup and overlay surfaces. */
 import Button, {ButtonProps} from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -8,7 +8,7 @@ import {CourseQuestionView} from "../../../domain/views";
 import {SurfaceCard, ToneChip} from "../../components";
 import {difficultyTone, labelForStatus,} from "../../presentation/studyState";
 
-export interface CourseNextCardProps {
+export interface ActiveTrackNextCardProps {
   actionLabel?: string;
   activeCourseId?: string;
   buttonFullWidth?: boolean;
@@ -23,14 +23,14 @@ export interface CourseNextCardProps {
   view: CourseQuestionView;
 }
 
-export function CourseNextCard(props: CourseNextCardProps) {
+export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
   const {
     actionLabel = "Continue Path",
     activeCourseId,
     buttonFullWidth = false,
     buttonVariant = "outlined",
     compact = false,
-    label = "Next In Course",
+    label = "Next in track",
     onOpenProblem,
     view,
   } = props;

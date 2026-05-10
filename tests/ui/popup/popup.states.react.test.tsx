@@ -17,9 +17,9 @@ describe("Popup States", () => {
     );
 
     expect(screen.getByText("Loading Queue")).toBeInTheDocument();
-    expect(screen.getByText("Loading Course")).toBeInTheDocument();
+    expect(screen.getByText("Loading track")).toBeInTheDocument();
     expect(screen.queryByText("Queue Clear")).not.toBeInTheDocument();
-    expect(screen.queryByText("No Active Course")).not.toBeInTheDocument();
+    expect(screen.queryByText("No active track")).not.toBeInTheDocument();
 
     act(() => {
       loadResponse.resolve({
@@ -41,7 +41,7 @@ describe("Popup States", () => {
     expect(await screen.findByText("Queue Clear")).toBeInTheDocument();
   });
 
-  it("renders the no-active-course state", async () => {
+  it("renders the no-active-track state", async () => {
     const payload = makePayload();
     payload.popup.activeCourse = null;
     payload.popup.courseNext = null;
@@ -49,10 +49,10 @@ describe("Popup States", () => {
 
     renderPopupWithPayload(payload);
 
-    expect(await screen.findByText("No Active Course")).toBeInTheDocument();
+    expect(await screen.findByText("No active track")).toBeInTheDocument();
   });
 
-  it("renders the course-complete state when no next question exists", async () => {
+  it("renders the track-complete state when no next question exists", async () => {
     const payload = makePayload();
     payload.popup.courseNext = null;
     payload.activeCourse = {
@@ -64,6 +64,6 @@ describe("Popup States", () => {
 
     renderPopupWithPayload(payload);
 
-    expect(await screen.findByText(/Course complete\./)).toBeInTheDocument();
+    expect(await screen.findByText(/Track complete\./)).toBeInTheDocument();
   });
 });

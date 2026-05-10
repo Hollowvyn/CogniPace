@@ -112,7 +112,7 @@ describe("OverlayPanel Expanded", () => {
       />
     );
 
-    expect(screen.getByText("Next In Study Mode")).toBeInTheDocument();
+    expect(screen.getByText("Next in track")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Open next" }));
     expect(onOpenProblem).toHaveBeenCalledWith({
       slug: "contains-duplicate",
