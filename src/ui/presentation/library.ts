@@ -49,7 +49,7 @@ export function filterLibraryRows(
     }
 
     if (filters.status !== "all") {
-      const summary = row.studyStateSummary;
+      const summary = row.studyState;
       if (filters.status === "due" && !summary?.isDue) {
         return false;
       }

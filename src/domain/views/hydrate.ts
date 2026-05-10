@@ -6,6 +6,8 @@
  * UI components must NOT call these directly — they consume the result
  * over the message channel.
  */
+import { getStudyStateSummary } from "../fsrs/studyState";
+import { slugToTitle, slugToUrl } from "../problem/slug";
 import { listEditedFields } from "../problems/operations";
 import { isGroupUnlocked } from "../sets/prerequisites";
 import { resolveStudySetSlugs } from "../sets/services/resolveSlugs";
@@ -14,11 +16,13 @@ import type { Company } from "../companies/model";
 import type { Problem, EditableProblemField } from "../problems/model";
 import type { StudySet } from "../sets/model";
 import type { StudySetProgress } from "../sets/progress";
+import type { StudyState } from "../study-state/model";
 import type { Topic } from "../topics/model";
 import type {
   CompanyLabel,
   ProblemView,
   StudySetView,
+  StudyStateView,
   TopicLabel,
 } from "../views";
 
@@ -51,6 +55,37 @@ export function buildProblemView(
   };
 }
 
+export interface BuildStudyStateViewInput {
+  studyState: StudyState | null;
+  now: Date;
+  targetRetention: number;
+  recentLimit?: number;
+}
+
+/** Hydrates a single StudyState into its display-ready view shape. */
+export function buildStudyStateView(
+  input: BuildStudyStateViewInput,
+): StudyStateView | null {
+  const { studyState, now, targetRetention } = input;
+  if (!studyState) return null;
+  const summary = getStudyStateSummary(studyState, now, targetRetention);
+  const limit = input.recentLimit ?? 5;
+  return {
+    ...summary,
+    interviewPattern: studyState.interviewPattern,
+    timeComplexity: studyState.timeComplexity,
+    spaceComplexity: studyState.spaceComplexity,
+    languages: studyState.languages,
+    notes: studyState.notes,
+    tags: studyState.tags,
+    bestTimeMs: studyState.bestTimeMs,
+    lastSolveTimeMs: studyState.lastSolveTimeMs,
+    lastRating: studyState.lastRating,
+    confidence: studyState.confidence,
+    recentAttempts: studyState.attemptHistory.slice(-limit),
+  };
+}
+
 export interface BuildStudySetViewInput {
   studySet: StudySet;
   problemsBySlug: Record<string, Problem>;
@@ -63,10 +98,15 @@ export interface BuildStudySetViewInput {
 export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
   const { studySet, problemsBySlug, topicsById, companiesById, progress } =
     input;
-  const hydrate = (slug: string): ProblemView | null => {
+  // Tracks tab always shows every curated slug — even ones the user has
+  // never opened. The Problem entity might not exist yet (fresh install
+  // pre-seed, mid-migration, the user wiped data), so synthesize a
+  // minimal display view from the slug itself when needed. Real details
+  // get filled in when the user opens the page.
+  const hydrate = (slug: string): ProblemView => {
     const p = problemsBySlug[slug];
-    if (!p) return null;
-    return buildProblemView(p, topicsById, companiesById);
+    if (p) return buildProblemView(p, topicsById, companiesById);
+    return synthesizeProblemView(slug);
   };
 
   if (studySet.kind === "course") {
@@ -76,17 +116,28 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
       name: studySet.name,
       description: studySet.description,
       enabled: studySet.enabled,
-      groups: studySet.groups.map((group) => ({
-        id: group.id,
-        name:
-          group.nameOverride ??
-          (group.topicId ? (topicsById[group.topicId]?.name ?? group.id) : group.id),
-        prerequisiteGroupIds: group.prerequisiteGroupIds,
-        unlocked: isGroupUnlocked(studySet, group, progress),
-        problems: group.problemSlugs
-          .map(hydrate)
-          .filter((view): view is ProblemView => view !== null),
-      })),
+      groups: studySet.groups.map((group) => {
+        const completedSlugs =
+          progress?.groupProgressById[group.id]?.completedSlugs ?? [];
+        const completedSet = new Set<string>(completedSlugs);
+        const completedCount = group.problemSlugs.reduce(
+          (acc, slug) => (completedSet.has(slug) ? acc + 1 : acc),
+          0,
+        );
+        return {
+          id: group.id,
+          name:
+            group.nameOverride ??
+            (group.topicId
+              ? (topicsById[group.topicId]?.name ?? group.id)
+              : group.id),
+          prerequisiteGroupIds: group.prerequisiteGroupIds,
+          unlocked: isGroupUnlocked(studySet, group, progress),
+          problems: group.problemSlugs.map(hydrate),
+          completedCount,
+          totalCount: group.problemSlugs.length,
+        };
+      }),
     };
   }
 
@@ -100,9 +151,7 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
       description: studySet.description,
       enabled: studySet.enabled,
       problems: studySet.groups[0]?.problemSlugs
-        ? studySet.groups[0].problemSlugs
-            .map(hydrate)
-            .filter((view): view is ProblemView => view !== null)
+        ? studySet.groups[0].problemSlugs.map(hydrate)
         : [],
     };
   }
@@ -117,17 +166,33 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
     description: studySet.description,
     enabled: studySet.enabled,
     filterDescription: describeFilter(studySet, topicsById, companiesById),
-    problems: slugs
-      .map(hydrate)
-      .filter((view): view is ProblemView => view !== null),
+    problems: slugs.map(hydrate),
+  };
+}
+
+/** Minimal ProblemView assembled from just a slug. Used when the
+ * Problem entity isn't in the store yet (fresh install, mid-migration,
+ * or a curated slug never opened). Title comes from the kebab slug,
+ * URL points at LeetCode, difficulty is Unknown until real data lands. */
+function synthesizeProblemView(slug: string): ProblemView {
+  return {
+    slug,
+    title: slugToTitle(slug),
+    difficulty: "Unknown",
+    isPremium: false,
+    url: slugToUrl(slug),
+    topics: [],
+    companies: [],
+    editedFields: [],
   };
 }
 
 function hydrateTopics(
-  ids: readonly string[],
+  ids: readonly string[] | undefined,
   topicsById: Record<string, Topic>,
 ): TopicLabel[] {
   const out: TopicLabel[] = [];
+  if (!ids) return out;
   for (const id of ids) {
     const topic = topicsById[id];
     if (!topic) continue;
@@ -137,10 +202,11 @@ function hydrateTopics(
 }
 
 function hydrateCompanies(
-  ids: readonly string[],
+  ids: readonly string[] | undefined,
   companiesById: Record<string, Company>,
 ): CompanyLabel[] {
   const out: CompanyLabel[] = [];
+  if (!ids) return out;
   for (const id of ids) {
     const company = companiesById[id];
     if (!company) continue;

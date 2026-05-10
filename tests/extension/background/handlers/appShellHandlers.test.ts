@@ -26,6 +26,7 @@ describe("Popup Shell Handler", () => {
 
     expect(Object.keys(payload).sort()).toEqual([
       "activeCourse",
+      "activeStudySetView",
       "popup",
       "settings",
     ]);

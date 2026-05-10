@@ -97,11 +97,11 @@ export function OverviewView(props: OverviewViewProps) {
                 </Button>
                 <Button
                   onClick={() => {
-                    props.onSetView("courses");
+                    props.onSetView("tracks");
                   }}
                   variant="outlined"
                 >
-                  Open Course View
+                  Open Tracks View
                 </Button>
               </Stack>
             ) : null}

@@ -25,7 +25,6 @@ export const INITIAL_USER_SETTINGS: UserSettings = {
     reviewOrder: "dueFirst",
   },
   questionFilters: {
-    skipIgnored: true,
     skipPremium: false,
   },
   timing: {

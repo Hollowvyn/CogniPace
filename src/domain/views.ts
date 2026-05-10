@@ -1,11 +1,15 @@
 /** UI-facing read models assembled by domain and background use cases. */
 import type {
   AnalyticsSummary,
+  AttemptHistoryEntry,
   Difficulty,
   Problem,
+  Rating,
+  ReviewLogFields,
   StudyMode,
   StudyPhase,
   StudyState,
+  StudyStateSummary,
   TodayQueue,
   UserSettings,
 } from "./types";
@@ -87,10 +91,28 @@ export interface LibraryCourseReference {
 }
 
 export interface LibraryProblemRow {
+  /** Legacy v6 entity — kept until Phase F.3 cleanup; UI uses `view`. */
   problem: Problem;
-  studyState: StudyState | null;
-  studyStateSummary: import("./types").StudyStateSummary | null;
+  /** v7 hydrated view of the problem (topic/company names resolved). */
+  view: ProblemView;
+  /** v7 — consolidated UI-ready view of the StudyState. Single source of
+   * truth for FSRS metrics, attempt history, log fields, tags, etc. */
+  studyState: StudyStateView | null;
+  /** Legacy v6 course memberships — kept until Phase F.3 cleanup. */
   courses: LibraryCourseReference[];
+  /** v7 — explicit StudySet memberships (sets whose groups list this slug). */
+  trackMemberships: TrackMembership[];
+  /** Combined queue-skip flag with reason. Computed from
+   * `studyState.suspended` (manual), premium-when-skipPremium-on, or
+   * both at once. */
+  suspended?: "manual" | "premium" | "both";
+}
+
+export interface TrackMembership {
+  trackId: import("./common/ids").StudySetId;
+  trackName: string;
+  groupId?: import("./common/ids").SetGroupId;
+  groupName?: string;
 }
 
 // ---------- v7 hydrated views ----------
@@ -127,6 +149,29 @@ export interface ProblemView {
   editedFields: import("./problems/model").EditableProblemField[];
 }
 
+/**
+ * Consolidated UI-ready view of a StudyState. Composes the FSRS-derived
+ * summary (phase, stability, retrievability, …) with the user-facing
+ * log fields (notes, pattern, complexities) and a pre-sliced
+ * recent-attempts list. Mirrors `ProblemView`'s role for Problem — the
+ * single shape every UI surface needs from a StudyState. Built via
+ * `buildStudyStateView` in `domain/views/hydrate.ts`.
+ */
+export interface StudyStateView extends StudyStateSummary, ReviewLogFields {
+  /** Last N attempt history entries (newest last). Empty for fresh problems. */
+  recentAttempts: AttemptHistoryEntry[];
+  /** Personal scratch tags from `StudyState.tags`. */
+  tags: string[];
+  /** Best recorded solve time across all attempts, in ms. */
+  bestTimeMs?: number;
+  /** Most recent solve time, in ms. */
+  lastSolveTimeMs?: number;
+  /** Most recent rating (0=Again, 1=Hard, 2=Good, 3=Easy). */
+  lastRating?: Rating;
+  /** Optional self-reported confidence, scale defined by the user. */
+  confidence?: number;
+}
+
 /** Discriminated UI shape for a StudySet. Each case carries the data the
  * matching component renderer needs without forcing it to match across
  * variants. */
@@ -151,6 +196,11 @@ export type StudySetView =
         prerequisiteGroupIds: string[];
         unlocked: boolean;
         problems: ProblemView[];
+        /** v7 — count of slugs in this group that are marked completed in
+         * the StudySetProgress aggregate. Used for `Topic · 5/10` tab labels. */
+        completedCount: number;
+        /** v7 — total number of slugs in the group (denominator). */
+        totalCount: number;
       }>;
     }
   | {
@@ -185,6 +235,8 @@ export interface PopupShellPayload {
   settings: UserSettings;
   popup: PopupViewData;
   activeCourse: ActiveCourseView | null;
+  /** v7 — hydrated view of the currently-active StudySet (mirrors `activeCourse`). */
+  activeStudySetView: StudySetView | null;
 }
 
 export interface AppShellPayload extends PopupShellPayload {
@@ -194,6 +246,12 @@ export interface AppShellPayload extends PopupShellPayload {
   courses: CourseCardView[];
   library: LibraryProblemRow[];
   courseOptions: CourseOption[];
+  /** v7 — every StudySet hydrated for the dashboard's Tracks tab. */
+  studySetViews: StudySetView[];
+  /** v7 — flat list of every Topic, sorted by name; for Autocomplete inputs. */
+  topicChoices: TopicLabel[];
+  /** v7 — flat list of every Company, sorted by name; for Autocomplete inputs. */
+  companyChoices: CompanyLabel[];
 }
 
 export interface SaveReviewResultResponse {

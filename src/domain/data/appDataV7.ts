@@ -1,5 +1,5 @@
 /**
- * v7 AppData root — the single object persisted to the extension's local store.
+ * v7 AppData root — the single object persisted to extension storage.
  * Each `Record<id, Entity>` field corresponds to one aggregate's "table"
  * in the eventual SQLite migration. Background mutators read and return
  * an `AppDataV7` draft inside `mutateAppData`; only `appDataRepository`

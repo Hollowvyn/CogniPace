@@ -23,6 +23,7 @@ import {
   resetStudyHistory,
   updateSettings,
 } from "../../../data/repositories/settingsRepository";
+import { setActiveFocus } from "../../../data/repositories/v7ActionRepository";
 import {
   areUserSettingsEqual,
   cloneUserSettings,
@@ -50,6 +51,8 @@ import {
   isExtensionContext,
   useAppShellQuery,
 } from "../../state/useAppShellQuery";
+
+import type { ActiveFocus } from "../../../domain/active-focus/model";
 
 function isImportPayloadCandidate(
   value: unknown
@@ -171,6 +174,15 @@ export function useDashboardController() {
     },
     [setStatus]
   );
+
+  const onEnablePremium = useCallback(async (): Promise<void> => {
+    await runMutation(
+      updateSettings({
+        questionFilters: { skipPremium: false },
+      }),
+      "Premium questions enabled.",
+    );
+  }, [runMutation]);
 
   const onToggleMode = useCallback(async (): Promise<void> => {
     const nextMode =
@@ -369,6 +381,31 @@ export function useDashboardController() {
     [runMutation]
   );
 
+  const onSetActiveFocus = useCallback(
+    async (focus: ActiveFocus): Promise<void> => {
+      const response = await setActiveFocus(focus);
+      if (!response.ok) {
+        setStatus({
+          message: response.error ?? "Failed to update active track.",
+          isError: true,
+        });
+        return;
+      }
+      const savedSettings = response.data?.settings;
+      if (savedSettings) {
+        setPayload((current) =>
+          current
+            ? { ...current, settings: cloneUserSettings(savedSettings) }
+            : current,
+        );
+      }
+      if (isExtensionContext()) {
+        await load({ clearStatusOnSuccess: false });
+      }
+    },
+    [load, setPayload, setStatus],
+  );
+
   return {
     draftSettings,
     filters,
@@ -376,6 +413,7 @@ export function useDashboardController() {
     importFile,
     isDefaultSettingsDraft,
     navigateToView,
+    onEnablePremium,
     onExportData,
     onDiscardSettings,
     onImportData,
@@ -383,6 +421,7 @@ export function useDashboardController() {
     onSaveSettings,
     onResetSettingsToDefaults,
     onResetStudyHistory,
+    onSetActiveFocus,
     onSetChapter,
     onSubmitCourseForm,
     onSwitchCourse,

@@ -3,6 +3,10 @@ import {
   sanitizeStoredUserSettings,
 } from "../../domain/settings";
 import { resolveSeedTopicId } from "../catalog/topicsSeed";
+import {
+  aggregates as v7AggregateDescriptors,
+  EXPORTABLE_AGGREGATE_KEYS,
+} from "../repositories/v7/aggregateRegistry";
 
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "./constants";
 import {
@@ -27,6 +31,13 @@ import {
 } from "./utils";
 
 /**
+ * v7 import allowlist. Aggregate keys are derived from the registry so
+ * adding a new aggregate later is a single registry edit. The non-data
+ * top-level fields ("version", "problems", "settings") plus the v6
+ * legacy ones are listed explicitly.
+ */
+
+/**
  * Cross-walks legacy `topics: string[]` into v7 `topicIds: TopicId[]`.
  * Unknown topic strings are dropped — custom topics enter the registry
  * via the v7 topicRepository, not implicit imports.
@@ -40,14 +51,21 @@ function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
   return out;
 }
 
-const ALLOWED_IMPORT_KEYS = new Set([
+const ALLOWED_IMPORT_KEYS = new Set<string>([
   "version",
+  // Legacy v6 wire shape — `problems: Problem[]` array (now also exported
+  // as `problemsBySlug` via the registry; the array form is preserved for
+  // backwards-compat imports of older backup files).
   "problems",
-  "studyStatesBySlug",
   "settings",
+  // v6 course aggregates — kept transitional so old backup files import
+  // gracefully. Phase F.3 drops them from the runtime; sanitiser ignores
+  // them silently if missing.
   "coursesById",
   "courseOrder",
   "courseProgressById",
+  // v7 aggregates — derived from the registry.
+  ...EXPORTABLE_AGGREGATE_KEYS,
 ]);
 
 type UnknownRecord = Record<string, unknown>;
@@ -468,12 +486,20 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
   }
 
   const importedAt = nowIso();
-  const problems = payload.problems
+  const problems = (payload.problems ?? [])
     .map((problem) => sanitizeProblem(problem, importedAt))
     .filter((problem): problem is Problem => problem !== null);
   const coursesById = sanitizeCoursesById(payload.coursesById, importedAt);
 
+  // v7 aggregate fields are sanitised via the registry's per-aggregate
+  // function. Derived sanitisers (which validate per-entity shape) live
+  // alongside their entity in v7 land; here we just defer to the
+  // registry's defensive Record/array filter so corrupt blobs don't
+  // crash the importer.
+  const v7Aggregates = sanitizeV7AggregatesFromPayload(payload);
+
   return {
+    ...v7Aggregates,
     version:
       payload.version === undefined
         ? undefined
@@ -492,4 +518,23 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
       importedAt
     ),
   };
+}
+
+/**
+ * Iterates the aggregateRegistry's exportable keys and applies each
+ * descriptor's sanitiser. Returns a partial ExportPayload carrying only
+ * the v7 aggregate fields that were present in the input — missing
+ * fields stay missing so the spread doesn't introduce empty Records.
+ */
+function sanitizeV7AggregatesFromPayload(
+  payload: ExportPayload,
+): Partial<ExportPayload> {
+  const out: Record<string, unknown> = {};
+  const indexed = payload as unknown as Record<string, unknown>;
+  for (const descriptor of v7AggregateDescriptors) {
+    const raw = indexed[descriptor.key];
+    if (raw === undefined) continue;
+    out[descriptor.key] = descriptor.sanitize(raw);
+  }
+  return out as Partial<ExportPayload>;
 }

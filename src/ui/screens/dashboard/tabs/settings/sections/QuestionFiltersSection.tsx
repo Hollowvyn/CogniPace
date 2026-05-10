@@ -11,25 +11,10 @@ export function QuestionFiltersSection(props: {
   return (
     <Stack spacing={1}>
       <SwitchSetting
-        checked={props.settingsDraft.questionFilters.skipIgnored}
-        helper="Keeps suspended questions out of generated practice queues."
-        label="Skip ignored questions"
-        name="Skip ignored questions"
-        onChange={(checked) => {
-          props.onUpdateSettings((current) => ({
-            ...current,
-            questionFilters: {
-              ...current.questionFilters,
-              skipIgnored: checked,
-            },
-          }));
-        }}
-      />
-      <SwitchSetting
         checked={props.settingsDraft.questionFilters.skipPremium}
-        helper="Only applies when a problem has premium-only metadata."
-        label="Skip premium questions"
-        name="Skip premium questions"
+        helper="Premium-locked questions are treated as suspended — kept out of the queue and badged in the library."
+        label="Treat premium as suspended"
+        name="Treat premium as suspended"
         onChange={(checked) => {
           props.onUpdateSettings((current) => ({
             ...current,

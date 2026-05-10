@@ -51,7 +51,6 @@ describe("queue recommendations", () => {
   it("uses the total daily question goal and skips ignored or premium problems", () => {
     const settings = createInitialUserSettings();
     settings.dailyQuestionGoal = 2;
-    settings.questionFilters.skipIgnored = true;
     settings.questionFilters.skipPremium = true;
 
     const data = normalizeStoredAppData({

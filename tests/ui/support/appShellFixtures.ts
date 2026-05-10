@@ -1,6 +1,15 @@
-import { StudyState } from "../../../src/domain/types";
-import { CourseQuestionView } from "../../../src/domain/views";
+import { StudyState, StudyStateSummary } from "../../../src/domain/types";
+import { CourseQuestionView, StudyStateView } from "../../../src/domain/views";
 import { createMockAppShellPayload } from "../../../src/ui/mockData";
+
+/** Wrap a bare summary into a StudyStateView for fixture rows. */
+function viewFromSummary(summary: StudyStateSummary): StudyStateView {
+  return {
+    ...summary,
+    recentAttempts: [],
+    tags: [],
+  };
+}
 
 export function makeStudyState(nextReviewAt?: string): StudyState {
   return {
@@ -173,11 +182,21 @@ export function makePayload() {
     },
   ];
 
+  const blind75Problem = payload.queue.items[0].problem;
+  const mergeIntervalsProblem = {
+    ...payload.queue.items[0].problem,
+    id: "2",
+    leetcodeSlug: "merge-intervals",
+    slug: "merge-intervals",
+    title: "Merge Intervals",
+    difficulty: "Medium" as const,
+    url: "https://leetcode.com/problems/merge-intervals/",
+  };
+
   payload.library = [
     {
-      problem: payload.queue.items[0].problem,
-      studyState: payload.queue.items[0].studyState,
-      studyStateSummary: payload.queue.items[0].studyStateSummary,
+      problem: blind75Problem,
+      studyState: viewFromSummary(payload.queue.items[0].studyStateSummary),
       courses: [
         {
           courseId: "Blind75",
@@ -186,18 +205,21 @@ export function makePayload() {
           chapterTitle: "Arrays",
         },
       ],
+      view: {
+        slug: blind75Problem.slug,
+        title: blind75Problem.title,
+        difficulty: blind75Problem.difficulty,
+        isPremium: blind75Problem.isPremium ?? false,
+        url: blind75Problem.url,
+        topics: [],
+        companies: [],
+        editedFields: [],
+      },
+      trackMemberships: [],
     },
     {
-      problem: {
-        ...payload.queue.items[0].problem,
-        id: "2",
-        leetcodeSlug: "merge-intervals",
-        title: "Merge Intervals",
-        difficulty: "Medium",
-        url: "https://leetcode.com/problems/merge-intervals/",
-      },
-      studyState: makeStudyState("2026-04-02T00:00:00.000Z"),
-      studyStateSummary: {
+      problem: mergeIntervalsProblem,
+      studyState: viewFromSummary({
         phase: "Learning",
         nextReviewAt: "2026-04-02T00:00:00.000Z",
         lastReviewedAt: "2026-03-28T00:00:00.000Z",
@@ -211,8 +233,19 @@ export function makePayload() {
         isDue: false,
         isOverdue: false,
         overdueDays: 0,
-      },
+      }),
       courses: [],
+      view: {
+        slug: mergeIntervalsProblem.slug,
+        title: mergeIntervalsProblem.title,
+        difficulty: mergeIntervalsProblem.difficulty,
+        isPremium: mergeIntervalsProblem.isPremium ?? false,
+        url: mergeIntervalsProblem.url,
+        topics: [],
+        companies: [],
+        editedFields: [],
+      },
+      trackMemberships: [],
     },
   ];
 

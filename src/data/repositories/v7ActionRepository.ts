@@ -137,3 +137,22 @@ export async function setActiveFocus(focus: ActiveFocus) {
 export async function consumePreV7Backup() {
   return sendMessage("CONSUME_PRE_V7_BACKUP", {});
 }
+
+/**
+ * Toggle the suspended state on a problem's StudyState. Used by the
+ * expanded row's Suspend / Resume button.
+ */
+export async function suspendProblem(input: { slug: string; suspend: boolean }) {
+  return sendMessage("SUSPEND_PROBLEM", input);
+}
+
+/**
+ * Reset a problem's FSRS schedule. Used by the expanded row's
+ * "Reset schedule" button.
+ */
+export async function resetProblemSchedule(input: {
+  slug: string;
+  keepNotes?: boolean;
+}) {
+  return sendMessage("RESET_PROBLEM_SCHEDULE", input);
+}

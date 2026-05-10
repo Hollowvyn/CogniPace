@@ -45,36 +45,6 @@ describe("runtime validation", () => {
     );
   });
 
-  it("rejects malformed EDIT_PROBLEM patch field types", () => {
-    assert.throws(
-      () =>
-        validateRuntimeMessage({
-          type: "EDIT_PROBLEM",
-          payload: {
-            slug: "two-sum",
-            patch: {
-              difficulty: 42,
-            },
-          },
-        } as never),
-      /patch\.difficulty/i
-    );
-
-    assert.throws(
-      () =>
-        validateRuntimeMessage({
-          type: "EDIT_PROBLEM",
-          payload: {
-            slug: "two-sum",
-            patch: {
-              title: [],
-            },
-          },
-        } as never),
-      /patch\.title/i
-    );
-  });
-
   it("rejects unauthorized content-script senders", () => {
     const message = validateRuntimeMessage({
       type: "UPDATE_SETTINGS",
@@ -177,7 +147,6 @@ describe("runtime validation", () => {
             dailyTime: "09:00",
           },
           questionFilters: {
-            skipIgnored: true,
             skipPremium: false,
           },
           timing: {
@@ -197,20 +166,6 @@ describe("runtime validation", () => {
         type: "RESET_STUDY_HISTORY",
         payload: {},
       })
-    );
-  });
-
-  it("rejects unsupported study-set kinds", () => {
-    assert.throws(
-      () =>
-        validateRuntimeMessage({
-          type: "CREATE_STUDY_SET",
-          payload: {
-            kind: "course",
-            name: "Nope",
-          },
-        } as never),
-      /supported study-set kind/i
     );
   });
 

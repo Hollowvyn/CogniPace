@@ -10,7 +10,7 @@ describe("DashboardRail", () => {
     expect(screen.getByRole("button", { name: "Dashboard" })).toHaveStyle({
       minHeight: "38px",
     });
-    expect(screen.getByRole("button", { name: "Courses" })).toHaveStyle({
+    expect(screen.getByRole("button", { name: "Tracks" })).toHaveStyle({
       minHeight: "38px",
     });
   });

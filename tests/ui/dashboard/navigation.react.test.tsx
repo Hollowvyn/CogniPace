@@ -23,12 +23,12 @@ describe("dashboard navigation", () => {
 
     const { user } = renderDashboardWithPayload(payload);
 
-    await user.click(await screen.findByRole("button", { name: "Courses" }));
+    await user.click(await screen.findByRole("button", { name: "Tracks" }));
 
     await waitFor(() => {
       expect(pushStateSpy).toHaveBeenCalled();
       expect(String(pushStateSpy.mock.calls.at(-1)?.[2])).toContain(
-        "view=courses"
+        "view=tracks"
       );
     });
   });

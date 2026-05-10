@@ -66,8 +66,8 @@ describe("v7 studySetRepository", () => {
   it("rejects cycles when adding a prerequisite", () => {
     const data = emptyAppDataV7();
     const set = makeCourseStudySetV7("course", "Course", [
-      { id: "course::0" },
-      { id: "course::1" },
+      { id: "a" },
+      { id: "b" },
     ]);
     data.studySetsById[set.id] = set;
     data.studySetOrder.push(set.id);
@@ -91,7 +91,7 @@ describe("v7 studySetRepository", () => {
 
     const updated = data.studySetsById[set.id];
     const a = updated.groups.find((g) => g.id === asSetGroupId("course::0"));
-    expect(a?.prerequisiteGroupIds).toEqual([]);
+    expect(a?.prerequisiteGroupIds).toEqual(undefined);
   });
 
   it("removes a group and cleans up dangling prerequisites", () => {

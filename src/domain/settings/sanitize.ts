@@ -78,6 +78,21 @@ function settingsRecord(value: unknown, fallback: object): UnknownRecord {
   return isRecord(value) ? value : (fallback as UnknownRecord);
 }
 
+function sanitizeActiveFocus(value: unknown): ActiveFocus | undefined {
+  if (value === null) return null;
+  if (!isRecord(value)) return undefined;
+  if (value.kind !== "studySet") return undefined;
+  if (typeof value.id !== "string" || !value.id.trim()) return undefined;
+  const focus: ActiveFocus = {
+    kind: "studySet",
+    id: asStudySetId(value.id),
+  };
+  if (typeof value.groupId === "string" && value.groupId.trim()) {
+    focus.groupId = asSetGroupId(value.groupId);
+  }
+  return focus;
+}
+
 function sanitizeSetsEnabled(value: unknown): Record<string, boolean> {
   if (!isRecord(value)) {
     return createInitialSetsEnabled();
@@ -145,35 +160,6 @@ function isDifficultyGoalSettings(value: unknown): value is DifficultyGoalSettin
   );
 }
 
-function sanitizeActiveFocus(value: unknown): ActiveFocus | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
-  }
-  if (!isRecord(value) || value.kind !== "studySet") {
-    return undefined;
-  }
-  if (typeof value.id !== "string" || !value.id.trim()) {
-    return undefined;
-  }
-  if (
-    value.groupId !== undefined &&
-    (typeof value.groupId !== "string" || !value.groupId.trim())
-  ) {
-    return undefined;
-  }
-
-  return {
-    kind: "studySet",
-    id: asStudySetId(value.id),
-    ...(typeof value.groupId === "string" && value.groupId.trim()
-      ? { groupId: asSetGroupId(value.groupId) }
-      : {}),
-  };
-}
-
 export function hasGroupedUserSettings(value: unknown): boolean {
   if (!isRecord(value)) {
     return false;
@@ -205,8 +191,6 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
     isStudyMode(source.studyMode) &&
     typeof source.activeCourseId === "string" &&
     Boolean(source.activeCourseId.trim()) &&
-    (source.activeFocus === undefined ||
-      sanitizeActiveFocus(source.activeFocus) !== undefined) &&
     isBooleanRecord(source.setsEnabled) &&
     typeof notifications.enabled === "boolean" &&
     typeof notifications.dailyTime === "string" &&
@@ -216,7 +200,6 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
     memoryReview.targetRetention >= 0.7 &&
     memoryReview.targetRetention <= 0.95 &&
     isReviewOrder(memoryReview.reviewOrder) &&
-    typeof questionFilters.skipIgnored === "boolean" &&
     typeof questionFilters.skipPremium === "boolean" &&
     typeof timing.requireSolveTime === "boolean" &&
     typeof timing.hardMode === "boolean" &&
@@ -245,6 +228,7 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     timing.requireSolveTime,
     initial.timing.requireSolveTime
   );
+
   const sanitizedActiveFocus = sanitizeActiveFocus(source.activeFocus);
 
   return {
@@ -257,10 +241,10 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       typeof source.activeCourseId === "string" && source.activeCourseId.trim()
         ? source.activeCourseId
         : DEFAULT_COURSE_ID,
+    setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
     ...(sanitizedActiveFocus !== undefined
       ? { activeFocus: sanitizedActiveFocus }
       : {}),
-    setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
     notifications: {
       enabled: booleanValue(
         notifications.enabled,
@@ -284,10 +268,6 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       ),
     },
     questionFilters: {
-      skipIgnored: booleanValue(
-        questionFilters.skipIgnored,
-        initial.questionFilters.skipIgnored
-      ),
       skipPremium: booleanValue(
         questionFilters.skipPremium,
         initial.questionFilters.skipPremium

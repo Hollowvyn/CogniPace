@@ -234,94 +234,95 @@ export async function createStudySetHandler(payload: CreateStudySetPayload) {
       trackProgress: true,
       ordering: "manual" as const,
     };
-    const next: StudySet = (() => {
-      switch (payload.kind) {
-        case "custom":
-          return {
-            id,
-            kind: "custom",
-            name: payload.name,
-            description: payload.description,
-            isCurated: false,
-            enabled: true,
-            groups: [flatGroup],
-            config: baseConfig,
-            filter:
-              payload.filter && payload.filter.kind === "custom"
-                ? {
-                    kind: "custom",
-                    companyIds: payload.filter.companyIds?.map((id) =>
-                      asCompanyId(id),
-                    ) as CompanyId[] | undefined,
-                    topicIds: payload.filter.topicIds?.map((id) => asTopicId(id)) as
-                      | TopicId[]
-                      | undefined,
-                    difficulties: payload.filter.difficulties,
-                    includePremium: payload.filter.includePremium,
-                  }
-                : undefined,
-            createdAt: now,
-            updatedAt: now,
-          };
-        case "company":
-          return {
-            id,
+    let next: StudySet;
+    switch (payload.kind) {
+      case "custom":
+        next = {
+          id,
+          kind: "custom",
+          name: payload.name,
+          description: payload.description,
+          isCurated: false,
+          enabled: true,
+          groups: [flatGroup],
+          config: baseConfig,
+          filter:
+            payload.filter && payload.filter.kind === "custom"
+              ? {
+                  kind: "custom",
+                  companyIds: payload.filter.companyIds?.map((id) =>
+                    asCompanyId(id),
+                  ) as CompanyId[] | undefined,
+                  topicIds: payload.filter.topicIds?.map((id) => asTopicId(id)) as
+                    | TopicId[]
+                    | undefined,
+                  difficulties: payload.filter.difficulties,
+                  includePremium: payload.filter.includePremium,
+                }
+              : undefined,
+          createdAt: now,
+          updatedAt: now,
+        };
+        break;
+      case "company":
+        next = {
+          id,
+          kind: "company",
+          name: payload.name,
+          description: payload.description,
+          isCurated: false,
+          enabled: true,
+          groups: [flatGroup],
+          config: baseConfig,
+          filter: {
             kind: "company",
-            name: payload.name,
-            description: payload.description,
-            isCurated: false,
-            enabled: true,
-            groups: [flatGroup],
-            config: baseConfig,
-            filter: {
-              kind: "company",
-              companyIds: (payload.filter?.companyIds ?? []).map((id) =>
-                asCompanyId(id),
-              ) as CompanyId[],
-            },
-            createdAt: now,
-            updatedAt: now,
-          };
-        case "topic":
-          return {
-            id,
+            companyIds: (payload.filter?.companyIds ?? []).map((id) =>
+              asCompanyId(id),
+            ) as CompanyId[],
+          },
+          createdAt: now,
+          updatedAt: now,
+        };
+        break;
+      case "topic":
+        next = {
+          id,
+          kind: "topic",
+          name: payload.name,
+          description: payload.description,
+          isCurated: false,
+          enabled: true,
+          groups: [flatGroup],
+          config: baseConfig,
+          filter: {
             kind: "topic",
-            name: payload.name,
-            description: payload.description,
-            isCurated: false,
-            enabled: true,
-            groups: [flatGroup],
-            config: baseConfig,
-            filter: {
-              kind: "topic",
-              topicIds: (payload.filter?.topicIds ?? []).map((id) =>
-                asTopicId(id),
-              ) as TopicId[],
-            },
-            createdAt: now,
-            updatedAt: now,
-          };
-        case "difficulty":
-          return {
-            id,
+            topicIds: (payload.filter?.topicIds ?? []).map((id) =>
+              asTopicId(id),
+            ) as TopicId[],
+          },
+          createdAt: now,
+          updatedAt: now,
+        };
+        break;
+      case "difficulty":
+        next = {
+          id,
+          kind: "difficulty",
+          name: payload.name,
+          description: payload.description,
+          isCurated: false,
+          enabled: true,
+          groups: [flatGroup],
+          config: baseConfig,
+          filter: {
             kind: "difficulty",
-            name: payload.name,
-            description: payload.description,
-            isCurated: false,
-            enabled: true,
-            groups: [flatGroup],
-            config: baseConfig,
-            filter: {
-              kind: "difficulty",
-              difficulties: payload.filter?.difficulties ?? [],
-            },
-            createdAt: now,
-            updatedAt: now,
-          };
-        default:
-          throw new Error(`Invalid study set kind: ${String(payload.kind)}`);
-      }
-    })();
+            difficulties: payload.filter?.difficulties ?? [],
+          },
+          createdAt: now,
+          updatedAt: now,
+        };
+        break;
+    }
 
     data.studySetsById[id] = next;
     data.studySetOrder = [...data.studySetOrder, id];
@@ -385,11 +386,11 @@ export interface SetActiveFocusPayload {
 }
 
 export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
-  await mutateAppData((data) => {
+  const updated = await mutateAppData((data) => {
     data.settings = { ...data.settings, activeFocus: payload.focus };
     return data;
   });
-  return ok({ ok: true });
+  return ok({ settings: updated.settings });
 }
 
 // ---------- Pre-v7 backup ----------

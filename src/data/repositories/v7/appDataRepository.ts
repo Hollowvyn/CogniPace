@@ -34,7 +34,7 @@ import type { AppDataV7 } from "../../../domain/data/appDataV7";
  */
 export const PRE_V7_BACKUP_KEY = `${STORAGE_KEY}_pre_v7_backup` as const;
 
-export interface PreV7BackupBlob {
+interface StoredBlob {
   schemaVersion?: number;
   [key: string]: unknown;
 }
@@ -49,7 +49,7 @@ let mutationChain: Promise<unknown> = Promise.resolve();
  */
 export async function getAppDataV7(): Promise<AppDataV7> {
   const result = await readLocalStorage([STORAGE_KEY]);
-  const stored = result[STORAGE_KEY] as PreV7BackupBlob | undefined;
+  const stored = result[STORAGE_KEY] as StoredBlob | undefined;
 
   if (isV7Blob(stored)) {
     return reconcileV7(stored, nowIso());
@@ -93,16 +93,16 @@ export async function mutateAppDataV7(
  * surface a download prompt — the sidecar lives in storage only until
  * the user has had a chance to retrieve it.
  */
-export async function consumeSidecarBackup(): Promise<PreV7BackupBlob | null> {
+export async function consumeSidecarBackup(): Promise<unknown> {
   const result = await readLocalStorage([PRE_V7_BACKUP_KEY]);
-  const blob = result[PRE_V7_BACKUP_KEY] as PreV7BackupBlob | undefined;
-  if (blob == null) return null;
+  const blob = result[PRE_V7_BACKUP_KEY];
+  if (!blob) return null;
   await removeLocalStorage([PRE_V7_BACKUP_KEY]);
   return blob;
 }
 
 /** True when the stored blob is recognisably v7-shaped. */
-function isV7Blob(blob: PreV7BackupBlob | undefined): blob is PreV7BackupBlob & {
+function isV7Blob(blob: StoredBlob | undefined): blob is StoredBlob & {
   schemaVersion: number;
 } {
   return (
@@ -117,7 +117,7 @@ function isV7Blob(blob: PreV7BackupBlob | undefined): blob is PreV7BackupBlob & 
  * present. Missing fields are filled from a fresh seed (curated topics,
  * companies, sets) so a partially-corrupted blob does not crash the app.
  */
-function reconcileV7(blob: PreV7BackupBlob, now: string): AppDataV7 {
+function reconcileV7(blob: StoredBlob, now: string): AppDataV7 {
   const fresh = buildFreshAppDataV7(now);
   const reconciled: AppDataV7 = {
     schemaVersion: STORAGE_SCHEMA_VERSION_V7,
@@ -138,7 +138,7 @@ function reconcileV7(blob: PreV7BackupBlob, now: string): AppDataV7 {
 }
 
 function aggregateValue<K extends (typeof aggregates)[number]["key"]>(
-  blob: PreV7BackupBlob,
+  blob: StoredBlob,
   key: K,
   fresh: AppDataV7,
 ): AppDataV7[K] {

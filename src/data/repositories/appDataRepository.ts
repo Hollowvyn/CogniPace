@@ -17,6 +17,7 @@ import {
 import { AppData } from "../../domain/types";
 import { buildCompanySeed } from "../catalog/companiesSeed";
 import { listCatalogPlans } from "../catalog/curatedSets";
+import { buildProblemSeed } from "../catalog/problemsSeed";
 import { buildStudySetSeed } from "../catalog/studySetsSeed";
 import { buildTopicSeed } from "../catalog/topicsSeed";
 import {
@@ -47,18 +48,29 @@ function needsV7SeedMigration(stored?: StoredAppData): boolean {
 export function normalizeStoredAppData(stored?: StoredAppData): AppData {
   const seedNow = nowIso();
   const runMigration = needsV7SeedMigration(stored);
+  // Curated Problem seed runs only on a totally-empty store — the very
+  // first launch. v6→v7 migrations preserve the user's existing
+  // problemsBySlug; later reads keep whatever's persisted (deleted
+  // problems stay deleted).
+  const isFirstEverLaunch = !stored;
 
   // Seed the v7 aggregates from catalog data when missing. The seed is
   // idempotent — subsequent reads keep the stored values intact.
+  const catalogPlans = runMigration || isFirstEverLaunch
+    ? listCatalogPlans()
+    : null;
   const seededTopics = runMigration ? buildTopicSeed(seedNow) : {};
   const seededCompanies = runMigration ? buildCompanySeed(seedNow) : {};
-  const seededStudySets = runMigration
-    ? buildStudySetSeed(listCatalogPlans(), seedNow)
+  const seededStudySets = runMigration && catalogPlans
+    ? buildStudySetSeed(catalogPlans, seedNow)
     : { studySetsById: {}, studySetOrder: [] };
+  const seededProblems = isFirstEverLaunch && catalogPlans
+    ? buildProblemSeed(catalogPlans, seedNow)
+    : {};
 
   const data: AppData = {
     schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
-    problemsBySlug: stored?.problemsBySlug ?? {},
+    problemsBySlug: stored?.problemsBySlug ?? seededProblems,
     studyStatesBySlug: Object.fromEntries(
       Object.entries(stored?.studyStatesBySlug ?? {}).map(([slug, state]) => [
         slug,
@@ -100,7 +112,6 @@ export async function getAppData(): Promise<AppData> {
   const result = await readLocalStorage([STORAGE_KEY]);
   const stored = result[STORAGE_KEY] as StoredAppData | undefined;
 
-  const runV7SeedMigration = stored !== undefined && needsV7SeedMigration(stored);
   const normalized = normalizeStoredAppData(stored);
   const storedSettings = stored?.settings;
   const settingsNeedsWriteBack =
@@ -108,7 +119,6 @@ export async function getAppData(): Promise<AppData> {
     !areUserSettingsEqual(normalized.settings, storedSettings);
   const needsWriteBack =
     !stored ||
-    runV7SeedMigration ||
     stored.schemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION ||
     !stored.coursesById ||
     !stored.courseOrder ||
@@ -116,9 +126,6 @@ export async function getAppData(): Promise<AppData> {
     settingsNeedsWriteBack;
 
   if (needsWriteBack) {
-    if (runV7SeedMigration) {
-      await writeLocalStorage({ [PRE_V7_BACKUP_KEY]: stored });
-    }
     await saveAppData(normalized);
   }
 

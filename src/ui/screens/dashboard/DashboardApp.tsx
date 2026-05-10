@@ -5,11 +5,12 @@ import Stack from "@mui/material/Stack";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardRail } from "./components/DashboardRail";
 import { DashboardFrame } from "./components/DashboardSurface";
+import { PreV7BackupSnackbar } from "./components/PreV7BackupSnackbar";
 import { AnalyticsView } from "./tabs/analytics/AnalyticsView";
-import { CoursesView } from "./tabs/courses/CoursesView";
 import { LibraryView } from "./tabs/library/LibraryView";
 import { OverviewView } from "./tabs/overview/OverviewView";
 import { SettingsView } from "./tabs/settings/SettingsView";
+import { TracksView } from "./tabs/tracks/TracksView";
 import { useDashboardController } from "./useDashboardController";
 
 export function DashboardApp() {
@@ -51,13 +52,11 @@ export function DashboardApp() {
               />
             ) : null}
 
-            {controller.view === "courses" ? (
-              <CoursesView
+            {controller.view === "tracks" ? (
+              <TracksView
+                onEnablePremium={controller.onEnablePremium}
                 onOpenProblem={controller.onOpenProblem}
-                onSetChapter={controller.onSetChapter}
-                onSubmitCourseForm={controller.onSubmitCourseForm}
-                onSwitchCourse={controller.onSwitchCourse}
-                onToggleMode={controller.onToggleMode}
+                onSetActiveFocus={controller.onSetActiveFocus}
                 payload={controller.payload}
               />
             ) : null}
@@ -96,8 +95,10 @@ export function DashboardApp() {
             {controller.view === "library" ? (
               <LibraryView
                 filters={controller.filters}
+                onEnablePremium={controller.onEnablePremium}
                 onFilterChange={controller.setFilters}
                 onOpenProblem={controller.onOpenProblem}
+                onRefresh={controller.refresh}
                 payload={controller.payload}
                 rows={controller.rows}
               />
@@ -105,6 +106,8 @@ export function DashboardApp() {
           </Stack>
         </Box>
       </Stack>
+
+      <PreV7BackupSnackbar />
     </DashboardFrame>
   );
 }
