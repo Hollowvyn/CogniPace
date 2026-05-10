@@ -23,7 +23,12 @@ export function buildFreshAppDataV7(now: string): AppDataV7 {
 
   return {
     schemaVersion: STORAGE_SCHEMA_VERSION_V7,
-    problemsBySlug,
+    // The seed emits the transitional shape (v7 fields + v6 compat). The
+    // strict v7 AppData type only sees the v7 subset — they're
+    // structurally compatible at runtime, the cast is just for the
+    // narrower typed branded slug.
+    problemsBySlug:
+      problemsBySlug as unknown as AppDataV7["problemsBySlug"],
     studyStatesBySlug: {},
     topicsById,
     companiesById,

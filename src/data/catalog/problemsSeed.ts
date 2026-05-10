@@ -16,8 +16,7 @@ import {
   type TopicId,
 } from "../../domain/common/ids";
 import { slugToTitle, slugToUrl } from "../../domain/problem/slug";
-import type { Problem } from "../../domain/problems/model";
-import type { Difficulty } from "../../domain/types";
+import type { Difficulty, Problem } from "../../domain/types";
 import type { CatalogPlan } from "./studySetsSeed";
 import { resolveSeedTopicId } from "./topicsSeed";
 
@@ -57,13 +56,18 @@ export function buildProblemSeed(
   for (const [slug, data] of acc) {
     const problemSlug: ProblemSlug = asProblemSlug(slug);
     out[slug] = {
+      // v6 transitional fields — kept equal to `slug` until F.3 cleanup.
+      id: slug,
+      leetcodeSlug: slug,
       slug: problemSlug,
       title: data.title ?? slugToTitle(slug),
       difficulty: data.difficulty ?? "Unknown",
       isPremium: false,
       url: slugToUrl(slug),
+      topics: [],
       topicIds: Array.from(data.topicIds),
       companyIds: [],
+      sourceSet: [],
       createdAt: now,
       updatedAt: now,
     };

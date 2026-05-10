@@ -10,6 +10,7 @@ import type { Company } from "../companies/model";
 import { getStudyStateSummary } from "../fsrs/studyState";
 import type { Problem, EditableProblemField } from "../problems/model";
 import { listEditedFields } from "../problems/operations";
+import { slugToTitle, slugToUrl } from "../problem/slug";
 import { isGroupUnlocked } from "../sets/prerequisites";
 import { resolveStudySetSlugs } from "../sets/services/resolveSlugs";
 import type { StudySet } from "../sets/model";
@@ -96,10 +97,15 @@ export interface BuildStudySetViewInput {
 export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
   const { studySet, problemsBySlug, topicsById, companiesById, progress } =
     input;
-  const hydrate = (slug: string): ProblemView | null => {
+  // Tracks tab always shows every curated slug — even ones the user has
+  // never opened. The Problem entity might not exist yet (fresh install
+  // pre-seed, mid-migration, the user wiped data), so synthesize a
+  // minimal display view from the slug itself when needed. Real details
+  // get filled in when the user opens the page.
+  const hydrate = (slug: string): ProblemView => {
     const p = problemsBySlug[slug];
-    if (!p) return null;
-    return buildProblemView(p, topicsById, companiesById);
+    if (p) return buildProblemView(p, topicsById, companiesById);
+    return synthesizeProblemView(slug);
   };
 
   if (studySet.kind === "course") {
@@ -126,9 +132,7 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
               : group.id),
           prerequisiteGroupIds: group.prerequisiteGroupIds,
           unlocked: isGroupUnlocked(studySet, group, progress),
-          problems: group.problemSlugs
-            .map(hydrate)
-            .filter((view): view is ProblemView => view !== null),
+          problems: group.problemSlugs.map(hydrate),
           completedCount,
           totalCount: group.problemSlugs.length,
         };
@@ -146,9 +150,7 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
       description: studySet.description,
       enabled: studySet.enabled,
       problems: studySet.groups[0]?.problemSlugs
-        ? studySet.groups[0].problemSlugs
-            .map(hydrate)
-            .filter((view): view is ProblemView => view !== null)
+        ? studySet.groups[0].problemSlugs.map(hydrate)
         : [],
     };
   }
@@ -163,9 +165,24 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
     description: studySet.description,
     enabled: studySet.enabled,
     filterDescription: describeFilter(studySet, topicsById, companiesById),
-    problems: slugs
-      .map(hydrate)
-      .filter((view): view is ProblemView => view !== null),
+    problems: slugs.map(hydrate),
+  };
+}
+
+/** Minimal ProblemView assembled from just a slug. Used when the
+ * Problem entity isn't in the store yet (fresh install, mid-migration,
+ * or a curated slug never opened). Title comes from the kebab slug,
+ * URL points at LeetCode, difficulty is Unknown until real data lands. */
+function synthesizeProblemView(slug: string): ProblemView {
+  return {
+    slug,
+    title: slugToTitle(slug),
+    difficulty: "Unknown",
+    isPremium: false,
+    url: slugToUrl(slug),
+    topics: [],
+    companies: [],
+    editedFields: [],
   };
 }
 
