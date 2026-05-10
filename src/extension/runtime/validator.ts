@@ -73,6 +73,15 @@ const ALLOWED_STUDY_SET_KINDS = new Set([
   "topic",
   "difficulty",
 ]);
+const EDIT_PROBLEM_PATCH_KEYS = [
+  "title",
+  "difficulty",
+  "url",
+  "isPremium",
+  "leetcodeId",
+  "topicIds",
+  "companyIds",
+] as const;
 
 const EMPTY_KEYS: readonly string[] = [];
 const SETTINGS_KEYS = [
@@ -216,6 +225,17 @@ function requireStudySetKind(value: unknown, field: string): void {
   if (!ALLOWED_STUDY_SET_KINDS.has(kind)) {
     throw new Error(`Invalid field "${field}": expected a supported study-set kind.`);
   }
+}
+
+function requireEditProblemPatch(value: UnknownRecord): void {
+  hasExactKeys(value, EDIT_PROBLEM_PATCH_KEYS, 'Field "patch"');
+  requireOptionalString(value.title, "patch.title");
+  requireOptionalDifficulty(value.difficulty, "patch.difficulty");
+  requireOptionalString(value.url, "patch.url");
+  requireOptionalBoolean(value.isPremium, "patch.isPremium");
+  requireOptionalString(value.leetcodeId, "patch.leetcodeId");
+  requireOptionalStringArray(value.topicIds, "patch.topicIds");
+  requireOptionalStringArray(value.companyIds, "patch.companyIds");
 }
 
 function validateSetsEnabled(value: unknown): void {
@@ -562,6 +582,7 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       if (!isRecord(payload.patch)) {
         throw new Error('Invalid field "patch": expected an object.');
       }
+      requireEditProblemPatch(payload.patch);
       requireOptionalBoolean(payload.markUserEdit, "markUserEdit");
       return;
     case "CREATE_CUSTOM_TOPIC":
