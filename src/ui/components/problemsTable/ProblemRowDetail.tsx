@@ -21,8 +21,6 @@
  * into a `+N more` chip whose tooltip lists the rest. The "Open in
  * LeetCode" CTA lives on the title in the collapsed row.
  */
-import CheckBoxOutlineBlankRoundedIcon from "@mui/icons-material/CheckBoxOutlineBlankRounded";
-import CheckBoxRoundedIcon from "@mui/icons-material/CheckBoxRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -90,11 +88,14 @@ export function ProblemRowDetail({
           <Stack spacing={1.25} divider={<RowDivider />}>
             <SectionHeading>Details</SectionHeading>
 
-            <DetailRow label="Status">
-              <Stack direction="row" spacing={2} alignItems="center">
-                <StatusFlag label="Premium" active={view.isPremium} />
-                <StatusFlag label="Suspended" active={suspended} />
-              </Stack>
+            <DetailRow label="Premium">
+              <Typography
+                variant="body2"
+                sx={{ fontVariantNumeric: "tabular-nums" }}
+                color={view.isPremium ? "warning.main" : "text.secondary"}
+              >
+                {view.isPremium ? "true" : "false"}
+              </Typography>
             </DetailRow>
 
             <DetailRow label="Topics">
@@ -243,28 +244,6 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
     >
       {children}
     </Typography>
-  );
-}
-
-/** Inline checkbox-style boolean indicator: `☑ Premium` / `☐ Suspended`. */
-function StatusFlag({ label, active }: { label: string; active: boolean }) {
-  const Icon = active ? CheckBoxRoundedIcon : CheckBoxOutlineBlankRoundedIcon;
-  return (
-    <Stack direction="row" spacing={0.5} alignItems="center">
-      <Icon
-        fontSize="small"
-        sx={{
-          color: active ? "warning.main" : "text.disabled",
-          fontSize: "1.1rem",
-        }}
-      />
-      <Typography
-        variant="body2"
-        color={active ? "text.primary" : "text.secondary"}
-      >
-        {label}
-      </Typography>
-    </Stack>
   );
 }
 

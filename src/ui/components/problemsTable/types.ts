@@ -31,8 +31,9 @@ export interface ProblemRowData {
 }
 
 /** Why a row reads as suspended. `manual` = user clicked Suspend.
- * `premium` = settings.skipPremium is on and isPremium is true. */
-export type SuspendedReason = "manual" | "premium";
+ * `premium` = settings.skipPremium is on and isPremium is true.
+ * `both` = manually suspended *and* premium-and-skipPremium. */
+export type SuspendedReason = "manual" | "premium" | "both";
 
 /** Sortable column key. */
 export type SortKey =

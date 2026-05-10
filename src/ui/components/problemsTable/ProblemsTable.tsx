@@ -24,6 +24,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
+import Tooltip from "@mui/material/Tooltip";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
@@ -482,12 +483,30 @@ export function ProblemsTable(props: ProblemsTableProps) {
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5} alignItems="center">
-                          <Typography
-                            variant="body2"
-                            color={isDue ? "warning.main" : "text.secondary"}
+                          <Tooltip
+                            title={suspendedTooltip(row.suspended)}
+                            disableHoverListener={!row.suspended}
+                            disableFocusListener={!row.suspended}
+                            disableTouchListener={!row.suspended}
+                            arrow
                           >
-                            {phaseLabel}
-                          </Typography>
+                            <Typography
+                              variant="body2"
+                              color={isDue ? "warning.main" : "text.secondary"}
+                              sx={
+                                row.suspended
+                                  ? {
+                                      cursor: "help",
+                                      textDecorationLine: "underline",
+                                      textDecorationStyle: "dotted",
+                                      textUnderlineOffset: "3px",
+                                    }
+                                  : undefined
+                              }
+                            >
+                              {phaseLabel}
+                            </Typography>
+                          </Tooltip>
                           {isDue ? <ToneChip label="DUE" tone="accent" /> : null}
                         </Stack>
                       </TableCell>
@@ -564,6 +583,20 @@ export function ProblemsTable(props: ProblemsTableProps) {
       />
     </Box>
   );
+}
+
+/** Hover-tooltip copy explaining why a row reads as Suspended. */
+function suspendedTooltip(reason: ProblemRowData["suspended"]): string {
+  switch (reason) {
+    case "manual":
+      return "Suspended manually.";
+    case "premium":
+      return "Premium-locked. Treated as suspended via the Settings toggle.";
+    case "both":
+      return "Suspended manually and premium-locked.";
+    default:
+      return "";
+  }
 }
 
 /** Library-variant retention badge: colored icon + tabular percent. */

@@ -10,7 +10,7 @@
  */
 import type { Problem, StudyState, UserSettings } from "../types";
 
-export type EffectivelySuspendedReason = "manual" | "premium";
+export type EffectivelySuspendedReason = "manual" | "premium" | "both";
 
 export interface EffectivelySuspendedFlag {
   suspended: boolean;
@@ -22,10 +22,12 @@ export function effectivelySuspendedFlag(
   studyState: Pick<StudyState, "suspended"> | null | undefined,
   settings: Pick<UserSettings, "questionFilters">,
 ): EffectivelySuspendedFlag {
-  if (studyState?.suspended) return { suspended: true, reason: "manual" };
-  if (settings.questionFilters.skipPremium && problem.isPremium === true) {
-    return { suspended: true, reason: "premium" };
-  }
+  const manual = studyState?.suspended === true;
+  const premium =
+    settings.questionFilters.skipPremium && problem.isPremium === true;
+  if (manual && premium) return { suspended: true, reason: "both" };
+  if (manual) return { suspended: true, reason: "manual" };
+  if (premium) return { suspended: true, reason: "premium" };
   return { suspended: false };
 }
 
