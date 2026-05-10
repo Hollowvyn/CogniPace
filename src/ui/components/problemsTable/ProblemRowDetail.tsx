@@ -54,6 +54,36 @@ interface ProblemRowDetailProps {
   onEditProblem?: (slug: ProblemSlug) => void;
   onSuspendProblem?: (slug: ProblemSlug, suspend: boolean) => void;
   onResetSchedule?: (slug: ProblemSlug) => void;
+  /** Re-enables premium questions globally (toggles
+   * `settings.skipPremium` off). Surfaced on rows whose only reason
+   * for being suspended is the premium gate. */
+  onEnablePremium?: () => void;
+}
+
+interface SuspendAction {
+  label: string;
+  onClick: () => void;
+}
+
+/** Resolves the right Suspend/Resume action for a given row based on
+ * its `suspended` reason. Manual: standard toggle. Premium-only: the
+ * only way to surface the row is to disable the global premium gate.
+ * Both: clearing the manual flag still leaves it premium-suspended,
+ * but it's a meaningful step the user can take. */
+function resolveSuspendAction(
+  reason: ProblemRowData["suspended"],
+  onSuspend: (suspend: boolean) => void,
+  onEnablePremium: (() => void) | undefined,
+): SuspendAction | null {
+  if (!reason) {
+    return { label: "Suspend", onClick: () => onSuspend(true) };
+  }
+  if (reason === "premium") {
+    if (!onEnablePremium) return null;
+    return { label: "Enable premium questions", onClick: onEnablePremium };
+  }
+  // manual or both — Resume clears the manual flag.
+  return { label: "Resume", onClick: () => onSuspend(false) };
 }
 
 export function ProblemRowDetail({
@@ -62,13 +92,20 @@ export function ProblemRowDetail({
   onEditProblem,
   onSuspendProblem,
   onResetSchedule,
+  onEnablePremium,
 }: ProblemRowDetailProps) {
   const { view, studyState, trackMemberships } = row;
   const slug = view.slug as ProblemSlug;
-  const suspended = !!studyState?.suspended;
   const recentAttempts = studyState?.recentAttempts ?? [];
   const notes = studyState?.notes;
   const interviewPattern = studyState?.interviewPattern;
+  const suspendAction = onSuspendProblem
+    ? resolveSuspendAction(
+        row.suspended,
+        (suspend) => onSuspendProblem(slug, suspend),
+        onEnablePremium,
+      )
+    : null;
 
   return (
     <Box
@@ -176,12 +213,9 @@ export function ProblemRowDetail({
             Edit
           </Button>
         ) : null}
-        {onSuspendProblem ? (
-          <Button
-            size="small"
-            onClick={() => onSuspendProblem(slug, !suspended)}
-          >
-            {suspended ? "Resume" : "Suspend"}
+        {suspendAction ? (
+          <Button size="small" onClick={suspendAction.onClick}>
+            {suspendAction.label}
           </Button>
         ) : null}
         {onResetSchedule ? (

@@ -54,6 +54,7 @@ export function DashboardApp() {
 
             {controller.view === "tracks" ? (
               <TracksView
+                onEnablePremium={controller.onEnablePremium}
                 onOpenProblem={controller.onOpenProblem}
                 onSetActiveFocus={controller.onSetActiveFocus}
                 payload={controller.payload}
@@ -94,6 +95,7 @@ export function DashboardApp() {
             {controller.view === "library" ? (
               <LibraryView
                 filters={controller.filters}
+                onEnablePremium={controller.onEnablePremium}
                 onFilterChange={controller.setFilters}
                 onOpenProblem={controller.onOpenProblem}
                 onRefresh={controller.refresh}

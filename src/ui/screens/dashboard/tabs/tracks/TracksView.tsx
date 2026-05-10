@@ -54,6 +54,7 @@ import {
 interface TracksViewProps {
   payload: AppShellPayload | null;
   onOpenProblem: (target: { slug: string }) => Promise<void>;
+  onEnablePremium: () => Promise<void>;
   onSetActiveFocus: (focus: ActiveFocus) => Promise<void>;
   onRefresh?: () => Promise<void>;
 }
@@ -174,6 +175,7 @@ export function TracksView(props: TracksViewProps) {
           onEditProblem={handleEdit}
           onSuspendProblem={handleSuspend}
           onResetSchedule={handleReset}
+          onEnablePremium={() => void props.onEnablePremium()}
         />
       ) : (
         <SurfaceCard sx={{ p: 3 }}>
@@ -285,6 +287,7 @@ interface ActiveStudySetSectionProps {
   onEditProblem: (slug: ProblemSlug) => void;
   onSuspendProblem: (slug: ProblemSlug, suspend: boolean) => void | Promise<void>;
   onResetSchedule: (slug: ProblemSlug) => void | Promise<void>;
+  onEnablePremium: () => void;
 }
 
 function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
@@ -299,6 +302,7 @@ function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
     onEditProblem,
     onSuspendProblem,
     onResetSchedule,
+    onEnablePremium,
   } = props;
 
   const switchOptions = options.filter(
@@ -382,6 +386,7 @@ function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
           onEditProblem={onEditProblem}
           onSuspendProblem={onSuspendProblem}
           onResetSchedule={onResetSchedule}
+          onEnablePremium={onEnablePremium}
         />
       ) : (
         <FlatStudySetBody
@@ -390,6 +395,7 @@ function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
           onEditProblem={onEditProblem}
           onSuspendProblem={onSuspendProblem}
           onResetSchedule={onResetSchedule}
+          onEnablePremium={onEnablePremium}
         />
       )}
     </SurfaceCard>
@@ -419,6 +425,7 @@ function GroupedStudySetBody({
   onEditProblem,
   onSuspendProblem,
   onResetSchedule,
+  onEnablePremium,
 }: {
   studySet: Extract<StudySetView, { kind: "grouped" }>;
   activeGroupId: SetGroupId | null;
@@ -427,6 +434,7 @@ function GroupedStudySetBody({
   onEditProblem: (slug: ProblemSlug) => void;
   onSuspendProblem: (slug: ProblemSlug, suspend: boolean) => void | Promise<void>;
   onResetSchedule: (slug: ProblemSlug) => void | Promise<void>;
+  onEnablePremium: () => void;
 }) {
   const activeGroup =
     studySet.groups.find((g) => g.id === activeGroupId) ?? studySet.groups[0];
@@ -466,6 +474,7 @@ function GroupedStudySetBody({
         onEditProblem={onEditProblem}
         onSuspendProblem={onSuspendProblem}
         onResetSchedule={onResetSchedule}
+        onEnablePremium={onEnablePremium}
       />
     </Stack>
   );
@@ -477,12 +486,14 @@ function FlatStudySetBody({
   onEditProblem,
   onSuspendProblem,
   onResetSchedule,
+  onEnablePremium,
 }: {
   studySet: Extract<StudySetView, { kind: "flat" } | { kind: "derived" }>;
   slugDataMap: Map<string, SlugStudyData>;
   onEditProblem: (slug: ProblemSlug) => void;
   onSuspendProblem: (slug: ProblemSlug, suspend: boolean) => void | Promise<void>;
   onResetSchedule: (slug: ProblemSlug) => void | Promise<void>;
+  onEnablePremium: () => void;
 }) {
   const rows = useMemo(
     () => hydrateRows(studySet.problems, slugDataMap),
@@ -503,6 +514,7 @@ function FlatStudySetBody({
         onEditProblem={onEditProblem}
         onSuspendProblem={onSuspendProblem}
         onResetSchedule={onResetSchedule}
+        onEnablePremium={onEnablePremium}
       />
     </Stack>
   );

@@ -35,6 +35,7 @@ import {
 export interface LibraryViewProps {
   filters: LibraryFilters;
   onFilterChange: React.Dispatch<React.SetStateAction<LibraryFilters>>;
+  onEnablePremium: () => Promise<void>;
   onOpenProblem: (target: { slug: string }) => Promise<void>;
   onRefresh?: () => Promise<void>;
   payload: AppShellPayload | null;
@@ -108,6 +109,7 @@ export function LibraryView(props: LibraryViewProps) {
         onEditProblem={handleEdit}
         onSuspendProblem={handleSuspend}
         onResetSchedule={handleReset}
+        onEnablePremium={() => void props.onEnablePremium()}
         toolbarExtras={
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel id="library-filter-track-label">Track</InputLabel>

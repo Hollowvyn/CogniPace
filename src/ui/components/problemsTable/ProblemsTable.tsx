@@ -84,6 +84,10 @@ export interface ProblemsTableProps {
   onSuspendProblem?: (slug: ProblemSlug, suspend: boolean) => void;
   /** Expanded panel callback — reset the FSRS schedule for this problem. */
   onResetSchedule?: (slug: ProblemSlug) => void;
+  /** Expanded panel callback — re-enable premium questions globally
+   * (toggles `settings.skipPremium` off). Surfaced when a row is
+   * suspended only because of the premium gate. */
+  onEnablePremium?: () => void;
 }
 
 const DIFFICULTY_OPTIONS: ReadonlyArray<Difficulty | "all"> = [
@@ -117,6 +121,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
     onEditProblem,
     onSuspendProblem,
     onResetSchedule,
+    onEnablePremium,
   } = props;
 
   const showRetentionColumn = variant === "library";
@@ -541,6 +546,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                             onEditProblem={onEditProblem}
                             onSuspendProblem={onSuspendProblem}
                             onResetSchedule={onResetSchedule}
+                            onEnablePremium={onEnablePremium}
                           />
                         </Collapse>
                       </TableCell>

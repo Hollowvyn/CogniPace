@@ -174,6 +174,15 @@ export function useDashboardController() {
     [setStatus]
   );
 
+  const onEnablePremium = useCallback(async (): Promise<void> => {
+    await runMutation(
+      updateSettings({
+        questionFilters: { skipPremium: false },
+      }),
+      "Premium questions enabled.",
+    );
+  }, [runMutation]);
+
   const onToggleMode = useCallback(async (): Promise<void> => {
     const nextMode =
       payload?.settings.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
@@ -403,6 +412,7 @@ export function useDashboardController() {
     importFile,
     isDefaultSettingsDraft,
     navigateToView,
+    onEnablePremium,
     onExportData,
     onDiscardSettings,
     onImportData,
