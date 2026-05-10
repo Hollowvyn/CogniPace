@@ -8,6 +8,18 @@
  *
  * StudyState is NOT created here — see studyStateRepository (lazy).
  */
+import type { AppDataV7 } from "../../../domain/data/appDataV7";
+import type { Problem } from "../../../domain/problems/model";
+import {
+  applyEdit,
+  mergeImported,
+  type ProblemEditPatch,
+} from "../../../domain/problems/operations";
+import {
+  leetcodeProblemUrl,
+  normalizeProblemSlug,
+  slugToTitle,
+} from "../../../domain/problems/helpers";
 import {
   asCompanyId,
   asProblemSlug,
@@ -16,19 +28,6 @@ import {
   type ProblemSlug,
   type TopicId,
 } from "../../../domain/common/ids";
-import {
-  leetcodeProblemUrl,
-  normalizeProblemSlug,
-  slugToTitle,
-} from "../../../domain/problems/helpers";
-import {
-  applyEdit,
-  mergeImported,
-  type ProblemEditPatch,
-} from "../../../domain/problems/operations";
-
-import type { AppDataV7 } from "../../../domain/data/appDataV7";
-import type { Problem } from "../../../domain/problems/model";
 import type { Difficulty } from "../../../domain/types";
 
 export interface ImportProblemArgs {

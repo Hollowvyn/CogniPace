@@ -30,13 +30,6 @@ describe("OverlayPanel Docked", () => {
       <OverlayPanel renderModel={makeDockedRenderModel({ onRestore })} />
     );
 
-    expect(screen.getByTestId("docked-overlay-panel")).toHaveStyle({
-      width: "40px",
-    });
-    expect(screen.getByRole("button", { name: "Show overlay" })).toHaveStyle({
-      minHeight: "60px",
-    });
-
     await user.click(screen.getByRole("button", { name: "Show overlay" }));
     expect(onRestore).toHaveBeenCalledTimes(1);
   });

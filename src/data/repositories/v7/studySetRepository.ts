@@ -10,18 +10,6 @@
  * delegate to `domain/sets/prerequisites.ts`; mutations that would
  * introduce a cycle are rejected and the draft is returned unchanged.
  */
-import {
-  asProblemSlug,
-  asStudySetId,
-  newSetGroupId,
-  newStudySetId,
-  type ProblemSlug,
-  type SetGroupId,
-  type StudySetId,
-} from "../../../domain/common/ids";
-import { FLAT_GROUP_ID } from "../../../domain/sets/model";
-import { isDagAcyclic } from "../../../domain/sets/prerequisites";
-
 import type { AppDataV7 } from "../../../domain/data/appDataV7";
 import type {
   BaseStudySetConfig,
@@ -34,6 +22,17 @@ import type {
   StudySetFilter,
   TopicFilter,
 } from "../../../domain/sets/model";
+import { FLAT_GROUP_ID } from "../../../domain/sets/model";
+import { isDagAcyclic } from "../../../domain/sets/prerequisites";
+import {
+  asProblemSlug,
+  asStudySetId,
+  newSetGroupId,
+  newStudySetId,
+  type ProblemSlug,
+  type SetGroupId,
+  type StudySetId,
+} from "../../../domain/common/ids";
 
 const DEFAULT_FLAT_CONFIG: BaseStudySetConfig = {
   trackProgress: true,

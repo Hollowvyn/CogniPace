@@ -75,3 +75,30 @@ export function formatStudyPhase(
 
   return getStudyPhaseLabel(phase);
 }
+
+/**
+ * Maps the FSRS retrievability score (0-1, "current probability of recall")
+ * to the shared tone system. Used by the Library Retention column and the
+ * expanded-row Retrievability tile.
+ *
+ *   ≥ 0.85  → success (high retention)
+ *   ≥ 0.70  → accent (moderate retention; warn-leaning)
+ *   <  0.70 → danger (low retention)
+ *   undef.  → default (no FSRS card yet)
+ */
+export function retrievalTone(retrievability?: number): Tone {
+  if (retrievability === undefined || Number.isNaN(retrievability)) {
+    return "default";
+  }
+  if (retrievability >= 0.85) return "success";
+  if (retrievability >= 0.7) return "accent";
+  return "danger";
+}
+
+/** Formats retrievability as a percent string ("92%"); em-dash when absent. */
+export function formatRetention(retrievability?: number): string {
+  if (retrievability === undefined || Number.isNaN(retrievability)) {
+    return "—";
+  }
+  return `${Math.round(retrievability * 100)}%`;
+}

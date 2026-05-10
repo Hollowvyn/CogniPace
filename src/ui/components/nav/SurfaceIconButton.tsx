@@ -2,7 +2,7 @@ import IconButton, { IconButtonProps } from "@mui/material/IconButton";
 import { alpha, Theme } from "@mui/material/styles";
 import { SxProps } from "@mui/system";
 
-import { cognipaceControlScale, cognipaceTokens } from "../../theme";
+import { cognipaceTokens } from "../../theme";
 
 export function SurfaceIconButton(props: IconButtonProps) {
   const { sx, ...rest } = props;
@@ -11,10 +11,10 @@ export function SurfaceIconButton(props: IconButtonProps) {
     border: `1px solid ${alpha(cognipaceTokens.outlineStrong, 0.34)}`,
     borderRadius: 1.15,
     color: "text.secondary",
-    height: cognipaceControlScale.iconButtonSize,
+    height: 40,
     transition:
       "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
-    width: cognipaceControlScale.iconButtonSize,
+    width: 40,
     "@media (prefers-reduced-motion: reduce)": {
       transition: "none",
     },

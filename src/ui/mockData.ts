@@ -12,6 +12,7 @@ export function createMockPopupShellPayload(): PopupShellPayload {
       activeCourse: null,
     },
     activeCourse: null,
+    activeStudySetView: null,
     settings: createInitialUserSettings(),
   };
 }
@@ -58,5 +59,8 @@ export function createMockAppShellPayload(): AppShellPayload {
     recommendedCandidates: [],
     library: [],
     courseOptions: [],
+    studySetViews: [],
+    topicChoices: [],
+    companyChoices: [],
   };
 }

@@ -163,7 +163,7 @@ export function usePopupController() {
     studyMode,
     onOpenDashboard: openDashboardPage,
     openCoursesDashboard: () => {
-      openDashboardPage("courses");
+      openDashboardPage("tracks");
     },
     onOpenProblem,
     onOpenSettings: openSettingsPage,

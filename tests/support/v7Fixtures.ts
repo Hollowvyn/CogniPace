@@ -2,6 +2,8 @@
  * Factories for the v7 schema. Mirrors the existing `domainFixtures.ts`
  * but builds branded entities for the new aggregate set.
  */
+import type { AppDataV7 } from "../../src/domain/data/appDataV7";
+import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/domain/data/appDataV7";
 import {
   asCompanyId,
   asProblemSlug,
@@ -10,17 +12,13 @@ import {
   asTopicId,
   type ProblemSlug,
 } from "../../src/domain/common/ids";
-import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/domain/data/appDataV7";
-import { createInitialUserSettings } from "../../src/domain/settings";
-import { createDefaultStudyState } from "../../src/domain/study-state/defaults";
-
-import type { Company } from "../../src/domain/companies/model";
-import type { AppDataV7 } from "../../src/domain/data/appDataV7";
 import type { Problem } from "../../src/domain/problems/model";
-import type { StudySet } from "../../src/domain/sets/model";
 import type { StudyState } from "../../src/domain/study-state/model";
+import { createDefaultStudyState } from "../../src/domain/study-state/defaults";
+import type { StudySet } from "../../src/domain/sets/model";
 import type { Topic } from "../../src/domain/topics/model";
-
+import type { Company } from "../../src/domain/companies/model";
+import { createInitialUserSettings } from "../../src/domain/settings";
 
 const NOW = "2026-03-01T00:00:00.000Z";
 

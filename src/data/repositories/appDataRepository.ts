@@ -1,9 +1,9 @@
 /** Repository for persisted app data stored in `chrome.storage.local`. */
+import { nowIso } from "../../domain/common/time";
 import {
   CURRENT_STORAGE_SCHEMA_VERSION,
   STORAGE_KEY,
 } from "../../domain/common/constants";
-import { nowIso } from "../../domain/common/time";
 import { ensureCourseData } from "../../domain/courses/courseProgress";
 import { normalizeStudyState } from "../../domain/fsrs/studyState";
 import {
@@ -15,14 +15,14 @@ import {
   UserSettingsPatch,
 } from "../../domain/settings";
 import { AppData } from "../../domain/types";
-import { buildCompanySeed } from "../catalog/companiesSeed";
-import { listCatalogPlans } from "../catalog/curatedSets";
-import { buildStudySetSeed } from "../catalog/studySetsSeed";
-import { buildTopicSeed } from "../catalog/topicsSeed";
 import {
   readLocalStorage,
   writeLocalStorage,
 } from "../datasources/chrome/storage";
+import { buildCompanySeed } from "../catalog/companiesSeed";
+import { listCatalogPlans } from "../catalog/curatedSets";
+import { buildStudySetSeed } from "../catalog/studySetsSeed";
+import { buildTopicSeed } from "../catalog/topicsSeed";
 
 /** Sidecar key holding the pre-v7 blob (auto-export-then-wipe migration). */
 export const PRE_V7_BACKUP_KEY = `${STORAGE_KEY}_pre_v7_backup` as const;
@@ -100,7 +100,6 @@ export async function getAppData(): Promise<AppData> {
   const result = await readLocalStorage([STORAGE_KEY]);
   const stored = result[STORAGE_KEY] as StoredAppData | undefined;
 
-  const runV7SeedMigration = stored !== undefined && needsV7SeedMigration(stored);
   const normalized = normalizeStoredAppData(stored);
   const storedSettings = stored?.settings;
   const settingsNeedsWriteBack =
@@ -108,7 +107,6 @@ export async function getAppData(): Promise<AppData> {
     !areUserSettingsEqual(normalized.settings, storedSettings);
   const needsWriteBack =
     !stored ||
-    runV7SeedMigration ||
     stored.schemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION ||
     !stored.coursesById ||
     !stored.courseOrder ||
@@ -116,9 +114,6 @@ export async function getAppData(): Promise<AppData> {
     settingsNeedsWriteBack;
 
   if (needsWriteBack) {
-    if (runV7SeedMigration) {
-      await writeLocalStorage({ [PRE_V7_BACKUP_KEY]: stored });
-    }
     await saveAppData(normalized);
   }
 

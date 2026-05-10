@@ -1,11 +1,11 @@
 /** Background handlers for settings and backup import/export operations. */
-import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import {
   getAppData,
   mergeSettings,
   mutateAppData,
 } from "../../../data/repositories/appDataRepository";
+import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
 import { nowIso } from "../../../domain/common/time";
@@ -40,9 +40,17 @@ export async function exportData() {
     problems: Object.values(data.problemsBySlug),
     studyStatesBySlug: data.studyStatesBySlug,
     settings: data.settings,
+    // v6 legacy fields — preserved in the export for backward-compat
+    // imports of older backup files until Phase F.3 drops them.
     coursesById: data.coursesById,
     courseOrder: data.courseOrder,
     courseProgressById: data.courseProgressById,
+    // v7 aggregates — every key is an aggregate root from the registry.
+    topicsById: data.topicsById,
+    companiesById: data.companiesById,
+    studySetsById: data.studySetsById,
+    studySetOrder: data.studySetOrder,
+    studySetProgressById: data.studySetProgressById,
   });
 }
 
@@ -97,6 +105,16 @@ export async function importData(payload: ExportPayload) {
       data.studyStatesBySlug[normalizedSlug] = normalizeStudyState(
         state as StudyState
       );
+    }
+
+    // v7 aggregates — sanitised by the registry; replace whole maps so
+    // the import is the single source of truth for the new state.
+    if (sanitized.topicsById) data.topicsById = sanitized.topicsById;
+    if (sanitized.companiesById) data.companiesById = sanitized.companiesById;
+    if (sanitized.studySetsById) data.studySetsById = sanitized.studySetsById;
+    if (sanitized.studySetOrder) data.studySetOrder = sanitized.studySetOrder;
+    if (sanitized.studySetProgressById) {
+      data.studySetProgressById = sanitized.studySetProgressById;
     }
 
     data.settings = mergeSettings(data.settings, sanitized.settings ?? {});

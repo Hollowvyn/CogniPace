@@ -3,8 +3,6 @@
  * a thin sendMessage wrapper — UI components import these rather than
  * constructing payload objects inline.
  */
-import { sendMessage } from "../../extension/runtime/client";
-
 import type { ActiveFocus } from "../../domain/active-focus/model";
 import type {
   CompanyFilter,
@@ -13,6 +11,7 @@ import type {
   TopicFilter,
 } from "../../domain/sets/model";
 import type { Difficulty } from "../../domain/types";
+import { sendMessage } from "../../extension/runtime/client";
 
 export interface EditProblemPatch {
   title?: string;
@@ -136,4 +135,23 @@ export async function setActiveFocus(focus: ActiveFocus) {
  */
 export async function consumePreV7Backup() {
   return sendMessage("CONSUME_PRE_V7_BACKUP", {});
+}
+
+/**
+ * Toggle the suspended state on a problem's StudyState. Used by the
+ * expanded row's Suspend / Resume button.
+ */
+export async function suspendProblem(input: { slug: string; suspend: boolean }) {
+  return sendMessage("SUSPEND_PROBLEM", input);
+}
+
+/**
+ * Reset a problem's FSRS schedule. Used by the expanded row's
+ * "Reset schedule" button.
+ */
+export async function resetProblemSchedule(input: {
+  slug: string;
+  keepNotes?: boolean;
+}) {
+  return sendMessage("RESET_PROBLEM_SCHEDULE", input);
 }

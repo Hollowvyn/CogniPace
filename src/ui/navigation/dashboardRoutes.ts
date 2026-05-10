@@ -1,7 +1,7 @@
 /** Dashboard deep-link model for the `?view=` contract. */
 export type DashboardView =
   | "dashboard"
-  | "courses"
+  | "tracks"
   | "library"
   | "analytics"
   | "settings";
@@ -23,10 +23,10 @@ export const dashboardRoutes: DashboardRoute[] = [
     copy: "The best next move for retention and the live state of your active path.",
   },
   {
-    view: "courses",
-    label: "Courses",
-    title: "Course Management",
-    copy: "Curated-first traversal, chapter progression, and intake control.",
+    view: "tracks",
+    label: "Tracks",
+    title: "Tracks",
+    copy: "Active track at the top, group-by-group progression, and intake for curated paths.",
   },
   {
     view: "library",

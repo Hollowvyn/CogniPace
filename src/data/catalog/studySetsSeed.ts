@@ -4,6 +4,7 @@
  * SetGroup per topic. Group ids are deterministic (`<setId>::<index>`) so
  * the seed is stable across builds.
  */
+import type { StudyPlanSummary } from "./curatedSets";
 import {
   asProblemSlug,
   asSetGroupId,
@@ -14,17 +15,13 @@ import {
   type StudySetId,
   type TopicId,
 } from "../../domain/common/ids";
-
-import { resolveSeedTopicId } from "./topicsSeed";
-
-import type { StudyPlanSummary } from "./curatedSets";
+import type { Difficulty } from "../../domain/types";
 import type {
   CourseStudySetConfig,
   SetGroup,
   StudySet,
 } from "../../domain/sets/model";
-import type { Difficulty } from "../../domain/types";
-
+import { resolveSeedTopicId } from "./topicsSeed";
 
 interface CatalogSection {
   topic: string;

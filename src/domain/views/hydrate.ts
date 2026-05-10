@@ -6,19 +6,21 @@
  * UI components must NOT call these directly — they consume the result
  * over the message channel.
  */
+import type { Company } from "../companies/model";
+import { getStudyStateSummary } from "../fsrs/studyState";
+import type { Problem, EditableProblemField } from "../problems/model";
 import { listEditedFields } from "../problems/operations";
 import { isGroupUnlocked } from "../sets/prerequisites";
 import { resolveStudySetSlugs } from "../sets/services/resolveSlugs";
-
-import type { Company } from "../companies/model";
-import type { Problem, EditableProblemField } from "../problems/model";
 import type { StudySet } from "../sets/model";
 import type { StudySetProgress } from "../sets/progress";
+import type { StudyState } from "../study-state/model";
 import type { Topic } from "../topics/model";
 import type {
   CompanyLabel,
   ProblemView,
   StudySetView,
+  StudyStateView,
   TopicLabel,
 } from "../views";
 
@@ -51,6 +53,37 @@ export function buildProblemView(
   };
 }
 
+export interface BuildStudyStateViewInput {
+  studyState: StudyState | null;
+  now: Date;
+  targetRetention: number;
+  recentLimit?: number;
+}
+
+/** Hydrates a single StudyState into its display-ready view shape. */
+export function buildStudyStateView(
+  input: BuildStudyStateViewInput,
+): StudyStateView | null {
+  const { studyState, now, targetRetention } = input;
+  if (!studyState) return null;
+  const summary = getStudyStateSummary(studyState, now, targetRetention);
+  const limit = input.recentLimit ?? 5;
+  return {
+    ...summary,
+    interviewPattern: studyState.interviewPattern,
+    timeComplexity: studyState.timeComplexity,
+    spaceComplexity: studyState.spaceComplexity,
+    languages: studyState.languages,
+    notes: studyState.notes,
+    tags: studyState.tags,
+    bestTimeMs: studyState.bestTimeMs,
+    lastSolveTimeMs: studyState.lastSolveTimeMs,
+    lastRating: studyState.lastRating,
+    confidence: studyState.confidence,
+    recentAttempts: studyState.attemptHistory.slice(-limit),
+  };
+}
+
 export interface BuildStudySetViewInput {
   studySet: StudySet;
   problemsBySlug: Record<string, Problem>;
@@ -76,17 +109,30 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
       name: studySet.name,
       description: studySet.description,
       enabled: studySet.enabled,
-      groups: studySet.groups.map((group) => ({
-        id: group.id,
-        name:
-          group.nameOverride ??
-          (group.topicId ? (topicsById[group.topicId]?.name ?? group.id) : group.id),
-        prerequisiteGroupIds: group.prerequisiteGroupIds,
-        unlocked: isGroupUnlocked(studySet, group, progress),
-        problems: group.problemSlugs
-          .map(hydrate)
-          .filter((view): view is ProblemView => view !== null),
-      })),
+      groups: studySet.groups.map((group) => {
+        const completedSlugs =
+          progress?.groupProgressById[group.id]?.completedSlugs ?? [];
+        const completedSet = new Set<string>(completedSlugs);
+        const completedCount = group.problemSlugs.reduce(
+          (acc, slug) => (completedSet.has(slug) ? acc + 1 : acc),
+          0,
+        );
+        return {
+          id: group.id,
+          name:
+            group.nameOverride ??
+            (group.topicId
+              ? (topicsById[group.topicId]?.name ?? group.id)
+              : group.id),
+          prerequisiteGroupIds: group.prerequisiteGroupIds,
+          unlocked: isGroupUnlocked(studySet, group, progress),
+          problems: group.problemSlugs
+            .map(hydrate)
+            .filter((view): view is ProblemView => view !== null),
+          completedCount,
+          totalCount: group.problemSlugs.length,
+        };
+      }),
     };
   }
 

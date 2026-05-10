@@ -2,7 +2,7 @@
 
 export type ExtensionDashboardView =
   | "dashboard"
-  | "courses"
+  | "tracks"
   | "library"
   | "analytics"
   | "settings";

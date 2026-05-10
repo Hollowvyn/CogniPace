@@ -3,9 +3,8 @@
  * slug-style strings; users may add custom companies (those use UUIDs and
  * are tagged `isCustom: true`).
  */
-import { asCompanyId, type CompanyId } from "../../domain/common/ids";
-
 import type { Company } from "../../domain/companies/model";
+import { asCompanyId, type CompanyId } from "../../domain/common/ids";
 
 interface CompanySeed {
   id: CompanyId;

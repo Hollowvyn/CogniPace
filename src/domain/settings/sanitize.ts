@@ -1,5 +1,4 @@
 import { DEFAULT_COURSE_ID } from "../common/constants";
-import { asSetGroupId, asStudySetId } from "../common/ids";
 
 import {
   DifficultyGoalSettings,
@@ -8,8 +7,6 @@ import {
   UserSettings,
 } from "./model";
 import { createInitialSetsEnabled, createInitialUserSettings } from "./seed";
-
-import type { ActiveFocus } from "../active-focus/model";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -145,35 +142,6 @@ function isDifficultyGoalSettings(value: unknown): value is DifficultyGoalSettin
   );
 }
 
-function sanitizeActiveFocus(value: unknown): ActiveFocus | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
-  }
-  if (!isRecord(value) || value.kind !== "studySet") {
-    return undefined;
-  }
-  if (typeof value.id !== "string" || !value.id.trim()) {
-    return undefined;
-  }
-  if (
-    value.groupId !== undefined &&
-    (typeof value.groupId !== "string" || !value.groupId.trim())
-  ) {
-    return undefined;
-  }
-
-  return {
-    kind: "studySet",
-    id: asStudySetId(value.id),
-    ...(typeof value.groupId === "string" && value.groupId.trim()
-      ? { groupId: asSetGroupId(value.groupId) }
-      : {}),
-  };
-}
-
 export function hasGroupedUserSettings(value: unknown): boolean {
   if (!isRecord(value)) {
     return false;
@@ -205,8 +173,6 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
     isStudyMode(source.studyMode) &&
     typeof source.activeCourseId === "string" &&
     Boolean(source.activeCourseId.trim()) &&
-    (source.activeFocus === undefined ||
-      sanitizeActiveFocus(source.activeFocus) !== undefined) &&
     isBooleanRecord(source.setsEnabled) &&
     typeof notifications.enabled === "boolean" &&
     typeof notifications.dailyTime === "string" &&
@@ -245,7 +211,6 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     timing.requireSolveTime,
     initial.timing.requireSolveTime
   );
-  const sanitizedActiveFocus = sanitizeActiveFocus(source.activeFocus);
 
   return {
     dailyQuestionGoal: nonNegativeInteger(
@@ -257,9 +222,6 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       typeof source.activeCourseId === "string" && source.activeCourseId.trim()
         ? source.activeCourseId
         : DEFAULT_COURSE_ID,
-    ...(sanitizedActiveFocus !== undefined
-      ? { activeFocus: sanitizedActiveFocus }
-      : {}),
     setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
     notifications: {
       enabled: booleanValue(

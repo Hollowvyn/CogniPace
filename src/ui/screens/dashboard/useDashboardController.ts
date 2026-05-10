@@ -23,6 +23,8 @@ import {
   resetStudyHistory,
   updateSettings,
 } from "../../../data/repositories/settingsRepository";
+import { setActiveFocus } from "../../../data/repositories/v7ActionRepository";
+import type { ActiveFocus } from "../../../domain/active-focus/model";
 import {
   areUserSettingsEqual,
   cloneUserSettings,
@@ -369,6 +371,13 @@ export function useDashboardController() {
     [runMutation]
   );
 
+  const onSetActiveFocus = useCallback(
+    async (focus: ActiveFocus): Promise<void> => {
+      await runMutation(setActiveFocus(focus), "Active track updated.");
+    },
+    [runMutation]
+  );
+
   return {
     draftSettings,
     filters,
@@ -383,6 +392,7 @@ export function useDashboardController() {
     onSaveSettings,
     onResetSettingsToDefaults,
     onResetStudyHistory,
+    onSetActiveFocus,
     onSetChapter,
     onSubmitCourseForm,
     onSwitchCourse,

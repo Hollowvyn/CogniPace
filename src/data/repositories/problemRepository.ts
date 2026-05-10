@@ -1,5 +1,3 @@
-import { resolveSeedTopicId } from "../catalog/topicsSeed";
-
 import { createDefaultStudyState } from "./constants";
 import {
   AppData,
@@ -17,6 +15,7 @@ import {
   slugToUrl,
   uniqueStrings,
 } from "./utils";
+import { resolveSeedTopicId } from "../catalog/topicsSeed";
 
 /**
  * Maps legacy `topics: string[]` to v7 `topicIds: TopicId[]` by resolving

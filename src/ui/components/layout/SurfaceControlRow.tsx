@@ -18,10 +18,10 @@ export function SurfaceControlRow(props: {
         sx={{
           alignItems: "center",
           display: "flex",
-          minHeight: 48,
+          minHeight: 52,
           minWidth: 0,
-          px: 1.25,
-          py: 0.85,
+          px: 1.35,
+          py: 1,
           ...(props.sx ?? {}),
         }}
       >
@@ -33,10 +33,10 @@ export function SurfaceControlRow(props: {
   return (
     <InsetSurface
       sx={{
-        minHeight: 48,
+        minHeight: 52,
         minWidth: 0,
-        px: 1.25,
-        py: 0.85,
+        px: 1.35,
+        py: 1,
         ...(props.sx ?? {}),
       }}
     >
@@ -44,7 +44,7 @@ export function SurfaceControlRow(props: {
         alignItems={{ sm: "center", xs: "stretch" }}
         direction={{ sm: "row", xs: "column" }}
         justifyContent="space-between"
-        spacing={1}
+        spacing={1.25}
       >
         <Box sx={{ minWidth: 0 }}>
           <Typography component="div" variant="body2">
@@ -61,7 +61,7 @@ export function SurfaceControlRow(props: {
             display: "flex",
             flexShrink: 0,
             justifyContent: { sm: "flex-end", xs: "flex-start" },
-            minWidth: { sm: 170, xs: "100%" },
+            minWidth: { sm: 182, xs: "100%" },
           }}
         >
           {props.control}

@@ -3,19 +3,17 @@
  * drafts. Progress is lazily created when the user first focuses or
  * completes a problem within a StudySet.
  */
+import type { AppDataV7 } from "../../../domain/data/appDataV7";
+import { resolveStudySetSlugs } from "../../../domain/sets/services/resolveSlugs";
+import type {
+  SetGroupProgress,
+  StudySetProgress,
+} from "../../../domain/sets/progress";
 import {
   type ProblemSlug,
   type SetGroupId,
   type StudySetId,
 } from "../../../domain/common/ids";
-import { resolveStudySetSlugs } from "../../../domain/sets/services/resolveSlugs";
-
-import type { AppDataV7 } from "../../../domain/data/appDataV7";
-import type {
-  SetGroupProgress,
-  StudySetProgress,
-} from "../../../domain/sets/progress";
-
 
 /** Materialise progress for a set on first interaction. No-op if it
  * already exists. */

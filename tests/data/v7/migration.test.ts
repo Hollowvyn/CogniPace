@@ -6,13 +6,13 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { STORAGE_KEY } from "../../../src/domain/common/constants";
+import { STORAGE_SCHEMA_VERSION_V7 } from "../../../src/domain/data/appDataV7";
 import {
   consumeSidecarBackup,
   getAppDataV7,
   PRE_V7_BACKUP_KEY,
 } from "../../../src/data/repositories/v7/appDataRepository";
-import { STORAGE_KEY } from "../../../src/domain/common/constants";
-import { STORAGE_SCHEMA_VERSION_V7 } from "../../../src/domain/data/appDataV7";
 
 const storageMocks = vi.hoisted(() => ({
   readLocalStorage: vi.fn(),

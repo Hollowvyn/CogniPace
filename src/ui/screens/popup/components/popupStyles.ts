@@ -1,6 +1,6 @@
 import {alpha} from "@mui/material/styles";
 
-import {cognipaceControlScale, cognipaceTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 
 export const popupShellSx = {
   backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.96),
@@ -14,8 +14,7 @@ export const popupShellSx = {
 };
 
 export const popupActionButtonSx = {
-  minHeight: cognipaceControlScale.compactButtonMinHeight,
-  paddingInline: 10,
+  minHeight: 42,
   touchAction: "manipulation",
   "&:focus-visible": {
     outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,
@@ -25,9 +24,9 @@ export const popupActionButtonSx = {
 
 export const popupSmallButtonSx = {
   borderRadius: 999,
-  minHeight: cognipaceControlScale.compactPillMinHeight,
-  paddingBlock: 1,
-  paddingInline: 9,
+  minHeight: 28,
+  px: 1.05,
+  py: 0.2,
   touchAction: "manipulation",
   "&:focus-visible": {
     outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,

@@ -21,6 +21,7 @@ export function makePopupPayload(): PopupShellPayload {
   const payload = makePayload();
   return {
     activeCourse: payload.activeCourse,
+    activeStudySetView: payload.activeStudySetView,
     popup: payload.popup,
     settings: payload.settings,
   };

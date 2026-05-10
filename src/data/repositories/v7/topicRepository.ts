@@ -6,10 +6,9 @@
  * `nowIso()` itself — handlers compute the timestamp once and thread it
  * through.
  */
-import { asTopicId, type TopicId } from "../../../domain/common/ids";
-
 import type { AppDataV7 } from "../../../domain/data/appDataV7";
 import type { Topic } from "../../../domain/topics/model";
+import { asTopicId, type TopicId } from "../../../domain/common/ids";
 
 export interface CreateTopicArgs {
   /** Pre-computed canonical id; if omitted, derived from `name`. */

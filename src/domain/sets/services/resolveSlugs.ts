@@ -12,13 +12,6 @@
  * The service is pure — given the same StudySet + AppData slice, it
  * returns the same result. Memoisation is the caller's responsibility.
  */
-import {
-  isDerivedKind,
-  type CustomFilter,
-  type StudySet,
-  type StudySetFilter,
-} from "../model";
-
 import type {
   CompanyId,
   ProblemSlug,
@@ -26,6 +19,12 @@ import type {
 } from "../../common/ids";
 import type { Problem } from "../../problems/model";
 import type { Difficulty } from "../../types";
+import {
+  isDerivedKind,
+  type CustomFilter,
+  type StudySet,
+  type StudySetFilter,
+} from "../model";
 
 export interface ResolveSlugsInput {
   studySet: StudySet;

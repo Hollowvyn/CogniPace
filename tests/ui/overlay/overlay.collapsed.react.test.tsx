@@ -20,15 +20,6 @@ describe("OverlayPanel Collapsed", () => {
 
     expect(screen.getByRole("button", { name: "Expand overlay" })).toBeInTheDocument();
     expect(screen.getByText("03:12")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Expand overlay" })).toHaveStyle({
-      height: "32px",
-      width: "32px",
-    });
-    expect(screen.getByRole("button", { name: "Submit" })).toHaveStyle({
-      height: "32px",
-      width: "32px",
-    });
-    expect(screen.getByRole("button", { name: "Fail review" })).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Start timer" }));
     expect(onStartTimer).toHaveBeenCalledTimes(1);

@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 
 import {StudyMode} from "../../../../domain/types";
 import {SurfaceCard} from "../../../components";
-import {cognipaceControlScale, cognipaceTokens} from "../../../theme";
+import {cognipaceTokens} from "../../../theme";
 
 interface PopupModeOptionProps {
   active: boolean;
@@ -31,9 +31,9 @@ function PopupModeOption(props: PopupModeOptionProps) {
         color: props.active ? "#2b1700" : cognipaceTokens.softText,
         display: "flex",
         flex: 1,
-        minHeight: cognipaceControlScale.popupModeMinHeight,
-        px: 1,
-        py: 0.7,
+        minHeight: 60,
+        px: 1.2,
+        py: 0.8,
         transition: "background-color 160ms ease, color 160ms ease",
         touchAction: "manipulation",
         "&:hover": {
@@ -48,11 +48,11 @@ function PopupModeOption(props: PopupModeOptionProps) {
         },
       }}
     >
-      <Stack alignItems="center" spacing={0.45} sx={{width: "100%"}}>
+      <Stack alignItems="center" spacing={0.55} sx={{width: "100%"}}>
         <Icon aria-hidden="true" fontSize="small"/>
         <Typography
           sx={{
-            fontSize: "0.64rem",
+            fontSize: "0.68rem",
             fontWeight: 700,
             letterSpacing: "0.08em",
             textTransform: "uppercase",

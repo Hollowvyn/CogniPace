@@ -1673,7 +1673,11 @@ export function getCurriculumRecommendations(
   const runtime = resolvePlan(planId);
   const { summary, steps } = runtime;
 
-  if (data.settings.setsEnabled[summary.sourceSet] === false) {
+  // v7: source-of-truth for "is this curated track enabled" is now the
+  // StudySet entity itself. The seed builder uses the plan id as the
+  // StudySet id, so the lookup is direct.
+  const studySet = data.studySetsById[summary.id];
+  if (studySet && studySet.enabled === false) {
     return {
       planId: summary.id,
       planName: summary.name,

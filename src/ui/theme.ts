@@ -18,23 +18,6 @@ export const cognipaceTokens = {
   danger: "#ffb4ab",
 };
 
-export const cognipaceControlScale = {
-  assessmentMinHeight: 64,
-  buttonInlinePadding: 10,
-  buttonMinHeight: 30,
-  compactButtonMinHeight: 32,
-  compactButtonMinWidth: 32,
-  compactPillMinHeight: 26,
-  compactPillMinWidth: 26,
-  dockMinHeight: 60,
-  dockWidth: 40,
-  iconButtonSize: 34,
-  navButtonInlinePadding: 9,
-  navButtonMinHeight: 38,
-  overlayActionMinHeight: 38,
-  popupModeMinHeight: 48,
-} as const;
-
 export const cognipaceTheme = createTheme({
   palette: {
     mode: "dark",
@@ -200,34 +183,11 @@ export const cognipaceTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          minHeight: cognipaceControlScale.buttonMinHeight,
-          paddingInline: cognipaceControlScale.buttonInlinePadding,
-        },
-        sizeSmall: {
-          minHeight: 28,
-          paddingInline: 9,
+          minHeight: 34,
+          paddingInline: 12,
         },
         containedPrimary: {
           boxShadow: `0 12px 24px ${alpha(cognipaceTokens.accent, 0.2)}`,
-        },
-      },
-    },
-    MuiIconButton: {
-      styleOverrides: {
-        sizeSmall: {
-          padding: 4,
-        },
-      },
-    },
-    MuiToggleButton: {
-      styleOverrides: {
-        root: {
-          minHeight: cognipaceControlScale.buttonMinHeight,
-          paddingInline: cognipaceControlScale.buttonInlinePadding,
-        },
-        sizeSmall: {
-          minHeight: 28,
-          paddingInline: 9,
         },
       },
     },

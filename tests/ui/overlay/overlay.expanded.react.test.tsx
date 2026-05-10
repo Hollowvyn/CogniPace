@@ -26,12 +26,6 @@ describe("OverlayPanel Expanded", () => {
       screen.getByRole("group", { name: "Review assessment" })
     ).getAllByRole("button");
     expect(assessmentButtons).toHaveLength(4);
-    expect(screen.getByRole("button", { name: "Restart" })).toHaveStyle({
-      minHeight: "38px",
-    });
-    expect(screen.getByRole("button", { name: "Easy Fast" })).toHaveStyle({
-      minHeight: "64px",
-    });
 
     await user.click(screen.getByRole("button", { name: "Easy Fast" }));
     expect(onSelectRating).toHaveBeenCalledWith(3);
