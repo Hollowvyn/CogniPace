@@ -555,7 +555,9 @@ export function ProblemsTable(props: ProblemsTableProps) {
                 );
               })
             )}
-            {pageRows.length > 0 && pageRows.length < rowsPerPage
+            {variant === "library" &&
+            pageRows.length > 0 &&
+            pageRows.length < rowsPerPage
               ? Array.from({ length: rowsPerPage - pageRows.length }).map(
                   (_, index) => (
                     <TableRow
