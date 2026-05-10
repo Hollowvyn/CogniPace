@@ -1,5 +1,6 @@
 /** Public surface of CogniPace UI primitives. */
 export { BrandMark } from "./BrandMark";
+export { CogniPaceIcon } from "./CogniPaceIcon";
 export { SurfaceCard } from "./card/SurfaceCard";
 export { MetricCard } from "./card/MetricCard";
 export { NumericDisplay } from "./chip/NumericDisplay";
