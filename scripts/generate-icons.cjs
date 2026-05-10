@@ -2,9 +2,10 @@
 // (16, 48, 128). Source of truth is the SVG; PNGs are generated artifacts.
 // Run via `npm run icons` or as part of `npm run build`.
 
-const sharp = require('sharp');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+
+const sharp = require('sharp');
 
 const ROOT = path.join(__dirname, '..');
 const SRC = path.join(ROOT, 'public', 'icons', 'icon.svg');
