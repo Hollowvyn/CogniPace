@@ -103,6 +103,7 @@ export function LibraryView(props: LibraryViewProps) {
       <ProblemsTable
         rows={tableRows}
         variant="library"
+        padToPageSize
         selectable
         selectedSlugs={selectedSlugs}
         onSelectionChange={setSelectedSlugs}

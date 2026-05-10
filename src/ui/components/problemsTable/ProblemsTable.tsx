@@ -88,6 +88,11 @@ export interface ProblemsTableProps {
    * (toggles `settings.skipPremium` off). Surfaced when a row is
    * suspended only because of the premium gate. */
   onEnablePremium?: () => void;
+  /** When true, short pages render empty placeholder rows up to
+   * `rowsPerPage` so the table height stays stable during pagination
+   * and filtering. Use for fixed catalogs (the Library); skip for
+   * naturally-small lists (Track groups). Default false. */
+  padToPageSize?: boolean;
 }
 
 const DIFFICULTY_OPTIONS: ReadonlyArray<Difficulty | "all"> = [
@@ -122,6 +127,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
     onSuspendProblem,
     onResetSchedule,
     onEnablePremium,
+    padToPageSize = false,
   } = props;
 
   const showRetentionColumn = variant === "library";
@@ -555,7 +561,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                 );
               })
             )}
-            {variant === "library" &&
+            {padToPageSize &&
             pageRows.length > 0 &&
             pageRows.length < rowsPerPage
               ? Array.from({ length: rowsPerPage - pageRows.length }).map(
