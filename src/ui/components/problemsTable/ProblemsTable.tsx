@@ -457,7 +457,14 @@ export function ProblemsTable(props: ProblemsTableProps) {
                           underline="hover"
                           color="primary"
                           variant="body1"
-                          sx={{ fontWeight: 500 }}
+                          sx={{
+                            fontWeight: 500,
+                            display: "-webkit-box",
+                            WebkitBoxOrient: "vertical",
+                            WebkitLineClamp: isExpanded ? 5 : 2,
+                            overflow: "hidden",
+                            wordBreak: "break-word",
+                          }}
                         >
                           {row.view.title}
                         </Link>
@@ -518,6 +525,22 @@ export function ProblemsTable(props: ProblemsTableProps) {
                 );
               })
             )}
+            {pageRows.length > 0 && pageRows.length < rowsPerPage
+              ? Array.from({ length: rowsPerPage - pageRows.length }).map(
+                  (_, index) => (
+                    <TableRow
+                      key={`empty-${index}`}
+                      aria-hidden
+                      sx={{ pointerEvents: "none" }}
+                    >
+                      <TableCell
+                        colSpan={totalColumns}
+                        sx={{ borderBottom: "none", height: 53 }}
+                      />
+                    </TableRow>
+                  ),
+                )
+              : null}
           </TableBody>
         </Table>
       </SurfaceTableContainer>
