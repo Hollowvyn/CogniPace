@@ -19,7 +19,7 @@ import { handleMessage } from "./router";
 chrome.runtime.onInstalled.addListener(async () => {
   // First read seeds the v7 aggregates (Tracks, Topics, Companies) idempotently.
   await getAppData();
-  void scheduleNextDueAlarm();
+  void handleStartupDueCheck();
 });
 
 chrome.runtime.onStartup.addListener(() => {
