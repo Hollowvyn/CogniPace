@@ -3,7 +3,6 @@ import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import {alpha} from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
 
 import {BrandMark, SurfaceIconButton, SurfaceTooltip} from "../../../components";
 import {cognipaceTokens} from "../../../theme";
@@ -29,26 +28,8 @@ export function PopupHeader(props: PopupHeaderProps) {
         justifyContent="space-between"
         spacing={1}
       >
-        <Box sx={{width: 32}}>
-          <BrandMark/>
-        </Box>
-        <Typography
-          component="h1"
-          sx={{
-            color: cognipaceTokens.accent,
-            flex: 1,
-            fontFamily:
-              '"Space Grotesk", "Avenir Next", "Segoe UI", sans-serif',
-            fontSize: "1.02rem",
-            fontWeight: 700,
-            letterSpacing: "-0.03em",
-            textAlign: "center",
-          }}
-          translate="no"
-        >
-          CogniPace
-        </Typography>
-        <Stack direction="row" spacing={0.45} sx={{minWidth: 64}}>
+        <BrandMark />
+        <Stack direction="row" spacing={0.45}>
           <SurfaceTooltip title="Refresh popup">
             <SurfaceIconButton
               aria-label="Refresh popup"

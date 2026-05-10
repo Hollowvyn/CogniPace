@@ -94,13 +94,9 @@ export async function maybeNotifyDueQueue(now = new Date()): Promise<boolean> {
     return false;
   }
 
-  /**
-   * [TODO]: ÍReplace with CogniPace icon when available. Using a 1x1 transparent PNG to avoid showing the default Chrome notification icon, which can be visually jarring and doesn't fit with our branding.
-   */
   await chrome.notifications.create("cognipace-due", {
     type: "basic",
-    iconUrl:
-      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
     title: "CogniPace reviews due",
     message: `You have ${queue.dueCount} review${queue.dueCount === 1 ? "" : "s"} due today.`,
   });

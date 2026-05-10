@@ -4,7 +4,8 @@
   "private": true,
   "description": "CogniPace Chrome extension for deliberate interview practice",
   "scripts": {
-    "build": "node build.cjs",
+    "icons": "node scripts/generate-icons.cjs",
+    "build": "node scripts/generate-icons.cjs && node build.cjs",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -29,7 +30,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.0.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -47,6 +48,7 @@
     "globals": "^17.5.0",
     "jsdom": "^26.1.0",
     "prettier": "^3.8.3",
+    "sharp": "^0.33.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.59.0",
     "vitest": "^3.2.4"
@@ -60,5 +62,8 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "ts-fsrs": "^5.3.1"
+  },
+  "volta": {
+    "node": "24.15.0"
   }
 }

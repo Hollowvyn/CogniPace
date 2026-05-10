@@ -53,6 +53,9 @@ describe("background notifications", () => {
   const alarmsClearMock = vi.fn();
   const alarmsCreateMock = vi.fn();
   const notificationsCreateMock = vi.fn();
+  const runtimeGetURLMock = vi.fn(
+    (path: string) => `chrome-extension://test/${path}`
+  );
 
   beforeEach(() => {
     readLocalStorageMock.mockReset();
@@ -61,6 +64,7 @@ describe("background notifications", () => {
     alarmsClearMock.mockReset();
     alarmsCreateMock.mockReset();
     notificationsCreateMock.mockReset();
+    runtimeGetURLMock.mockClear();
 
     Object.defineProperty(globalThis, "chrome", {
       configurable: true,
@@ -71,6 +75,9 @@ describe("background notifications", () => {
         },
         notifications: {
           create: notificationsCreateMock,
+        },
+        runtime: {
+          getURL: runtimeGetURLMock,
         },
       },
     });

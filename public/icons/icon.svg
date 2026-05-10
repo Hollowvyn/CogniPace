@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="cognipace-icon-title">
+  <title id="cognipace-icon-title">CogniPace</title>
+  <path d="M38 20A18 18 0 1 0 38 44M19 32L55 32M47 24L55 32L47 40"
+        fill="none" stroke="#ffa116" stroke-width="6"
+        stroke-linecap="round" stroke-linejoin="round" />
+</svg>
