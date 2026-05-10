@@ -23,8 +23,6 @@ const MESSAGE_TYPES = {
   GET_DASHBOARD_DATA: true,
   GET_APP_SHELL_DATA: true,
   GET_POPUP_SHELL_DATA: true,
-  SWITCH_ACTIVE_COURSE: true,
-  SET_ACTIVE_COURSE_CHAPTER: true,
   TRACK_COURSE_QUESTION_LAUNCH: true,
   IMPORT_CURATED_SET: true,
   IMPORT_CUSTOM_SET: true,
@@ -33,7 +31,6 @@ const MESSAGE_TYPES = {
   RESET_STUDY_HISTORY: true,
   UPDATE_SETTINGS: true,
   ADD_PROBLEM_BY_INPUT: true,
-  ADD_PROBLEM_TO_COURSE: true,
   SUSPEND_PROBLEM: true,
   RESET_PROBLEM_SCHEDULE: true,
   EDIT_PROBLEM: true,
@@ -72,7 +69,7 @@ const EMPTY_KEYS: readonly string[] = [];
 const SETTINGS_KEYS = [
   "dailyQuestionGoal",
   "studyMode",
-  "activeCourseId",
+  "activeFocus",
   "setsEnabled",
   "notifications",
   "memoryReview",
@@ -443,24 +440,15 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "RESET_STUDY_HISTORY":
       hasExactKeys(payload, EMPTY_KEYS, `Payload for ${type}`);
       return;
-    case "SWITCH_ACTIVE_COURSE":
-      hasExactKeys(payload, ["courseId"], `Payload for ${type}`);
-      requireString(payload.courseId, "courseId");
-      return;
-    case "SET_ACTIVE_COURSE_CHAPTER":
-      hasExactKeys(payload, ["courseId", "chapterId"], `Payload for ${type}`);
-      requireString(payload.courseId, "courseId");
-      requireString(payload.chapterId, "chapterId");
-      return;
     case "TRACK_COURSE_QUESTION_LAUNCH":
       hasExactKeys(
         payload,
-        ["slug", "courseId", "chapterId"],
+        ["slug", "trackId", "groupId"],
         `Payload for ${type}`
       );
       requireString(payload.slug, "slug");
-      requireOptionalString(payload.courseId, "courseId");
-      requireOptionalString(payload.chapterId, "chapterId");
+      requireString(payload.trackId, "trackId");
+      requireString(payload.groupId, "groupId");
       return;
     case "IMPORT_CURATED_SET":
       hasExactKeys(payload, ["setName"], `Payload for ${type}`);
@@ -481,7 +469,7 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
         "dailyQuestionGoal"
       );
       requireOptionalStudyMode(payload.studyMode, "studyMode");
-      requireOptionalString(payload.activeCourseId, "activeCourseId");
+      // activeFocus is validated by the receiving handler.
       if (payload.setsEnabled !== undefined) {
         validateSetsEnabled(payload.setsEnabled);
       }
@@ -510,17 +498,6 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.input, "input");
       requireOptionalString(payload.sourceSet, "sourceSet");
       requireOptionalStringArray(payload.topics, "topics");
-      requireOptionalBoolean(payload.markAsStarted, "markAsStarted");
-      return;
-    case "ADD_PROBLEM_TO_COURSE":
-      hasExactKeys(
-        payload,
-        ["courseId", "chapterId", "input", "markAsStarted"],
-        `Payload for ${type}`
-      );
-      requireString(payload.courseId, "courseId");
-      requireString(payload.chapterId, "chapterId");
-      requireString(payload.input, "input");
       requireOptionalBoolean(payload.markAsStarted, "markAsStarted");
       return;
     case "SUSPEND_PROBLEM":

@@ -1,12 +1,7 @@
 /**
- * v7 message handlers — additive surface for the Question-as-SSoT
- * refactor. These handlers run alongside the existing v6 handlers; once
- * UI surfaces start sending the new message types, this file is the
- * single landing zone for them.
- *
- * All mutations go through the legacy `mutateAppData` funnel so the v6
- * fields (`courseProgressById`, etc.) stay in sync via `ensureCourseData`
- * / `syncCourseProgress` until Phase 8 deletes them.
+ * v7 message handlers — single landing zone for Question / Track / Topic /
+ * Company / ActiveFocus mutations. All writes flow through the
+ * `mutateAppData` funnel so persistence is serialised.
  */
 import {
   readLocalStorage,
@@ -16,6 +11,7 @@ import { mutateAppData , PRE_V7_BACKUP_KEY } from "../../../data/repositories/ap
 import {
   asCompanyId,
   asProblemSlug,
+  asSetGroupId,
   asStudySetId,
   asTopicId,
   newStudySetId,
@@ -24,6 +20,7 @@ import {
   type StudySetId,
   type TopicId,
 } from "../../../domain/common/ids";
+import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
 import { nowIso } from "../../../domain/common/time";
 import {
   applyEdit,
@@ -369,7 +366,7 @@ export async function deleteStudySetHandler(payload: DeleteStudySetPayload) {
     delete data.studySetProgressById[id];
     if (
       data.settings.activeFocus &&
-      data.settings.activeFocus.kind === "studySet" &&
+      data.settings.activeFocus.kind === "track" &&
       data.settings.activeFocus.id === id
     ) {
       data.settings = { ...data.settings, activeFocus: null };
@@ -387,17 +384,39 @@ export interface SetActiveFocusPayload {
 
 export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
   const updated = await mutateAppData((data) => {
-    data.settings = {
-      ...data.settings,
-      activeFocus: payload.focus,
-      activeCourseId:
-        payload.focus?.kind === "studySet"
-          ? payload.focus.id
-          : data.settings.activeCourseId,
-    };
+    data.settings = { ...data.settings, activeFocus: payload.focus };
     return data;
   });
   return ok({ settings: updated.settings });
+}
+
+// ---------- Track launch tracking ----------
+
+export interface TrackQuestionLaunchPayload {
+  slug: string;
+  trackId: string;
+  groupId: string;
+}
+
+/** Records that the user launched a problem from a track context. Pins
+ * the active group on the StudySetProgress aggregate so the user's
+ * "where am I" pointer stays aligned across surfaces. */
+export async function trackQuestionLaunch(payload: TrackQuestionLaunchPayload) {
+  const slug = payload.slug.trim();
+  if (!slug || !payload.trackId || !payload.groupId) {
+    return ok({ tracked: false });
+  }
+  await mutateAppData((data) => {
+    markSlugLaunched(
+      data as unknown as Parameters<typeof markSlugLaunched>[0],
+      asStudySetId(payload.trackId),
+      asSetGroupId(payload.groupId),
+      asProblemSlug(slug),
+      nowIso(),
+    );
+    return data;
+  });
+  return ok({ tracked: true });
 }
 
 // ---------- Pre-v7 backup ----------

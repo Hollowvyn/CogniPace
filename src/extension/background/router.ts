@@ -9,13 +9,9 @@ import {
   openExtensionPage,
 } from "./handlers/appShellHandlers";
 import {
-  activateCourseChapter,
   addProblemByInput,
-  addProblemToCourse,
   importCurated,
   importCustom,
-  switchActiveCourseHandler,
-  trackCourseQuestionLaunch,
 } from "./handlers/courseHandlers";
 import {
   getProblemContext,
@@ -46,6 +42,7 @@ import {
   deleteStudySetHandler,
   editProblemHandler,
   setActiveFocusHandler,
+  trackQuestionLaunch,
   updateStudySetHandler,
 } from "./handlers/v7Handlers";
 
@@ -97,17 +94,9 @@ export async function handleMessage(
       return getAppShellData();
     case "GET_POPUP_SHELL_DATA":
       return getPopupShellData();
-    case "SWITCH_ACTIVE_COURSE":
-      return switchActiveCourseHandler(
-        message.payload as Parameters<typeof switchActiveCourseHandler>[0]
-      );
-    case "SET_ACTIVE_COURSE_CHAPTER":
-      return activateCourseChapter(
-        message.payload as Parameters<typeof activateCourseChapter>[0]
-      );
     case "TRACK_COURSE_QUESTION_LAUNCH":
-      return trackCourseQuestionLaunch(
-        message.payload as Parameters<typeof trackCourseQuestionLaunch>[0]
+      return trackQuestionLaunch(
+        message.payload as Parameters<typeof trackQuestionLaunch>[0]
       );
     case "IMPORT_CURATED_SET":
       return importCurated(
@@ -128,10 +117,6 @@ export async function handleMessage(
     case "ADD_PROBLEM_BY_INPUT":
       return addProblemByInput(
         message.payload as Parameters<typeof addProblemByInput>[0]
-      );
-    case "ADD_PROBLEM_TO_COURSE":
-      return addProblemToCourse(
-        message.payload as Parameters<typeof addProblemToCourse>[0]
       );
     case "SUSPEND_PROBLEM":
       return suspendProblem(

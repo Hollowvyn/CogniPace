@@ -4,20 +4,15 @@ import {
   computeReviewStreakDays,
   summarizeAnalytics,
 } from "../../../domain/analytics/summarizeAnalytics";
-import {
-  buildActiveCourseView,
-  buildCourseCards,
-  buildCourseOptions,
-  getCourseMemberships,
-} from "../../../domain/courses/courseProgress";
+import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
 import { buildRecommendedCandidates } from "../../../domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../../domain/queue/buildTodayQueue";
 import { effectivelySuspendedFlag } from "../../../domain/queue/effectivelySuspended";
 import {
-  ActiveCourseView,
+  ActiveTrackView,
   AppShellPayload,
-  CourseCardView,
+  TrackCardView,
   LibraryProblemRow,
   PopupShellPayload,
   StudySetView,
@@ -95,14 +90,14 @@ function buildStudySetViews(data: AppData, now: Date): StudySetView[] {
  */
 function buildActiveStudySetView(
   data: AppData,
-  studySetViews: readonly StudySetView[],
+  tracks: readonly StudySetView[],
 ): StudySetView | null {
   const focusedId =
-    data.settings.activeFocus?.kind === "studySet"
+    data.settings.activeFocus?.kind === "track"
       ? data.settings.activeFocus.id
-      : data.settings.activeCourseId;
+      : null;
   if (!focusedId) return null;
-  return studySetViews.find((view) => view.id === focusedId) ?? null;
+  return tracks.find((view) => view.id === focusedId) ?? null;
 }
 
 function libraryRows(
@@ -143,7 +138,6 @@ function libraryRows(
           now,
           targetRetention,
         }),
-        courses: getCourseMemberships(payload, slug),
         trackMemberships: getTrackMemberships(payload, slug),
         ...(suspendFlag.suspended ? { suspended: suspendFlag.reason } : {}),
       };
@@ -172,27 +166,27 @@ function synthesizeProblem(slug: string): Problem {
   };
 }
 
-function activeCourseCard(
-  activeCourse: ActiveCourseView | null
-): CourseCardView | null {
-  if (!activeCourse) {
+function activeTrackCard(
+  activeTrack: ActiveTrackView | null
+): TrackCardView | null {
+  if (!activeTrack) {
     return null;
   }
 
   return {
-    id: activeCourse.id,
-    name: activeCourse.name,
-    description: activeCourse.description,
-    sourceSet: activeCourse.sourceSet,
-    active: activeCourse.active,
-    totalQuestions: activeCourse.totalQuestions,
-    completedQuestions: activeCourse.completedQuestions,
-    completionPercent: activeCourse.completionPercent,
-    dueCount: activeCourse.dueCount,
-    totalChapters: activeCourse.totalChapters,
-    completedChapters: activeCourse.completedChapters,
-    nextQuestionTitle: activeCourse.nextQuestionTitle,
-    nextChapterTitle: activeCourse.nextChapterTitle,
+    id: activeTrack.id,
+    name: activeTrack.name,
+    description: activeTrack.description,
+    sourceSet: activeTrack.sourceSet,
+    active: activeTrack.active,
+    totalQuestions: activeTrack.totalQuestions,
+    completedQuestions: activeTrack.completedQuestions,
+    completionPercent: activeTrack.completionPercent,
+    dueCount: activeTrack.dueCount,
+    totalChapters: activeTrack.totalChapters,
+    completedChapters: activeTrack.completedChapters,
+    nextQuestionTitle: activeTrack.nextQuestionTitle,
+    nextChapterTitle: activeTrack.nextChapterTitle,
   };
 }
 
@@ -203,16 +197,34 @@ export function buildPopupShellPayload(
 ): PopupShellPayload {
   const queue = buildTodayQueue(data, now);
   const activeFocusId =
-    data.settings.activeFocus?.kind === "studySet"
+    data.settings.activeFocus?.kind === "track"
       ? data.settings.activeFocus.id
-      : data.settings.activeCourseId;
-  const activeCourse = buildActiveCourseView(data, activeFocusId, now);
+      : null;
+  const tracks = buildStudySetViews(data, now);
+  const activeTrackView = buildActiveStudySetView(data, tracks);
+  const activeTrackEntity = activeFocusId
+    ? (data.studySetsById[activeFocusId] ?? null)
+    : null;
+  const activeTrackProgress = activeFocusId
+    ? (data.studySetProgressById[activeFocusId] ?? null)
+    : null;
+  const activeTrack = buildActiveTrackView({
+    activeFocus: data.settings.activeFocus,
+    trackView: activeTrackView,
+    trackEntity: activeTrackEntity,
+    trackProgress: activeTrackProgress,
+    studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<
+      typeof buildActiveTrackView
+    >[0]["studyStatesBySlug"],
+    problemsBySlug: data.problemsBySlug as unknown as Parameters<
+      typeof buildActiveTrackView
+    >[0]["problemsBySlug"],
+    now,
+  });
   const candidates = buildRecommendedCandidates(
     queue,
-    activeCourse?.nextQuestion?.slug
+    activeTrack?.nextQuestion?.slug
   );
-  const studySetViews = buildStudySetViews(data, now);
-  const activeStudySetView = buildActiveStudySetView(data, studySetViews);
 
   return {
     settings: data.settings,
@@ -221,11 +233,10 @@ export function buildPopupShellPayload(
       streakDays: computeReviewStreakDays(data, now),
       recommended: candidates[0] ?? null,
       recommendedCandidates: candidates,
-      courseNext: activeCourse?.nextQuestion ?? null,
-      activeCourse: activeCourseCard(activeCourse),
+      trackNext: activeTrack?.nextQuestion ?? null,
+      activeTrack: activeTrackCard(activeTrack),
     },
-    activeCourse,
-    activeStudySetView,
+    activeTrack: activeTrack,
   };
 }
 
@@ -242,7 +253,7 @@ export async function getAppShellData() {
   const popupShell = buildPopupShellPayload(data, now);
   const queue = buildTodayQueue(data, now);
   const analytics = summarizeAnalytics(data, now);
-  const studySetViews = buildStudySetViews(data, now);
+  const tracks = buildStudySetViews(data, now);
 
   const topicChoices = Object.values(data.topicsById)
     .map((topic) => ({ id: topic.id, name: topic.name }))
@@ -256,10 +267,8 @@ export async function getAppShellData() {
     queue,
     analytics,
     recommendedCandidates: popupShell.popup.recommendedCandidates,
-    courses: buildCourseCards(data),
     library: libraryRows(data, now),
-    courseOptions: buildCourseOptions(data),
-    studySetViews,
+    tracks,
     topicChoices,
     companyChoices,
   });

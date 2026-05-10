@@ -1,9 +1,8 @@
 /** Service-worker bootstrap for background lifecycle, alarms, and runtime routing. */
 import {
-  mutateAppData,
+  getAppData,
   STORAGE_KEY,
 } from "../../data/repositories/appDataRepository";
-import { ensureCourseData } from "../../domain/courses/courseProgress";
 import {
   assertAuthorizedRuntimeMessage,
   validateRuntimeMessage,
@@ -18,10 +17,8 @@ import { fail } from "./responses";
 import { handleMessage } from "./router";
 
 chrome.runtime.onInstalled.addListener(async () => {
-  await mutateAppData((data) => {
-    ensureCourseData(data);
-    return data;
-  });
+  // First read seeds the v7 aggregates (Tracks, Topics, Companies) idempotently.
+  await getAppData();
   void scheduleNextDueAlarm();
 });
 
