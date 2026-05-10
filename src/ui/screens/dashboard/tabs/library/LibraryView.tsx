@@ -15,6 +15,10 @@ import Select from "@mui/material/Select";
 import React, { useMemo, useState } from "react";
 
 import {
+  resetProblemSchedule,
+  suspendProblem,
+} from "../../../../../data/repositories/v7ActionRepository";
+import {
   AppShellPayload,
   LibraryProblemRow,
 } from "../../../../../domain/views";
@@ -24,13 +28,11 @@ import {
   type ProblemRowData,
   type ProblemSelection,
 } from "../../../../components/problemsTable";
-import type { ProblemSlug } from "../../../../../domain/common/ids";
 import { LibraryFilters } from "../../../../presentation/library";
+
 import { EditProblemModal } from "./EditProblemModal";
-import {
-  resetProblemSchedule,
-  suspendProblem,
-} from "../../../../../data/repositories/v7ActionRepository";
+
+import type { ProblemSlug } from "../../../../../domain/common/ids";
 
 export interface LibraryViewProps {
   filters: LibraryFilters;

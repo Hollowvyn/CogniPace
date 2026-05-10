@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { applyFiltersAndSort } from "../../../src/ui/components/problemsTable/useProblemsTable";
-import { createDefaultFilters } from "../../../src/ui/components/problemsTable/types";
-import type { ProblemRowData } from "../../../src/ui/components/problemsTable/types";
 import {
   asProblemSlug,
 } from "../../../src/domain/common/ids";
+import { createDefaultFilters } from "../../../src/ui/components/problemsTable/types";
+import { applyFiltersAndSort } from "../../../src/ui/components/problemsTable/useProblemsTable";
+
 import type { Difficulty, StudyPhase } from "../../../src/domain/types";
+import type { ProblemRowData } from "../../../src/ui/components/problemsTable/types";
+
+
 
 function row(
   slug: string,

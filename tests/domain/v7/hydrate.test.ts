@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildProblemView,
-  buildStudySetView,
-} from "../../../src/domain/views/hydrate";
-import {
   asCompanyId,
   asProblemSlug,
   asSetGroupId,
   asTopicId,
 } from "../../../src/domain/common/ids";
+import { applyEdit } from "../../../src/domain/problems/operations";
+import {
+  buildProblemView,
+  buildStudySetView,
+} from "../../../src/domain/views/hydrate";
 import {
   emptyAppDataV7,
   makeCompanyV7,
@@ -18,10 +19,11 @@ import {
   makeProblemV7,
   makeTopicV7,
 } from "../../support/v7Fixtures";
+
 import type { Company } from "../../../src/domain/companies/model";
 import type { Problem } from "../../../src/domain/problems/model";
 import type { Topic } from "../../../src/domain/topics/model";
-import { applyEdit } from "../../../src/domain/problems/operations";
+
 
 describe("v7 view hydration", () => {
   it("hydrates Topic and Company FKs into display labels", () => {

@@ -16,7 +16,7 @@ import {
 import { consumePreV7Backup } from "../../../../data/repositories/v7ActionRepository";
 
 export function PreV7BackupSnackbar() {
-  const [backup, setBackup] = useState<unknown | null>(null);
+  const [backup, setBackup] = useState<unknown>(null);
   const [open, setOpen] = useState(false);
   const requestedRef = useRef(false);
 
@@ -28,7 +28,7 @@ export function PreV7BackupSnackbar() {
       if (cancelled) return;
       const blob =
         response && "ok" in response && response.ok
-          ? (response.data as { backup: unknown | null }).backup
+          ? (response.data as { backup: unknown }).backup
           : null;
       if (blob) {
         setBackup(blob);

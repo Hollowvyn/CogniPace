@@ -5,7 +5,8 @@
  */
 import { useMemo, useState } from "react";
 
-import type { Difficulty, StudyPhase } from "../../../domain/types";
+import { createDefaultFilters } from "./types";
+
 import type {
   ProblemRowData,
   ProblemsTableFilters,
@@ -13,7 +14,7 @@ import type {
   SortDirection,
   SortKey,
 } from "./types";
-import { createDefaultFilters } from "./types";
+import type { Difficulty, StudyPhase } from "../../../domain/types";
 
 export interface UseProblemsTableOptions {
   rows: ProblemRowData[];

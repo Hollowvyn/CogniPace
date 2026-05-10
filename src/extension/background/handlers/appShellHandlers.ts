@@ -10,14 +10,10 @@ import {
   buildCourseOptions,
   getCourseMemberships,
 } from "../../../domain/courses/courseProgress";
+import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
 import { buildRecommendedCandidates } from "../../../domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../../domain/queue/buildTodayQueue";
 import { effectivelySuspendedFlag } from "../../../domain/queue/effectivelySuspended";
-import {
-  buildProblemView,
-  buildStudySetView,
-  buildStudyStateView,
-} from "../../../domain/views/hydrate";
 import {
   ActiveCourseView,
   AppShellPayload,
@@ -27,10 +23,15 @@ import {
   StudySetView,
   TrackMembership,
 } from "../../../domain/views";
-import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
-import type { AppData, Problem } from "../../../domain/types";
+import {
+  buildProblemView,
+  buildStudySetView,
+  buildStudyStateView,
+} from "../../../domain/views/hydrate";
 import { validateExtensionPagePath } from "../../runtime/validator";
 import { ok } from "../responses";
+
+import type { AppData, Problem } from "../../../domain/types";
 
 /** Hydrates the v7 list of explicit StudySet memberships for a problem slug.
  * Derived sets (kind: company/topic/difficulty) aren't included here — they

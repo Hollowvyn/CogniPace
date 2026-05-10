@@ -14,17 +14,19 @@
  * The repository is intentionally the only place where chrome.storage is
  * touched in the v7 layer. Everything else is pure-mutator.
  */
-import type { AppDataV7 } from "../../../domain/data/appDataV7";
-import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 import { STORAGE_KEY } from "../../../domain/common/constants";
 import { nowIso } from "../../../domain/common/time";
+import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 import {
   readLocalStorage,
   removeLocalStorage,
   writeLocalStorage,
 } from "../../datasources/chrome/storage";
+
 import { aggregates } from "./aggregateRegistry";
 import { buildFreshAppDataV7 } from "./seed";
+
+import type { AppDataV7 } from "../../../domain/data/appDataV7";
 
 /**
  * Sidecar key holding the pre-v7 blob. UI mounts read this once, prompt
@@ -91,7 +93,7 @@ export async function mutateAppDataV7(
  * surface a download prompt — the sidecar lives in storage only until
  * the user has had a chance to retrieve it.
  */
-export async function consumeSidecarBackup(): Promise<unknown | null> {
+export async function consumeSidecarBackup(): Promise<unknown> {
   const result = await readLocalStorage([PRE_V7_BACKUP_KEY]);
   const blob = result[PRE_V7_BACKUP_KEY];
   if (!blob) return null;

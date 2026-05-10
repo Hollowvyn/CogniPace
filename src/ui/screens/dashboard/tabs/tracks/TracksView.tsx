@@ -27,12 +27,10 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React, { useMemo, useState } from "react";
 
-import type { ActiveFocus } from "../../../../../domain/active-focus/model";
-import type {
-  AppShellPayload,
-  ProblemView,
-  StudySetView,
-} from "../../../../../domain/views";
+import {
+  resetProblemSchedule,
+  suspendProblem,
+} from "../../../../../data/repositories/v7ActionRepository";
 import {
   asSetGroupId,
   asStudySetId,
@@ -40,16 +38,19 @@ import {
   type SetGroupId,
   type StudySetId,
 } from "../../../../../domain/common/ids";
+import { SurfaceCard } from "../../../../components";
 import {
   ProblemsTable,
   type ProblemRowData,
 } from "../../../../components/problemsTable";
-import { SurfaceCard } from "../../../../components";
 import { EditProblemModal } from "../library/EditProblemModal";
-import {
-  resetProblemSchedule,
-  suspendProblem,
-} from "../../../../../data/repositories/v7ActionRepository";
+
+import type { ActiveFocus } from "../../../../../domain/active-focus/model";
+import type {
+  AppShellPayload,
+  ProblemView,
+  StudySetView,
+} from "../../../../../domain/views";
 
 interface TracksViewProps {
   payload: AppShellPayload | null;
@@ -70,9 +71,9 @@ interface SlugStudyData {
 }
 
 export function TracksView(props: TracksViewProps) {
-  const studySetViews = props.payload?.studySetViews ?? [];
+  const studySetViews = useMemo(() => props.payload?.studySetViews ?? [], [props.payload?.studySetViews]);
   const settings = props.payload?.settings;
-  const library = props.payload?.library ?? [];
+  const library = useMemo(() => props.payload?.library ?? [], [props.payload?.library]);
   const activeFocus = settings?.activeFocus ?? null;
 
   // Single source of truth: the persisted activeFocus. Click handlers

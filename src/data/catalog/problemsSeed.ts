@@ -16,9 +16,11 @@ import {
   type TopicId,
 } from "../../domain/common/ids";
 import { slugToTitle, slugToUrl } from "../../domain/problem/slug";
-import type { Difficulty, Problem } from "../../domain/types";
-import type { CatalogPlan } from "./studySetsSeed";
+
 import { resolveSeedTopicId } from "./topicsSeed";
+
+import type { CatalogPlan } from "./studySetsSeed";
+import type { Difficulty, Problem } from "../../domain/types";
 
 interface ProblemAccumulator {
   title?: string;

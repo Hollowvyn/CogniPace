@@ -10,8 +10,8 @@ import type {
   StudySetId,
   TopicId,
 } from "../../../domain/common/ids";
-import type { ProblemView, StudyStateView } from "../../../domain/views";
 import type { Difficulty, StudyPhase } from "../../../domain/types";
+import type { ProblemView, StudyStateView } from "../../../domain/views";
 
 /** A single row passed to the table. */
 export interface ProblemRowData {

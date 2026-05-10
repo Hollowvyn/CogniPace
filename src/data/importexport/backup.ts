@@ -2,6 +2,11 @@ import {
   hasGroupedUserSettings,
   sanitizeStoredUserSettings,
 } from "../../domain/settings";
+import { resolveSeedTopicId } from "../catalog/topicsSeed";
+import {
+  aggregates as v7AggregateDescriptors,
+  EXPORTABLE_AGGREGATE_KEYS,
+} from "../repositories/v7/aggregateRegistry";
 
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "./constants";
 import {
@@ -24,7 +29,13 @@ import {
   slugToUrl,
   uniqueStrings,
 } from "./utils";
-import { resolveSeedTopicId } from "../catalog/topicsSeed";
+
+/**
+ * v7 import allowlist. Aggregate keys are derived from the registry so
+ * adding a new aggregate later is a single registry edit. The non-data
+ * top-level fields ("version", "problems", "settings") plus the v6
+ * legacy ones are listed explicitly.
+ */
 
 /**
  * Cross-walks legacy `topics: string[]` into v7 `topicIds: TopicId[]`.
@@ -39,17 +50,6 @@ function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
   }
   return out;
 }
-
-/**
- * v7 import allowlist. Aggregate keys are derived from the registry so
- * adding a new aggregate later is a single registry edit. The non-data
- * top-level fields ("version", "problems", "settings") plus the v6
- * legacy ones are listed explicitly.
- */
-import {
-  aggregates as v7AggregateDescriptors,
-  EXPORTABLE_AGGREGATE_KEYS,
-} from "../repositories/v7/aggregateRegistry";
 
 const ALLOWED_IMPORT_KEYS = new Set<string>([
   "version",
@@ -499,6 +499,7 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
   const v7Aggregates = sanitizeV7AggregatesFromPayload(payload);
 
   return {
+    ...v7Aggregates,
     version:
       payload.version === undefined
         ? undefined
@@ -516,7 +517,6 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
       payload.courseProgressById,
       importedAt
     ),
-    ...v7Aggregates,
   };
 }
 

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveStudySetSlugs } from "../../../src/domain/sets/services/resolveSlugs";
 import {
   asCompanyId,
   asProblemSlug,
   asTopicId,
 } from "../../../src/domain/common/ids";
+import { resolveStudySetSlugs } from "../../../src/domain/sets/services/resolveSlugs";
 import {
   emptyAppDataV7,
   makeCourseStudySetV7,

@@ -61,7 +61,7 @@ describe("Popup Recommendations", () => {
     );
 
     expect(tabsCreateMock).toHaveBeenCalledWith({
-      url: "chrome-extension://test/dashboard.html?view=courses",
+      url: "chrome-extension://test/dashboard.html?view=tracks",
     });
   });
 

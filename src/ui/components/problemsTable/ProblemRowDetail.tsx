@@ -24,11 +24,21 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
+import { alpha } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
 import React from "react";
 
+import {
+  formatRetention,
+  retrievalTone,
+  type Tone,
+} from "../../presentation/studyState";
+import { cognipaceTokens } from "../../theme";
+import { ToneChip } from "../chip/ToneChip";
+
+import type { ProblemsTableVariant } from "./ProblemsTable";
+import type { ProblemRowData } from "./types";
 import type { ProblemSlug } from "../../../domain/common/ids";
 import type {
   AttemptHistoryEntry,
@@ -36,15 +46,7 @@ import type {
   ReviewMode,
   StudyStateSummary,
 } from "../../../domain/types";
-import { cognipaceTokens } from "../../theme";
-import { ToneChip } from "../chip/ToneChip";
-import {
-  formatRetention,
-  retrievalTone,
-  type Tone,
-} from "../../presentation/studyState";
-import type { ProblemRowData } from "./types";
-import type { ProblemsTableVariant } from "./ProblemsTable";
+
 
 const MAX_VISIBLE_CHIPS = 6;
 

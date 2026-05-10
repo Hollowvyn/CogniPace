@@ -3,6 +3,8 @@
  * a thin sendMessage wrapper — UI components import these rather than
  * constructing payload objects inline.
  */
+import { sendMessage } from "../../extension/runtime/client";
+
 import type { ActiveFocus } from "../../domain/active-focus/model";
 import type {
   CompanyFilter,
@@ -11,7 +13,6 @@ import type {
   TopicFilter,
 } from "../../domain/sets/model";
 import type { Difficulty } from "../../domain/types";
-import { sendMessage } from "../../extension/runtime/client";
 
 export interface EditProblemPatch {
   title?: string;

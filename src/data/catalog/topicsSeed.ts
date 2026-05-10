@@ -8,8 +8,9 @@
  * resolve to a single canonical id at seed time so problems carry only
  * canonical references.
  */
-import type { Topic } from "../../domain/topics/model";
 import { asTopicId, type TopicId } from "../../domain/common/ids";
+
+import type { Topic } from "../../domain/topics/model";
 
 interface TopicSeed {
   id: TopicId;

@@ -42,7 +42,7 @@ describe("DashboardApp", () => {
 
     expect(await screen.findByText("All Tracked Problems")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Search title or slug"), {
+    fireEvent.change(screen.getByLabelText("Search problems"), {
       target: { value: "merge" },
     });
 

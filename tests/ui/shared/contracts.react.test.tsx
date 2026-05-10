@@ -26,7 +26,7 @@ import { makePayload, makeStudyState } from "../support/appShellFixtures";
 
 describe("route and selector contracts", () => {
   it("parses dashboard routes and builds view urls", () => {
-    expect(readDashboardViewFromSearch("?view=courses")).toBe("courses");
+    expect(readDashboardViewFromSearch("?view=tracks")).toBe("tracks");
     expect(readDashboardViewFromSearch("?view=unknown")).toBe("dashboard");
     expect(
       buildDashboardUrl(

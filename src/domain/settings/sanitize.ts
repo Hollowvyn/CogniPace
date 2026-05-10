@@ -1,6 +1,5 @@
-import type { ActiveFocus } from "../active-focus/model";
-import { asSetGroupId, asStudySetId } from "../common/ids";
 import { DEFAULT_COURSE_ID } from "../common/constants";
+import { asSetGroupId, asStudySetId } from "../common/ids";
 
 import {
   DifficultyGoalSettings,
@@ -9,6 +8,8 @@ import {
   UserSettings,
 } from "./model";
 import { createInitialSetsEnabled, createInitialUserSettings } from "./seed";
+
+import type { ActiveFocus } from "../active-focus/model";
 
 type UnknownRecord = Record<string, unknown>;
 

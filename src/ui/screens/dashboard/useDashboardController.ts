@@ -24,7 +24,6 @@ import {
   updateSettings,
 } from "../../../data/repositories/settingsRepository";
 import { setActiveFocus } from "../../../data/repositories/v7ActionRepository";
-import type { ActiveFocus } from "../../../domain/active-focus/model";
 import {
   areUserSettingsEqual,
   cloneUserSettings,
@@ -52,6 +51,8 @@ import {
   isExtensionContext,
   useAppShellQuery,
 } from "../../state/useAppShellQuery";
+
+import type { ActiveFocus } from "../../../domain/active-focus/model";
 
 function isImportPayloadCandidate(
   value: unknown

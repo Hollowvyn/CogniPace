@@ -6,13 +6,14 @@
  * UI components must NOT call these directly — they consume the result
  * over the message channel.
  */
-import type { Company } from "../companies/model";
 import { getStudyStateSummary } from "../fsrs/studyState";
-import type { Problem, EditableProblemField } from "../problems/model";
-import { listEditedFields } from "../problems/operations";
 import { slugToTitle, slugToUrl } from "../problem/slug";
+import { listEditedFields } from "../problems/operations";
 import { isGroupUnlocked } from "../sets/prerequisites";
 import { resolveStudySetSlugs } from "../sets/services/resolveSlugs";
+
+import type { Company } from "../companies/model";
+import type { Problem, EditableProblemField } from "../problems/model";
 import type { StudySet } from "../sets/model";
 import type { StudySetProgress } from "../sets/progress";
 import type { StudyState } from "../study-state/model";
@@ -187,10 +188,11 @@ function synthesizeProblemView(slug: string): ProblemView {
 }
 
 function hydrateTopics(
-  ids: readonly string[],
+  ids: readonly string[] | undefined,
   topicsById: Record<string, Topic>,
 ): TopicLabel[] {
   const out: TopicLabel[] = [];
+  if (!ids) return out;
   for (const id of ids) {
     const topic = topicsById[id];
     if (!topic) continue;
@@ -200,10 +202,11 @@ function hydrateTopics(
 }
 
 function hydrateCompanies(
-  ids: readonly string[],
+  ids: readonly string[] | undefined,
   companiesById: Record<string, Company>,
 ): CompanyLabel[] {
   const out: CompanyLabel[] = [];
+  if (!ids) return out;
   for (const id of ids) {
     const company = companiesById[id];
     if (!company) continue;

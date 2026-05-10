@@ -20,11 +20,11 @@ import Collapse from "@mui/material/Collapse";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
+import Link from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
-import Tooltip from "@mui/material/Tooltip";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
@@ -32,14 +32,11 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React, { Fragment, useCallback, useState } from "react";
 
-import type { ProblemSlug } from "../../../domain/common/ids";
-import type { Difficulty, StudyPhase } from "../../../domain/types";
 import { SurfaceTableContainer } from "../../components/table/SurfaceTableContainer";
-import { ToneChip } from "../chip/ToneChip";
-import Link from "@mui/material/Link";
 import {
   difficultyTone,
   formatDisplayDate,
@@ -47,8 +44,9 @@ import {
   formatStudyPhase,
   retrievalTone,
 } from "../../presentation/studyState";
+import { ToneChip } from "../chip/ToneChip";
+
 import { ProblemRowDetail } from "./ProblemRowDetail";
-import { useProblemsTable } from "./useProblemsTable";
 import {
   ROWS_PER_PAGE_OPTIONS,
   type ProblemRowData,
@@ -58,6 +56,10 @@ import {
   type SortDirection,
   type SortKey,
 } from "./types";
+import { useProblemsTable } from "./useProblemsTable";
+
+import type { ProblemSlug } from "../../../domain/common/ids";
+import type { Difficulty, StudyPhase } from "../../../domain/types";
 
 export type ProblemsTableVariant = "tracks" | "library";
 

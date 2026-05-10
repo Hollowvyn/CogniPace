@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  addGroup,
   addGroupPrerequisite,
   addProblemToGroup,
   createStudySet,
   deleteStudySet,
-  removeGroupPrerequisite,
   reorderGroupProblems,
   reorderGroups,
   updateStudySet,
@@ -93,7 +91,7 @@ describe("v7 studySetRepository", () => {
 
     const updated = data.studySetsById[set.id];
     const a = updated.groups.find((g) => g.id === asSetGroupId("course::0"));
-    expect(a?.prerequisiteGroupIds).toEqual([]);
+    expect(a?.prerequisiteGroupIds).toEqual(undefined);
   });
 
   it("removes a group and cleans up dangling prerequisites", () => {
