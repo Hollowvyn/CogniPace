@@ -83,4 +83,28 @@ describe("settings sanitization", () => {
     assert.equal(sanitized.setsEnabled.Blind75, true);
     assert.equal(sanitized.setsEnabled.NeetCode150, false);
   });
+
+  it("derives activeFocus from activeCourseId when activeFocus is missing", () => {
+    const sanitized = sanitizeStoredUserSettings({
+      activeCourseId: "Grind75",
+    });
+
+    assert.deepEqual(sanitized.activeFocus, {
+      kind: "studySet",
+      id: "Grind75",
+    });
+    assert.equal(sanitized.activeCourseId, "Grind75");
+  });
+
+  it("keeps activeFocus and activeCourseId aligned when only activeFocus is set", () => {
+    const sanitized = sanitizeStoredUserSettings({
+      activeFocus: { kind: "studySet", id: "NeetCode150" },
+    });
+
+    assert.equal(sanitized.activeCourseId, "NeetCode150");
+    assert.deepEqual(sanitized.activeFocus, {
+      kind: "studySet",
+      id: "NeetCode150",
+    });
+  });
 });

@@ -38,4 +38,24 @@ describe("Popup Shell Handler", () => {
     expect(payload.popup.recommended?.slug).toBe("two-sum");
     expect(payload.popup.activeCourse).not.toHaveProperty("chapters");
   });
+
+  it("derives activeCourse from settings.activeFocus when it diverges from activeCourseId", () => {
+    const data = normalizeStoredAppData({
+      problemsBySlug: {
+        "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
+      },
+      settings: {
+        activeCourseId: "Blind75",
+        activeFocus: { kind: "studySet", id: "Grind75" },
+        dailyQuestionGoal: 10,
+      },
+      studyStatesBySlug: {},
+    });
+
+    const payload = buildPopupShellPayload(data);
+
+    expect(payload.activeCourse?.id).toBe("Grind75");
+    expect(payload.popup.activeCourse?.id).toBe("Grind75");
+    expect(payload.activeStudySetView?.id).toBe("Grind75");
+  });
 });

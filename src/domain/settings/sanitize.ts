@@ -229,7 +229,15 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     initial.timing.requireSolveTime
   );
 
-  const sanitizedActiveFocus = sanitizeActiveFocus(source.activeFocus);
+  const sanitizedActiveCourseId =
+    typeof source.activeCourseId === "string" && source.activeCourseId.trim()
+      ? source.activeCourseId
+      : DEFAULT_COURSE_ID;
+  const explicitActiveFocus = sanitizeActiveFocus(source.activeFocus);
+  const sanitizedActiveFocus: ActiveFocus =
+    explicitActiveFocus !== undefined
+      ? explicitActiveFocus
+      : { kind: "studySet", id: asStudySetId(sanitizedActiveCourseId) };
 
   return {
     dailyQuestionGoal: nonNegativeInteger(
@@ -238,13 +246,11 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     ),
     studyMode: studyMode(source.studyMode, initial.studyMode),
     activeCourseId:
-      typeof source.activeCourseId === "string" && source.activeCourseId.trim()
-        ? source.activeCourseId
-        : DEFAULT_COURSE_ID,
+      sanitizedActiveFocus?.kind === "studySet"
+        ? sanitizedActiveFocus.id
+        : sanitizedActiveCourseId,
     setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
-    ...(sanitizedActiveFocus !== undefined
-      ? { activeFocus: sanitizedActiveFocus }
-      : {}),
+    activeFocus: sanitizedActiveFocus,
     notifications: {
       enabled: booleanValue(
         notifications.enabled,

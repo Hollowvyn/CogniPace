@@ -198,7 +198,11 @@ export function buildPopupShellPayload(
   now = new Date()
 ): PopupShellPayload {
   const queue = buildTodayQueue(data, now);
-  const activeCourse = buildActiveCourseView(data, data.settings.activeCourseId, now);
+  const activeFocusId =
+    data.settings.activeFocus?.kind === "studySet"
+      ? data.settings.activeFocus.id
+      : data.settings.activeCourseId;
+  const activeCourse = buildActiveCourseView(data, activeFocusId, now);
   const candidates = buildRecommendedCandidates(
     queue,
     activeCourse?.nextQuestion?.slug
