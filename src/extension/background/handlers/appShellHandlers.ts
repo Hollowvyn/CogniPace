@@ -56,7 +56,7 @@ function getTrackMemberships(data: AppData, slug: string): TrackMembership[] {
 }
 
 /** Hydrates every StudySet for dashboard consumption. */
-function buildStudySetViews(data: AppData): StudySetView[] {
+function buildStudySetViews(data: AppData, now: Date): StudySetView[] {
   const order = data.studySetOrder.length > 0
     ? data.studySetOrder
     : (Object.keys(data.studySetsById) as typeof data.studySetOrder);
@@ -77,6 +77,10 @@ function buildStudySetViews(data: AppData): StudySetView[] {
         topicsById: data.topicsById,
         companiesById: data.companiesById,
         progress,
+        studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<
+          typeof buildStudySetView
+        >[0]["studyStatesBySlug"],
+        now,
       }),
     );
   }
@@ -207,7 +211,7 @@ export function buildPopupShellPayload(
     queue,
     activeCourse?.nextQuestion?.slug
   );
-  const studySetViews = buildStudySetViews(data);
+  const studySetViews = buildStudySetViews(data, now);
   const activeStudySetView = buildActiveStudySetView(data, studySetViews);
 
   return {
@@ -238,7 +242,7 @@ export async function getAppShellData() {
   const popupShell = buildPopupShellPayload(data, now);
   const queue = buildTodayQueue(data, now);
   const analytics = summarizeAnalytics(data, now);
-  const studySetViews = buildStudySetViews(data);
+  const studySetViews = buildStudySetViews(data, now);
 
   const topicChoices = Object.values(data.topicsById)
     .map((topic) => ({ id: topic.id, name: topic.name }))
