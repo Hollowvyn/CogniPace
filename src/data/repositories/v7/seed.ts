@@ -8,22 +8,22 @@ import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 import { createInitialUserSettings } from "../../../domain/settings";
 import { buildTopicSeed } from "../../catalog/topicsSeed";
 import { buildCompanySeed } from "../../catalog/companiesSeed";
+import { buildProblemSeed } from "../../catalog/problemsSeed";
 import { buildStudySetSeed } from "../../catalog/studySetsSeed";
 import { listCatalogPlans } from "../../catalog/curatedSets";
 
 /** Returns the freshly-seeded v7 AppData. `now` is used as the createdAt /
  * updatedAt for every seeded entity so the snapshot is deterministic. */
 export function buildFreshAppDataV7(now: string): AppDataV7 {
+  const plans = listCatalogPlans();
   const topicsById = buildTopicSeed(now);
   const companiesById = buildCompanySeed(now);
-  const { studySetsById, studySetOrder } = buildStudySetSeed(
-    listCatalogPlans(),
-    now,
-  );
+  const { studySetsById, studySetOrder } = buildStudySetSeed(plans, now);
+  const problemsBySlug = buildProblemSeed(plans, now);
 
   return {
     schemaVersion: STORAGE_SCHEMA_VERSION_V7,
-    problemsBySlug: {},
+    problemsBySlug,
     studyStatesBySlug: {},
     topicsById,
     companiesById,
