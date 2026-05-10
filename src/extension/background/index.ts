@@ -22,7 +22,7 @@ chrome.runtime.onInstalled.addListener(async () => {
     ensureCourseData(data);
     return data;
   });
-  void scheduleNextDueAlarm();
+  void handleStartupDueCheck();
 });
 
 chrome.runtime.onStartup.addListener(() => {
