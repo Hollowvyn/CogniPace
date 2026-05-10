@@ -4,13 +4,13 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import {getStudyPhaseLabel} from "../../../domain/fsrs/studyState";
-import {CourseQuestionView} from "../../../domain/views";
+import {TrackQuestionView} from "../../../domain/views";
 import {SurfaceCard, ToneChip} from "../../components";
 import {difficultyTone, labelForStatus,} from "../../presentation/studyState";
 
 export interface ActiveTrackNextCardProps {
   actionLabel?: string;
-  activeCourseId?: string;
+  activeTrackId?: string;
   buttonFullWidth?: boolean;
   buttonVariant?: ButtonProps["variant"];
   compact?: boolean;
@@ -20,13 +20,13 @@ export interface ActiveTrackNextCardProps {
     courseId?: string;
     chapterId?: string;
   }) => Promise<void> | void;
-  view: CourseQuestionView;
+  view: TrackQuestionView;
 }
 
 export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
   const {
     actionLabel = "Continue Path",
-    activeCourseId,
+    activeTrackId,
     buttonFullWidth = false,
     buttonVariant = "outlined",
     compact = false,
@@ -55,7 +55,7 @@ export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
           onClick={() => {
             void onOpenProblem({
               slug: view.slug,
-              courseId: activeCourseId,
+              courseId: activeTrackId,
               chapterId: view.chapterId,
             });
           }}

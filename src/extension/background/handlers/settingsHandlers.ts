@@ -9,10 +9,6 @@ import {
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
 import { nowIso } from "../../../domain/common/time";
-import {
-  ensureCourseData,
-  syncCourseProgress,
-} from "../../../domain/courses/courseProgress";
 import { normalizeStudyState } from "../../../domain/fsrs/studyState";
 import {
   slugToTitle,
@@ -40,11 +36,6 @@ export async function exportData() {
     problems: Object.values(data.problemsBySlug),
     studyStatesBySlug: data.studyStatesBySlug,
     settings: data.settings,
-    // v6 legacy fields — preserved in the export for backward-compat
-    // imports of older backup files until Phase F.3 drops them.
-    coursesById: data.coursesById,
-    courseOrder: data.courseOrder,
-    courseProgressById: data.courseProgressById,
     // v7 aggregates — every key is an aggregate root from the registry.
     topicsById: data.topicsById,
     companiesById: data.companiesById,
@@ -61,9 +52,6 @@ export async function importData(payload: ExportPayload) {
   await mutateAppData((data) => {
     data.problemsBySlug = {};
     data.studyStatesBySlug = {};
-    data.coursesById = sanitized.coursesById ?? {};
-    data.courseOrder = sanitized.courseOrder ?? [];
-    data.courseProgressById = sanitized.courseProgressById ?? {};
 
     for (const problem of sanitized.problems) {
       const slug = normalizeSlug(problem.leetcodeSlug);
@@ -118,8 +106,6 @@ export async function importData(payload: ExportPayload) {
     }
 
     data.settings = mergeSettings(data.settings, sanitized.settings ?? {});
-    ensureCourseData(data);
-    syncCourseProgress(data);
     return data;
   });
 
@@ -130,8 +116,6 @@ export async function importData(payload: ExportPayload) {
 export async function updateSettings(payload: Record<string, unknown>) {
   const updated = await mutateAppData((data) => {
     data.settings = mergeSettings(data.settings, payload);
-    ensureCourseData(data);
-    syncCourseProgress(data);
     return data;
   });
 
@@ -142,9 +126,7 @@ export async function updateSettings(payload: Record<string, unknown>) {
 export async function resetStudyHistory() {
   await mutateAppData((data) => {
     data.studyStatesBySlug = {};
-    data.courseProgressById = {};
-    ensureCourseData(data);
-    syncCourseProgress(data);
+    data.studySetProgressById = {};
     return data;
   });
 

@@ -1,10 +1,9 @@
 /**
  * Shared primitives + AppData root.
  *
- * v7 is mid-cutover: new aggregate fields (`topicsById`, `companiesById`,
- * `studySetsById`, ...) live alongside the v6 ones (`coursesById`,
- * `courseProgressById`, ...). Once handlers migrate to v7 the legacy
- * fields will be removed (Phase 8 of the refactor plan).
+ * The single source of truth is three aggregates: Problem
+ * (`problemsBySlug`), Track (`studySetsById` + `studySetProgressById`), and
+ * FSRSStudy (`studyStatesBySlug`). Everything else is derived.
  *
  * Aggregate-specific shapes live in their own folders (`problems/`,
  * `topics/`, `companies/`, `sets/`, `study-state/`); this file re-exports
@@ -156,62 +155,8 @@ export interface StudyState extends ReviewLogFields {
   updatedAt?: string;
 }
 
-export interface CourseQuestionRef {
-  slug: string;
-  title: string;
-  url: string;
-  difficulty?: Difficulty;
-  chapterId: string;
-  chapterTitle: string;
-  order: number;
-}
-
-export interface CourseChapter {
-  id: string;
-  title: string;
-  order: number;
-  questionSlugs: string[];
-}
-
-export interface CourseDefinition {
-  id: string;
-  name: string;
-  description: string;
-  sourceSet: string;
-  chapterIds: string[];
-  chaptersById: Record<string, CourseChapter>;
-  questionRefsBySlug: Record<string, CourseQuestionRef>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CourseQuestionProgress {
-  slug: string;
-  addedToLibraryAt?: string;
-  lastOpenedAt?: string;
-  lastReviewedAt?: string;
-  completedAt?: string;
-}
-
-export interface CourseChapterProgress {
-  chapterId: string;
-  currentQuestionSlug?: string;
-  completedAt?: string;
-  questionProgressBySlug: Record<string, CourseQuestionProgress>;
-}
-
-export interface CourseProgress {
-  courseId: string;
-  activeChapterId: string;
-  startedAt: string;
-  lastInteractedAt: string;
-  chapterProgressById: Record<string, CourseChapterProgress>;
-}
-
 /**
- * v7 AppData — carries both v6 and v7 aggregate fields during the
- * cutover. Once handlers all migrate, the v6 course fields will be
- * removed (refactor plan, Phase 8).
+ * AppData — the v7 single source of truth.
  */
 export interface AppData {
   schemaVersion: number;
@@ -229,12 +174,6 @@ export interface AppData {
   studySetOrder: string[];
   /** v7 — Per-StudySet progress, lazily created when first focused. */
   studySetProgressById: Record<string, import("./sets/progress").StudySetProgress>;
-  /** @deprecated v6 — collapsed into studySetsById in v7. */
-  coursesById: Record<string, CourseDefinition>;
-  /** @deprecated v6 — replaced by studySetOrder in v7. */
-  courseOrder: string[];
-  /** @deprecated v6 — replaced by studySetProgressById in v7. */
-  courseProgressById: Record<string, CourseProgress>;
   settings: UserSettings;
   /** Set by the v6→v7 migration; surfaces in support diagnostics. */
   lastMigrationAt?: string;
@@ -305,9 +244,6 @@ export interface ExportPayload {
   problems: Problem[];
   studyStatesBySlug: Record<string, StudyState>;
   settings?: Partial<UserSettings>;
-  coursesById?: Record<string, CourseDefinition>;
-  courseOrder?: string[];
-  courseProgressById?: Record<string, CourseProgress>;
   /** v7 — present once import/export migrates to aggregateRegistry. */
   topicsById?: Record<string, import("./topics/model").Topic>;
   companiesById?: Record<string, import("./companies/model").Company>;

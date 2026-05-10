@@ -25,7 +25,7 @@ export interface OverviewViewProps {
 }
 
 export function OverviewView(props: OverviewViewProps) {
-  const course = props.payload?.activeCourse ?? null;
+  const course = props.payload?.activeTrack ?? null;
   const recommended = props.payload?.popup.recommended ?? null;
 
   return (

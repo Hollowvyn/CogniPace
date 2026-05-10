@@ -152,9 +152,9 @@ export function usePopupController() {
   }
 
   return {
-    activeCourseDetail: payload?.activeCourse ?? null,
-    activeCourse: payload?.popup.activeCourse ?? null,
-    courseNext: payload?.popup.courseNext ?? null,
+    activeTrackDetail: payload?.activeTrack ?? null,
+    activeTrack: payload?.popup.activeTrack ?? null,
+    trackNext: payload?.popup.trackNext ?? null,
     hasMultipleRecommended:
       (payload?.popup.recommendedCandidates.length ?? 0) > 1,
     isInitialLoading: payload === null && !status.message,
@@ -162,7 +162,7 @@ export function usePopupController() {
     isCourseMode: studyMode === "studyPlan",
     studyMode,
     onOpenDashboard: openDashboardPage,
-    openCoursesDashboard: () => {
+    openTracksDashboard: () => {
       openDashboardPage("tracks");
     },
     onOpenProblem,

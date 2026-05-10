@@ -91,8 +91,8 @@ describe("OverlayPanel Expanded", () => {
       <OverlayPanel
         renderModel={makeExpandedRenderModel({
           postSubmitNext: {
-            kind: "course",
-            activeCourseId: "Blind75",
+            kind: "track",
+            activeTrackId: "Blind75",
             onOpenProblem,
             view: {
               slug: "contains-duplicate",

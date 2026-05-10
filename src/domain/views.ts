@@ -27,40 +27,41 @@ export interface RecommendedProblemView {
   alsoCourseNext?: boolean;
 }
 
-export type CourseQuestionStatusView =
+export type TrackQuestionStatusView =
   | "CURRENT"
   | "LOCKED"
   | "QUEUED"
   | "READY"
   | "DUE_NOW";
 
-export interface CourseQuestionView {
+export interface TrackQuestionView {
   slug: string;
   title: string;
   url: string;
   difficulty: Difficulty;
+  /** ID of the Track chapter (group) containing this question. */
   chapterId: string;
   chapterTitle: string;
-  status: CourseQuestionStatusView;
+  status: TrackQuestionStatusView;
   reviewPhase?: StudyPhase;
   nextReviewAt?: string;
   inLibrary: boolean;
   isCurrent: boolean;
 }
 
-export type CourseChapterStatusView = "COMPLETE" | "CURRENT" | "UPCOMING";
+export type TrackChapterStatusView = "COMPLETE" | "CURRENT" | "UPCOMING";
 
-export interface CourseChapterView {
+export interface TrackChapterView {
   id: string;
   title: string;
   order: number;
-  status: CourseChapterStatusView;
+  status: TrackChapterStatusView;
   totalQuestions: number;
   completedQuestions: number;
-  questions: CourseQuestionView[];
+  questions: TrackQuestionView[];
 }
 
-export interface CourseCardView {
+export interface TrackCardView {
   id: string;
   name: string;
   description: string;
@@ -76,18 +77,11 @@ export interface CourseCardView {
   nextChapterTitle?: string;
 }
 
-export interface ActiveCourseView extends CourseCardView {
+export interface ActiveTrackView extends TrackCardView {
   activeChapterId: string | null;
   activeChapterTitle: string | null;
-  nextQuestion: CourseQuestionView | null;
-  chapters: CourseChapterView[];
-}
-
-export interface LibraryCourseReference {
-  courseId: string;
-  courseName: string;
-  chapterId: string;
-  chapterTitle: string;
+  nextQuestion: TrackQuestionView | null;
+  chapters: TrackChapterView[];
 }
 
 export interface LibraryProblemRow {
@@ -98,9 +92,8 @@ export interface LibraryProblemRow {
   /** v7 — consolidated UI-ready view of the StudyState. Single source of
    * truth for FSRS metrics, attempt history, log fields, tags, etc. */
   studyState: StudyStateView | null;
-  /** Legacy v6 course memberships — kept until Phase F.3 cleanup. */
-  courses: LibraryCourseReference[];
-  /** v7 — explicit StudySet memberships (sets whose groups list this slug). */
+  /** Track memberships (Tracks whose groups list this slug). The single
+   * source of truth for "which curated lists contain this problem". */
   trackMemberships: TrackMembership[];
   /** Combined queue-skip flag with reason. Computed from
    * `studyState.suspended` (manual), premium-when-skipPremium-on, or
@@ -213,41 +206,32 @@ export type StudySetView =
       problems: ProblemView[];
     };
 
-export interface CourseOption {
-  id: string;
-  name: string;
-  chapterOptions: Array<{
-    id: string;
-    title: string;
-  }>;
-}
 
 export interface PopupViewData {
   dueCount: number;
   streakDays: number;
   recommended: RecommendedProblemView | null;
   recommendedCandidates: RecommendedProblemView[];
-  courseNext: CourseQuestionView | null;
-  activeCourse: CourseCardView | null;
+  /** Next question on the user's active Track. */
+  trackNext: TrackQuestionView | null;
+  /** Compact card view of the active Track. */
+  activeTrack: TrackCardView | null;
 }
 
 export interface PopupShellPayload {
   settings: UserSettings;
   popup: PopupViewData;
-  activeCourse: ActiveCourseView | null;
-  /** v7 — hydrated view of the currently-active StudySet (mirrors `activeCourse`). */
-  activeStudySetView: StudySetView | null;
+  /** Detailed view of the active Track for dashboard surfaces. */
+  activeTrack: ActiveTrackView | null;
 }
 
 export interface AppShellPayload extends PopupShellPayload {
   queue: TodayQueue;
   analytics: AnalyticsSummary;
   recommendedCandidates: RecommendedProblemView[];
-  courses: CourseCardView[];
   library: LibraryProblemRow[];
-  courseOptions: CourseOption[];
-  /** v7 — every StudySet hydrated for the dashboard's Tracks tab. */
-  studySetViews: StudySetView[];
+  /** Every Track hydrated for the dashboard's Tracks tab. */
+  tracks: StudySetView[];
   /** v7 — flat list of every Topic, sorted by name; for Autocomplete inputs. */
   topicChoices: TopicLabel[];
   /** v7 — flat list of every Company, sorted by name; for Autocomplete inputs. */
@@ -269,24 +253,6 @@ export interface ProblemContextResponse {
 export interface ProblemMutationResponse {
   problem: Problem;
   studyState: StudyState;
-}
-
-export interface CourseMutationResponse extends ProblemMutationResponse {
-  course: ActiveCourseView | null;
-}
-
-export interface CourseActivationResponse {
-  activeCourseId: string;
-  activeCourse: ActiveCourseView | null;
-}
-
-export interface CourseChapterActivationResponse {
-  activeCourse: ActiveCourseView | null;
-}
-
-export interface CourseLaunchTrackingResponse {
-  tracked: true;
-  activeCourse: ActiveCourseView | null;
 }
 
 export interface ImportSummaryResponse {

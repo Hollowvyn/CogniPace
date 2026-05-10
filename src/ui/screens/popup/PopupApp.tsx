@@ -30,16 +30,16 @@ export function PopupApp() {
     controller.status.scope === "recommendation"
       ? controller.status
       : undefined;
-  const courseStatus =
+  const trackStatus =
     controller.status.scope === "course" ? controller.status : undefined;
   const surfaceStatus =
     controller.status.scope === "surface" ? controller.status : undefined;
 
-  const courseActions = {
+  const trackActions = {
     onEnterFreestyle: () => {
       void controller.setStudyMode("freestyle");
     },
-    onOpenDashboard: controller.openCoursesDashboard,
+    onOpenDashboard: controller.openTracksDashboard,
     onOpenProblem: controller.onOpenProblem,
     onReturnToStudyMode: () => {
       void controller.setStudyMode("studyPlan");
@@ -122,38 +122,38 @@ export function PopupApp() {
 
             {controller.isInitialLoading ? (
               <TrackPanelLoading
-                onOpenDashboard={courseActions.onOpenDashboard}
-                status={courseStatus}
+                onOpenDashboard={trackActions.onOpenDashboard}
+                status={trackStatus}
               />
             ) : controller.studyMode === "freestyle" ? (
               <TrackPanelFreestyle
                 disabled={controller.isUpdatingStudyMode}
-                onOpenDashboard={courseActions.onOpenDashboard}
-                onReturnToStudyMode={courseActions.onReturnToStudyMode}
-                status={courseStatus}
+                onOpenDashboard={trackActions.onOpenDashboard}
+                onReturnToStudyMode={trackActions.onReturnToStudyMode}
+                status={trackStatus}
               />
-            ) : !controller.activeCourseDetail ? (
+            ) : !controller.activeTrackDetail ? (
               <TrackPanelEmpty
                 disabled={controller.isUpdatingStudyMode}
-                onEnterFreestyle={courseActions.onEnterFreestyle}
-                onOpenDashboard={courseActions.onOpenDashboard}
-                status={courseStatus}
+                onEnterFreestyle={trackActions.onEnterFreestyle}
+                onOpenDashboard={trackActions.onOpenDashboard}
+                status={trackStatus}
               />
-            ) : !controller.courseNext ? (
+            ) : !controller.trackNext ? (
               <TrackPanelCompleted
-                courseName={controller.activeCourseDetail.name}
+                trackName={controller.activeTrackDetail.name}
                 disabled={controller.isUpdatingStudyMode}
-                onEnterFreestyle={courseActions.onEnterFreestyle}
-                onOpenDashboard={courseActions.onOpenDashboard}
-                status={courseStatus}
+                onEnterFreestyle={trackActions.onEnterFreestyle}
+                onOpenDashboard={trackActions.onOpenDashboard}
+                status={trackStatus}
               />
             ) : (
               <TrackPanelStudyPlan
-                actions={courseActions}
-                course={controller.activeCourseDetail}
+                actions={trackActions}
+                track={controller.activeTrackDetail}
                 disabled={controller.isUpdatingStudyMode}
-                nextQuestion={controller.courseNext}
-                status={courseStatus}
+                nextQuestion={controller.trackNext}
+                status={trackStatus}
               />
             )}
           </Stack>

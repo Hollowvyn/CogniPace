@@ -1,7 +1,7 @@
 /** UI-only presentation helpers for study-state and recommendation labels. */
 import { getStudyPhaseLabel } from "../../domain/fsrs/studyState";
 import {
-  CourseQuestionStatusView,
+  TrackQuestionStatusView,
   Difficulty,
   RecommendedReason,
   StudyPhase,
@@ -49,7 +49,7 @@ export function recommendedTone(reason: RecommendedReason): Tone {
 }
 
 /** Maps course-question status into the shared tone system. */
-export function questionStatusTone(status: CourseQuestionStatusView): Tone {
+export function questionStatusTone(status: TrackQuestionStatusView): Tone {
   if (status === "DUE_NOW" || status === "CURRENT" || status === "READY") {
     return "accent";
   }

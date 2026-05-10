@@ -1,5 +1,5 @@
 import { StudyState, StudyStateSummary } from "../../../src/domain/types";
-import { CourseQuestionView, StudyStateView } from "../../../src/domain/views";
+import { TrackQuestionView, StudyStateView } from "../../../src/domain/views";
 import { createMockAppShellPayload } from "../../../src/ui/mockData";
 
 /** Wrap a bare summary into a StudyStateView for fixture rows. */
@@ -56,7 +56,7 @@ export function makePayload() {
     },
   ] as NonNullable<typeof payload.popup.recommended>[];
 
-  const nextQuestion: CourseQuestionView = {
+  const nextQuestion: TrackQuestionView = {
     slug: "contains-duplicate",
     title: "Contains Duplicate",
     url: "https://leetcode.com/problems/contains-duplicate/",
@@ -70,8 +70,8 @@ export function makePayload() {
     isCurrent: true,
   };
 
-  payload.popup.courseNext = nextQuestion;
-  payload.popup.activeCourse = {
+  payload.popup.trackNext = nextQuestion;
+  payload.popup.activeTrack = {
     id: "Blind75",
     name: "Blind 75",
     description: "Classic interview baseline.",
@@ -87,8 +87,8 @@ export function makePayload() {
     nextChapterTitle: "Arrays",
   };
 
-  payload.activeCourse = {
-    ...payload.popup.activeCourse,
+  payload.activeTrack = {
+    ...payload.popup.activeTrack,
     activeChapterId: "arrays-1",
     activeChapterTitle: "Arrays",
     nextQuestion,
@@ -152,36 +152,6 @@ export function makePayload() {
     },
   ];
 
-  payload.courses = [
-    payload.popup.activeCourse,
-    {
-      id: "NeetCode150",
-      name: "NeetCode 150",
-      description: "Expanded practice track.",
-      sourceSet: "NeetCode150",
-      active: false,
-      totalQuestions: 150,
-      completedQuestions: 40,
-      completionPercent: 27,
-      dueCount: 5,
-      totalChapters: 12,
-      completedChapters: 3,
-      nextQuestionTitle: "3Sum",
-      nextChapterTitle: "Two Pointers",
-    },
-  ];
-
-  payload.courseOptions = [
-    {
-      id: "Blind75",
-      name: "Blind 75",
-      chapterOptions: [
-        { id: "arrays-1", title: "Arrays" },
-        { id: "graphs-1", title: "Graphs" },
-      ],
-    },
-  ];
-
   const blind75Problem = payload.queue.items[0].problem;
   const mergeIntervalsProblem = {
     ...payload.queue.items[0].problem,
@@ -197,14 +167,6 @@ export function makePayload() {
     {
       problem: blind75Problem,
       studyState: viewFromSummary(payload.queue.items[0].studyStateSummary),
-      courses: [
-        {
-          courseId: "Blind75",
-          courseName: "Blind 75",
-          chapterId: "arrays-1",
-          chapterTitle: "Arrays",
-        },
-      ],
       view: {
         slug: blind75Problem.slug,
         title: blind75Problem.title,
@@ -234,7 +196,6 @@ export function makePayload() {
         isOverdue: false,
         overdueDays: 0,
       }),
-      courses: [],
       view: {
         slug: mergeIntervalsProblem.slug,
         title: mergeIntervalsProblem.title,

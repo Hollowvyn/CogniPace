@@ -84,27 +84,33 @@ describe("settings sanitization", () => {
     assert.equal(sanitized.setsEnabled.NeetCode150, false);
   });
 
-  it("derives activeFocus from activeCourseId when activeFocus is missing", () => {
+  it("derives activeFocus from legacy activeCourseId when activeFocus is missing", () => {
     const sanitized = sanitizeStoredUserSettings({
       activeCourseId: "Grind75",
     });
 
     assert.deepEqual(sanitized.activeFocus, {
-      kind: "studySet",
+      kind: "track",
       id: "Grind75",
     });
-    assert.equal(sanitized.activeCourseId, "Grind75");
   });
 
-  it("keeps activeFocus and activeCourseId aligned when only activeFocus is set", () => {
+  it("preserves an explicit activeFocus", () => {
     const sanitized = sanitizeStoredUserSettings({
-      activeFocus: { kind: "studySet", id: "NeetCode150" },
+      activeFocus: { kind: "track", id: "NeetCode150" },
     });
 
-    assert.equal(sanitized.activeCourseId, "NeetCode150");
     assert.deepEqual(sanitized.activeFocus, {
-      kind: "studySet",
+      kind: "track",
       id: "NeetCode150",
+    });
+  });
+
+  it("falls back to the default Track when no focus or legacy id is set", () => {
+    const sanitized = sanitizeStoredUserSettings({});
+    assert.deepEqual(sanitized.activeFocus, {
+      kind: "track",
+      id: "Blind75",
     });
   });
 });

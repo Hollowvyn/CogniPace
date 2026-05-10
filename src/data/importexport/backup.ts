@@ -10,17 +10,11 @@ import {
 
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "./constants";
 import {
-  CourseChapter,
-  CourseDefinition,
-  CourseProgress,
-  CourseQuestionProgress,
-  CourseQuestionRef,
-  CourseChapterProgress,
   ExportPayload,
   Problem,
   StudyState,
   UserSettings,
-} from "./types";
+} from "../../domain/types";
 import {
   normalizeSlug,
   nowIso,
@@ -58,12 +52,6 @@ const ALLOWED_IMPORT_KEYS = new Set<string>([
   // backwards-compat imports of older backup files).
   "problems",
   "settings",
-  // v6 course aggregates — kept transitional so old backup files import
-  // gracefully. Phase F.3 drops them from the runtime; sanitiser ignores
-  // them silently if missing.
-  "coursesById",
-  "courseOrder",
-  "courseProgressById",
   // v7 aggregates — derived from the registry.
   ...EXPORTABLE_AGGREGATE_KEYS,
 ]);
@@ -191,220 +179,6 @@ function sanitizeSettings(value: unknown): UserSettings | undefined {
   return sanitizeStoredUserSettings(value);
 }
 
-function sanitizeCourseChapter(
-  chapterIdValue: string,
-  chapter: unknown,
-  fallbackOrder: number
-): CourseChapter | null {
-  if (!isRecord(chapter)) {
-    return null;
-  }
-
-  const normalizedQuestionSlugs = uniqueStrings(
-    (isStringArray(chapter.questionSlugs) ? chapter.questionSlugs : [])
-      .map((slug) => normalizeSlug(slug))
-      .filter(Boolean)
-  );
-
-  return {
-    id: chapterIdValue,
-    title: safeString(chapter.title, "Chapter"),
-    order: safeInteger(chapter.order, fallbackOrder),
-    questionSlugs: normalizedQuestionSlugs,
-  };
-}
-
-function sanitizeCourseQuestionRef(
-  slugKey: string,
-  ref: unknown
-): CourseQuestionRef | null {
-  if (!isRecord(ref)) {
-    return null;
-  }
-
-  const slug = normalizeSlug(typeof ref.slug === "string" ? ref.slug : slugKey);
-  if (!slug) {
-    return null;
-  }
-
-  return {
-    slug,
-    title: safeString(ref.title, slugToTitle(slug)),
-    url: slugToUrl(slug),
-    difficulty: parseDifficulty(
-      typeof ref.difficulty === "string" ? ref.difficulty : undefined
-    ),
-    chapterId: safeString(ref.chapterId, ""),
-    chapterTitle: safeString(ref.chapterTitle, ""),
-    order: safeInteger(ref.order, 0),
-  };
-}
-
-function sanitizeCoursesById(
-  value: unknown,
-  importedAt: string
-): Record<string, CourseDefinition> {
-  if (!isRecord(value)) {
-    return {};
-  }
-
-  const result: Record<string, CourseDefinition> = {};
-
-  for (const [courseIdValue, rawCourse] of Object.entries(value)) {
-    if (!isRecord(rawCourse)) {
-      continue;
-    }
-
-    const rawChapterIds = isStringArray(rawCourse.chapterIds)
-      ? rawCourse.chapterIds.map((id) => id.trim()).filter(Boolean)
-      : [];
-    const rawChaptersById = isRecord(rawCourse.chaptersById)
-      ? rawCourse.chaptersById
-      : null;
-    const rawRefsBySlug = isRecord(rawCourse.questionRefsBySlug)
-      ? rawCourse.questionRefsBySlug
-      : null;
-
-    if (!rawChaptersById || !rawRefsBySlug) {
-      continue;
-    }
-
-    const chaptersById: Record<string, CourseChapter> = {};
-    const chapterIds: string[] = [];
-
-    rawChapterIds.forEach((chapterIdValue, index) => {
-      const sanitizedChapter = sanitizeCourseChapter(
-        chapterIdValue,
-        rawChaptersById[chapterIdValue],
-        index
-      );
-      if (!sanitizedChapter) {
-        return;
-      }
-      chaptersById[chapterIdValue] = sanitizedChapter;
-      chapterIds.push(chapterIdValue);
-    });
-
-    if (chapterIds.length === 0) {
-      continue;
-    }
-
-    const questionRefsBySlug: Record<string, CourseQuestionRef> = {};
-    for (const [slugKey, ref] of Object.entries(rawRefsBySlug)) {
-      const sanitizedRef = sanitizeCourseQuestionRef(slugKey, ref);
-      if (!sanitizedRef) {
-        continue;
-      }
-      questionRefsBySlug[sanitizedRef.slug] = sanitizedRef;
-    }
-
-    result[courseIdValue] = {
-      id: safeString(rawCourse.id, courseIdValue),
-      name: safeString(rawCourse.name, courseIdValue),
-      description: safeString(rawCourse.description, ""),
-      sourceSet: safeString(rawCourse.sourceSet, "Custom"),
-      chapterIds,
-      chaptersById,
-      questionRefsBySlug,
-      createdAt: safeString(rawCourse.createdAt, importedAt),
-      updatedAt: safeString(rawCourse.updatedAt, importedAt),
-    };
-  }
-
-  return result;
-}
-
-function sanitizeQuestionProgress(
-  slugKey: string,
-  value: unknown
-): CourseQuestionProgress | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  const slug = normalizeSlug(
-    typeof value.slug === "string" ? value.slug : slugKey
-  );
-  if (!slug) {
-    return null;
-  }
-
-  return {
-    slug,
-    addedToLibraryAt: safeOptionalString(value.addedToLibraryAt),
-    lastOpenedAt: safeOptionalString(value.lastOpenedAt),
-    lastReviewedAt: safeOptionalString(value.lastReviewedAt),
-    completedAt: safeOptionalString(value.completedAt),
-  };
-}
-
-function sanitizeChapterProgress(
-  chapterIdValue: string,
-  value: unknown
-): CourseChapterProgress | null {
-  if (!isRecord(value) || !isRecord(value.questionProgressBySlug)) {
-    return null;
-  }
-
-  const questionProgressBySlug: Record<string, CourseQuestionProgress> = {};
-  for (const [slugKey, progress] of Object.entries(
-    value.questionProgressBySlug
-  )) {
-    const sanitized = sanitizeQuestionProgress(slugKey, progress);
-    if (!sanitized) {
-      continue;
-    }
-    questionProgressBySlug[sanitized.slug] = sanitized;
-  }
-
-  return {
-    chapterId: chapterIdValue,
-    currentQuestionSlug: safeOptionalString(value.currentQuestionSlug),
-    completedAt: safeOptionalString(value.completedAt),
-    questionProgressBySlug,
-  };
-}
-
-function sanitizeCourseProgressById(
-  value: unknown,
-  importedAt: string
-): Record<string, CourseProgress> {
-  if (!isRecord(value)) {
-    return {};
-  }
-
-  const result: Record<string, CourseProgress> = {};
-
-  for (const [courseIdValue, rawProgress] of Object.entries(value)) {
-    if (!isRecord(rawProgress) || !isRecord(rawProgress.chapterProgressById)) {
-      continue;
-    }
-
-    const chapterProgressById: Record<string, CourseChapterProgress> = {};
-    for (const [chapterIdValue, chapterProgress] of Object.entries(
-      rawProgress.chapterProgressById
-    )) {
-      const sanitizedChapterProgress = sanitizeChapterProgress(
-        chapterIdValue,
-        chapterProgress
-      );
-      if (!sanitizedChapterProgress) {
-        continue;
-      }
-      chapterProgressById[chapterIdValue] = sanitizedChapterProgress;
-    }
-
-    result[courseIdValue] = {
-      courseId: safeString(rawProgress.courseId, courseIdValue),
-      activeChapterId: safeString(rawProgress.activeChapterId, ""),
-      startedAt: safeString(rawProgress.startedAt, importedAt),
-      lastInteractedAt: safeString(rawProgress.lastInteractedAt, importedAt),
-      chapterProgressById,
-    };
-  }
-
-  return result;
-}
 
 export function assertImportPayloadShape(
   payload: unknown
@@ -445,33 +219,6 @@ export function assertImportPayloadShape(
     throw new Error("Invalid import format: settings must be an object.");
   }
 
-  if (
-    "coursesById" in payload &&
-    payload.coursesById !== undefined &&
-    !isRecord(payload.coursesById)
-  ) {
-    throw new Error("Invalid import format: coursesById must be an object.");
-  }
-
-  if (
-    "courseOrder" in payload &&
-    payload.courseOrder !== undefined &&
-    !isStringArray(payload.courseOrder)
-  ) {
-    throw new Error(
-      "Invalid import format: courseOrder must be a string array."
-    );
-  }
-
-  if (
-    "courseProgressById" in payload &&
-    payload.courseProgressById !== undefined &&
-    !isRecord(payload.courseProgressById)
-  ) {
-    throw new Error(
-      "Invalid import format: courseProgressById must be an object."
-    );
-  }
 }
 
 export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
@@ -489,7 +236,6 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
   const problems = (payload.problems ?? [])
     .map((problem) => sanitizeProblem(problem, importedAt))
     .filter((problem): problem is Problem => problem !== null);
-  const coursesById = sanitizeCoursesById(payload.coursesById, importedAt);
 
   // v7 aggregate fields are sanitised via the registry's per-aggregate
   // function. Derived sanitisers (which validate per-entity shape) live
@@ -507,16 +253,6 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
     problems,
     studyStatesBySlug: sanitizeStudyStatesBySlug(payload.studyStatesBySlug),
     settings: sanitizeSettings(payload.settings),
-    coursesById,
-    courseOrder: uniqueStrings(
-      (Array.isArray(payload.courseOrder) ? payload.courseOrder : [])
-        .map((courseId) => courseId.trim())
-        .filter(Boolean)
-    ),
-    courseProgressById: sanitizeCourseProgressById(
-      payload.courseProgressById,
-      importedAt
-    ),
   };
 }
 

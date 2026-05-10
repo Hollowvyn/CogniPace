@@ -1,4 +1,4 @@
-import { DEFAULT_COURSE_ID } from "../common/constants";
+import { DEFAULT_TRACK_ID } from "../common/constants";
 import { asSetGroupId, asStudySetId } from "../common/ids";
 
 import {
@@ -81,10 +81,10 @@ function settingsRecord(value: unknown, fallback: object): UnknownRecord {
 function sanitizeActiveFocus(value: unknown): ActiveFocus | undefined {
   if (value === null) return null;
   if (!isRecord(value)) return undefined;
-  if (value.kind !== "studySet") return undefined;
+  if (value.kind !== "track") return undefined;
   if (typeof value.id !== "string" || !value.id.trim()) return undefined;
   const focus: ActiveFocus = {
-    kind: "studySet",
+    kind: "track",
     id: asStudySetId(value.id),
   };
   if (typeof value.groupId === "string" && value.groupId.trim()) {
@@ -189,8 +189,7 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
   return (
     isNonNegativeInteger(source.dailyQuestionGoal) &&
     isStudyMode(source.studyMode) &&
-    typeof source.activeCourseId === "string" &&
-    Boolean(source.activeCourseId.trim()) &&
+    sanitizeActiveFocus(source.activeFocus) !== undefined &&
     isBooleanRecord(source.setsEnabled) &&
     typeof notifications.enabled === "boolean" &&
     typeof notifications.dailyTime === "string" &&
@@ -229,15 +228,17 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     initial.timing.requireSolveTime
   );
 
-  const sanitizedActiveCourseId =
+  // Honour the v6 `activeCourseId` field on legacy import payloads to
+  // recover an active focus when none is set explicitly.
+  const legacyCourseIdFallback =
     typeof source.activeCourseId === "string" && source.activeCourseId.trim()
       ? source.activeCourseId
-      : DEFAULT_COURSE_ID;
+      : DEFAULT_TRACK_ID;
   const explicitActiveFocus = sanitizeActiveFocus(source.activeFocus);
   const sanitizedActiveFocus: ActiveFocus =
     explicitActiveFocus !== undefined
       ? explicitActiveFocus
-      : { kind: "studySet", id: asStudySetId(sanitizedActiveCourseId) };
+      : { kind: "track", id: asStudySetId(legacyCourseIdFallback) };
 
   return {
     dailyQuestionGoal: nonNegativeInteger(
@@ -245,10 +246,6 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       initial.dailyQuestionGoal
     ),
     studyMode: studyMode(source.studyMode, initial.studyMode),
-    activeCourseId:
-      sanitizedActiveFocus?.kind === "studySet"
-        ? sanitizedActiveFocus.id
-        : sanitizedActiveCourseId,
     setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
     activeFocus: sanitizedActiveFocus,
     notifications: {

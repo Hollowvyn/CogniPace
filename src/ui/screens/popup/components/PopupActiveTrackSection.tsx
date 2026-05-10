@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { ActiveCourseView, CourseQuestionView } from "../../../../domain/views";
+import { ActiveTrackView, TrackQuestionView } from "../../../../domain/views";
 import {
   FieldAssistRow,
   InlineStatusRegion,
@@ -99,7 +99,7 @@ function TrackStateCard(props: {
 
 function TrackNextInset(props: {
   courseId: string;
-  nextQuestion: CourseQuestionView;
+  nextQuestion: TrackQuestionView;
   onOpenProblem: (target: {
     slug: string;
     courseId?: string;
@@ -206,7 +206,7 @@ export function TrackPanelLoading(props: {
 }
 
 export function TrackPanelCompleted(props: {
-  courseName: string;
+  trackName: string;
   disabled?: boolean;
   onEnterFreestyle: () => void;
   onOpenDashboard: () => void;
@@ -220,7 +220,7 @@ export function TrackPanelCompleted(props: {
       onOpenDashboard={props.onOpenDashboard}
       primaryActionLabel="Start freestyle mode"
       status={props.status}
-      title={props.courseName}
+      title={props.trackName}
     >
       <Typography color="text.secondary" variant="body2">
         Track complete. Switch tracks in the dashboard or stay focused on due
@@ -263,15 +263,15 @@ export function TrackPanelStudyPlan(props: {
       chapterId?: string;
     }) => Promise<void> | void;
   };
-  course: ActiveCourseView;
+  track: ActiveTrackView;
   disabled?: boolean;
-  nextQuestion: CourseQuestionView;
+  nextQuestion: TrackQuestionView;
   status?: UiStatus;
 }) {
   return (
     <TrackStateCard
       action={
-        <ToneChip label={`${props.course.completionPercent}%`} tone="accent" />
+        <ToneChip label={`${props.track.completionPercent}%`} tone="accent" />
       }
       disabled={props.disabled}
       helper="Study mode advances the active path. Use freestyle if you want queue-only review without changing track next."
@@ -279,19 +279,19 @@ export function TrackPanelStudyPlan(props: {
       onOpenDashboard={props.actions.onOpenDashboard}
       primaryActionLabel="Start freestyle mode"
       status={props.status}
-      title={props.course.name}
+      title={props.track.name}
     >
       <Stack spacing={1.25}>
         <Typography color="text.secondary" variant="body2">
-          {props.course.description}
+          {props.track.description}
         </Typography>
-        <ProgressTrack value={props.course.completionPercent} />
+        <ProgressTrack value={props.track.completionPercent} />
         <Typography color="text.secondary" variant="body2">
-          {props.course.completedQuestions}/{props.course.totalQuestions}{" "}
+          {props.track.completedQuestions}/{props.track.totalQuestions}{" "}
           questions traversed
         </Typography>
         <TrackNextInset
-          courseId={props.course.id}
+          courseId={props.track.id}
           nextQuestion={props.nextQuestion}
           onOpenProblem={props.actions.onOpenProblem}
         />

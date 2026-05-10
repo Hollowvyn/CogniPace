@@ -40,9 +40,11 @@ function makeAppData(): AppData {
     studyStatesBySlug: {
       "two-sum": makeScheduledState("2026-05-01T09:00:00.000Z"),
     },
-    coursesById: {},
-    courseOrder: [],
-    courseProgressById: {},
+    topicsById: {},
+    companiesById: {},
+    studySetsById: {},
+    studySetOrder: [],
+    studySetProgressById: {},
     settings,
   };
 }

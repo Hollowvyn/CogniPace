@@ -30,10 +30,10 @@ export function OverlayPostSubmitNextCard(
     <Collapse in={props.nextTarget !== null} timeout={180} unmountOnExit>
       <Fade in={props.nextTarget !== null} timeout={180}>
         <div ref={sectionRef}>
-          {props.nextTarget?.kind === "course" ? (
+          {props.nextTarget?.kind === "track" ? (
             <ActiveTrackNextCard
               actionLabel="Open next"
-              activeCourseId={props.nextTarget.activeCourseId}
+              activeTrackId={props.nextTarget.activeTrackId}
               buttonFullWidth
               compact
               label="Next in track"

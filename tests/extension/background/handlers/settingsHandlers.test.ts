@@ -47,12 +47,10 @@ describe("Reset Study History", () => {
       settings: {
         dailyQuestionGoal: 42,
       },
-      coursesById: {},
-      courseProgressById: {}
     };
 
     storageMocks.readLocalStorage.mockResolvedValue({
-      [STORAGE_KEY]: initialData
+      [STORAGE_KEY]: initialData,
     });
 
     // Verify initial state
@@ -68,10 +66,9 @@ describe("Reset Study History", () => {
     const savedData = lastCall?.[0][STORAGE_KEY];
 
     assert.equal(Object.keys(savedData.studyStatesBySlug).length, 0);
-    // ensureCourseData re-seeds defaults if missing, syncCourseProgress creates progress entries for them.
-    assert.ok(Object.keys(savedData.courseProgressById).length > 0);
+    // v7 — track progress aggregate is wiped alongside study states.
+    assert.equal(Object.keys(savedData.studySetProgressById).length, 0);
     assert.equal(savedData.problemsBySlug["two-sum"].leetcodeSlug, "two-sum");
     assert.equal(savedData.settings.dailyQuestionGoal, 42);
-    assert.ok(savedData.coursesById["Blind75"]);
   });
 });
