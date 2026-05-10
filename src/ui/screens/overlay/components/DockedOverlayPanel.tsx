@@ -189,7 +189,7 @@ export function DockedOverlayPanel(
               transform: "scale(0.82)",
             }}
           >
-            <BrandMark/>
+            <BrandMark variant="compact"/>
           </Box>
         </ButtonBase>
       </SurfaceTooltip>

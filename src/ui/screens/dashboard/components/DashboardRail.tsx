@@ -1,5 +1,4 @@
 /** Persistent dashboard rail navigation for switching between dashboard screens. */
-import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -25,15 +24,7 @@ export function DashboardRail(props: DashboardRailProps) {
   return (
     <DashboardRailPanel>
       <Stack spacing={2}>
-        <Stack alignItems="center" direction="row" spacing={1.25}>
-          <BrandMark />
-          <Box>
-            <Typography variant="h6">CogniPace</Typography>
-            <Typography color="text.secondary" variant="body2">
-              v1.0.4
-            </Typography>
-          </Box>
-        </Stack>
+        <BrandMark subtitle="v1.0.4" />
         <Stack spacing={1}>
           <SurfaceSectionLabel>Navigate</SurfaceSectionLabel>
           {dashboardRoutes.map((route) => (
