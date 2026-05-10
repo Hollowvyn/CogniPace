@@ -22,7 +22,7 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import {
   createCustomCompany,
@@ -158,11 +158,17 @@ export function EditProblemModal(props: EditProblemModalProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync the draft when the dialog opens for a different problem.
-  useEffect(() => {
+  // Sync the draft when the dialog opens for a different problem
+  // by deriving it during render instead of inside an effect.
+  const [prevProblemSlug, setPrevProblemSlug] = useState<string | undefined>(problem?.slug);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (problem?.slug !== prevProblemSlug || open !== prevOpen) {
+    setPrevProblemSlug(problem?.slug);
+    setPrevOpen(open);
     setDraft(makeDraft(problem));
     setError(null);
-  }, [problem, open]);
+  }
 
   const handleSave = async () => {
     if (!problem) return;
