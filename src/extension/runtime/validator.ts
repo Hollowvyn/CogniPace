@@ -36,6 +36,16 @@ const MESSAGE_TYPES = {
   ADD_PROBLEM_TO_COURSE: true,
   SUSPEND_PROBLEM: true,
   RESET_PROBLEM_SCHEDULE: true,
+  EDIT_PROBLEM: true,
+  CREATE_CUSTOM_TOPIC: true,
+  CREATE_CUSTOM_COMPANY: true,
+  ASSIGN_TOPIC_TO_PROBLEM: true,
+  ASSIGN_COMPANY_TO_PROBLEM: true,
+  CREATE_STUDY_SET: true,
+  UPDATE_STUDY_SET: true,
+  DELETE_STUDY_SET: true,
+  SET_ACTIVE_FOCUS: true,
+  CONSUME_PRE_V7_BACKUP: true,
 } satisfies Record<MessageType, true>;
 
 const CONTENT_SCRIPT_MESSAGE_TYPES = new Set<MessageType>([
@@ -57,6 +67,21 @@ const ALLOWED_DASHBOARD_VIEWS = new Set([
   "analytics",
   "settings",
 ]);
+const ALLOWED_STUDY_SET_KINDS = new Set([
+  "custom",
+  "company",
+  "topic",
+  "difficulty",
+]);
+const EDIT_PROBLEM_PATCH_KEYS = [
+  "title",
+  "difficulty",
+  "url",
+  "isPremium",
+  "leetcodeId",
+  "topicIds",
+  "companyIds",
+] as const;
 
 const EMPTY_KEYS: readonly string[] = [];
 const SETTINGS_KEYS = [
@@ -193,6 +218,24 @@ function requireOptionalStudyMode(value: unknown, field: string): void {
   if (value !== undefined && value !== "freestyle" && value !== "studyPlan") {
     throw new Error(`Invalid field "${field}": expected a study mode.`);
   }
+}
+
+function requireStudySetKind(value: unknown, field: string): void {
+  const kind = requireString(value, field);
+  if (!ALLOWED_STUDY_SET_KINDS.has(kind)) {
+    throw new Error(`Invalid field "${field}": expected a supported study-set kind.`);
+  }
+}
+
+function requireEditProblemPatch(value: UnknownRecord): void {
+  hasExactKeys(value, EDIT_PROBLEM_PATCH_KEYS, 'Field "patch"');
+  requireOptionalString(value.title, "patch.title");
+  requireOptionalDifficulty(value.difficulty, "patch.difficulty");
+  requireOptionalString(value.url, "patch.url");
+  requireOptionalBoolean(value.isPremium, "patch.isPremium");
+  requireOptionalString(value.leetcodeId, "patch.leetcodeId");
+  requireOptionalStringArray(value.topicIds, "patch.topicIds");
+  requireOptionalStringArray(value.companyIds, "patch.companyIds");
 }
 
 function validateSetsEnabled(value: unknown): void {
@@ -527,6 +570,82 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       hasExactKeys(payload, ["slug", "keepNotes"], `Payload for ${type}`);
       requireString(payload.slug, "slug");
       requireOptionalBoolean(payload.keepNotes, "keepNotes");
+      return;
+    // v7 — additive surface for the Question-as-SSoT refactor.
+    case "EDIT_PROBLEM":
+      hasExactKeys(
+        payload,
+        ["slug", "patch", "markUserEdit"],
+        `Payload for ${type}`
+      );
+      requireString(payload.slug, "slug");
+      if (!isRecord(payload.patch)) {
+        throw new Error('Invalid field "patch": expected an object.');
+      }
+      requireEditProblemPatch(payload.patch);
+      requireOptionalBoolean(payload.markUserEdit, "markUserEdit");
+      return;
+    case "CREATE_CUSTOM_TOPIC":
+    case "CREATE_CUSTOM_COMPANY":
+      hasExactKeys(payload, ["name", "description"], `Payload for ${type}`);
+      requireString(payload.name, "name");
+      requireOptionalString(payload.description, "description");
+      return;
+    case "ASSIGN_TOPIC_TO_PROBLEM":
+      hasExactKeys(
+        payload,
+        ["slug", "topicId", "assigned"],
+        `Payload for ${type}`
+      );
+      requireString(payload.slug, "slug");
+      requireString(payload.topicId, "topicId");
+      requireOptionalBoolean(payload.assigned, "assigned");
+      return;
+    case "ASSIGN_COMPANY_TO_PROBLEM":
+      hasExactKeys(
+        payload,
+        ["slug", "companyId", "assigned"],
+        `Payload for ${type}`
+      );
+      requireString(payload.slug, "slug");
+      requireString(payload.companyId, "companyId");
+      requireOptionalBoolean(payload.assigned, "assigned");
+      return;
+    case "CREATE_STUDY_SET":
+      hasExactKeys(
+        payload,
+        ["kind", "name", "description", "filter", "problemSlugs"],
+        `Payload for ${type}`
+      );
+      requireStudySetKind(payload.kind, "kind");
+      requireString(payload.name, "name");
+      requireOptionalString(payload.description, "description");
+      return;
+    case "UPDATE_STUDY_SET":
+      hasExactKeys(
+        payload,
+        ["id", "name", "description", "enabled"],
+        `Payload for ${type}`
+      );
+      requireString(payload.id, "id");
+      requireOptionalString(payload.name, "name");
+      requireOptionalString(payload.description, "description");
+      requireOptionalBoolean(payload.enabled, "enabled");
+      return;
+    case "DELETE_STUDY_SET":
+      hasExactKeys(payload, ["id"], `Payload for ${type}`);
+      requireString(payload.id, "id");
+      return;
+    case "SET_ACTIVE_FOCUS":
+      hasExactKeys(payload, ["focus"], `Payload for ${type}`);
+      // `focus` is allowed to be null (clears the selection); else an
+      // object with kind: 'studySet' and id is expected.
+      if (payload.focus !== null && !isRecord(payload.focus)) {
+        throw new Error('Invalid field "focus": expected null or an object.');
+      }
+      return;
+    case "CONSUME_PRE_V7_BACKUP":
+      hasExactKeys(payload, EMPTY_KEYS, `Payload for ${type}`);
       return;
     default:
       throw new Error(`Unknown message type: ${String(type)}`);

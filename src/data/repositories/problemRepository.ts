@@ -1,3 +1,5 @@
+import { resolveSeedTopicId } from "../catalog/topicsSeed";
+
 import { createDefaultStudyState } from "./constants";
 import {
   AppData,
@@ -15,6 +17,21 @@ import {
   slugToUrl,
   uniqueStrings,
 } from "./utils";
+
+/**
+ * Maps legacy `topics: string[]` to v7 `topicIds: TopicId[]` by resolving
+ * each label against the curated topic seed. Unknown labels are dropped
+ * (they remain visible in `topics` for reference); custom-topic creation
+ * happens via the v7 topicRepository, not this implicit path.
+ */
+function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
+  const out: string[] = [];
+  for (const label of labels) {
+    const resolved = resolveSeedTopicId(label);
+    if (resolved && !out.includes(resolved)) out.push(resolved);
+  }
+  return out;
+}
 
 export interface UpsertProblemInput {
   slug: string;
@@ -39,14 +56,18 @@ export function ensureProblem(
   const now = nowIso();
 
   if (!existing) {
+    const labels = uniqueStrings(input.topics ?? []);
     const created: Problem = {
       id: slug,
       leetcodeSlug: slug,
+      slug,
       title: input.title?.trim() || slugToTitle(slug),
       difficulty: input.difficulty ?? "Unknown",
       isPremium: input.isPremium,
       url: input.url?.trim() || slugToUrl(slug),
-      topics: uniqueStrings(input.topics ?? []),
+      topics: labels,
+      topicIds: deriveTopicIdsFromLabels(labels),
+      companyIds: [],
       sourceSet: input.sourceSet ? [input.sourceSet] : [],
       createdAt: now,
       updatedAt: now,
@@ -56,6 +77,14 @@ export function ensureProblem(
     return created;
   }
 
+  const mergedLabels = uniqueStrings([
+    ...(existing.topics ?? []),
+    ...(input.topics ?? []),
+  ]);
+  const mergedTopicIds = uniqueStrings([
+    ...(existing.topicIds ?? []),
+    ...deriveTopicIdsFromLabels(input.topics ?? []),
+  ]);
   const merged: Problem = {
     ...existing,
     title: input.title?.trim() || existing.title,
@@ -68,10 +97,9 @@ export function ensureProblem(
         ? input.isPremium
         : existing.isPremium,
     url: input.url?.trim() || existing.url,
-    topics: uniqueStrings([
-      ...(existing.topics ?? []),
-      ...(input.topics ?? []),
-    ]),
+    topics: mergedLabels,
+    topicIds: mergedTopicIds,
+    companyIds: existing.companyIds ?? [],
     sourceSet: uniqueStrings([
       ...(existing.sourceSet ?? []),
       ...(input.sourceSet ? [input.sourceSet] : []),

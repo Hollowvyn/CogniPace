@@ -36,6 +36,18 @@ import {
   resetStudyHistory,
   updateSettings,
 } from "./handlers/settingsHandlers";
+import {
+  assignCompanyHandler,
+  assignTopicHandler,
+  consumePreV7BackupHandler,
+  createCustomCompanyHandler,
+  createCustomTopicHandler,
+  createStudySetHandler,
+  deleteStudySetHandler,
+  editProblemHandler,
+  setActiveFocusHandler,
+  updateStudySetHandler,
+} from "./handlers/v7Handlers";
 
 /** Routes a validated runtime message to the appropriate grouped handler. */
 export async function handleMessage(
@@ -129,6 +141,45 @@ export async function handleMessage(
       return resetProblem(
         message.payload as Parameters<typeof resetProblem>[0]
       );
+    // v7 — additive Question-as-SSoT surface.
+    case "EDIT_PROBLEM":
+      return editProblemHandler(
+        message.payload as Parameters<typeof editProblemHandler>[0]
+      );
+    case "CREATE_CUSTOM_TOPIC":
+      return createCustomTopicHandler(
+        message.payload as Parameters<typeof createCustomTopicHandler>[0]
+      );
+    case "CREATE_CUSTOM_COMPANY":
+      return createCustomCompanyHandler(
+        message.payload as Parameters<typeof createCustomCompanyHandler>[0]
+      );
+    case "ASSIGN_TOPIC_TO_PROBLEM":
+      return assignTopicHandler(
+        message.payload as Parameters<typeof assignTopicHandler>[0]
+      );
+    case "ASSIGN_COMPANY_TO_PROBLEM":
+      return assignCompanyHandler(
+        message.payload as Parameters<typeof assignCompanyHandler>[0]
+      );
+    case "CREATE_STUDY_SET":
+      return createStudySetHandler(
+        message.payload as Parameters<typeof createStudySetHandler>[0]
+      );
+    case "UPDATE_STUDY_SET":
+      return updateStudySetHandler(
+        message.payload as Parameters<typeof updateStudySetHandler>[0]
+      );
+    case "DELETE_STUDY_SET":
+      return deleteStudySetHandler(
+        message.payload as Parameters<typeof deleteStudySetHandler>[0]
+      );
+    case "SET_ACTIVE_FOCUS":
+      return setActiveFocusHandler(
+        message.payload as Parameters<typeof setActiveFocusHandler>[0]
+      );
+    case "CONSUME_PRE_V7_BACKUP":
+      return consumePreV7BackupHandler();
     default:
       throw new Error(`Unknown message type: ${message.type}`);
   }

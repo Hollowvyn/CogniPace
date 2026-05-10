@@ -1,3 +1,5 @@
+import type { ActiveFocus } from "../active-focus/model";
+
 export type ReviewOrder = "dueFirst" | "mixByDifficulty" | "weakestFirst";
 
 export type StudyMode = "freestyle" | "studyPlan";
@@ -36,8 +38,13 @@ export interface ExperimentalSettings {
 export interface UserSettings {
   dailyQuestionGoal: number;
   studyMode: StudyMode;
+  /** v6 — replaced by `activeFocus` in v7. Kept for backwards compatibility
+   * during the migration; consumers prefer `activeFocus` when present. */
   activeCourseId: string;
+  /** v6 — replaced by `StudySet.enabled` in v7. */
   setsEnabled: Record<string, boolean>;
+  /** v7 — discriminated current selection across all StudySets. */
+  activeFocus?: ActiveFocus;
   notifications: NotificationSettings;
   memoryReview: MemoryReviewSettings;
   questionFilters: QuestionFilterSettings;

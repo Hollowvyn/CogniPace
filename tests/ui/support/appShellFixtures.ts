@@ -111,10 +111,13 @@ export function makePayload() {
       problem: {
         id: "1",
         leetcodeSlug: "two-sum",
+        slug: "two-sum",
         title: "Two Sum",
         difficulty: "Easy",
         url: "https://leetcode.com/problems/two-sum/",
         topics: [],
+        topicIds: [],
+        companyIds: [],
         sourceSet: ["Blind75"],
         createdAt: "2026-03-01T00:00:00.000Z",
         updatedAt: "2026-03-01T00:00:00.000Z",

@@ -83,4 +83,31 @@ describe("settings sanitization", () => {
     assert.equal(sanitized.setsEnabled.Blind75, true);
     assert.equal(sanitized.setsEnabled.NeetCode150, false);
   });
+
+  it("preserves a valid activeFocus payload", () => {
+    const sanitized = sanitizeStoredUserSettings({
+      activeFocus: {
+        kind: "studySet",
+        id: "blind-75",
+        groupId: "blind-75::arrays",
+      },
+    });
+
+    assert.deepEqual(sanitized.activeFocus, {
+      kind: "studySet",
+      id: "blind-75",
+      groupId: "blind-75::arrays",
+    });
+  });
+
+  it("drops malformed activeFocus payloads", () => {
+    const sanitized = sanitizeStoredUserSettings({
+      activeFocus: {
+        kind: "studySet",
+        id: "",
+      },
+    });
+
+    assert.equal("activeFocus" in sanitized, false);
+  });
 });

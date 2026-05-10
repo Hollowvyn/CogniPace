@@ -1,4 +1,5 @@
 /** Background handlers for settings and backup import/export operations. */
+import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import {
   getAppData,
@@ -20,6 +21,16 @@ import {
 } from "../../../domain/problem/slug";
 import { ExportPayload, StudyState } from "../../../domain/types";
 import { ok } from "../responses";
+
+/** Cross-walks legacy topics labels into v7 topicIds via the curated seed. */
+function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
+  const out: string[] = [];
+  for (const label of labels) {
+    const resolved = resolveSeedTopicId(label);
+    if (resolved && !out.includes(resolved)) out.push(resolved);
+  }
+  return out;
+}
 
 /** Exports the full persisted backup payload. */
 export async function exportData() {
@@ -53,15 +64,23 @@ export async function importData(payload: ExportPayload) {
       }
 
       const now = nowIso();
+      const labels = uniqueStrings(problem.topics ?? []);
+      const importedTopicIds = uniqueStrings(problem.topicIds ?? []);
       data.problemsBySlug[slug] = {
         id: problem.id || slug,
         leetcodeSlug: slug,
+        slug,
         leetcodeId: problem.leetcodeId,
         title: problem.title?.trim() || slugToTitle(slug),
         difficulty: problem.difficulty ?? "Unknown",
         isPremium: problem.isPremium,
         url: slugToUrl(slug),
-        topics: uniqueStrings(problem.topics ?? []),
+        topics: labels,
+        topicIds:
+          importedTopicIds.length > 0
+            ? importedTopicIds
+            : deriveTopicIdsFromLabels(labels),
+        companyIds: uniqueStrings(problem.companyIds ?? []),
         sourceSet: uniqueStrings(problem.sourceSet ?? []),
         createdAt: problem.createdAt || now,
         updatedAt: problem.updatedAt || now,
