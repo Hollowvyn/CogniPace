@@ -11,6 +11,10 @@ import {
 import { getDb } from "../../../data/db/instance";
 import { mutateAppData , PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
+import {
+  getUserSettings,
+  saveUserSettings,
+} from "../../../data/settings/repository";
 import { upsertTopic } from "../../../data/topics/repository";
 import {
   asCompanyId,
@@ -335,6 +339,7 @@ export interface DeleteStudySetPayload {
 
 export async function deleteStudySetHandler(payload: DeleteStudySetPayload) {
   const id = asStudySetId(payload.id);
+  let deletedActiveTrack = false;
   await mutateAppData((data) => {
     const existing = data.studySetsById[id];
     if (!existing || existing.isCurated) return data;
@@ -346,10 +351,20 @@ export async function deleteStudySetHandler(payload: DeleteStudySetPayload) {
       data.settings.activeFocus.kind === "track" &&
       data.settings.activeFocus.id === id
     ) {
-      data.settings = { ...data.settings, activeFocus: null };
+      deletedActiveTrack = true;
     }
     return data;
   });
+  // Phase 5: settings live in SQLite. If we just deleted the active
+  // track, clear settings.activeFocus there too so the popup/dashboard
+  // don't keep pointing at a now-missing track id.
+  if (deletedActiveTrack) {
+    const { db } = await getDb();
+    const current = await getUserSettings(db);
+    if (current && current.activeFocus?.kind === "track" && current.activeFocus.id === id) {
+      await saveUserSettings(db, { ...current, activeFocus: null });
+    }
+  }
   return ok({ ok: true });
 }
 
@@ -360,11 +375,16 @@ export interface SetActiveFocusPayload {
 }
 
 export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
-  const updated = await mutateAppData((data) => {
-    data.settings = { ...data.settings, activeFocus: payload.focus };
-    return data;
+  const { db } = await getDb();
+  const current = await getUserSettings(db);
+  if (!current) {
+    throw new Error("setActiveFocusHandler: no settings row in DB (boot seed missing)");
+  }
+  const saved = await saveUserSettings(db, {
+    ...current,
+    activeFocus: payload.focus,
   });
-  return ok({ settings: updated.settings });
+  return ok({ settings: saved });
 }
 
 // ---------- Track launch tracking ----------

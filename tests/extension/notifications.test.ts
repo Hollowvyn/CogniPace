@@ -27,6 +27,22 @@ vi.mock("../../src/data/repositories/appDataRepository", () => ({
   getAppData: (...args: unknown[]) => getAppDataMock(...args),
 }));
 
+// Phase 5: notifications.ts now also reads settings from SQLite. We
+// don't want the test to spin up wasm + a real DB; the AppData returned
+// by getAppDataMock already carries the test's intended settings, so
+// stub the SQLite read to "no row present" and let the in-memory
+// data.settings fallback win.
+vi.mock("../../src/data/db/instance", () => ({
+  getDb: vi.fn(async () => ({
+    db: {} as never,
+    rawDb: {} as never,
+    sqlite3: {} as never,
+  })),
+}));
+vi.mock("../../src/data/settings/repository", () => ({
+  getUserSettings: vi.fn(async () => undefined),
+}));
+
 function makeAppData(): AppData {
   const settings = createInitialUserSettings();
   settings.notifications.enabled = true;

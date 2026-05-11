@@ -11,6 +11,10 @@ import {
   mergeSettings,
   mutateAppData,
 } from "../../../data/repositories/appDataRepository";
+import {
+  getUserSettings,
+  saveUserSettings,
+} from "../../../data/settings/repository";
 import { listTopics, upsertTopic } from "../../../data/topics/repository";
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
@@ -22,6 +26,10 @@ import {
   slugToUrl,
   normalizeSlug,
 } from "../../../domain/problem/slug";
+import {
+  createInitialUserSettings,
+  mergeUserSettings,
+} from "../../../domain/settings";
 import { ExportPayload, StudyState } from "../../../domain/types";
 import { ok } from "../responses";
 
@@ -123,16 +131,23 @@ export async function importData(payload: ExportPayload) {
       data.studySetProgressById = sanitized.studySetProgressById;
     }
 
-    data.settings = mergeSettings(data.settings, sanitized.settings ?? {});
+    // Settings live in SQLite (Phase 5); do not write through the
+    // mutateAppData path. The SQLite merge happens below the
+    // mutateAppData await.
     return data;
   });
 
-  // Route imported topics + companies through SQLite (Phase 4+5 SSoT).
-  // Curated rows are seeded at SW boot — re-importing them via upsert
-  // is a safe no-op for matching rows; user-custom rows in the payload
-  // land as isCustom=true and become editable.
+  // Route imported topics + companies + settings through SQLite
+  // (Phase 4+5 SSoT). Curated rows are seeded at SW boot — re-importing
+  // them via upsert is a safe no-op for matching rows; user-custom rows
+  // in the payload land as isCustom=true and become editable.
+  const { db } = await getDb();
+  if (sanitized.settings) {
+    const current = (await getUserSettings(db)) ?? createInitialUserSettings();
+    const merged = mergeUserSettings(current, sanitized.settings);
+    await saveUserSettings(db, merged);
+  }
   if (sanitized.topicsById || sanitized.companiesById) {
-    const { db } = await getDb();
     if (sanitized.topicsById) {
       for (const topic of Object.values(sanitized.topicsById)) {
         await upsertTopic(db, {
@@ -158,14 +173,16 @@ export async function importData(payload: ExportPayload) {
   return ok({ imported: true });
 }
 
-/** Applies a settings patch and returns the normalized saved settings. */
+/** Applies a settings patch and returns the normalized saved settings.
+ * Phase 5: settings live in SQLite, not the v7 blob — the merge runs
+ * against the SQLite copy and the write path returns the round-tripped
+ * value (charter lesson #6) so the UI's next read matches. */
 export async function updateSettings(payload: Record<string, unknown>) {
-  const updated = await mutateAppData((data) => {
-    data.settings = mergeSettings(data.settings, payload);
-    return data;
-  });
-
-  return ok({ settings: updated.settings });
+  const { db } = await getDb();
+  const current = (await getUserSettings(db)) ?? createInitialUserSettings();
+  const merged = mergeSettings(current, payload);
+  const saved = await saveUserSettings(db, merged);
+  return ok({ settings: saved });
 }
 
 /** Clears all local study history while preserving settings, courses, and the problem library. */

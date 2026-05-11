@@ -3,10 +3,12 @@ import {
   readLocalStorage,
   writeLocalStorage,
 } from "../../data/datasources/chrome/storage";
+import { getDb } from "../../data/db/instance";
 import {
   getAppData,
   STORAGE_KEY,
 } from "../../data/repositories/appDataRepository";
+import { getUserSettings } from "../../data/settings/repository";
 import { buildTodayQueue } from "../../domain/queue/buildTodayQueue";
 import { INITIAL_USER_SETTINGS, UserSettings } from "../../domain/settings";
 
@@ -79,6 +81,11 @@ async function writeDueNotificationState(
 /** Sends a due-queue notification when reminders are enabled. */
 export async function maybeNotifyDueQueue(now = new Date()): Promise<boolean> {
   const data = await getAppData();
+  // Phase 5: settings live in SQLite. Read directly here rather than
+  // relying on the (no-longer-maintained) data.settings field.
+  const { db } = await getDb();
+  const settings = await getUserSettings(db);
+  data.settings = settings ?? data.settings;
   if (!data.settings.notifications.enabled) {
     return false;
   }

@@ -2,6 +2,7 @@
 import { listCompanies } from "../../../data/companies/repository";
 import { getDb } from "../../../data/db/instance";
 import { getAppData } from "../../../data/repositories/appDataRepository";
+import { getUserSettings } from "../../../data/settings/repository";
 import { listTopics } from "../../../data/topics/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import {
@@ -34,21 +35,23 @@ import type { Topic } from "../../../domain/topics/model";
 import type { AppData, Problem } from "../../../domain/types";
 
 /**
- * Loads topics + companies from SQLite (Phase 4+5 SSoT) and mutates
- * `data.topicsById` / `data.companiesById` in place so downstream
- * view-hydration helpers — buildStudySetView, buildProblemView,
- * libraryRows — work unchanged.
+ * Loads topics + companies + settings from SQLite (Phase 4+5 SSoT) and
+ * mutates `data.topicsById` / `data.companiesById` / `data.settings`
+ * in place so downstream helpers — buildStudySetView, buildProblemView,
+ * libraryRows, buildPopupShellPayload, etc. — read unchanged shapes.
  */
 async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   const { db } = await getDb();
   const topics = await listTopics(db);
   const companies = await listCompanies(db);
+  const settings = await getUserSettings(db);
   const topicMap: Record<string, Topic> = {};
   for (const t of topics) topicMap[t.id] = t;
   data.topicsById = topicMap;
   const companyMap: Record<string, Company> = {};
   for (const c of companies) companyMap[c.id] = c;
   data.companiesById = companyMap;
+  if (settings) data.settings = settings;
 }
 
 /** Hydrates the v7 list of explicit StudySet memberships for a problem slug.

@@ -40,6 +40,11 @@ import {
   serializeDb,
 } from "../data/db/snapshot";
 import {
+  getUserSettings,
+  saveUserSettings,
+  seedInitialSettings,
+} from "../data/settings/repository";
+import {
   getTopic,
   listTopics,
   removeTopic,
@@ -47,6 +52,7 @@ import {
   upsertTopic,
 } from "../data/topics/repository";
 import { asCompanyId, asTopicId } from "../domain/common/ids";
+import { createInitialUserSettings } from "../domain/settings";
 
 let handle: DbHandle | undefined;
 
@@ -1132,6 +1138,76 @@ const allChecks: CheckDef[] = [
       return {
         ok: curatedThrew && !customStill && !!curatedStill,
         detail: `curatedThrew=${curatedThrew} customStill=${!!customStill} curatedStill=${!!curatedStill}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "settings repo: seedInitialSettings is idempotent, defaults visible",
+    run: async ({ db }) => {
+      // Clear any pre-existing row so we exercise the seed path cleanly.
+      await db.delete(schema.settingsKv);
+      const seeded = await seedInitialSettings(db);
+      const seededAgain = await seedInitialSettings(db);
+      const defaults = createInitialUserSettings();
+      const ok =
+        seeded.dailyQuestionGoal === defaults.dailyQuestionGoal &&
+        seededAgain.dailyQuestionGoal === defaults.dailyQuestionGoal;
+      return {
+        ok,
+        detail: `seeded.dailyQuestionGoal=${seeded.dailyQuestionGoal} (defaults=${defaults.dailyQuestionGoal})`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "settings repo: saveUserSettings round-trips full shape (charter lesson #6)",
+    run: async ({ db }) => {
+      await db.delete(schema.settingsKv);
+      const base = createInitialUserSettings();
+      const customised = {
+        ...base,
+        dailyQuestionGoal: 11,
+        studyMode: "studyPlan" as const,
+      };
+      const saved = await saveUserSettings(db, customised);
+      const fetched = await getUserSettings(db);
+      const ok =
+        saved.dailyQuestionGoal === 11 &&
+        saved.studyMode === "studyPlan" &&
+        fetched?.dailyQuestionGoal === 11 &&
+        fetched?.studyMode === "studyPlan";
+      return {
+        ok,
+        detail: `saved=${saved.dailyQuestionGoal}/${saved.studyMode} fetched=${fetched?.dailyQuestionGoal}/${fetched?.studyMode}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "settings repo: upsert (no duplicate rows after multiple saves)",
+    run: async ({ db, rawDb }) => {
+      await db.delete(schema.settingsKv);
+      await saveUserSettings(db, createInitialUserSettings());
+      await saveUserSettings(db, {
+        ...createInitialUserSettings(),
+        dailyQuestionGoal: 3,
+      });
+      await saveUserSettings(db, {
+        ...createInitialUserSettings(),
+        dailyQuestionGoal: 7,
+      });
+      const rows = rawDb.exec({
+        sql: "SELECT COUNT(*) AS c FROM settings_kv WHERE key = 'user_settings'",
+        rowMode: "object",
+        returnValue: "resultRows",
+      }) as unknown as Array<{ c: number }>;
+      const fetched = await getUserSettings(db);
+      const ok =
+        rows[0].c === 1 && fetched?.dailyQuestionGoal === 7;
+      return {
+        ok,
+        detail: `rows=${rows[0].c} dailyQuestionGoal=${fetched?.dailyQuestionGoal}`,
       };
     },
   },

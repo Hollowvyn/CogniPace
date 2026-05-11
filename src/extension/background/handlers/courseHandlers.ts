@@ -1,5 +1,6 @@
 /** Background handlers for catalog set imports and direct problem intake. */
 import { getCuratedSet } from "../../../data/catalog/curatedSets";
+import { getDb } from "../../../data/db/instance";
 import {
   mergeSettings,
   mutateAppData,
@@ -10,7 +11,23 @@ import {
   importProblemsIntoSet,
   parseProblemInput,
 } from "../../../data/repositories/problemRepository";
+import {
+  getUserSettings,
+  saveUserSettings,
+} from "../../../data/settings/repository";
+import { createInitialUserSettings } from "../../../domain/settings";
 import { ok } from "../responses";
+
+/** Phase 5: setsEnabled lives in SQLite — read-merge-write rather
+ * than mutating data.settings inside mutateAppData. */
+async function enableSetInSqlite(setName: string): Promise<void> {
+  const { db } = await getDb();
+  const current = (await getUserSettings(db)) ?? createInitialUserSettings();
+  const next = mergeSettings(current, {
+    setsEnabled: { ...current.setsEnabled, [setName]: true },
+  });
+  await saveUserSettings(db, next);
+}
 
 /** Imports a built-in curated set into the local library. */
 export async function importCurated(payload: { setName: string }) {
@@ -22,14 +39,9 @@ export async function importCurated(payload: { setName: string }) {
   let importResult = { added: 0, updated: 0 };
   await mutateAppData((data) => {
     importResult = importProblemsIntoSet(data, payload.setName, setProblems);
-    data.settings = mergeSettings(data.settings, {
-      setsEnabled: {
-        ...data.settings.setsEnabled,
-        [payload.setName]: true,
-      },
-    });
     return data;
   });
+  await enableSetInSqlite(payload.setName);
 
   return ok({
     setName: payload.setName,
@@ -59,15 +71,12 @@ export async function importCustom(payload: {
 
   await mutateAppData((data) => {
     importResult = importProblemsIntoSet(data, normalizedName, payload.items);
-    data.settings = mergeSettings(data.settings, {
-      setsEnabled: {
-        ...data.settings.setsEnabled,
-        [normalizedName]: true,
-        Custom: true,
-      },
-    });
     return data;
   });
+  await enableSetInSqlite(normalizedName);
+  if (normalizedName !== "Custom") {
+    await enableSetInSqlite("Custom");
+  }
 
   return ok({
     setName: normalizedName,
