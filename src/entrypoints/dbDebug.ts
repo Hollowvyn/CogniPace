@@ -50,6 +50,17 @@ async function bootDb(): Promise<DbHandle> {
   });
 }
 
+/** Helper for Persistence-category checks: creates a sub-DB inside the
+ * same extension page using the same wasm locator the page booted
+ * with. Without `locateWasm`, `createDb()` fails in the IIFE bundle
+ * because sqlite-wasm's auto-detection can't resolve sqlite3.wasm. */
+function createSubDb(opts: { migrationSql?: string } = {}): Promise<DbHandle> {
+  return createDb({
+    ...opts,
+    locateWasm: (file) => chrome.runtime.getURL(file),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // DOM helpers
 // ---------------------------------------------------------------------------
@@ -1102,7 +1113,7 @@ const allChecks: CheckDef[] = [
 
       // 3. Spin up a fresh DB (no migration applied here — deserialize
       //    will install the full schema from the snapshot bytes).
-      const fresh = await createDb({});
+      const fresh = await createSubDb();
 
       // 4. Deserialize into the fresh DB.
       deserializeDb(fresh, bytes);
@@ -1138,7 +1149,7 @@ const allChecks: CheckDef[] = [
 
       // In a FRESH DB, stage row B; deserialize the snapshot over it;
       // row B should be gone, row A should be present.
-      const fresh = await createDb({ migrationSql });
+      const fresh = await createSubDb({ migrationSql });
       const b = asTopicId(uniq("snap-b"));
       await upsertTopic(fresh.db, { id: b, name: "Row B", isCustom: true });
       deserializeDb(fresh, bytes);
