@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CogniPace · Drizzle-on-wasm smoke</title>
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        max-width: 720px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #222;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+      }
+      p {
+        color: #555;
+        margin-top: 0;
+      }
+      #status {
+        margin: 1rem 0;
+        font-style: italic;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Drizzle-on-wasm runtime smoke</h1>
+    <p>
+      Phase 3 verification. Open the devtools console for full log lines;
+      summary appears below. This page is temporary and will be removed
+      before Phase 3 merges.
+    </p>
+    <div id="status">Loading…</div>
+    <div id="results"></div>
+    <script src="dbSmoke.js"></script>
+  </body>
+</html>
