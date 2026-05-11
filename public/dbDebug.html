@@ -2,11 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>CogniPace · DB debug</title>
+    <title>CogniPace · DB debug & verification</title>
     <style>
       body {
         font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-        max-width: 960px;
+        max-width: 1040px;
         margin: 1.5rem auto;
         padding: 0 1rem;
         color: #1d1d1f;
@@ -20,9 +20,11 @@
         font-size: 0.95rem;
       }
       h4 {
-        margin: 0.5rem 0 0.25rem;
-        font-size: 0.85rem;
-        color: #444;
+        margin: 0.75rem 0 0.25rem;
+        font-size: 0.8rem;
+        color: #555;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
       }
       p {
         color: #555;
@@ -39,7 +41,13 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.4rem;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.5rem;
+      }
+      .toolbar .label {
+        font-size: 0.75rem;
+        color: #777;
+        align-self: center;
+        margin-right: 0.4rem;
       }
       button {
         padding: 0.35rem 0.7rem;
@@ -51,6 +59,18 @@
       }
       button:hover {
         background: #f3f3f3;
+      }
+      button.primary {
+        background: #0a5d22;
+        border-color: #0a5d22;
+        color: #fff;
+      }
+      button.primary:hover {
+        background: #08501d;
+      }
+      button.secondary {
+        background: #fff7ea;
+        border-color: #d4a755;
       }
       textarea#sql-input {
         width: 100%;
@@ -74,7 +94,7 @@
         border-radius: 6px;
         padding: 0.75rem;
         min-height: 12rem;
-        max-height: 32rem;
+        max-height: 40rem;
         overflow: auto;
       }
       table {
@@ -118,6 +138,21 @@
         background: #fdecea;
         white-space: pre-wrap;
       }
+      .summary {
+        margin-top: 0.75rem;
+        padding: 0.5rem 0.7rem;
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+      }
+      .summary.ok {
+        background: #c8e6c9;
+        color: #054d10;
+      }
+      .summary.fail {
+        background: #ffcdd2;
+        color: #6e0000;
+      }
       .muted {
         color: #777;
       }
@@ -127,17 +162,29 @@
     </style>
   </head>
   <body>
-    <h1>CogniPace · DB debug</h1>
+    <h1>CogniPace · DB debug & verification</h1>
     <p>
       In-memory wasm SQLite with the latest Drizzle migration applied.
-      Use to verify schema, inspect query shapes, or sanity-check
-      changes during development. Resets on every reload.
+      Use the toolbar to run typed verification checks across every
+      table / constraint / default / FK / JSON column / RQB query.
+      New checks should be appended as later phases land new schemas.
+      Resets on every reload — no persistence yet.
     </p>
     <div id="status">Loading…</div>
 
     <div class="toolbar">
-      <button id="run-smoke">Run smoke checks</button>
-      <button id="seed">Seed sample data</button>
+      <span class="label">Verification:</span>
+      <button id="run-all" class="primary">Run all</button>
+      <button id="run-Defaults">Defaults</button>
+      <button id="run-CRUD">CRUD</button>
+      <button id="run-Foreign-keys">Foreign keys</button>
+      <button id="run-JSON-columns">JSON columns</button>
+      <button id="run-Indexes">Indexes</button>
+      <button id="run-RQB">RQB</button>
+    </div>
+    <div class="toolbar">
+      <span class="label">Data:</span>
+      <button id="seed" class="secondary">Seed sample data</button>
       <button id="reset">Reset DB</button>
       <button id="clear">Clear output</button>
     </div>
@@ -150,7 +197,7 @@
     <div class="hint">
       Cmd/Ctrl+Enter to run · executes against the raw wasm DB via
       <code>rawDb.exec</code> (no Drizzle parsing) · use the toolbar
-      for typed Drizzle queries.
+      buttons above for typed Drizzle assertions.
     </div>
     <div class="toolbar">
       <button id="run-sql">Run SQL</button>
