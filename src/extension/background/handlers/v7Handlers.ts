@@ -3,6 +3,7 @@
  * Company / ActiveFocus mutations. All writes flow through the
  * `mutateAppData` funnel so persistence is serialised.
  */
+import { upsertCompany } from "../../../data/companies/repository";
 import {
   readLocalStorage,
   removeLocalStorage,
@@ -32,7 +33,6 @@ import { FLAT_GROUP_ID } from "../../../domain/sets/model";
 import { ok } from "../responses";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
-import type { Company } from "../../../domain/companies/model";
 import type { StudySet } from "../../../domain/sets/model";
 import type { Difficulty } from "../../../domain/types";
 
@@ -103,25 +103,13 @@ export interface CreateCustomCompanyPayload {
 export async function createCustomCompanyHandler(
   payload: CreateCustomCompanyPayload,
 ) {
-  const id = asCompanyId(payload.name);
-  if (!id) throw new Error("Company name cannot be empty.");
-  const now = nowIso();
-  await mutateAppData((data) => {
-    const existing = data.companiesById[id];
-    const next: Company = existing
-      ? { ...existing, name: payload.name, description: payload.description, updatedAt: now }
-      : {
-          id,
-          name: payload.name,
-          description: payload.description,
-          isCustom: true,
-          createdAt: now,
-          updatedAt: now,
-        };
-    data.companiesById[id] = next;
-    return data;
+  const { db } = await getDb();
+  const company = await upsertCompany(db, {
+    name: payload.name,
+    description: payload.description,
+    isCustom: true,
   });
-  return ok({ id });
+  return ok({ id: company.id });
 }
 
 // ---------- Topic / company assignment ----------

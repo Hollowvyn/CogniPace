@@ -23,7 +23,9 @@
  * Production code should always use `getDb()`; tests construct their
  * own DB via `createDb()` in `client.ts`.
  */
+import { listCatalogCompanySeeds } from "../catalog/companiesSeed";
 import { listCatalogTopicSeeds } from "../catalog/topicsSeed";
+import { seedCatalogCompanies } from "../companies/repository";
 import { seedCatalogTopics } from "../topics/repository";
 
 import { createDb, type DbHandle } from "./client";
@@ -109,6 +111,7 @@ async function bootDb(): Promise<DbHandle> {
       await clearSnapshot();
       handle.rawDb.exec(migrationSql);
       await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
+      await seedCatalogCompanies(handle.db, listCatalogCompanySeeds());
       const bytes = serializeDb(handle);
       await writeSnapshotToStorage({ fingerprint, bytes });
     }
@@ -123,6 +126,7 @@ async function bootDb(): Promise<DbHandle> {
     }
     handle.rawDb.exec(migrationSql);
     await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
+    await seedCatalogCompanies(handle.db, listCatalogCompanySeeds());
     const bytes = serializeDb(handle);
     await writeSnapshotToStorage({ fingerprint, bytes });
     console.log(`[CogniPace] bootDb: fresh seed complete, snapshot written (${bytes.length} bytes)`);

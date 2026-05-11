@@ -14,7 +14,6 @@ import {
   UserSettingsPatch,
 } from "../../domain/settings";
 import { AppData } from "../../domain/types";
-import { buildCompanySeed } from "../catalog/companiesSeed";
 import { listCatalogPlans } from "../catalog/curatedSets";
 import { buildProblemSeed } from "../catalog/problemsSeed";
 import { buildStudySetSeed } from "../catalog/studySetsSeed";
@@ -55,13 +54,12 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
   // Seed the v7 aggregates from catalog data when missing. The seed is
   // idempotent — subsequent reads keep the stored values intact.
   //
-  // Phase 4: topics are no longer seeded into the v7 blob — they live in
-  // SQLite and are seeded at SW boot. `data.topicsById` stays as `{}`
-  // here; the dashboard handler hydrates it at read time.
+  // Phase 4+5: topics and companies live in SQLite, not the v7 blob.
+  // Their fields stay as `{}` here; the dashboard handler hydrates
+  // them at read time from the DB.
   const catalogPlans = runMigration || isFirstEverLaunch
     ? listCatalogPlans()
     : null;
-  const seededCompanies = runMigration ? buildCompanySeed(seedNow) : {};
   const seededStudySets = runMigration && catalogPlans
     ? buildStudySetSeed(catalogPlans, seedNow)
     : { studySetsById: {}, studySetOrder: [] };
@@ -78,11 +76,11 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
         normalizeStudyState(state),
       ])
     ),
-    // v7 aggregate fields. Companies + courses seeded on first encounter;
-    // topics moved to SQLite in Phase 4 so `topicsById` is no longer
-    // seeded here — handler-level hydration fills it from the DB.
+    // v7 aggregate fields. Topics + companies moved to SQLite (Phase
+    // 4+5) so those maps are no longer seeded here; the handler layer
+    // hydrates them from the DB. Courses still seed from catalog here.
     topicsById: stored?.topicsById ?? {},
-    companiesById: { ...seededCompanies, ...(stored?.companiesById ?? {}) },
+    companiesById: stored?.companiesById ?? {},
     studySetsById: {
       ...seededStudySets.studySetsById,
       ...(stored?.studySetsById ?? {}),

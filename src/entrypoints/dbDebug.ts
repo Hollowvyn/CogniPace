@@ -20,7 +20,15 @@
  */
 import { eq, and } from "drizzle-orm";
 
+import { listCatalogCompanySeeds } from "../data/catalog/companiesSeed";
 import { listCatalogTopicSeeds } from "../data/catalog/topicsSeed";
+import {
+  getCompany,
+  listCompanies,
+  removeCompany,
+  seedCatalogCompanies,
+  upsertCompany,
+} from "../data/companies/repository";
 import { createDb, type DbHandle } from "../data/db/client";
 import migrationSql from "../data/db/migrations/0000_initial.sql";
 import * as schema from "../data/db/schema";
@@ -38,7 +46,7 @@ import {
   seedCatalogTopics,
   upsertTopic,
 } from "../data/topics/repository";
-import { asTopicId } from "../domain/common/ids";
+import { asCompanyId, asTopicId } from "../domain/common/ids";
 
 let handle: DbHandle | undefined;
 
@@ -1044,6 +1052,86 @@ const allChecks: CheckDef[] = [
       return {
         ok,
         detail: ok ? "Alpha, Mu, Zeta (alphabetised)" : `got: ${names.join(", ")}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "companies repo: seedCatalogCompanies seeds curated catalog idempotently",
+    run: async ({ db }) => {
+      const seeds = listCatalogCompanySeeds();
+      await seedCatalogCompanies(db, seeds);
+      await seedCatalogCompanies(db, seeds);
+      const companies = await listCompanies(db);
+      const curated = companies.filter((c) => !c.isCustom);
+      const missing = seeds.filter((s) => !companies.some((c) => c.id === s.id));
+      return {
+        ok: curated.length >= seeds.length && missing.length === 0,
+        detail:
+          missing.length === 0
+            ? `${curated.length} curated companies present (expected ≥${seeds.length})`
+            : `missing seeds: ${missing.map((m) => m.id).join(", ")}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "companies repo: upsertCompany preserves isCustom on conflict",
+    run: async ({ db }) => {
+      const id = asCompanyId(uniq("repo-company"));
+      const inserted = await upsertCompany(db, {
+        id,
+        name: "Initial Co",
+        isCustom: true,
+      });
+      const renamed = await upsertCompany(db, {
+        id,
+        name: "Renamed Co",
+        description: "now described",
+      });
+      const reseeded = await upsertCompany(db, {
+        id,
+        name: "Renamed Co",
+        isCustom: false /* ignored on conflict */,
+      });
+      await removeCompany(db, id);
+      const ok =
+        inserted.isCustom === true &&
+        renamed.isCustom === true &&
+        renamed.description === "now described" &&
+        reseeded.isCustom === true;
+      return {
+        ok,
+        detail: `inserted=${inserted.isCustom} renamed=${renamed.isCustom} reseeded=${reseeded.isCustom}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "companies repo: removeCompany refuses curated, removes custom",
+    run: async ({ db }) => {
+      const customId = asCompanyId(uniq("repo-co-custom"));
+      const curatedId = asCompanyId(uniq("repo-co-curated"));
+      await upsertCompany(db, { id: customId, name: "Custom Co", isCustom: true });
+      await upsertCompany(db, { id: curatedId, name: "Curated Co", isCustom: false });
+
+      let curatedThrew = false;
+      try {
+        await removeCompany(db, curatedId);
+      } catch {
+        curatedThrew = true;
+      }
+
+      await removeCompany(db, customId);
+      const customStill = await getCompany(db, customId);
+      const curatedStill = await getCompany(db, curatedId);
+
+      // Cleanup
+      await db.delete(schema.companies).where(eq(schema.companies.id, curatedId));
+
+      return {
+        ok: curatedThrew && !customStill && !!curatedStill,
+        detail: `curatedThrew=${curatedThrew} customStill=${!!customStill} curatedStill=${!!curatedStill}`,
       };
     },
   },

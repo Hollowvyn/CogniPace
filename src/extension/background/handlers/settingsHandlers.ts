@@ -1,5 +1,9 @@
 /** Background handlers for settings and backup import/export operations. */
 import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
+import {
+  listCompanies,
+  upsertCompany,
+} from "../../../data/companies/repository";
 import { getDb } from "../../../data/db/instance";
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import {
@@ -10,7 +14,7 @@ import {
 import { listTopics, upsertTopic } from "../../../data/topics/repository";
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
-import { asTopicId } from "../../../domain/common/ids";
+import { asCompanyId, asTopicId } from "../../../domain/common/ids";
 import { nowIso } from "../../../domain/common/time";
 import { normalizeStudyState } from "../../../domain/fsrs/studyState";
 import {
@@ -21,6 +25,7 @@ import {
 import { ExportPayload, StudyState } from "../../../domain/types";
 import { ok } from "../responses";
 
+import type { Company } from "../../../domain/companies/model";
 import type { Topic } from "../../../domain/topics/model";
 
 /** Cross-walks legacy topics labels into v7 topicIds via the curated seed. */
@@ -33,22 +38,25 @@ function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
   return out;
 }
 
-/** Exports the full persisted backup payload. Topics come from SQLite
- * (Phase 4 SSoT); other aggregates still come from the v7 blob until
- * later phases migrate them. */
+/** Exports the full persisted backup payload. Topics + companies come
+ * from SQLite (Phase 4+5 SSoT); the remaining aggregates still come
+ * from the v7 blob until later phases migrate them. */
 export async function exportData() {
   const data = await getAppData();
   const { db } = await getDb();
   const topics = await listTopics(db);
+  const companies = await listCompanies(db);
   const topicsById: Record<string, Topic> = {};
   for (const t of topics) topicsById[t.id] = t;
+  const companiesById: Record<string, Company> = {};
+  for (const c of companies) companiesById[c.id] = c;
   return ok({
     version: CURRENT_STORAGE_SCHEMA_VERSION,
     problems: Object.values(data.problemsBySlug),
     studyStatesBySlug: data.studyStatesBySlug,
     settings: data.settings,
     topicsById,
-    companiesById: data.companiesById,
+    companiesById,
     studySetsById: data.studySetsById,
     studySetOrder: data.studySetOrder,
     studySetProgressById: data.studySetProgressById,
@@ -105,10 +113,10 @@ export async function importData(payload: ExportPayload) {
       );
     }
 
-    // v7 aggregates other than topics — sanitised by the registry;
-    // replace whole maps so the import is the single source of truth.
-    // Topics are handled separately below via the SQLite repo.
-    if (sanitized.companiesById) data.companiesById = sanitized.companiesById;
+    // v7 aggregates other than topics + companies — sanitised by the
+    // registry; replace whole maps so the import is the single source of
+    // truth. Topics and companies are handled separately below via the
+    // SQLite repos.
     if (sanitized.studySetsById) data.studySetsById = sanitized.studySetsById;
     if (sanitized.studySetOrder) data.studySetOrder = sanitized.studySetOrder;
     if (sanitized.studySetProgressById) {
@@ -119,19 +127,31 @@ export async function importData(payload: ExportPayload) {
     return data;
   });
 
-  // Route imported topics through SQLite (Phase 4 SSoT). Curated topics
-  // are seeded at SW boot — re-importing them via upsert is a safe no-op
-  // for the rows that match; user-custom topics in the payload land as
-  // isCustom=true and become editable.
-  if (sanitized.topicsById) {
+  // Route imported topics + companies through SQLite (Phase 4+5 SSoT).
+  // Curated rows are seeded at SW boot — re-importing them via upsert
+  // is a safe no-op for matching rows; user-custom rows in the payload
+  // land as isCustom=true and become editable.
+  if (sanitized.topicsById || sanitized.companiesById) {
     const { db } = await getDb();
-    for (const topic of Object.values(sanitized.topicsById)) {
-      await upsertTopic(db, {
-        id: asTopicId(topic.id),
-        name: topic.name,
-        description: topic.description,
-        isCustom: topic.isCustom,
-      });
+    if (sanitized.topicsById) {
+      for (const topic of Object.values(sanitized.topicsById)) {
+        await upsertTopic(db, {
+          id: asTopicId(topic.id),
+          name: topic.name,
+          description: topic.description,
+          isCustom: topic.isCustom,
+        });
+      }
+    }
+    if (sanitized.companiesById) {
+      for (const company of Object.values(sanitized.companiesById)) {
+        await upsertCompany(db, {
+          id: asCompanyId(company.id),
+          name: company.name,
+          description: company.description,
+          isCustom: company.isCustom,
+        });
+      }
     }
   }
 
