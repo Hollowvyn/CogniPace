@@ -90,7 +90,15 @@ export function LibraryView(props: LibraryViewProps) {
     [visibleRows, editingSlug],
   );
 
-  const handleEdit = (slug: ProblemSlug) => setEditingSlug(slug);
+  const handleEdit = (slug: ProblemSlug) => {
+    // Drop focus from the trigger row/menu before opening the modal so
+    // MUI's aria-hidden on <main id="app-shell"> never lands while a
+    // descendant retains focus (Chrome a11y audit complains otherwise).
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    setEditingSlug(slug);
+  };
   const handleSuspend = async (slug: ProblemSlug, suspend: boolean) => {
     await suspendProblem({ slug, suspend });
     await props.onRefresh?.();
