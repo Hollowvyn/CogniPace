@@ -78,7 +78,7 @@ CREATE TABLE `track_group_problems` (
 	`order_index` integer NOT NULL,
 	PRIMARY KEY(`group_id`, `problem_slug`),
 	FOREIGN KEY (`group_id`) REFERENCES `track_groups`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`problem_slug`) REFERENCES `problems`(`slug`) ON UPDATE no action ON DELETE restrict
+	FOREIGN KEY (`problem_slug`) REFERENCES `problems`(`slug`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE INDEX `idx_tgp_group_id_order` ON `track_group_problems` (`group_id`,`order_index`);--> statement-breakpoint

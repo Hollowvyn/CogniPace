@@ -660,19 +660,11 @@ const allChecks: CheckDef[] = [
   },
   {
     category: "Foreign keys",
-    label: "problems referenced by track_group_problems: DELETE blocked (RESTRICT)",
-    run: async ({ db, rawDb }) => {
-      const trackId = uniq("fk-restrict-track");
-      const groupId = uniq("fk-restrict-group");
-      const slug = uniq("fk-restrict-problem");
-
-      const pragmaRows = rawDb.exec({
-        sql: "PRAGMA foreign_keys",
-        rowMode: "array",
-        returnValue: "resultRows",
-      }) as unknown as Array<[number]>;
-      const fkPragmaOn = pragmaRows[0]?.[0] === 1;
-
+    label: "problems → track_group_problems CASCADE on delete problem",
+    run: async ({ db }) => {
+      const trackId = uniq("fk-cascade-tgp-track");
+      const groupId = uniq("fk-cascade-tgp-group");
+      const slug = uniq("fk-cascade-tgp-problem");
       await db.insert(schema.tracks).values({ id: trackId, name: "x" });
       await db
         .insert(schema.trackGroups)
@@ -682,31 +674,22 @@ const allChecks: CheckDef[] = [
         .insert(schema.trackGroupProblems)
         .values({ groupId, problemSlug: slug, orderIndex: 0 });
 
-      let threw = false;
-      let errMsg = "";
-      try {
-        await db.delete(schema.problems).where(eq(schema.problems.slug, slug));
-      } catch (err) {
-        threw = true;
-        errMsg = String(err);
-      }
+      await db.delete(schema.problems).where(eq(schema.problems.slug, slug));
 
-      const stillThere = await db
+      const remainingMembership = await db
         .select()
-        .from(schema.problems)
-        .where(eq(schema.problems.slug, slug));
+        .from(schema.trackGroupProblems)
+        .where(eq(schema.trackGroupProblems.problemSlug, slug));
 
-      // Cleanup: drop membership first so the problem can be removed.
+      // Cleanup
       await db.delete(schema.tracks).where(eq(schema.tracks.id, trackId));
-      if (stillThere.length > 0) {
-        await db.delete(schema.problems).where(eq(schema.problems.slug, slug));
-      }
 
-      const ok = threw && stillThere.length === 1;
-      const errPreview = errMsg.length > 80 ? errMsg.slice(0, 80) + "…" : errMsg;
       return {
-        ok,
-        detail: `fkPragmaOn=${fkPragmaOn} threw=${threw} stillThere=${stillThere.length} err="${errPreview}"`,
+        ok: remainingMembership.length === 0,
+        detail:
+          remainingMembership.length === 0
+            ? "memberships removed alongside the problem"
+            : `${remainingMembership.length} membership row(s) survived`,
       };
     },
   },

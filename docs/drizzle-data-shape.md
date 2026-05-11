@@ -72,10 +72,12 @@ which traced to ambiguous "should this be NOT NULL?" decisions.
 - `track_groups.topic_id → topics.id` — `ON DELETE SET NULL`. Removing a
   topic doesn't break the track group; the group becomes "untopic'd".
 - `track_group_problems.group_id → track_groups.id` — `ON DELETE CASCADE`.
-- `track_group_problems.problem_slug → problems.slug` — `ON DELETE RESTRICT`.
-  Curated catalog problems should not be deleted while a track references
-  them. If a delete is genuinely needed, the repo must remove the join row
-  first.
+- `track_group_problems.problem_slug → problems.slug` — `ON DELETE CASCADE`.
+  Deleting a problem removes its membership in any track group it
+  belonged to. Protection for curated catalog content is enforced at
+  the repo level (`removeProblem` refuses if `problems.is_curated` is
+  true), not at the DB level — the constraint here is purely about
+  referential integrity.
 
 ---
 
@@ -278,7 +280,7 @@ The ordered membership of problems within a group.
 | Column | Type | Null? | Default | Notes |
 |---|---|---|---|---|
 | `group_id` | `text` FK→`track_groups.id` | NO (PK) | — | `ON DELETE CASCADE`. |
-| `problem_slug` | `text` FK→`problems.slug` | NO (PK) | — | `ON DELETE RESTRICT` (must remove the membership row before deleting a problem). |
+| `problem_slug` | `text` FK→`problems.slug` | NO (PK) | — | `ON DELETE CASCADE` (deleting a problem cleans up its track memberships; curated-content protection is a repo-level concern). |
 | `order_index` | `integer` | NO | — | Sort order within the group. |
 
 **Composite PK:** `(group_id, problem_slug)`.
@@ -289,7 +291,7 @@ The ordered membership of problems within a group.
 - `idx_tgp_group_id_order` on `(group_id, order_index)` — list problems within a group in order.
 - `idx_tgp_problem_slug` on `(problem_slug)` — reverse lookup "which tracks contain this problem?".
 
-**FKs:** cascade on `group_id`, restrict on `problem_slug`.
+**FKs:** cascade on both `group_id` and `problem_slug`.
 
 ---
 

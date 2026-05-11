@@ -186,7 +186,7 @@ export const trackGroupProblems = sqliteTable(
       .references(() => trackGroups.id, { onDelete: "cascade" }),
     problemSlug: text("problem_slug")
       .notNull()
-      .references(() => problems.slug, { onDelete: "restrict" }),
+      .references(() => problems.slug, { onDelete: "cascade" }),
     orderIndex: integer("order_index").notNull(),
   },
   (t) => [

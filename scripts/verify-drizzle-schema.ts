@@ -281,16 +281,49 @@ check("FK cascade: deleting problem cascades to study_states + attempt_history",
   );
 });
 
-check("FK restrict: cannot delete a problem referenced by track_group_problems", () => {
-  assert.throws(
-    () => {
-      db.delete(schema.problems)
-        .where(eq(schema.problems.slug, "three-sum"))
-        .run();
-    },
-    /FOREIGN KEY constraint failed/,
-    "expected RESTRICT to block delete",
+check("FK cascade: deleting a problem also removes its track memberships", () => {
+  // Self-contained: uses its own fresh ids so it doesn't affect the
+  // shared two-sum / three-sum / blind75-arrays fixtures the later
+  // RQB test reads from.
+  db.insert(schema.problems).values({ slug: "cascade-tgp-problem" }).run();
+  db.insert(schema.tracks)
+    .values({ id: "cascade-tgp-track", name: "x" })
+    .run();
+  db.insert(schema.trackGroups)
+    .values({
+      id: "cascade-tgp-group",
+      trackId: "cascade-tgp-track",
+      orderIndex: 0,
+    })
+    .run();
+  db.insert(schema.trackGroupProblems)
+    .values({
+      groupId: "cascade-tgp-group",
+      problemSlug: "cascade-tgp-problem",
+      orderIndex: 0,
+    })
+    .run();
+
+  db.delete(schema.problems)
+    .where(eq(schema.problems.slug, "cascade-tgp-problem"))
+    .run();
+
+  const afterMembership = db
+    .select()
+    .from(schema.trackGroupProblems)
+    .where(
+      eq(schema.trackGroupProblems.problemSlug, "cascade-tgp-problem"),
+    )
+    .all();
+  assert.equal(
+    afterMembership.length,
+    0,
+    "memberships should cascade-delete with the problem",
   );
+
+  db.delete(schema.tracks)
+    .where(eq(schema.tracks.id, "cascade-tgp-track"))
+    .run();
 });
 
 check("FK set-null: deleting a topic nulls out track_groups.topic_id", () => {

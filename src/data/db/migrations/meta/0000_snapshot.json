@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "064e9f66-0779-4d9b-bef0-578de00dca2b",
+  "id": "797dca86-9502-4c18-ae1d-0d7613595f80",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "attempt_history": {
@@ -551,7 +551,7 @@
           "columnsTo": [
             "slug"
           ],
-          "onDelete": "restrict",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
