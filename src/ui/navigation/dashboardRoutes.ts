@@ -2,6 +2,7 @@
 export type DashboardView =
   | "dashboard"
   | "tracks"
+  | "companies"
   | "library"
   | "analytics"
   | "settings";
@@ -27,6 +28,12 @@ export const dashboardRoutes: DashboardRoute[] = [
     label: "Tracks",
     title: "Tracks",
     copy: "Active track at the top, group-by-group progression, and intake for curated paths.",
+  },
+  {
+    view: "companies",
+    label: "Companies",
+    title: "Companies",
+    copy: "Practice for a specific company. Optionally set an interview date to pace coverage.",
   },
   {
     view: "library",

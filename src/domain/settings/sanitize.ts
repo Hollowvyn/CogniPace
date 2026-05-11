@@ -3,6 +3,7 @@ import { asSetGroupId, asStudySetId } from "../common/ids";
 
 import {
   DifficultyGoalSettings,
+  InterviewTarget,
   ReviewOrder,
   StudyMode,
   UserSettings,
@@ -160,6 +161,38 @@ function isDifficultyGoalSettings(value: unknown): value is DifficultyGoalSettin
   );
 }
 
+/** Loose ISO-date validator. Accepts `YYYY-MM-DD` or anything else
+ * `Date` can parse — we don't enforce timezone form here because
+ * downstream consumers always recompute via `Date`. */
+function isParseableDateString(value: unknown): value is string {
+  if (typeof value !== "string" || value.trim() === "") return false;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp);
+}
+
+function isInterviewTargetShape(value: unknown): value is InterviewTarget {
+  return (
+    isRecord(value) &&
+    typeof value.companyId === "string" &&
+    value.companyId.trim() !== "" &&
+    isParseableDateString(value.date) &&
+    isPositiveInteger(value.interviewCount)
+  );
+}
+
+/** Returns the sanitized `InterviewTarget` or `null` when the input is
+ * absent or malformed. Returning `null` (rather than `undefined`) keeps
+ * the persisted shape explicit. */
+function sanitizeInterviewTarget(value: unknown): InterviewTarget | null {
+  if (value === null || value === undefined) return null;
+  if (!isInterviewTargetShape(value)) return null;
+  return {
+    companyId: value.companyId.trim(),
+    date: value.date,
+    interviewCount: value.interviewCount,
+  };
+}
+
 export function hasGroupedUserSettings(value: unknown): boolean {
   if (!isRecord(value)) {
     return false;
@@ -186,10 +219,16 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
   const timing = source.timing as UnknownRecord;
   const experimental = source.experimental as UnknownRecord;
 
+  const interviewTargetValid =
+    source.interviewTarget === null ||
+    source.interviewTarget === undefined ||
+    isInterviewTargetShape(source.interviewTarget);
+
   return (
     isNonNegativeInteger(source.dailyQuestionGoal) &&
     isStudyMode(source.studyMode) &&
     sanitizeActiveFocus(source.activeFocus) !== undefined &&
+    interviewTargetValid &&
     isBooleanRecord(source.setsEnabled) &&
     typeof notifications.enabled === "boolean" &&
     typeof notifications.dailyTime === "string" &&
@@ -248,6 +287,7 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     studyMode: studyMode(source.studyMode, initial.studyMode),
     setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
     activeFocus: sanitizedActiveFocus,
+    interviewTarget: sanitizeInterviewTarget(source.interviewTarget),
     notifications: {
       enabled: booleanValue(
         notifications.enabled,

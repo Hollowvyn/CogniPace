@@ -73,6 +73,14 @@ The main surfaces are:
 - Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Security: [SECURITY.md](SECURITY.md)
 
+## Data Attribution
+
+Company-tagged problem sets are derived from the [CodeJeet](https://github.com/codejeet/codejeet) dataset (GPL-3.0-or-later). CogniPace converts the upstream CSVs to JSON at build time. The extension does not scrape LeetCode, store LeetCode credentials, or refresh this data at runtime. Refresh cadence depends on periodic upstream re-runs and CogniPace releases.
+
 ## License
 
-[MIT](LICENSE)
+Copyright (C) 2026 Tobi Olutimehin and Timi Olaosebikan.
+
+CogniPace is licensed under the [GNU General Public License v3.0 or later](LICENSE). Distribution and modification of this software must comply with the terms of that license, including source-availability obligations for distributed builds.
+
+This is a relicensing from the project's original MIT license. See [docs/decisions/0007-license-change-to-gpl-3-0.md](docs/decisions/0007-license-change-to-gpl-3-0.md) for context.

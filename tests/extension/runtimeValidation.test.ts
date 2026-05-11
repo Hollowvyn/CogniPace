@@ -169,6 +169,69 @@ describe("runtime validation", () => {
     );
   });
 
+  describe("interviewTarget", () => {
+    it("accepts a well-formed target", () => {
+      assert.doesNotThrow(() =>
+        validateRuntimeMessage({
+          type: "UPDATE_SETTINGS",
+          payload: {
+            interviewTarget: {
+              companyId: "google",
+              date: "2026-06-15",
+              interviewCount: 3,
+            },
+          },
+        })
+      );
+    });
+
+    it("accepts null to clear the target", () => {
+      assert.doesNotThrow(() =>
+        validateRuntimeMessage({
+          type: "UPDATE_SETTINGS",
+          payload: { interviewTarget: null },
+        })
+      );
+    });
+
+    it("rejects malformed targets", () => {
+      const cases = [
+        // missing required keys
+        { interviewTarget: { companyId: "google" } },
+        // wrong type for date
+        {
+          interviewTarget: {
+            companyId: "google",
+            date: 20260615,
+            interviewCount: 1,
+          },
+        },
+        // non-positive interview count
+        {
+          interviewTarget: {
+            companyId: "google",
+            date: "2026-06-15",
+            interviewCount: 0,
+          },
+        },
+        // extra keys (strict allowlist)
+        {
+          interviewTarget: {
+            companyId: "google",
+            date: "2026-06-15",
+            interviewCount: 1,
+            extra: "nope",
+          },
+        },
+      ];
+      for (const payload of cases) {
+        assert.throws(() =>
+          validateRuntimeMessage({ type: "UPDATE_SETTINGS", payload }),
+        );
+      }
+    });
+  });
+
   it("rejects removed legacy settings fields", () => {
     assert.throws(
       () =>

@@ -113,4 +113,64 @@ describe("settings sanitization", () => {
       id: "Blind75",
     });
   });
+
+  describe("interviewTarget", () => {
+    it("defaults to null when absent", () => {
+      const sanitized = sanitizeStoredUserSettings({});
+      assert.equal(sanitized.interviewTarget, null);
+    });
+
+    it("preserves a valid target", () => {
+      const sanitized = sanitizeStoredUserSettings({
+        interviewTarget: {
+          companyId: "google",
+          date: "2026-06-15",
+          interviewCount: 2,
+        },
+      });
+      assert.deepEqual(sanitized.interviewTarget, {
+        companyId: "google",
+        date: "2026-06-15",
+        interviewCount: 2,
+      });
+    });
+
+    it("rejects malformed targets without crashing", () => {
+      const cases = [
+        { interviewTarget: { companyId: "", date: "2026-06-15", interviewCount: 1 } },
+        { interviewTarget: { companyId: "google", date: "totally bogus", interviewCount: 1 } },
+        { interviewTarget: { companyId: "google", date: "2026-06-15", interviewCount: 0 } },
+        { interviewTarget: { companyId: "google", date: "2026-06-15", interviewCount: -3 } },
+        { interviewTarget: "not even an object" },
+      ];
+      for (const stored of cases) {
+        const sanitized = sanitizeStoredUserSettings(stored);
+        assert.equal(sanitized.interviewTarget, null);
+      }
+    });
+
+    it("isPersistedUserSettings accepts both null and a valid object", () => {
+      const baseline = createInitialUserSettings();
+      assert.ok(
+        isPersistedUserSettings({ ...baseline, interviewTarget: null }),
+      );
+      assert.ok(
+        isPersistedUserSettings({
+          ...baseline,
+          interviewTarget: {
+            companyId: "meta",
+            date: "2026-07-01",
+            interviewCount: 4,
+          },
+        }),
+      );
+      assert.equal(
+        isPersistedUserSettings({
+          ...baseline,
+          interviewTarget: { companyId: "meta", date: "x", interviewCount: 4 },
+        }),
+        false,
+      );
+    });
+  });
 });

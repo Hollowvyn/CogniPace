@@ -70,6 +70,7 @@ const SETTINGS_KEYS = [
   "dailyQuestionGoal",
   "studyMode",
   "activeFocus",
+  "interviewTarget",
   "setsEnabled",
   "notifications",
   "memoryReview",
@@ -285,6 +286,32 @@ function validateExperimental(value: unknown): void {
   );
 }
 
+/** Allows `undefined` (field omitted), `null` (clear the overlay), or a
+ * well-formed `{ companyId, date, interviewCount }` object. */
+function validateOptionalInterviewTarget(value: unknown, field: string): void {
+  if (value === undefined || value === null) return;
+  if (!isRecord(value)) {
+    throw new Error(`Invalid field "${field}": expected an object or null.`);
+  }
+  hasExactKeys(
+    value,
+    ["companyId", "date", "interviewCount"],
+    `Field "${field}"`,
+  );
+  requireString(value.companyId, `${field}.companyId`);
+  requireString(value.date, `${field}.date`);
+  if (
+    typeof value.interviewCount !== "number" ||
+    !Number.isFinite(value.interviewCount) ||
+    !Number.isInteger(value.interviewCount) ||
+    value.interviewCount <= 0
+  ) {
+    throw new Error(
+      `Invalid field "${field}.interviewCount": expected a positive integer.`,
+    );
+  }
+}
+
 function validateCustomSetItems(value: unknown): void {
   if (!Array.isArray(value)) {
     throw new Error('Invalid field "items": expected an array.');
@@ -470,6 +497,10 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       );
       requireOptionalStudyMode(payload.studyMode, "studyMode");
       // activeFocus is validated by the receiving handler.
+      validateOptionalInterviewTarget(
+        payload.interviewTarget,
+        "interviewTarget"
+      );
       if (payload.setsEnabled !== undefined) {
         validateSetsEnabled(payload.setsEnabled);
       }

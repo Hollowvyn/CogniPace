@@ -78,6 +78,7 @@ The current product includes:
 - settings and optional notifications
 - import/export backup
 - built-in curated sets
+- company-tagged practice pools with optional interview-date targeting
 
 ## Explicit Non-Goals
 
@@ -91,6 +92,9 @@ These are intentionally out of scope for the current product:
 - generic SaaS dashboard expansion
 - large multi-page web app behavior
 - roadmap-by-agent interpretation
+- live or automated refresh of company-tagged data from LeetCode
+- in-extension scraping of LeetCode
+- credential storage for LeetCode
 
 ## Future Candidates
 
@@ -113,6 +117,10 @@ The current product stage is successful when a user can:
 - log review results from the LeetCode problem page
 - inspect progress and weak areas in the dashboard
 - adjust settings and backup data without needing an account
+- pick a company so the popup recommendation draws from that company's
+  tagged problem pool
+- optionally set an interview date to bump today's coverage so the pool
+  is on track for that date
 
 ## Canonicality Notes
 

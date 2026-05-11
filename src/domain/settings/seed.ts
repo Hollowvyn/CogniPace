@@ -7,6 +7,7 @@ export const INITIAL_USER_SETTINGS: UserSettings = {
   dailyQuestionGoal: 18,
   studyMode: "studyPlan",
   activeFocus: { kind: "track", id: asStudySetId(DEFAULT_TRACK_ID) },
+  interviewTarget: null,
   setsEnabled: {
     Blind75: true,
     ByteByteGo101: true,
