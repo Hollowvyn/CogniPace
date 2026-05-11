@@ -12,7 +12,11 @@ CREATE TABLE `attempt_history` (
 CREATE INDEX `idx_attempt_history_slug_reviewed_at` ON `attempt_history` (`problem_slug`,`reviewed_at`);--> statement-breakpoint
 CREATE TABLE `companies` (
 	`id` text PRIMARY KEY NOT NULL,
-	`name` text NOT NULL
+	`name` text NOT NULL,
+	`description` text,
+	`is_custom` integer DEFAULT false NOT NULL,
+	`created_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+	`updated_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `problems` (
@@ -69,7 +73,11 @@ CREATE INDEX `idx_study_states_due` ON `study_states` (`fsrs_due`) WHERE "study_
 CREATE INDEX `idx_study_states_suspended` ON `study_states` (`suspended`);--> statement-breakpoint
 CREATE TABLE `topics` (
 	`id` text PRIMARY KEY NOT NULL,
-	`name` text NOT NULL
+	`name` text NOT NULL,
+	`description` text,
+	`is_custom` integer DEFAULT false NOT NULL,
+	`created_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+	`updated_at` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `track_group_problems` (

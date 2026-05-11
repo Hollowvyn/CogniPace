@@ -20,9 +20,18 @@
  */
 import { eq, and } from "drizzle-orm";
 
+import { listCatalogTopicSeeds } from "../data/catalog/topicsSeed";
 import { createDb, type DbHandle } from "../data/db/client";
 import migrationSql from "../data/db/migrations/0000_initial.sql";
 import * as schema from "../data/db/schema";
+import {
+  getTopic,
+  listTopics,
+  removeTopic,
+  seedCatalogTopics,
+  upsertTopic,
+} from "../data/topics/repository";
+import { asTopicId } from "../domain/common/ids";
 
 let handle: DbHandle | undefined;
 
@@ -112,7 +121,8 @@ type Category =
   | "Foreign keys"
   | "JSON columns"
   | "Indexes"
-  | "RQB";
+  | "RQB"
+  | "Repos";
 
 interface CheckOutcome {
   ok: boolean;
@@ -246,25 +256,32 @@ const allChecks: CheckDef[] = [
   // -------------------- CRUD lifecycles --------------------
   {
     category: "CRUD",
-    label: "topics: insert → select → update → delete",
+    label: "topics: insert → select → update → delete (with rich columns)",
     run: async ({ db }) => {
       const id = uniq("crud-topic");
-      await db.insert(schema.topics).values({ id, name: "Original" });
+      await db
+        .insert(schema.topics)
+        .values({ id, name: "Original", description: "first", isCustom: true });
       const r1 = await db
         .select()
         .from(schema.topics)
         .where(eq(schema.topics.id, id));
-      if (r1.length !== 1 || r1[0].name !== "Original")
+      if (
+        r1.length !== 1 ||
+        r1[0].name !== "Original" ||
+        r1[0].description !== "first" ||
+        r1[0].isCustom !== true
+      )
         return { ok: false, detail: `INSERT/SELECT failed: ${JSON.stringify(r1)}` };
       await db
         .update(schema.topics)
-        .set({ name: "Updated" })
+        .set({ name: "Updated", description: "renamed" })
         .where(eq(schema.topics.id, id));
       const r2 = await db
         .select()
         .from(schema.topics)
         .where(eq(schema.topics.id, id));
-      if (r2[0].name !== "Updated")
+      if (r2[0].name !== "Updated" || r2[0].description !== "renamed")
         return { ok: false, detail: `UPDATE failed: ${JSON.stringify(r2)}` };
       await db.delete(schema.topics).where(eq(schema.topics.id, id));
       const r3 = await db
@@ -278,24 +295,27 @@ const allChecks: CheckDef[] = [
   },
   {
     category: "CRUD",
-    label: "companies: insert → select → update → delete",
+    label: "companies: insert → select → update → delete (with rich columns)",
     run: async ({ db }) => {
       const id = uniq("crud-company");
-      await db.insert(schema.companies).values({ id, name: "OrigCo" });
+      await db
+        .insert(schema.companies)
+        .values({ id, name: "OrigCo", isCustom: true });
       const r1 = await db
         .select()
         .from(schema.companies)
         .where(eq(schema.companies.id, id));
-      if (r1.length !== 1) return { ok: false, detail: `INSERT failed` };
+      if (r1.length !== 1 || r1[0].isCustom !== true)
+        return { ok: false, detail: `INSERT failed: ${JSON.stringify(r1)}` };
       await db
         .update(schema.companies)
-        .set({ name: "NewCo" })
+        .set({ name: "NewCo", description: "updated" })
         .where(eq(schema.companies.id, id));
       const r2 = await db
         .select()
         .from(schema.companies)
         .where(eq(schema.companies.id, id));
-      if (r2[0].name !== "NewCo")
+      if (r2[0].name !== "NewCo" || r2[0].description !== "updated")
         return { ok: false, detail: `UPDATE failed: ${JSON.stringify(r2)}` };
       await db.delete(schema.companies).where(eq(schema.companies.id, id));
       const r3 = await db
@@ -897,6 +917,118 @@ const allChecks: CheckDef[] = [
       return { ok, detail: JSON.stringify(tracks) };
     },
   },
+  // -------------------- Repos (Phase 4+) --------------------
+  {
+    category: "Repos",
+    label: "topics repo: seedCatalogTopics seeds the curated catalog idempotently",
+    run: async ({ db }) => {
+      const seeds = listCatalogTopicSeeds();
+      await seedCatalogTopics(db, seeds);
+      await seedCatalogTopics(db, seeds); // second call must not error
+      const topics = await listTopics(db);
+      const curated = topics.filter((t) => !t.isCustom);
+      const seedIds = new Set(seeds.map((s) => s.id));
+      const missing = seeds.filter((s) => !topics.some((t) => t.id === s.id));
+      return {
+        ok: curated.length >= seeds.length && missing.length === 0,
+        detail:
+          missing.length === 0
+            ? `${curated.length} curated topics present (expected ≥${seeds.length})`
+            : `missing seeds: ${missing.map((m) => m.id).join(", ")}; total seedIds=${seedIds.size}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "topics repo: upsertTopic inserts new + renames without flipping isCustom",
+    run: async ({ db }) => {
+      const id = asTopicId(uniq("repo-topic"));
+      const inserted = await upsertTopic(db, {
+        id,
+        name: "Initial",
+        isCustom: true,
+        description: "first",
+      });
+      if (!inserted.isCustom) {
+        return { ok: false, detail: `inserted isCustom should be true` };
+      }
+      const renamed = await upsertTopic(db, {
+        id,
+        name: "Renamed",
+        description: "second",
+      });
+      const afterReseed = await upsertTopic(db, {
+        id,
+        name: "Renamed",
+        isCustom: false /* ignored on conflict path */,
+      });
+      // Cleanup
+      await removeTopic(db, id);
+      const ok =
+        renamed.name === "Renamed" &&
+        renamed.description === "second" &&
+        renamed.isCustom === true &&
+        afterReseed.isCustom === true;
+      return {
+        ok,
+        detail: `inserted.isCustom=${inserted.isCustom} renamed.name="${renamed.name}" renamed.isCustom=${renamed.isCustom} afterReseed.isCustom=${afterReseed.isCustom}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "topics repo: removeTopic refuses curated, removes custom",
+    run: async ({ db }) => {
+      const customId = asTopicId(uniq("repo-custom"));
+      const curatedId = asTopicId(uniq("repo-curated"));
+      await upsertTopic(db, { id: customId, name: "Custom", isCustom: true });
+      await upsertTopic(db, { id: curatedId, name: "Curated", isCustom: false });
+
+      let curatedThrew = false;
+      try {
+        await removeTopic(db, curatedId);
+      } catch {
+        curatedThrew = true;
+      }
+
+      await removeTopic(db, customId);
+      const customStill = await getTopic(db, customId);
+      const curatedStill = await getTopic(db, curatedId);
+
+      // Cleanup: drop the curated topic we created
+      await db.delete(schema.topics).where(eq(schema.topics.id, curatedId));
+
+      return {
+        ok: curatedThrew && !customStill && !!curatedStill,
+        detail: `curatedThrew=${curatedThrew} customStill=${!!customStill} curatedStill=${!!curatedStill}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "topics repo: listTopics returns alphabetised flat Topic objects",
+    run: async ({ db }) => {
+      const idA = asTopicId(uniq("zlist-z"));
+      const idB = asTopicId(uniq("alist-a"));
+      const idC = asTopicId(uniq("mlist-m"));
+      await upsertTopic(db, { id: idA, name: "Zeta", isCustom: true });
+      await upsertTopic(db, { id: idB, name: "Alpha", isCustom: true });
+      await upsertTopic(db, { id: idC, name: "Mu", isCustom: true });
+      const topics = await listTopics(db);
+      const customSubset = topics.filter((t) =>
+        [idA, idB, idC].includes(t.id as typeof idA),
+      );
+      const names = customSubset.map((t) => t.name);
+      // Cleanup
+      for (const id of [idA, idB, idC]) await removeTopic(db, id);
+      const ok = names.join(",") === "Alpha,Mu,Zeta";
+      return {
+        ok,
+        detail: ok ? "Alpha, Mu, Zeta (alphabetised)" : `got: ${names.join(", ")}`,
+      };
+    },
+  },
+
   {
     category: "RQB",
     label: "studyStates → problem + attempts nests correctly",
@@ -938,6 +1070,7 @@ const categoryOrder: Category[] = [
   "JSON columns",
   "Indexes",
   "RQB",
+  "Repos",
 ];
 
 async function runChecks(filter?: Category): Promise<void> {

@@ -7,8 +7,10 @@ import {
   readLocalStorage,
   removeLocalStorage,
 } from "../../../data/datasources/chrome/storage";
+import { getDb } from "../../../data/db/instance";
 import { mutateAppData , PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
+import { upsertTopic } from "../../../data/topics/repository";
 import {
   asCompanyId,
   asProblemSlug,
@@ -32,7 +34,6 @@ import { ok } from "../responses";
 import type { ActiveFocus } from "../../../domain/active-focus/model";
 import type { Company } from "../../../domain/companies/model";
 import type { StudySet } from "../../../domain/sets/model";
-import type { Topic } from "../../../domain/topics/model";
 import type { Difficulty } from "../../../domain/types";
 
 
@@ -85,25 +86,13 @@ export interface CreateCustomTopicPayload {
 }
 
 export async function createCustomTopicHandler(payload: CreateCustomTopicPayload) {
-  const id = asTopicId(payload.name);
-  if (!id) throw new Error("Topic name cannot be empty.");
-  const now = nowIso();
-  await mutateAppData((data) => {
-    const existing = data.topicsById[id];
-    const next: Topic = existing
-      ? { ...existing, name: payload.name, description: payload.description, updatedAt: now }
-      : {
-          id,
-          name: payload.name,
-          description: payload.description,
-          isCustom: true,
-          createdAt: now,
-          updatedAt: now,
-        };
-    data.topicsById[id] = next;
-    return data;
+  const { db } = await getDb();
+  const topic = await upsertTopic(db, {
+    name: payload.name,
+    description: payload.description,
+    isCustom: true,
   });
-  return ok({ id });
+  return ok({ id: topic.id });
 }
 
 export interface CreateCustomCompanyPayload {

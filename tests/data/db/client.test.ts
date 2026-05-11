@@ -30,14 +30,24 @@ async function freshDb(): Promise<DbHandle> {
 }
 
 describe("Drizzle on @sqlite.org/sqlite-wasm", () => {
-  it("topics: insert + select returns a flat { id, name } object", async () => {
+  it("topics: insert + select returns a flat domain Topic object", async () => {
     const { db } = await freshDb();
     await db.insert(schema.topics).values({ id: "arrays", name: "Arrays" });
     const rows = await db.select().from(schema.topics);
     expect(rows).toHaveLength(1);
     const [row] = rows;
-    expect(row).toEqual({ id: "arrays", name: "Arrays" });
-    expect(Object.keys(row).sort()).toEqual(["id", "name"]);
+    expect(row.id).toBe("arrays");
+    expect(row.name).toBe("Arrays");
+    expect(row.isCustom).toBe(false);
+    expect(row.description).toBeNull();
+    expect(Object.keys(row).sort()).toEqual([
+      "createdAt",
+      "description",
+      "id",
+      "isCustom",
+      "name",
+      "updatedAt",
+    ]);
   });
 
   it("problems: SQL defaults fire through the wasm path", async () => {

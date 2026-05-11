@@ -89,10 +89,16 @@ which traced to ambiguous "should this be NOT NULL?" decisions.
 |---|---|---|---|---|
 | `id` | `text` PK | NO | — | Slug-style ids for curated (`"array"`, `"dynamic-programming"`); UUIDs for user-custom. |
 | `name` | `text` | NO | — | Human label. |
+| `description` | `text` | YES | — | Optional summary used in tooltips. |
+| `is_custom` | `integer({ mode: "boolean" })` | NO | `false` (SQL) | Discriminates user-created topics from seeded catalog topics; gates `delete` / `rename` affordances in the UI. |
+| `created_at` | `text` | NO | `current_timestamp` (SQL) | |
+| `updated_at` | `text` | NO | `current_timestamp` (SQL) | |
 
-**Domain type:** `interface Topic { id: TopicId; name: string }` — replaces the
-current `src/domain/topics/model.ts` (drops `description`, `isCustom`,
-`createdAt`, `updatedAt` per the charter's "slim by design").
+**Domain type:** `Topic` from `src/domain/topics/model.ts` — preserved as-is.
+The charter's "(id, name) slim by design" was relaxed once Phase 4 exposed
+that the UI consumes `isCustom` (for the delete affordance) and
+`description` (for tooltips); adding the four fields back avoided a
+follow-up UI rewrite for negligible storage savings.
 
 **Indexes:** none beyond the PK.
 
@@ -106,9 +112,12 @@ current `src/domain/topics/model.ts` (drops `description`, `isCustom`,
 |---|---|---|---|---|
 | `id` | `text` PK | NO | — | Slug-style for curated, UUID for custom. |
 | `name` | `text` | NO | — | Human label. |
+| `description` | `text` | YES | — | Optional summary. |
+| `is_custom` | `integer({ mode: "boolean" })` | NO | `false` (SQL) | Same role as on `topics`. |
+| `created_at` | `text` | NO | `current_timestamp` (SQL) | |
+| `updated_at` | `text` | NO | `current_timestamp` (SQL) | |
 
-**Domain type:** `interface Company { id: CompanyId; name: string }` — replaces
-the current `src/domain/companies/model.ts` (same slim-down as topics).
+**Domain type:** `Company` from `src/domain/companies/model.ts` — preserved.
 
 **Indexes:** none beyond the PK.
 

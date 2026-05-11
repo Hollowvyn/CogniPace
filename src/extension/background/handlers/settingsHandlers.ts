@@ -1,13 +1,16 @@
 /** Background handlers for settings and backup import/export operations. */
 import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
+import { getDb } from "../../../data/db/instance";
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import {
   getAppData,
   mergeSettings,
   mutateAppData,
 } from "../../../data/repositories/appDataRepository";
+import { listTopics, upsertTopic } from "../../../data/topics/repository";
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
+import { asTopicId } from "../../../domain/common/ids";
 import { nowIso } from "../../../domain/common/time";
 import { normalizeStudyState } from "../../../domain/fsrs/studyState";
 import {
@@ -17,6 +20,8 @@ import {
 } from "../../../domain/problem/slug";
 import { ExportPayload, StudyState } from "../../../domain/types";
 import { ok } from "../responses";
+
+import type { Topic } from "../../../domain/topics/model";
 
 /** Cross-walks legacy topics labels into v7 topicIds via the curated seed. */
 function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
@@ -28,16 +33,21 @@ function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
   return out;
 }
 
-/** Exports the full persisted backup payload. */
+/** Exports the full persisted backup payload. Topics come from SQLite
+ * (Phase 4 SSoT); other aggregates still come from the v7 blob until
+ * later phases migrate them. */
 export async function exportData() {
   const data = await getAppData();
+  const { db } = await getDb();
+  const topics = await listTopics(db);
+  const topicsById: Record<string, Topic> = {};
+  for (const t of topics) topicsById[t.id] = t;
   return ok({
     version: CURRENT_STORAGE_SCHEMA_VERSION,
     problems: Object.values(data.problemsBySlug),
     studyStatesBySlug: data.studyStatesBySlug,
     settings: data.settings,
-    // v7 aggregates — every key is an aggregate root from the registry.
-    topicsById: data.topicsById,
+    topicsById,
     companiesById: data.companiesById,
     studySetsById: data.studySetsById,
     studySetOrder: data.studySetOrder,
@@ -95,9 +105,9 @@ export async function importData(payload: ExportPayload) {
       );
     }
 
-    // v7 aggregates — sanitised by the registry; replace whole maps so
-    // the import is the single source of truth for the new state.
-    if (sanitized.topicsById) data.topicsById = sanitized.topicsById;
+    // v7 aggregates other than topics — sanitised by the registry;
+    // replace whole maps so the import is the single source of truth.
+    // Topics are handled separately below via the SQLite repo.
     if (sanitized.companiesById) data.companiesById = sanitized.companiesById;
     if (sanitized.studySetsById) data.studySetsById = sanitized.studySetsById;
     if (sanitized.studySetOrder) data.studySetOrder = sanitized.studySetOrder;
@@ -108,6 +118,22 @@ export async function importData(payload: ExportPayload) {
     data.settings = mergeSettings(data.settings, sanitized.settings ?? {});
     return data;
   });
+
+  // Route imported topics through SQLite (Phase 4 SSoT). Curated topics
+  // are seeded at SW boot — re-importing them via upsert is a safe no-op
+  // for the rows that match; user-custom topics in the payload land as
+  // isCustom=true and become editable.
+  if (sanitized.topicsById) {
+    const { db } = await getDb();
+    for (const topic of Object.values(sanitized.topicsById)) {
+      await upsertTopic(db, {
+        id: asTopicId(topic.id),
+        name: topic.name,
+        description: topic.description,
+        isCustom: topic.isCustom,
+      });
+    }
+  }
 
   return ok({ imported: true });
 }

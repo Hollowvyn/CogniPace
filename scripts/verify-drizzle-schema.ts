@@ -65,20 +65,38 @@ const isFlatObject = (row: unknown, expectedKeys: readonly string[]) => {
   }
 };
 
-check("topics: insert + flat-object select", () => {
+check("topics: insert + flat-object select with richer columns", () => {
   db.insert(schema.topics)
-    .values({ id: "arrays", name: "Arrays" })
+    .values({ id: "arrays", name: "Arrays", isCustom: false })
     .run();
   const [row] = db.select().from(schema.topics).all();
-  isFlatObject(row, ["id", "name"]);
+  isFlatObject(row, [
+    "id",
+    "name",
+    "description",
+    "isCustom",
+    "createdAt",
+    "updatedAt",
+  ]);
   assert.equal(row.id, "arrays");
   assert.equal(row.name, "Arrays");
+  assert.equal(row.isCustom, false);
+  assert.equal(row.description, null);
 });
 
-check("companies: insert + flat-object select", () => {
-  db.insert(schema.companies).values({ id: "google", name: "Google" }).run();
+check("companies: insert + flat-object select with richer columns", () => {
+  db.insert(schema.companies)
+    .values({ id: "google", name: "Google", isCustom: false })
+    .run();
   const [row] = db.select().from(schema.companies).all();
-  isFlatObject(row, ["id", "name"]);
+  isFlatObject(row, [
+    "id",
+    "name",
+    "description",
+    "isCustom",
+    "createdAt",
+    "updatedAt",
+  ]);
 });
 
 check("problems: defaults fire (title/difficulty/url/booleans/JSON)", () => {

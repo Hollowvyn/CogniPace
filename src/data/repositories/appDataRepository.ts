@@ -18,7 +18,6 @@ import { buildCompanySeed } from "../catalog/companiesSeed";
 import { listCatalogPlans } from "../catalog/curatedSets";
 import { buildProblemSeed } from "../catalog/problemsSeed";
 import { buildStudySetSeed } from "../catalog/studySetsSeed";
-import { buildTopicSeed } from "../catalog/topicsSeed";
 import {
   readLocalStorage,
   writeLocalStorage,
@@ -55,10 +54,13 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
 
   // Seed the v7 aggregates from catalog data when missing. The seed is
   // idempotent — subsequent reads keep the stored values intact.
+  //
+  // Phase 4: topics are no longer seeded into the v7 blob — they live in
+  // SQLite and are seeded at SW boot. `data.topicsById` stays as `{}`
+  // here; the dashboard handler hydrates it at read time.
   const catalogPlans = runMigration || isFirstEverLaunch
     ? listCatalogPlans()
     : null;
-  const seededTopics = runMigration ? buildTopicSeed(seedNow) : {};
   const seededCompanies = runMigration ? buildCompanySeed(seedNow) : {};
   const seededStudySets = runMigration && catalogPlans
     ? buildStudySetSeed(catalogPlans, seedNow)
@@ -76,9 +78,10 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
         normalizeStudyState(state),
       ])
     ),
-    // v7 aggregate fields. Seeded on first encounter (curated topics +
-    // companies + courses); preserved as-is once the user has any data.
-    topicsById: { ...seededTopics, ...(stored?.topicsById ?? {}) },
+    // v7 aggregate fields. Companies + courses seeded on first encounter;
+    // topics moved to SQLite in Phase 4 so `topicsById` is no longer
+    // seeded here — handler-level hydration fills it from the DB.
+    topicsById: stored?.topicsById ?? {},
     companiesById: { ...seededCompanies, ...(stored?.companiesById ?? {}) },
     studySetsById: {
       ...seededStudySets.studySetsById,

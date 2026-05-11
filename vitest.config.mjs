@@ -1,6 +1,21 @@
+import * as fs from "node:fs";
+
 import { defineConfig } from "vitest/config";
 
+const sqlTextLoader = {
+  name: "sql-text-loader",
+  enforce: "pre",
+  load(id) {
+    if (id.endsWith(".sql")) {
+      const sql = fs.readFileSync(id, "utf-8");
+      return `export default ${JSON.stringify(sql)};`;
+    }
+    return null;
+  },
+};
+
 export default defineConfig({
+  plugins: [sqlTextLoader],
   test: {
     environment: "jsdom",
     globals: true,

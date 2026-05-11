@@ -1,5 +1,7 @@
 /** Background handlers for app-shell reads and extension page navigation. */
+import { getDb } from "../../../data/db/instance";
 import { getAppData } from "../../../data/repositories/appDataRepository";
+import { listTopics } from "../../../data/topics/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import {
   computeReviewStreakDays,
@@ -26,7 +28,21 @@ import {
 import { validateExtensionPagePath } from "../../runtime/validator";
 import { ok } from "../responses";
 
+import type { Topic } from "../../../domain/topics/model";
 import type { AppData, Problem } from "../../../domain/types";
+
+/**
+ * Loads topics from SQLite (Phase 4 SSoT) and mutates `data.topicsById`
+ * in place so downstream view-hydration helpers — buildStudySetView,
+ * buildProblemView, libraryRows — work unchanged.
+ */
+async function hydrateTopicsFromDb(data: AppData): Promise<void> {
+  const { db } = await getDb();
+  const topics = await listTopics(db);
+  const map: Record<string, Topic> = {};
+  for (const t of topics) map[t.id] = t;
+  data.topicsById = map;
+}
 
 /** Hydrates the v7 list of explicit StudySet memberships for a problem slug.
  * Derived sets (kind: company/topic/difficulty) aren't included here — they
@@ -243,12 +259,14 @@ export function buildPopupShellPayload(
 /** Builds the popup-only app shell payload from the current persisted state. */
 export async function getPopupShellData() {
   const data = await getAppData();
+  await hydrateTopicsFromDb(data);
   return ok(buildPopupShellPayload(data));
 }
 
 /** Builds the popup/dashboard app shell payload from the current persisted state. */
 export async function getAppShellData() {
   const data = await getAppData();
+  await hydrateTopicsFromDb(data);
   const now = new Date();
   const popupShell = buildPopupShellPayload(data, now);
   const queue = buildTodayQueue(data, now);
