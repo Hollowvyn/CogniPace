@@ -37,6 +37,24 @@ export interface ExperimentalSettings {
   autoDetectSolved: boolean;
 }
 
+/**
+ * Interview-target overlay. When present, scheduling shifts toward
+ * peak-by-date readiness for the named company: today's effective daily
+ * goal is bumped to ceil(uncoveredPoolSize / daysRemaining) so the user
+ * covers the company's pool by interview day. FSRS continues to order
+ * within each day's slot.
+ */
+export interface InterviewTarget {
+  /** Company slug from `companiesById`. Tied to the active company pool
+   * — when this doesn't match `activeFocus`, the overlay stays inert. */
+  companyId: string;
+  /** Interview date as ISO 8601 (`YYYY-MM-DD` or full timestamp). */
+  date: string;
+  /** Number of interview rounds. Currently informational; reserved for
+   * future scheduling refinements. */
+  interviewCount: number;
+}
+
 export interface UserSettings {
   dailyQuestionGoal: number;
   studyMode: StudyMode;
@@ -45,6 +63,9 @@ export interface UserSettings {
   /** Discriminated current selection across all Tracks. The single source
    * of truth for "which Track is the user focused on right now". */
   activeFocus: ActiveFocus;
+  /** Optional peak-by-date overlay. Null/absent when the user has no
+   * upcoming interview to ramp for. */
+  interviewTarget: InterviewTarget | null;
   notifications: NotificationSettings;
   memoryReview: MemoryReviewSettings;
   questionFilters: QuestionFilterSettings;
@@ -65,4 +86,8 @@ export type UserSettingsPatch = Partial<
   timing?: Partial<Omit<TimingSettings, "difficultyGoalMs">> & {
     difficultyGoalMs?: Partial<DifficultyGoalSettings>;
   };
+  /** Pass `null` to clear the overlay. Pass a fresh `InterviewTarget`
+   * object to replace the current one (partial-merge is not supported —
+   * date/count must be coherent). */
+  interviewTarget?: InterviewTarget | null;
 };

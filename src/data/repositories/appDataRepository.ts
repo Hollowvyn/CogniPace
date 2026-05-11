@@ -15,6 +15,7 @@ import {
 } from "../../domain/settings";
 import { AppData } from "../../domain/types";
 import { buildCompanySeed } from "../catalog/companiesSeed";
+import { buildCompanyStudySetSeed } from "../catalog/companyStudySetsSeed";
 import { listCatalogPlans } from "../catalog/curatedSets";
 import { buildProblemSeed } from "../catalog/problemsSeed";
 import { buildStudySetSeed } from "../catalog/studySetsSeed";
@@ -60,9 +61,22 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
     : null;
   const seededTopics = runMigration ? buildTopicSeed(seedNow) : {};
   const seededCompanies = runMigration ? buildCompanySeed(seedNow) : {};
-  const seededStudySets = runMigration && catalogPlans
+  const seededCourseStudySets = runMigration && catalogPlans
     ? buildStudySetSeed(catalogPlans, seedNow)
     : { studySetsById: {}, studySetOrder: [] };
+  const seededCompanyStudySets = runMigration
+    ? buildCompanyStudySetSeed(seedNow)
+    : {};
+  const seededStudySets = {
+    studySetsById: {
+      ...seededCourseStudySets.studySetsById,
+      ...seededCompanyStudySets,
+    },
+    // Company-derived sets are deliberately omitted from the order list —
+    // they're addressable by id but should not appear in the default
+    // track listing until the user surfaces them through a picker.
+    studySetOrder: seededCourseStudySets.studySetOrder,
+  };
   const seededProblems = isFirstEverLaunch && catalogPlans
     ? buildProblemSeed(catalogPlans, seedNow)
     : {};

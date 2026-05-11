@@ -5,6 +5,11 @@ import {
   computeReviewStreakDays,
   summarizeAnalytics,
 } from "../../../domain/analytics/summarizeAnalytics";
+import {
+  resolveActiveCompanyPool,
+  resolveEffectiveDailyGoal,
+  type CompanyPool,
+} from "../../../domain/companies";
 import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
 import { buildRecommendedCandidates } from "../../../domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../../domain/queue/buildTodayQueue";
@@ -26,7 +31,58 @@ import {
 import { validateExtensionPagePath } from "../../runtime/validator";
 import { ok } from "../responses";
 
+import type { Problem as ProblemV7 } from "../../../domain/problems/model";
 import type { AppData, Problem } from "../../../domain/types";
+
+/** Resolves the user's active focus to the live company pool, or null
+ * when no company focus is active or the pool resolves empty (so callers
+ * fall back to the full library). */
+function resolveActivePoolForData(data: AppData): CompanyPool | null {
+  const pool = resolveActiveCompanyPool({
+    activeFocus: data.settings.activeFocus,
+    studySetsById: data.studySetsById,
+    problemsBySlug: data.problemsBySlug as unknown as Record<string, ProblemV7>,
+  });
+  if (!pool || pool.isEmpty) return null;
+  return pool;
+}
+
+/** Counts pool problems the user has not yet *touched* — used by the
+ * interview-target overlay to compute today's coverage quota. */
+function countUncoveredInPool(
+  pool: CompanyPool,
+  data: AppData,
+): number {
+  let uncovered = 0;
+  for (const slug of pool.slugs) {
+    const state = data.studyStatesBySlug[slug as unknown as string];
+    if (!state || state.attemptHistory.length === 0) uncovered += 1;
+  }
+  return uncovered;
+}
+
+/** Builds the queue options that scope `buildTodayQueue` to the user's
+ * active company pool (when set) and bump the daily goal for an active
+ * interview-target overlay. */
+function buildPoolAwareQueueOptions(
+  data: AppData,
+  now: Date,
+): { restrictToSlugs?: ReadonlySet<string>; dailyQuestionGoalOverride?: number } {
+  const pool = resolveActivePoolForData(data);
+  if (!pool) return {};
+  const uncoveredCount = countUncoveredInPool(pool, data);
+  const dailyQuestionGoalOverride = resolveEffectiveDailyGoal({
+    userDailyGoal: data.settings.dailyQuestionGoal,
+    uncoveredCount,
+    target: data.settings.interviewTarget,
+    companyId: pool.companyId,
+    now,
+  });
+  return {
+    restrictToSlugs: new Set(pool.slugs.map(String)),
+    dailyQuestionGoalOverride,
+  };
+}
 
 /** Hydrates the v7 list of explicit StudySet memberships for a problem slug.
  * Derived sets (kind: company/topic/difficulty) aren't included here — they
@@ -195,7 +251,8 @@ export function buildPopupShellPayload(
   data: Awaited<ReturnType<typeof getAppData>>,
   now = new Date()
 ): PopupShellPayload {
-  const queue = buildTodayQueue(data, now);
+  const queueOptions = buildPoolAwareQueueOptions(data, now);
+  const queue = buildTodayQueue(data, now, queueOptions);
   const activeFocusId =
     data.settings.activeFocus?.kind === "track"
       ? data.settings.activeFocus.id
@@ -251,7 +308,8 @@ export async function getAppShellData() {
   const data = await getAppData();
   const now = new Date();
   const popupShell = buildPopupShellPayload(data, now);
-  const queue = buildTodayQueue(data, now);
+  const queueOptions = buildPoolAwareQueueOptions(data, now);
+  const queue = buildTodayQueue(data, now, queueOptions);
   const analytics = summarizeAnalytics(data, now);
   const tracks = buildStudySetViews(data, now);
 
@@ -277,7 +335,8 @@ export async function getAppShellData() {
 /** Returns the live due/new/reinforcement queue projection. */
 export async function getQueue() {
   const data = await getAppData();
-  return ok(buildTodayQueue(data));
+  const now = new Date();
+  return ok(buildTodayQueue(data, now, buildPoolAwareQueueOptions(data, now)));
 }
 
 /** Opens an internal extension page after validating the requested path. */

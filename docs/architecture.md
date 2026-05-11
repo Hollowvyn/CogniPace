@@ -225,6 +225,16 @@ in-memory payloads or reading `chrome.storage` directly from UI code.
 - Raw Chrome storage access: `src/data/datasources/chrome/storage.ts`
 - Backup import/export: `src/data/importexport/backup.ts`
 - Built-in study plans: `src/data/catalog/curatedSets.ts`
+- Company CSV source (committed snapshot): `data/companies/*.csv`
+- Build-time CSV to JSON converter: `scripts/build-company-catalog.mjs`
+- Bundled company catalog (generated): `src/data/catalog/generated/companiesCatalog.json`
+- Typed catalog loader: `src/data/catalog/generated/companiesCatalog.ts`
+- Company seed (catalog + curated name overrides): `src/data/catalog/companiesSeed.ts`
+- Company-derived StudySet seed: `src/data/catalog/companyStudySetsSeed.ts`
+- Company StudySet id helpers (no catalog import): `src/data/catalog/companyStudySetId.ts`
+- Company pool resolution: `src/domain/companies/pool.ts`
+- Interview-target overlay logic: `src/domain/companies/interviewTarget.ts`
+- Companies dashboard tab: `src/ui/screens/dashboard/tabs/companies/CompaniesView.tsx`
 - Problem slug rules: `src/domain/problem/slug.ts`
 - Difficulty parsing and solve-time goals: `src/domain/problem/difficulty.ts`
 - FSRS logic: `src/domain/fsrs/*`
@@ -263,11 +273,22 @@ Important persisted areas:
 - `coursesById`
 - `courseOrder`
 - `courseProgressById`
+- `topicsById`, `companiesById`, `studySetsById`, `studySetOrder`,
+  `studySetProgressById`
+  v7 aggregate registries seeded on first launch. `companiesById` and
+  the company-derived StudySets in `studySetsById` come from the bundled
+  catalog at `src/data/catalog/generated/companiesCatalog.json`.
+  Company-derived StudySets are addressable by id (`company::<slug>`)
+  but excluded from `studySetOrder` so they do not appear in the default
+  track listing.
 - `settings`
   Stores the current grouped user settings model. Top-level fields hold the daily question goal, study mode, active
-  course, and enabled source sets. Nested groups hold notification preferences, memory-review settings, question
-  filters, timing goals, and experimental flags. Missing or malformed settings are seeded once into the current model.
-  This grouped shape is the only supported persisted settings contract.
+  focus, enabled source sets, and the optional `interviewTarget` overlay
+  (`{ companyId, date, interviewCount }` or `null`). Nested groups hold
+  notification preferences, memory-review settings, question filters,
+  timing goals, and experimental flags. Missing or malformed settings
+  are seeded once into the current model. This grouped shape is the only
+  supported persisted settings contract.
   Short-lived migration code is acceptable when explicitly approved for a release boundary, but legacy compatibility is
   not meant to linger in the runtime model or sanitizer indefinitely.
   After the migration window closes, removed legacy fields are not preserved and should be deleted from runtime,
@@ -308,6 +329,10 @@ Review and history runtime contracts now include:
 - React 19 + MUI + Emotion UI stack
 - `esbuild` remains the bundler for TSX entrypoints
 - runtime message names and persisted JSON contracts are stable unless explicitly updated in this document
+- the company-tagged dataset is a periodic upstream snapshot from
+  codejeet; refreshing it is a maintainer-driven task done outside the
+  extension (re-import CSVs into `data/companies/`, re-run
+  `npm run build:companies`, ship a new release)
 
 ## Related ADRs
 
@@ -316,3 +341,6 @@ Review and history runtime contracts now include:
 - `docs/decisions/0003-react-mui-emotion-ui.md`
 - `docs/decisions/0004-no-backend-service.md`
 - `docs/decisions/0005-minimal-extension-permissions.md`
+- `docs/decisions/0006-desktop-only-scope.md`
+- `docs/decisions/0007-license-change-to-gpl-3-0.md`
+- `docs/decisions/0008-company-catalog-source.md`

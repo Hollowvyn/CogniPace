@@ -596,3 +596,82 @@ Define the current persistence model and its limits.
 ### Acceptance Criteria
 
 - contributors understand that local-first is an intentional product decision, not an incomplete backend
+
+## Company Pools And Interview Targets
+
+### Purpose
+
+Let users practice problems tagged for a specific company, with an
+optional interview-date overlay that bumps today's coverage so the pool
+is on track for the interview.
+
+### User Flow
+
+1. User opens the dashboard and navigates to the Companies tab
+2. User searches the catalog and picks a company
+3. Product sets `activeFocus` to that company's StudySet — popup
+   recommendation and dashboard queue now draw from the company's pool
+4. User may optionally add an interview target `{ date, interviewCount }`
+   on the active company
+5. When the target is set and active, today's effective daily goal is
+   bumped to `max(userDailyGoal, ceil(uncovered / (daysRemaining + 1)))`
+6. When no company data exists for the chosen company, the pool resolves
+   empty and the queue falls back to FSRS over the full library
+
+### Current Behavior
+
+- 662 companies are seeded from a periodic upstream snapshot of the
+  codejeet dataset, each with a `kind: "company"` StudySet addressable
+  by id (`company::<slug>`) but excluded from the default track listing
+- 3,310 catalog problems land in the library on first launch with
+  `companyIds` populated from the reverse-index
+- the Companies tab provides search + pick affordances; the picker writes
+  `activeFocus` rather than mutating set-membership
+- when an active company pool resolves, the popup recommendation and
+  dashboard queue restrict to its slugs; an empty resolution falls back
+  to the full library so the popup never empties unexpectedly
+- the optional interview-target overlay is inert when the active company
+  doesn't match the target's `companyId`, when the date has passed, or
+  when the target is absent
+
+### Key States And Edge Cases
+
+- no active company → unchanged FSRS behavior over the full library
+- active company with no tagged problems in the library → fallback to
+  full library
+- interview target set for a different company than the active focus →
+  surfaced as an informational alert; overlay stays inert
+- interview date in the past → overlay stays inert; daily goal is not
+  bumped
+- catalog snapshot is older than the latest LeetCode question additions
+  → those problems simply aren't tagged until the maintainer refreshes
+
+### In Scope
+
+- clearer empty-pool messaging in the popup and Companies tab
+- pinning or curating featured companies for faster discovery
+- showing interview-date urgency in the popup
+- importing user-supplied frequency datasets without overwriting the
+  bundled catalog
+
+### Out Of Scope
+
+- live or automated data refresh from LeetCode
+- in-extension scraping of LeetCode problem pages
+- credential storage for any third-party source
+- multiple concurrent company selections or concurrent interview targets
+- cloud sync of company selection or interview target
+
+### Acceptance Criteria
+
+- selecting a company drives the popup recommendation and dashboard
+  queue from that company's tagged pool
+- when no company data is available, behavior matches the pre-feature
+  state — FSRS over the full library
+- when an interview target is set and active for the current company,
+  today's daily goal is visibly bumped to cover the pool by the
+  interview date
+- clearing the target or letting the date pass reverts to baseline FSRS
+  behavior
+- the extension never reads LeetCode credentials and never scrapes
+  LeetCode at runtime

@@ -102,9 +102,20 @@ function orderItems(
   return sortByDueDateAsc(items);
 }
 
+export interface BuildTodayQueueOptions {
+  /** When set, only problems whose slug appears here are considered. Used
+   * to scope the queue to an active company pool. Falls back to the full
+   * library when omitted. */
+  restrictToSlugs?: ReadonlySet<string>;
+  /** When set, replaces `settings.dailyQuestionGoal`. Used by the
+   * interview-target overlay to bump coverage capacity for today. */
+  dailyQuestionGoalOverride?: number;
+}
+
 export function buildTodayQueue(
   data: AppData,
-  now = new Date()
+  now = new Date(),
+  options: BuildTodayQueueOptions = {}
 ): {
   generatedAt: string;
   dueCount: number;
@@ -112,13 +123,18 @@ export function buildTodayQueue(
   reinforcementCount: number;
   items: QueueItem[];
 } {
+  const baseDailyGoal = options.dailyQuestionGoalOverride ?? data.settings.dailyQuestionGoal;
   const dailyQuestionGoal = Math.max(
     0,
-    Math.round(data.settings.dailyQuestionGoal)
+    Math.round(baseDailyGoal)
   );
-  const problems = Object.values(data.problemsBySlug).filter((problem) =>
-    isSetEnabled(problem, data.settings.setsEnabled),
-  );
+  const { restrictToSlugs } = options;
+  const problems = Object.values(data.problemsBySlug).filter((problem) => {
+    if (restrictToSlugs && !restrictToSlugs.has(problem.leetcodeSlug)) {
+      return false;
+    }
+    return isSetEnabled(problem, data.settings.setsEnabled);
+  });
 
   const due: QueueItem[] = [];
   const newCandidates: QueueItem[] = [];

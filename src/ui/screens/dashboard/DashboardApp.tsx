@@ -7,6 +7,7 @@ import { DashboardRail } from "./components/DashboardRail";
 import { DashboardFrame } from "./components/DashboardSurface";
 import { PreV7BackupSnackbar } from "./components/PreV7BackupSnackbar";
 import { AnalyticsView } from "./tabs/analytics/AnalyticsView";
+import { CompaniesView } from "./tabs/companies/CompaniesView";
 import { LibraryView } from "./tabs/library/LibraryView";
 import { OverviewView } from "./tabs/overview/OverviewView";
 import { SettingsView } from "./tabs/settings/SettingsView";
@@ -55,6 +56,14 @@ export function DashboardApp() {
                 onEnablePremium={controller.onEnablePremium}
                 onOpenProblem={controller.onOpenProblem}
                 onSetActiveFocus={controller.onSetActiveFocus}
+                payload={controller.payload}
+              />
+            ) : null}
+
+            {controller.view === "companies" ? (
+              <CompaniesView
+                onSetActiveFocus={controller.onSetActiveFocus}
+                onUpdateSettings={controller.onUpdateSettings}
                 payload={controller.payload}
               />
             ) : null}

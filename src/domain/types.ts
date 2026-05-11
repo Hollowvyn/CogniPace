@@ -14,6 +14,7 @@ import type { UserSettings } from "./settings/model";
 export type {
   DifficultyGoalSettings,
   ExperimentalSettings,
+  InterviewTarget,
   MemoryReviewSettings,
   NotificationSettings,
   QuestionFilterSettings,

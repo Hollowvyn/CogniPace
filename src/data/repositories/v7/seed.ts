@@ -6,6 +6,7 @@
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 import { createInitialUserSettings } from "../../../domain/settings";
 import { buildCompanySeed } from "../../catalog/companiesSeed";
+import { buildCompanyStudySetSeed } from "../../catalog/companyStudySetsSeed";
 import { listCatalogPlans } from "../../catalog/curatedSets";
 import { buildProblemSeed } from "../../catalog/problemsSeed";
 import { buildStudySetSeed } from "../../catalog/studySetsSeed";
@@ -19,7 +20,12 @@ export function buildFreshAppDataV7(now: string): AppDataV7 {
   const plans = listCatalogPlans();
   const topicsById = buildTopicSeed(now);
   const companiesById = buildCompanySeed(now);
-  const { studySetsById, studySetOrder } = buildStudySetSeed(plans, now);
+  const { studySetsById: courseStudySetsById, studySetOrder } =
+    buildStudySetSeed(plans, now);
+  const companyStudySetsById = buildCompanyStudySetSeed(now);
+  // Course sets ship in `studySetOrder`; company-derived sets are
+  // addressable by id but excluded from the default order list.
+  const studySetsById = { ...courseStudySetsById, ...companyStudySetsById };
   const problemsBySlug = buildProblemSeed(plans, now);
 
   return {

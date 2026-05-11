@@ -24,6 +24,7 @@ import {
   cloneUserSettings,
   createInitialUserSettings,
   UserSettings,
+  UserSettingsPatch,
 } from "../../../domain/settings";
 import { sanitizeStoredUserSettings } from "../../../domain/settings/sanitize";
 import { createMockAppShellPayload } from "../../mockData";
@@ -357,6 +358,31 @@ export function useDashboardController() {
     [load, setPayload, setStatus],
   );
 
+  const onUpdateSettings = useCallback(
+    async (patch: UserSettingsPatch): Promise<void> => {
+      const response = await updateSettings(patch);
+      if (!response.ok) {
+        setStatus({
+          message: response.error ?? "Failed to update settings.",
+          isError: true,
+        });
+        return;
+      }
+      const savedSettings = response.data?.settings;
+      if (savedSettings) {
+        setPayload((current) =>
+          current
+            ? { ...current, settings: cloneUserSettings(savedSettings) }
+            : current,
+        );
+      }
+      if (isExtensionContext()) {
+        await load({ clearStatusOnSuccess: false });
+      }
+    },
+    [load, setPayload, setStatus],
+  );
+
   return {
     draftSettings,
     filters,
@@ -374,6 +400,7 @@ export function useDashboardController() {
     onResetStudyHistory,
     onSetActiveFocus,
     onToggleMode,
+    onUpdateSettings,
     payload,
     refresh,
     route: getDashboardRoute(view),
