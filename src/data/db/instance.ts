@@ -29,6 +29,7 @@ import { seedCatalogCompanies } from "../companies/repository";
 import { seedInitialSettings } from "../settings/repository";
 import { seedCatalogTopics } from "../topics/repository";
 
+import { broadcastDbTick } from "./broadcast";
 import { createDb, type DbHandle } from "./client";
 import migrationSql from "./migrations/0000_initial.sql";
 import { setOnMutationHook } from "./proxy";
@@ -137,7 +138,14 @@ async function bootDb(): Promise<DbHandle> {
 
   liveHandle = handle;
   liveFingerprint = fingerprint;
-  setOnMutationHook(scheduleSnapshotSave);
+  // Two-tier reactivity: immediate broadcast for UI re-fetch (Phase 7
+  // lite) + debounced snapshot persistence (Phase 6). Both run on the
+  // same `run` proxy event; the broadcast is fire-and-forget so it
+  // doesn't slow the mutation's response path.
+  setOnMutationHook(() => {
+    broadcastDbTick();
+    scheduleSnapshotSave();
+  });
 
   console.log("[CogniPace] bootDb: ready");
   return handle;
