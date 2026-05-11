@@ -27,12 +27,11 @@ import * as schema from "../data/db/schema";
 let handle: DbHandle | undefined;
 
 async function bootDb(): Promise<DbHandle> {
-  const h = await createDb({
+  // foreign_keys is already enabled by createDb; no further setup needed.
+  return createDb({
     migrationSql,
     locateWasm: (file) => chrome.runtime.getURL(file),
   });
-  h.rawDb.exec("PRAGMA foreign_keys = ON");
-  return h;
 }
 
 // ---------------------------------------------------------------------------
@@ -662,10 +661,18 @@ const allChecks: CheckDef[] = [
   {
     category: "Foreign keys",
     label: "problems referenced by track_group_problems: DELETE blocked (RESTRICT)",
-    run: async ({ db }) => {
+    run: async ({ db, rawDb }) => {
       const trackId = uniq("fk-restrict-track");
       const groupId = uniq("fk-restrict-group");
       const slug = uniq("fk-restrict-problem");
+
+      const pragmaRows = rawDb.exec({
+        sql: "PRAGMA foreign_keys",
+        rowMode: "array",
+        returnValue: "resultRows",
+      }) as unknown as Array<[number]>;
+      const fkPragmaOn = pragmaRows[0]?.[0] === 1;
+
       await db.insert(schema.tracks).values({ id: trackId, name: "x" });
       await db
         .insert(schema.trackGroups)
@@ -674,18 +681,32 @@ const allChecks: CheckDef[] = [
       await db
         .insert(schema.trackGroupProblems)
         .values({ groupId, problemSlug: slug, orderIndex: 0 });
-      let restricted = false;
+
+      let threw = false;
+      let errMsg = "";
       try {
         await db.delete(schema.problems).where(eq(schema.problems.slug, slug));
       } catch (err) {
-        restricted = String(err).includes("FOREIGN KEY constraint failed");
+        threw = true;
+        errMsg = String(err);
       }
-      // Cleanup
+
+      const stillThere = await db
+        .select()
+        .from(schema.problems)
+        .where(eq(schema.problems.slug, slug));
+
+      // Cleanup: drop membership first so the problem can be removed.
       await db.delete(schema.tracks).where(eq(schema.tracks.id, trackId));
-      await db.delete(schema.problems).where(eq(schema.problems.slug, slug));
+      if (stillThere.length > 0) {
+        await db.delete(schema.problems).where(eq(schema.problems.slug, slug));
+      }
+
+      const ok = threw && stillThere.length === 1;
+      const errPreview = errMsg.length > 80 ? errMsg.slice(0, 80) + "…" : errMsg;
       return {
-        ok: restricted,
-        detail: restricted ? "RESTRICT blocked the delete" : "DELETE was allowed (bug)",
+        ok,
+        detail: `fkPragmaOn=${fkPragmaOn} threw=${threw} stillThere=${stillThere.length} err="${errPreview}"`,
       };
     },
   },

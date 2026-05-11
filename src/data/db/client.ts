@@ -99,6 +99,11 @@ export async function createDb(
 ): Promise<DbHandle> {
   const sqlite3 = await loadSqlite3(options.locateWasm);
   const rawDb = new sqlite3.oo1.DB(options.filename ?? ":memory:", "c");
+  // Default-enable foreign keys. SQLite ships with `foreign_keys = OFF`
+  // per connection, which silently disables ON DELETE CASCADE / RESTRICT
+  // / SET NULL — a footgun the schema relies on. Set it before the
+  // migration runs so DDL and DML both see enforcement.
+  rawDb.exec("PRAGMA foreign_keys = ON");
   if (options.migrationSql) {
     rawDb.exec(options.migrationSql);
   }
