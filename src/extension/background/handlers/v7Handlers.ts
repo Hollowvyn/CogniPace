@@ -9,6 +9,10 @@ import {
   removeLocalStorage,
 } from "../../../data/datasources/chrome/storage";
 import { getDb } from "../../../data/db/instance";
+import {
+  editProblem,
+  getProblem,
+} from "../../../data/problems/repository";
 import { mutateAppData , PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
 import {
@@ -29,14 +33,11 @@ import {
   type TopicId,
 } from "../../../domain/common/ids";
 import { nowIso } from "../../../domain/common/time";
-import {
-  applyEdit,
-  type ProblemEditPatch,
-} from "../../../domain/problems/operations";
 import { FLAT_GROUP_ID } from "../../../domain/sets/model";
 import { ok } from "../responses";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
+import type { ProblemEditPatch } from "../../../domain/problems/operations";
 import type { StudySet } from "../../../domain/sets/model";
 import type { Difficulty } from "../../../domain/types";
 
@@ -51,33 +52,24 @@ export interface EditProblemPayload {
 
 export async function editProblemHandler(payload: EditProblemPayload) {
   const slug = asProblemSlug(payload.slug);
-  await mutateAppData((data) => {
-    const existing = data.problemsBySlug[slug];
-    if (!existing) return data;
-    const patch: ProblemEditPatch = {
-      ...payload.patch,
-      topicIds: payload.patch.topicIds?.map((id) => asTopicId(id)) as TopicId[] | undefined,
-      companyIds: payload.patch.companyIds?.map((id) => asCompanyId(id)) as
-        | CompanyId[]
-        | undefined,
-    };
-    const next = applyEdit(
-      // The runtime Problem carries v6 fields too; the operations layer
-      // ignores them.
-      existing as unknown as Parameters<typeof applyEdit>[0],
-      patch,
-      nowIso(),
-      payload.markUserEdit ?? true,
-    );
-    // Stitch v6 fields back so handlers continue to see consistent data.
-    data.problemsBySlug[slug] = {
-      ...existing,
-      ...next,
-      // Mirror difficulty/title/url back onto v6 mirror fields.
-      id: existing.id,
-      leetcodeSlug: existing.leetcodeSlug,
-    };
-    return data;
+  const patch: ProblemEditPatch = {
+    ...payload.patch,
+    topicIds: payload.patch.topicIds?.map((id) => asTopicId(id)) as
+      | TopicId[]
+      | undefined,
+    companyIds: payload.patch.companyIds?.map((id) => asCompanyId(id)) as
+      | CompanyId[]
+      | undefined,
+  };
+  const { db } = await getDb();
+  // No-op if the problem doesn't exist yet — match the legacy handler's
+  // silent return rather than throwing for an edit on a missing row.
+  const existing = await getProblem(db, slug);
+  if (!existing) return ok({ slug });
+  await editProblem(db, {
+    slug,
+    patch,
+    markUserEdit: payload.markUserEdit ?? true,
   });
   return ok({ slug });
 }
@@ -127,23 +119,21 @@ export interface AssignTopicPayload {
 export async function assignTopicHandler(payload: AssignTopicPayload) {
   const slug = asProblemSlug(payload.slug);
   const topicId = asTopicId(payload.topicId);
-  await mutateAppData((data) => {
-    const existing = data.problemsBySlug[slug];
-    if (!existing) return data;
-    const current = (existing.topicIds ?? []) as TopicId[];
-    const has = current.includes(topicId);
-    const assigned = payload.assigned ?? true;
-    if (assigned && has) return data;
-    if (!assigned && !has) return data;
-    const next = assigned
-      ? [...current, topicId]
-      : current.filter((id) => id !== topicId);
-    data.problemsBySlug[slug] = {
-      ...existing,
-      topicIds: next,
-      updatedAt: nowIso(),
-    };
-    return data;
+  const assigned = payload.assigned ?? true;
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (!existing) return ok({ slug });
+  const current = existing.topicIds as TopicId[];
+  const has = current.includes(topicId);
+  if (assigned && has) return ok({ slug });
+  if (!assigned && !has) return ok({ slug });
+  const nextIds = assigned
+    ? [...current, topicId]
+    : current.filter((id) => id !== topicId);
+  await editProblem(db, {
+    slug,
+    patch: { topicIds: nextIds },
+    markUserEdit: true,
   });
   return ok({ slug });
 }
@@ -157,23 +147,21 @@ export interface AssignCompanyPayload {
 export async function assignCompanyHandler(payload: AssignCompanyPayload) {
   const slug = asProblemSlug(payload.slug);
   const companyId = asCompanyId(payload.companyId);
-  await mutateAppData((data) => {
-    const existing = data.problemsBySlug[slug];
-    if (!existing) return data;
-    const current = (existing.companyIds ?? []) as CompanyId[];
-    const has = current.includes(companyId);
-    const assigned = payload.assigned ?? true;
-    if (assigned && has) return data;
-    if (!assigned && !has) return data;
-    const next = assigned
-      ? [...current, companyId]
-      : current.filter((id) => id !== companyId);
-    data.problemsBySlug[slug] = {
-      ...existing,
-      companyIds: next,
-      updatedAt: nowIso(),
-    };
-    return data;
+  const assigned = payload.assigned ?? true;
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (!existing) return ok({ slug });
+  const current = existing.companyIds as CompanyId[];
+  const has = current.includes(companyId);
+  if (assigned && has) return ok({ slug });
+  if (!assigned && !has) return ok({ slug });
+  const nextIds = assigned
+    ? [...current, companyId]
+    : current.filter((id) => id !== companyId);
+  await editProblem(db, {
+    slug,
+    patch: { companyIds: nextIds },
+    markUserEdit: true,
   });
   return ok({ slug });
 }

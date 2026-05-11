@@ -1,6 +1,7 @@
 /** Background handlers for app-shell reads and extension page navigation. */
 import { listCompanies } from "../../../data/companies/repository";
 import { getDb } from "../../../data/db/instance";
+import { listProblems } from "../../../data/problems/repository";
 import { getAppData } from "../../../data/repositories/appDataRepository";
 import { getUserSettings } from "../../../data/settings/repository";
 import { listTopics } from "../../../data/topics/repository";
@@ -45,6 +46,7 @@ async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   const topics = await listTopics(db);
   const companies = await listCompanies(db);
   const settings = await getUserSettings(db);
+  const problems = await listProblems(db);
   const topicMap: Record<string, Topic> = {};
   for (const t of topics) topicMap[t.id] = t;
   data.topicsById = topicMap;
@@ -52,6 +54,12 @@ async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   for (const c of companies) companyMap[c.id] = c;
   data.companiesById = companyMap;
   if (settings) data.settings = settings;
+  // Phase 5 problems: SQLite is the SSoT. Replace data.problemsBySlug
+  // wholesale so downstream library/track-view code reads the same
+  // shape it always has — just sourced from the DB now.
+  const problemMap: Record<string, Problem> = {};
+  for (const p of problems) problemMap[p.slug] = p;
+  data.problemsBySlug = problemMap;
 }
 
 /** Hydrates the v7 list of explicit StudySet memberships for a problem slug.

@@ -23,9 +23,13 @@
  * Production code should always use `getDb()`; tests construct their
  * own DB via `createDb()` in `client.ts`.
  */
+import { nowIso } from "../../domain/common/time";
 import { listCatalogCompanySeeds } from "../catalog/companiesSeed";
+import { listCatalogPlans } from "../catalog/curatedSets";
+import { buildProblemSeed } from "../catalog/problemsSeed";
 import { listCatalogTopicSeeds } from "../catalog/topicsSeed";
 import { seedCatalogCompanies } from "../companies/repository";
+import { seedCatalogProblems } from "../problems/repository";
 import { seedInitialSettings } from "../settings/repository";
 import { seedCatalogTopics } from "../topics/repository";
 
@@ -42,6 +46,8 @@ import {
   writeSnapshotToStorage,
 } from "./snapshot";
 
+import type { Problem } from "../../domain/types";
+
 let bootPromise: Promise<DbHandle> | undefined;
 let liveHandle: DbHandle | undefined;
 let liveFingerprint: string | undefined;
@@ -49,6 +55,13 @@ let pendingSaveTimer: ReturnType<typeof setTimeout> | undefined;
 let pendingSavePromise: Promise<void> | undefined;
 
 const SNAPSHOT_DEBOUNCE_MS = 1000;
+
+/** Builds the catalog Problem seed by walking the curated plans. */
+function buildCatalogProblems(): Problem[] {
+  const plans = listCatalogPlans();
+  const seed = buildProblemSeed(plans, nowIso());
+  return Object.values(seed);
+}
 
 async function persistSnapshot(): Promise<void> {
   if (!liveHandle || !liveFingerprint) return;
@@ -115,9 +128,14 @@ async function bootDb(): Promise<DbHandle> {
       await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
       await seedCatalogCompanies(handle.db, listCatalogCompanySeeds());
       await seedInitialSettings(handle.db);
+      await seedCatalogProblems(handle.db, buildCatalogProblems());
       const bytes = serializeDb(handle);
       await writeSnapshotToStorage({ fingerprint, bytes });
     }
+    // Always ensure catalog problems are present, including on restore
+    // paths where an earlier snapshot may pre-date the Phase 5 problems
+    // slice. Idempotent via ON CONFLICT DO NOTHING.
+    await seedCatalogProblems(handle.db, buildCatalogProblems());
   } else {
     if (stored) {
       console.log(
