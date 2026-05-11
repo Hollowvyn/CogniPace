@@ -62,10 +62,18 @@ export async function editProblemHandler(payload: EditProblemPayload) {
       | undefined,
   };
   const { db } = await getDb();
-  // No-op if the problem doesn't exist yet — match the legacy handler's
-  // silent return rather than throwing for an edit on a missing row.
   const existing = await getProblem(db, slug);
-  if (!existing) return ok({ slug });
+  if (!existing) {
+    // Fail loud per charter lesson #5. The library row may be a
+    // synthesised placeholder for a problem the user has seen
+    // referenced in a track but never actually opened on LeetCode —
+    // editing it doesn't make sense until it's been initialised by
+    // a page visit. Surface the requirement to the UI rather than
+    // silently succeeding or auto-creating a half-populated row.
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to edit. Visit the page and then come back.",
+    );
+  }
   await editProblem(db, {
     slug,
     patch,
@@ -122,7 +130,11 @@ export async function assignTopicHandler(payload: AssignTopicPayload) {
   const assigned = payload.assigned ?? true;
   const { db } = await getDb();
   const existing = await getProblem(db, slug);
-  if (!existing) return ok({ slug });
+  if (!existing) {
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a topic to.",
+    );
+  }
   const current = existing.topicIds as TopicId[];
   const has = current.includes(topicId);
   if (assigned && has) return ok({ slug });
@@ -150,7 +162,11 @@ export async function assignCompanyHandler(payload: AssignCompanyPayload) {
   const assigned = payload.assigned ?? true;
   const { db } = await getDb();
   const existing = await getProblem(db, slug);
-  if (!existing) return ok({ slug });
+  if (!existing) {
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a company to.",
+    );
+  }
   const current = existing.companyIds as CompanyId[];
   const has = current.includes(companyId);
   if (assigned && has) return ok({ slug });
