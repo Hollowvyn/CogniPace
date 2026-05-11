@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CogniPace · DB debug</title>
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        max-width: 960px;
+        margin: 1.5rem auto;
+        padding: 0 1rem;
+        color: #1d1d1f;
+      }
+      h1 {
+        font-size: 1.15rem;
+        margin: 0 0 0.25rem;
+      }
+      h3 {
+        margin: 1rem 0 0.25rem;
+        font-size: 0.95rem;
+      }
+      h4 {
+        margin: 0.5rem 0 0.25rem;
+        font-size: 0.85rem;
+        color: #444;
+      }
+      p {
+        color: #555;
+        margin: 0.25rem 0 1rem;
+      }
+      #status {
+        margin: 0.5rem 0 1rem;
+        padding: 0.4rem 0.6rem;
+        background: #f6f6f6;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+      }
+      button {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.85rem;
+        border: 1px solid #ccc;
+        background: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #f3f3f3;
+      }
+      textarea#sql-input {
+        width: 100%;
+        min-height: 80px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+        resize: vertical;
+      }
+      .hint {
+        font-size: 0.75rem;
+        color: #888;
+        margin: 0.2rem 0 0.75rem;
+      }
+      #output {
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        padding: 0.75rem;
+        min-height: 12rem;
+        max-height: 32rem;
+        overflow: auto;
+      }
+      table {
+        border-collapse: collapse;
+        margin: 0.5rem 0;
+        font-size: 0.8rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        width: 100%;
+      }
+      th, td {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #e5e5e5;
+        text-align: left;
+        vertical-align: top;
+        white-space: nowrap;
+      }
+      th {
+        background: #f1f1f1;
+      }
+      pre.sql {
+        background: #f0f4ff;
+        padding: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        margin: 0.25rem 0 0.5rem;
+      }
+      .log {
+        padding: 0.3rem 0.5rem;
+        border-radius: 4px;
+        margin: 0.2rem 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.8rem;
+      }
+      .log.ok {
+        color: #0a5d22;
+        background: #e8f5e9;
+      }
+      .log.fail {
+        color: #8e0000;
+        background: #fdecea;
+        white-space: pre-wrap;
+      }
+      .muted {
+        color: #777;
+      }
+      .small {
+        font-size: 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CogniPace · DB debug</h1>
+    <p>
+      In-memory wasm SQLite with the latest Drizzle migration applied.
+      Use to verify schema, inspect query shapes, or sanity-check
+      changes during development. Resets on every reload.
+    </p>
+    <div id="status">Loading…</div>
+
+    <div class="toolbar">
+      <button id="run-smoke">Run smoke checks</button>
+      <button id="seed">Seed sample data</button>
+      <button id="reset">Reset DB</button>
+      <button id="clear">Clear output</button>
+    </div>
+
+    <h3>SQL</h3>
+    <textarea
+      id="sql-input"
+      placeholder="SELECT name FROM sqlite_master WHERE type='table';"
+    >SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;</textarea>
+    <div class="hint">
+      Cmd/Ctrl+Enter to run · executes against the raw wasm DB via
+      <code>rawDb.exec</code> (no Drizzle parsing) · use the toolbar
+      for typed Drizzle queries.
+    </div>
+    <div class="toolbar">
+      <button id="run-sql">Run SQL</button>
+    </div>
+
+    <h3>Output</h3>
+    <div id="output"></div>
+
+    <script src="dbDebug.js"></script>
+  </body>
+</html>
