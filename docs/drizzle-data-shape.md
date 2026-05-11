@@ -45,11 +45,22 @@ For each column, **exactly one** of these owns the default:
 | Empty JSON arrays (`topic_ids`, `company_ids`, `tags`, `languages`, etc.) | **Drizzle** | `.$default(() => [])` — Drizzle serialises to `'[]'` at insert time |
 | Empty JSON objects (`user_edits`) | **Drizzle** | `.$default(() => ({}))` |
 | Booleans with a sensible "false" default (`suspended`, `is_premium`, `enabled`, `is_curated`) | **SQL** | `.default(false)` (Drizzle renders to `0`) |
-| Required strings (`title`, `name`, `url`) | **Caller** | No default; repo MUST provide; column is `NOT NULL` |
+| **Display-required strings** (`problems.title`, `problems.url`, `problems.difficulty`, `tracks.name`) | **SQL** | `.default("Untitled")` / `.default("Unknown")` / `.default("")` — these fields are NOT NULL but get a sensible placeholder so partial imports succeed and the user can correct the value later. Failing loud here doesn't help: if a curated catalog row is missing a difficulty, we still want the problem ingested, just labelled as `"Unknown"`. |
+| **Structurally required fields** (PKs, FKs, `tracks.is_curated`, `attempt_history.rating`, `attempt_history.mode`, `attempt_history.reviewed_at`, `*.order_index`) | **Caller** | No default; repo MUST provide; column is `NOT NULL`. These are invariants the system can't function without — fail loud per charter lesson #5. |
 | Optional / nullable columns | **N/A** | No default; column is nullable |
 
 **Forbidden:** mixing a SQL default with a repo-supplied value on the same
 column. Pick one or the other per the table below.
+
+**Convention rationale.** Charter lesson #5 says "repos throw, don't
+swallow." That rule targets *invariant* violations (missing FK, missing
+rating on a review event) — situations where continuing past the error
+silently corrupts data. It does **not** target *cosmetic* incompleteness
+(an imported problem with no difficulty label). For the latter, a SQL
+default is the right tool: the insert succeeds with a clear placeholder
+value, and the user can refine it later. This is consistent with the
+prior-attempt failure mode (`SQLITE_CONSTRAINT_NOTNULL` on every write)
+which traced to ambiguous "should this be NOT NULL?" decisions.
 
 ### Foreign keys & ON DELETE
 
@@ -107,12 +118,12 @@ the current `src/domain/companies/model.ts` (same slim-down as topics).
 
 | Column | Type | Null? | Default | Notes |
 |---|---|---|---|---|
-| `slug` | `text` PK | NO | — | LeetCode-canonical slug (`"two-sum"`). |
+| `slug` | `text` PK | NO | — | LeetCode-canonical slug (`"two-sum"`). Caller provides. |
 | `leetcode_id` | `text` | YES | — | LC numeric id as string (`"1"`). |
-| `title` | `text` | NO | — | Display title. |
-| `difficulty` | `text({ enum: ["Easy","Medium","Hard","Unknown"] })` | NO | — | Closed set. |
+| `title` | `text` | NO | `"Untitled"` (SQL) | Display title; placeholder if absent at import time. |
+| `difficulty` | `text({ enum: ["Easy","Medium","Hard","Unknown"] })` | NO | `"Unknown"` (SQL) | Closed set; placeholder if absent at import. |
 | `is_premium` | `integer({ mode: "boolean" })` | NO | `false` (SQL) | LC-premium flag. |
-| `url` | `text` | NO | — | Full LC URL. |
+| `url` | `text` | NO | `""` (SQL) | Full LC URL; empty string if absent at import (UI may render as a disabled link). |
 | `topic_ids` | `text({ mode: "json" })` | NO | `[]` (Drizzle) | `TopicId[]` — denormalised. Charter accepts this; allows single-row reads of a Problem. |
 | `company_ids` | `text({ mode: "json" })` | NO | `[]` (Drizzle) | `CompanyId[]`. |
 | `user_edits` | `text({ mode: "json" })` | NO | `{}` (Drizzle) | `Partial<Record<EditableField, true>>` sticky-edit flags so imports don't clobber user overrides. |
@@ -208,8 +219,8 @@ track.
 
 | Column | Type | Null? | Default | Notes |
 |---|---|---|---|---|
-| `id` | `text` PK | NO | — | Slug-style for curated (`"blind75"`); UUID for user-created. |
-| `name` | `text` | NO | — | Display name. |
+| `id` | `text` PK | NO | — | Slug-style for curated (`"blind75"`); UUID for user-created. Caller provides. |
+| `name` | `text` | NO | `"Untitled Track"` (SQL) | Display name; placeholder if absent. |
 | `description` | `text` | YES | — | Optional summary. |
 | `enabled` | `integer({ mode: "boolean" })` | NO | `true` (SQL) | Whether the queue draws problems from this track. |
 | `is_curated` | `integer({ mode: "boolean" })` | NO | `false` (SQL) | Curated tracks gate "delete" / "rename" / etc. behaviour in the repo. Charter omitted this, but we need it to distinguish ownership; included as a small, justified addition. |
