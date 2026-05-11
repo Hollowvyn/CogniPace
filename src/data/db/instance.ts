@@ -87,34 +87,52 @@ export async function flushSnapshot(): Promise<void> {
 }
 
 async function bootDb(): Promise<DbHandle> {
+  console.log("[CogniPace] bootDb: starting");
   const handle = await createDb({
     locateWasm: (file) => chrome.runtime.getURL(file),
   });
+  console.log("[CogniPace] bootDb: wasm DB created");
   const fingerprint = computeFingerprint(migrationSql);
   const stored = await readSnapshotFromStorage();
 
   if (stored && stored.fingerprint === fingerprint) {
-    deserializeDb(handle, stored.bytes);
+    console.log(
+      `[CogniPace] bootDb: restoring from snapshot (${stored.bytes.length} bytes, fp=${fingerprint})`,
+    );
+    try {
+      deserializeDb(handle, stored.bytes);
+    } catch (err) {
+      console.error(
+        "[CogniPace] bootDb: deserialize FAILED, falling back to fresh seed:",
+        err,
+      );
+      await clearSnapshot();
+      handle.rawDb.exec(migrationSql);
+      await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
+      const bytes = serializeDb(handle);
+      await writeSnapshotToStorage({ fingerprint, bytes });
+    }
   } else {
     if (stored) {
       console.log(
-        `[CogniPace] schema fingerprint mismatch (stored=${stored.fingerprint}, current=${fingerprint}); wiping snapshot`,
+        `[CogniPace] bootDb: schema fingerprint mismatch (stored=${stored.fingerprint}, current=${fingerprint}); wiping snapshot`,
       );
       await clearSnapshot();
+    } else {
+      console.log(`[CogniPace] bootDb: no snapshot found (fp=${fingerprint}); fresh seed`);
     }
     handle.rawDb.exec(migrationSql);
     await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
-    // Take the initial snapshot so a SW wake mid-session finds a
-    // fingerprint to compare against (avoids triggering the "fresh
-    // install" path on every cold boot for a user with no mutations).
     const bytes = serializeDb(handle);
     await writeSnapshotToStorage({ fingerprint, bytes });
+    console.log(`[CogniPace] bootDb: fresh seed complete, snapshot written (${bytes.length} bytes)`);
   }
 
   liveHandle = handle;
   liveFingerprint = fingerprint;
   setOnMutationHook(scheduleSnapshotSave);
 
+  console.log("[CogniPace] bootDb: ready");
   return handle;
 }
 

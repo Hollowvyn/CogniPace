@@ -17,33 +17,51 @@ import {
 import { fail } from "./responses";
 import { handleMessage } from "./router";
 
-chrome.runtime.onInstalled.addListener(async () => {
-  // First read seeds the v7 aggregates (Tracks, Companies, etc.) idempotently.
-  await getAppData();
-  // Eagerly boot the SQLite DB so the snapshot restore / catalog seed
-  // happens before any handler call, not on the first user-triggered read.
-  await getDb();
-  void handleStartupDueCheck();
+chrome.runtime.onInstalled.addListener((details) => {
+  // Defer all async work so a single failure doesn't crash the
+  // top-level install handler and leave the SW unable to wake.
+  void (async () => {
+    try {
+      await getAppData();
+    } catch (err) {
+      console.error("[CogniPace] onInstalled getAppData failed:", err);
+    }
+    try {
+      // Eagerly boot the SQLite DB so the snapshot restore / catalog
+      // seed happens before any handler call.
+      await getDb();
+    } catch (err) {
+      console.error("[CogniPace] onInstalled getDb failed:", err);
+    }
+    void handleStartupDueCheck();
+    console.log(`[CogniPace] onInstalled complete (reason=${details.reason})`);
+  })();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   // Warm the DB on every SW wake so persistence kicks in promptly.
-  void getDb();
+  void getDb().catch((err) => {
+    console.error("[CogniPace] onStartup getDb failed:", err);
+  });
   void handleStartupDueCheck();
 });
 
 /**
- * Best-effort flush before MV3 evicts the SW. onSuspend isn't 100%
- * reliable in MV3 — the runtime can terminate the worker without
- * warning. The 1-second debounced snapshot in instance.ts is the
- * primary durability guarantee; onSuspend just catches the edge case
- * where a mutation fired within that 1-second window.
+ * Best-effort flush before MV3 evicts the SW. `chrome.runtime.onSuspend`
+ * exists in MV3 for backwards-compat but is **not reliably fired** by
+ * the runtime (the worker can be terminated abruptly), and on some
+ * Chrome versions the event is missing entirely. We guard the
+ * registration so a missing-event environment doesn't kill the SW at
+ * load time. The 1-second debounced snapshot in instance.ts is the
+ * primary durability guarantee; this hook is a defensive backstop.
  */
-chrome.runtime.onSuspend.addListener(() => {
-  void flushSnapshot().catch((err) => {
-    console.error("[CogniPace] onSuspend flushSnapshot failed:", err);
+if (chrome.runtime.onSuspend?.addListener) {
+  chrome.runtime.onSuspend.addListener(() => {
+    void flushSnapshot().catch((err) => {
+      console.error("[CogniPace] onSuspend flushSnapshot failed:", err);
+    });
   });
-});
+}
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && STORAGE_KEY in changes) {
