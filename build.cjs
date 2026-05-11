@@ -16,10 +16,6 @@ async function build() {
       popup: "src/entrypoints/popup.tsx",
       dashboard: "src/entrypoints/dashboard.tsx",
       database: "src/entrypoints/libraryRedirect.ts",
-      // PHASE-3-SMOKE: temporary entry for runtime verification of the
-      // Drizzle-on-wasm wiring. Remove (along with dbSmoke.ts, dbSmoke.html)
-      // before Phase 3 merges.
-      dbSmoke: "src/entrypoints/dbSmoke.ts",
     },
     outdir,
     bundle: true,
@@ -40,9 +36,9 @@ async function build() {
     fs.cpSync(publicDir, outdir, { recursive: true });
   }
 
-  // PHASE-3-SMOKE: copy the sqlite3.wasm binary next to the bundled JS
-  // so @sqlite.org/sqlite-wasm's default locateFile() finds it via
-  // the page-relative URL. Remove with the rest of the smoke wiring.
+  // Copy the sqlite3.wasm binary next to the bundled JS so consumers
+  // can locate it via chrome.runtime.getURL("sqlite3.wasm") (see
+  // CreateDbOptions.locateWasm in src/data/db/client.ts).
   const wasmSrc = path.join(
     __dirname,
     "node_modules/@sqlite.org/sqlite-wasm/dist/sqlite3.wasm",
