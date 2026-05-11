@@ -71,11 +71,36 @@ export function execProxy(
 }
 
 /**
+ * Module-scoped mutation hook. Set by `instance.ts` after boot so the
+ * SW can schedule a debounced snapshot whenever a mutation runs through
+ * the proxy. Null in test/debug contexts where no persistence is wired.
+ *
+ * Stored as a single function rather than per-DB to keep the proxy
+ * callback factory ergonomic; in practice only one production DB is
+ * live at a time inside a given runtime (SW or extension page).
+ */
+let onMutationHook: (() => void) | null = null;
+
+/** Wires (or clears) the mutation observer. Tests / dbDebug never call
+ * this, so the hook stays null and their in-memory DBs are not
+ * persisted to chrome.storage. */
+export function setOnMutationHook(hook: (() => void) | null): void {
+  onMutationHook = hook;
+}
+
+/**
  * Factory: returns the async callback Drizzle's sqlite-proxy driver
  * accepts at `drizzle(callback, ...)`. The underlying wasm calls are
  * synchronous, so we resolve the promise eagerly — but the async
  * signature is preserved so that a future OPFS-backed worker driver
  * can drop in without rewriting consumers.
+ *
+ * When `method === "run"` and `setOnMutationHook(...)` has been called,
+ * the hook is invoked after a successful execution so the SW can
+ * schedule a debounced snapshot. DDL (CREATE TABLE, indexes) goes
+ * through `run` too — but instance.ts only sets the hook *after* the
+ * initial migration finishes, so boot-time DDL doesn't trigger
+ * snapshot churn.
  */
 export function createProxyCallback(
   rawDb: Database,
@@ -84,6 +109,11 @@ export function createProxyCallback(
   params: SqlValue[],
   method: ProxyMethod,
 ) => Promise<ProxyResult> {
-  return (sql, params, method) =>
-    Promise.resolve(execProxy(rawDb, sql, params, method));
+  return (sql, params, method) => {
+    const result = execProxy(rawDb, sql, params, method);
+    if (method === "run" && onMutationHook) {
+      onMutationHook();
+    }
+    return Promise.resolve(result);
+  };
 }

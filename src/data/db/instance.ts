@@ -1,14 +1,24 @@
 /**
  * Service-worker DB singleton. Lazy-initialises the wasm SQLite DB on
- * first call, applies the canonical migration, seeds catalog topics,
- * and caches the handle at module scope so subsequent calls reuse the
- * same connection.
+ * first call, restores from snapshot when available (fingerprint
+ * matches the current migration) or seeds catalog data when not,
+ * registers a debounced snapshot-on-mutation hook, and caches the
+ * handle at module scope so subsequent calls reuse the same connection.
  *
- * Phase 4 reality (strict, no persistence): MV3 service workers can be
- * evicted from memory; every wake re-evaluates this module, which
- * resets the cache, which re-runs boot. User-created topics that aren't
- * persisted to chrome.storage yet will not survive the wake — that's
- * a known cost of strict Phase 4 and is what Phase 6 fixes.
+ * Phase 6 reality (snapshot persistence):
+ *   Boot:
+ *     1. Read fingerprint + snapshot bytes from chrome.storage.local.
+ *     2. If fingerprint matches the current migration's hash, restore.
+ *     3. Else (fresh install OR schema change), drop the stored snapshot,
+ *        run the migration, seed catalog topics, write a fresh snapshot.
+ *   Steady state:
+ *     - Every mutation through Drizzle (the proxy's `run` path) bumps
+ *       a debounce timer; when the timer fires, the in-memory DB is
+ *       serialised and written back to chrome.storage.local.
+ *   Suspend:
+ *     - `flushSnapshot()` forces an immediate save without waiting for
+ *       the debounce — wired to chrome.runtime.onSuspend in the SW
+ *       entry point.
  *
  * Production code should always use `getDb()`; tests construct their
  * own DB via `createDb()` in `client.ts`.
@@ -18,15 +28,93 @@ import { seedCatalogTopics } from "../topics/repository";
 
 import { createDb, type DbHandle } from "./client";
 import migrationSql from "./migrations/0000_initial.sql";
+import { setOnMutationHook } from "./proxy";
+import {
+  clearSnapshot,
+  computeFingerprint,
+  deserializeDb,
+  readSnapshotFromStorage,
+  serializeDb,
+  writeSnapshotToStorage,
+} from "./snapshot";
 
 let bootPromise: Promise<DbHandle> | undefined;
+let liveHandle: DbHandle | undefined;
+let liveFingerprint: string | undefined;
+let pendingSaveTimer: ReturnType<typeof setTimeout> | undefined;
+let pendingSavePromise: Promise<void> | undefined;
+
+const SNAPSHOT_DEBOUNCE_MS = 1000;
+
+async function persistSnapshot(): Promise<void> {
+  if (!liveHandle || !liveFingerprint) return;
+  const bytes = serializeDb(liveHandle);
+  await writeSnapshotToStorage({ fingerprint: liveFingerprint, bytes });
+}
+
+/**
+ * Debounced snapshot scheduler. Each call resets the timer; after
+ * SNAPSHOT_DEBOUNCE_MS of mutation quiet, a save runs. Save failures
+ * are logged (not thrown) — losing one debounced save is recoverable
+ * (the next mutation triggers another); throwing here would corrupt
+ * the proxy's mutation flow.
+ */
+function scheduleSnapshotSave(): void {
+  if (pendingSaveTimer !== undefined) clearTimeout(pendingSaveTimer);
+  pendingSaveTimer = setTimeout(() => {
+    pendingSaveTimer = undefined;
+    pendingSavePromise = persistSnapshot().catch((err) => {
+      console.error("[CogniPace] snapshot save failed:", err);
+    });
+  }, SNAPSHOT_DEBOUNCE_MS);
+}
+
+/**
+ * Forces an immediate snapshot save, bypassing the debounce. Awaits
+ * any in-flight save first so we don't race ourselves. Intended for
+ * `chrome.runtime.onSuspend` — the SW has only a few seconds before
+ * eviction, so we can't afford to wait out a debounce.
+ */
+export async function flushSnapshot(): Promise<void> {
+  if (pendingSaveTimer !== undefined) {
+    clearTimeout(pendingSaveTimer);
+    pendingSaveTimer = undefined;
+  }
+  if (pendingSavePromise) {
+    await pendingSavePromise.catch(() => undefined);
+  }
+  await persistSnapshot();
+}
 
 async function bootDb(): Promise<DbHandle> {
   const handle = await createDb({
-    migrationSql,
     locateWasm: (file) => chrome.runtime.getURL(file),
   });
-  await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
+  const fingerprint = computeFingerprint(migrationSql);
+  const stored = await readSnapshotFromStorage();
+
+  if (stored && stored.fingerprint === fingerprint) {
+    deserializeDb(handle, stored.bytes);
+  } else {
+    if (stored) {
+      console.log(
+        `[CogniPace] schema fingerprint mismatch (stored=${stored.fingerprint}, current=${fingerprint}); wiping snapshot`,
+      );
+      await clearSnapshot();
+    }
+    handle.rawDb.exec(migrationSql);
+    await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
+    // Take the initial snapshot so a SW wake mid-session finds a
+    // fingerprint to compare against (avoids triggering the "fresh
+    // install" path on every cold boot for a user with no mutations).
+    const bytes = serializeDb(handle);
+    await writeSnapshotToStorage({ fingerprint, bytes });
+  }
+
+  liveHandle = handle;
+  liveFingerprint = fingerprint;
+  setOnMutationHook(scheduleSnapshotSave);
+
   return handle;
 }
 
@@ -44,8 +132,17 @@ export function getDb(): Promise<DbHandle> {
 
 /**
  * Test/debug hook: drops the cached handle so the next `getDb()` boots
- * a fresh DB. Production code should not call this.
+ * a fresh DB. Also unhooks the mutation observer so the dropped DB
+ * doesn't accidentally write a stale snapshot. Production code should
+ * not call this.
  */
 export function resetDbForTesting(): void {
   bootPromise = undefined;
+  liveHandle = undefined;
+  liveFingerprint = undefined;
+  setOnMutationHook(null);
+  if (pendingSaveTimer !== undefined) {
+    clearTimeout(pendingSaveTimer);
+    pendingSaveTimer = undefined;
+  }
 }

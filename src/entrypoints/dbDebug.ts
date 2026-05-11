@@ -25,6 +25,13 @@ import { createDb, type DbHandle } from "../data/db/client";
 import migrationSql from "../data/db/migrations/0000_initial.sql";
 import * as schema from "../data/db/schema";
 import {
+  base64ToBytes,
+  bytesToBase64,
+  computeFingerprint,
+  deserializeDb,
+  serializeDb,
+} from "../data/db/snapshot";
+import {
   getTopic,
   listTopics,
   removeTopic,
@@ -122,7 +129,8 @@ type Category =
   | "JSON columns"
   | "Indexes"
   | "RQB"
-  | "Repos";
+  | "Repos"
+  | "Persistence";
 
 interface CheckOutcome {
   ok: boolean;
@@ -1029,6 +1037,138 @@ const allChecks: CheckDef[] = [
     },
   },
 
+  // -------------------- Persistence (Phase 6) --------------------
+  {
+    category: "Persistence",
+    label: "computeFingerprint is deterministic + 8-char hex",
+    run: () => {
+      const a = computeFingerprint("CREATE TABLE foo (id INTEGER);");
+      const a2 = computeFingerprint("CREATE TABLE foo (id INTEGER);");
+      const b = computeFingerprint("CREATE TABLE bar (id INTEGER);");
+      const ok =
+        a === a2 && a !== b && /^[0-9a-f]{8}$/.test(a) && /^[0-9a-f]{8}$/.test(b);
+      return {
+        ok,
+        detail: `a=${a} a2=${a2} b=${b} (a==a2 expected; a!=b expected)`,
+      };
+    },
+  },
+  {
+    category: "Persistence",
+    label: "base64 round-trip preserves bytes exactly (including null bytes)",
+    run: () => {
+      const original = new Uint8Array([0, 1, 2, 3, 255, 254, 0, 128, 64]);
+      const b64 = bytesToBase64(original);
+      const back = base64ToBytes(b64);
+      const ok =
+        back.length === original.length &&
+        original.every((b, i) => b === back[i]);
+      return { ok, detail: `len=${original.length} b64="${b64}"` };
+    },
+  },
+  {
+    category: "Persistence",
+    label: "serializeDb returns valid SQLite-format bytes (header check)",
+    run: (handle) => {
+      const bytes = serializeDb(handle);
+      // SQLite file format starts with the 16-byte magic string
+      // "SQLite format 3\0".
+      const magic = "SQLite format 3 ";
+      const head = Array.from(bytes.subarray(0, 16))
+        .map((b) => String.fromCharCode(b))
+        .join("");
+      return {
+        ok: head === magic && bytes.length > 0,
+        detail: `bytes=${bytes.length}  head="${head.replace(/ /g, "\\0")}"`,
+      };
+    },
+  },
+  {
+    category: "Persistence",
+    label: "serialize → fresh DB → deserialize → data preserved (full round-trip)",
+    run: async (handle) => {
+      const { db } = handle;
+      // 1. Stage data in the live DB.
+      const customId = asTopicId(uniq("snapshot-custom"));
+      await upsertTopic(db, {
+        id: customId,
+        name: "Snapshot Custom Topic",
+        description: "round-trip me",
+        isCustom: true,
+      });
+
+      // 2. Serialize.
+      const bytes = serializeDb(handle);
+
+      // 3. Spin up a fresh DB (no migration applied here — deserialize
+      //    will install the full schema from the snapshot bytes).
+      const fresh = await createDb({});
+
+      // 4. Deserialize into the fresh DB.
+      deserializeDb(fresh, bytes);
+
+      // 5. Query the fresh DB and verify the staged row survived.
+      const restored = await getTopic(fresh.db, customId);
+
+      // Cleanup the staged row in the live DB.
+      await removeTopic(db, customId);
+
+      const ok =
+        !!restored &&
+        restored.name === "Snapshot Custom Topic" &&
+        restored.description === "round-trip me" &&
+        restored.isCustom === true;
+      return {
+        ok,
+        detail: ok
+          ? `restored ${customId} cleanly from ${bytes.length}-byte snapshot`
+          : `restored=${JSON.stringify(restored)}`,
+      };
+    },
+  },
+  {
+    category: "Persistence",
+    label: "deserialize replaces existing state (post-restore data is gone)",
+    run: async (handle) => {
+      const { db } = handle;
+      // Stage row A in the live DB and serialize.
+      const a = asTopicId(uniq("snap-a"));
+      await upsertTopic(db, { id: a, name: "Row A", isCustom: true });
+      const bytes = serializeDb(handle);
+
+      // In a FRESH DB, stage row B; deserialize the snapshot over it;
+      // row B should be gone, row A should be present.
+      const fresh = await createDb({ migrationSql });
+      const b = asTopicId(uniq("snap-b"));
+      await upsertTopic(fresh.db, { id: b, name: "Row B", isCustom: true });
+      deserializeDb(fresh, bytes);
+
+      const restoredA = await getTopic(fresh.db, a);
+      const restoredB = await getTopic(fresh.db, b);
+
+      // Cleanup staged row A in the live DB.
+      await removeTopic(db, a);
+
+      const ok = !!restoredA && !restoredB;
+      return {
+        ok,
+        detail: `restoredA=${!!restoredA} restoredB=${!!restoredB} (B should be gone, A should be present)`,
+      };
+    },
+  },
+  {
+    category: "Persistence",
+    label: "fingerprint of bundled migration matches itself across calls",
+    run: () => {
+      const a = computeFingerprint(migrationSql);
+      const b = computeFingerprint(migrationSql);
+      return {
+        ok: a === b && a.length === 8,
+        detail: `bundled migration fingerprint = ${a} (length=${migrationSql.length} bytes)`,
+      };
+    },
+  },
+
   {
     category: "RQB",
     label: "studyStates → problem + attempts nests correctly",
@@ -1071,6 +1211,7 @@ const categoryOrder: Category[] = [
   "Indexes",
   "RQB",
   "Repos",
+  "Persistence",
 ];
 
 async function runChecks(filter?: Category): Promise<void> {
