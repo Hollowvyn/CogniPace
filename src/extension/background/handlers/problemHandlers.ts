@@ -1,6 +1,8 @@
 /** Background handlers for problem-context, review-session, and page actions. */
+import { getDb } from "../../../data/db/instance";
+import { importProblem } from "../../../data/problems/repository";
 import {getAppData, mutateAppData,} from "../../../data/repositories/appDataRepository";
-import {ensureProblem, ensureStudyState, normalizeDifficulty,} from "../../../data/repositories/problemRepository";
+import {ensureStudyState, normalizeDifficulty,} from "../../../data/repositories/problemRepository";
 import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
 import { asProblemSlug, asSetGroupId, asStudySetId } from "../../../domain/common/ids";
 import {nowIso} from "../../../domain/common/time";
@@ -75,38 +77,33 @@ export async function upsertFromPage(payload: {
   url?: string;
   topics?: string[];
 }) {
-  const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, {
-      slug: payload.slug,
-      title: payload.title,
-      difficulty: normalizeDifficulty(payload.difficulty),
-      isPremium: payload.isPremium,
-      url: payload.url,
-      topics: payload.topics,
-    });
-
-    const state = ensureStudyState(data, payload.slug);
-
-    return {
-      ...data,
-      problemsBySlug: {
-        ...data.problemsBySlug,
-        [problem.leetcodeSlug]: problem,
-      },
-      studyStatesBySlug: {
-        ...data.studyStatesBySlug,
-        [problem.leetcodeSlug]: state,
-      },
-    };
-  });
-
   const slug = normalizeSlug(payload.slug);
   if (!slug) {
     throw new Error("Invalid slug.");
   }
-
+  // Phase 5: SQLite owns problem writes. importProblem preserves
+  // sticky user-edits while accepting page-detect updates.
+  const { db } = await getDb();
+  const difficulty = normalizeDifficulty(payload.difficulty);
+  const problem = await importProblem(db, {
+    slug,
+    ...(payload.title !== undefined ? { title: payload.title } : {}),
+    ...(difficulty !== undefined ? { difficulty } : {}),
+    ...(payload.isPremium !== undefined ? { isPremium: payload.isPremium } : {}),
+    ...(payload.url !== undefined ? { url: payload.url } : {}),
+  });
+  // StudyState still lives in the v7 blob; Phase 5 studyStates slice
+  // will migrate it. Mirror the SQLite problem into the blob so the
+  // mutateAppData callback's `ensureStudyState` lookup sees consistent
+  // problem state.
+  const updated = await mutateAppData((data) => {
+    data.problemsBySlug[slug] = problem;
+    const state = ensureStudyState(data, slug);
+    data.studyStatesBySlug[slug] = state;
+    return data;
+  });
   return ok({
-    problem: updated.problemsBySlug[slug],
+    problem,
     studyState: updated.studyStatesBySlug[slug],
   });
 }
@@ -159,8 +156,10 @@ export async function saveReviewResult(payload: {
   }
 
   const now = nowIso();
+  const { db } = await getDb();
+  const problem = await importProblem(db, { slug: normalized });
   const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, {slug: normalized});
+    data.problemsBySlug[normalized] = problem;
     const current = ensureStudyState(data, normalized);
     const logSnapshot = buildReviewLogFields(payload, current);
 
@@ -175,7 +174,7 @@ export async function saveReviewResult(payload: {
       now,
     });
 
-    data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
+    data.studyStatesBySlug[normalized] = nextState;
     if (payload.courseId && payload.chapterId) {
       markSlugLaunched(
         data as unknown as Parameters<typeof markSlugLaunched>[0],
@@ -212,8 +211,10 @@ export async function saveOverlayLogDraft(payload: {
     throw new Error("Invalid slug.");
   }
 
+  const { db } = await getDb();
+  const problem = await importProblem(db, { slug: normalized });
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
+    data.problemsBySlug[normalized] = problem;
     const current = ensureStudyState(data, normalized);
     const nextLogFields = buildReviewLogFields(payload, current);
 
@@ -248,8 +249,10 @@ export async function overrideLastReviewResult(payload: {
   }
 
   const now = nowIso();
+  const { db } = await getDb();
+  const problem = await importProblem(db, { slug: normalized });
   const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, {slug: normalized});
+    data.problemsBySlug[normalized] = problem;
     const current = ensureStudyState(data, normalized);
     const logSnapshot = buildReviewLogFields(payload, current);
 
@@ -263,7 +266,7 @@ export async function overrideLastReviewResult(payload: {
       now,
     });
 
-    data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
+    data.studyStatesBySlug[normalized] = nextState;
     if (payload.courseId && payload.chapterId) {
       markSlugLaunched(
         data as unknown as Parameters<typeof markSlugLaunched>[0],
@@ -310,8 +313,10 @@ export async function updateNotes(payload: { slug: string; notes: string }) {
     throw new Error("Invalid slug.");
   }
 
+  const { db } = await getDb();
+  const problem = await importProblem(db, { slug: normalized });
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
+    data.problemsBySlug[normalized] = problem;
     const state = ensureStudyState(data, normalized);
     state.notes = payload.notes;
     data.studyStatesBySlug[normalized] = state;
@@ -328,8 +333,10 @@ export async function updateTags(payload: { slug: string; tags: string[] }) {
     throw new Error("Invalid slug.");
   }
 
+  const { db } = await getDb();
+  const problem = await importProblem(db, { slug: normalized });
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
+    data.problemsBySlug[normalized] = problem;
     const state = ensureStudyState(data, normalized);
     state.tags = payload.tags.map((tag) => tag.trim()).filter(Boolean);
     data.studyStatesBySlug[normalized] = state;
@@ -349,8 +356,10 @@ export async function suspendProblem(payload: {
     throw new Error("Invalid slug.");
   }
 
+  const { db } = await getDb();
+  const problem = await importProblem(db, { slug: normalized });
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
+    data.problemsBySlug[normalized] = problem;
     const state = ensureStudyState(data, normalized);
     state.suspended = payload.suspend;
     data.studyStatesBySlug[normalized] = state;
@@ -370,8 +379,10 @@ export async function resetProblem(payload: {
     throw new Error("Invalid slug.");
   }
 
+  const { db } = await getDb();
+  const problem = await importProblem(db, { slug: normalized });
   const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
+    data.problemsBySlug[normalized] = problem;
     const state = data.studyStatesBySlug[normalized];
     data.studyStatesBySlug[normalized] = resetSchedule(
       state,

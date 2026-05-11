@@ -40,6 +40,14 @@ import {
   serializeDb,
 } from "../data/db/snapshot";
 import {
+  bulkImportProblems,
+  editProblem,
+  getProblem,
+  importProblem,
+  listProblems,
+  removeProblem,
+} from "../data/problems/repository";
+import {
   getUserSettings,
   saveUserSettings,
   seedInitialSettings,
@@ -51,7 +59,7 @@ import {
   seedCatalogTopics,
   upsertTopic,
 } from "../data/topics/repository";
-import { asCompanyId, asTopicId } from "../domain/common/ids";
+import { asCompanyId, asProblemSlug, asTopicId } from "../domain/common/ids";
 import { createInitialUserSettings } from "../domain/settings";
 
 let handle: DbHandle | undefined;
@@ -1208,6 +1216,129 @@ const allChecks: CheckDef[] = [
       return {
         ok,
         detail: `rows=${rows[0].c} dailyQuestionGoal=${fetched?.dailyQuestionGoal}`,
+      };
+    },
+  },
+
+  // -------------------- Repos: problems (Phase 5) --------------------
+  {
+    category: "Repos",
+    label: "problems repo: importProblem inserts new + preserves sticky user-edits",
+    run: async ({ db }) => {
+      const slug = asProblemSlug(uniq("repo-prob"));
+      const inserted = await importProblem(db, {
+        slug,
+        title: "Initial Title",
+        difficulty: "Easy",
+      });
+      if (inserted.title !== "Initial Title") {
+        return { ok: false, detail: `insert title=${inserted.title}` };
+      }
+      // User edit pins the title via mark-user-edit.
+      await editProblem(db, {
+        slug,
+        patch: { title: "Renamed by user" },
+      });
+      // Re-import attempts to overwrite — should be blocked for the
+      // user-edited field but apply to the un-edited `difficulty`.
+      const final = await importProblem(db, {
+        slug,
+        title: "Catalog Title",
+        difficulty: "Hard",
+      });
+      // Cleanup
+      await removeProblem(db, slug);
+      const ok =
+        final.title === "Renamed by user" && final.difficulty === "Hard";
+      return {
+        ok,
+        detail: `final.title="${final.title}" final.difficulty=${final.difficulty}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "problems repo: editProblem flags only touched fields in userEdits",
+    run: async ({ db }) => {
+      const slug = asProblemSlug(uniq("repo-edit"));
+      await importProblem(db, { slug, title: "T", difficulty: "Easy" });
+      const edited = await editProblem(db, {
+        slug,
+        patch: { difficulty: "Hard" },
+      });
+      await removeProblem(db, slug);
+      const flags = edited.userEdits ?? {};
+      const ok =
+        flags.difficulty === true &&
+        flags.title === undefined &&
+        flags.url === undefined;
+      return {
+        ok,
+        detail: `userEdits=${JSON.stringify(flags)}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "problems repo: bulkImportProblems is idempotent (ON CONFLICT DO NOTHING)",
+    run: async ({ db }) => {
+      const baselineCount = (await listProblems(db)).length;
+      const slugA = uniq("repo-bulk-a");
+      const slugB = uniq("repo-bulk-b");
+      const seed = [
+        {
+          id: slugA,
+          leetcodeSlug: slugA,
+          slug: slugA,
+          title: "Bulk A",
+          difficulty: "Easy" as const,
+          isPremium: false,
+          url: `https://leetcode.com/problems/${slugA}/`,
+          topics: [],
+          topicIds: [],
+          companyIds: [],
+          sourceSet: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: slugB,
+          leetcodeSlug: slugB,
+          slug: slugB,
+          title: "Bulk B",
+          difficulty: "Medium" as const,
+          isPremium: false,
+          url: `https://leetcode.com/problems/${slugB}/`,
+          topics: [],
+          topicIds: [],
+          companyIds: [],
+          sourceSet: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ];
+      const firstRun = await bulkImportProblems(db, seed);
+      const secondRun = await bulkImportProblems(db, seed);
+      const after = (await listProblems(db)).length;
+      // Cleanup
+      await removeProblem(db, asProblemSlug(slugA));
+      await removeProblem(db, asProblemSlug(slugB));
+      const ok =
+        firstRun === 2 && secondRun === 0 && after === baselineCount + 2;
+      return {
+        ok,
+        detail: `firstRun=${firstRun} secondRun=${secondRun} netInserted=${after - baselineCount}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "problems repo: getProblem returns undefined for missing (not error)",
+    run: async ({ db }) => {
+      const ghost = await getProblem(db, asProblemSlug("definitely-not-a-real-slug-xyz"));
+      return {
+        ok: ghost === undefined,
+        detail: `getProblem(ghost) returned ${ghost === undefined ? "undefined ✓" : JSON.stringify(ghost)}`,
       };
     },
   },
