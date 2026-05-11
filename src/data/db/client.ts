@@ -40,6 +40,16 @@ export interface CreateDbOptions {
    * — useful only for tests that build their own schema inline.
    */
   migrationSql?: string;
+  /**
+   * Resolves a wasm-runtime file (notably `sqlite3.wasm`) to a URL the
+   * browser can fetch. Required when the wasm bundle runs in a context
+   * where sqlite-wasm's default auto-detection (`import.meta.url` /
+   * `document.currentScript.src`) fails — e.g. a Chrome MV3 service
+   * worker or an esbuild IIFE bundle. Typical extension implementation:
+   * `(file) => chrome.runtime.getURL(file)`. Omit for Node tests
+   * (the Node entry loads via fs and ignores this hook).
+   */
+  locateWasm?: (file: string) => string;
 }
 
 export interface DbHandle {
@@ -51,11 +61,30 @@ export interface DbHandle {
   sqlite3: Sqlite3Static;
 }
 
-let cachedSqlite3: Promise<Sqlite3Static> | undefined;
+/**
+ * sqlite3InitModule's TS types declare no arguments, but the runtime
+ * accepts `{ locateFile, instantiateWasm }` (see sqlite-wasm
+ * extern-post-js.c-pp.js around line 15816 in dist/index.mjs). We cast
+ * to the runtime shape so consumers can override the wasm URL.
+ */
+type Sqlite3InitArgs = { locateFile?: (file: string) => string };
+const initSqlite3 = sqlite3InitModule as (
+  args?: Sqlite3InitArgs,
+) => Promise<Sqlite3Static>;
 
-function loadSqlite3(): Promise<Sqlite3Static> {
-  if (!cachedSqlite3) {
-    cachedSqlite3 = sqlite3InitModule();
+let cachedSqlite3: Promise<Sqlite3Static> | undefined;
+let cachedLocateKey: string | undefined;
+
+function loadSqlite3(
+  locateWasm: ((file: string) => string) | undefined,
+): Promise<Sqlite3Static> {
+  // If the locate function changed between calls (e.g. one caller passed
+  // chrome.runtime.getURL, another didn't), we need a fresh init — the
+  // runtime stashes the override in module-global state at init time.
+  const key = locateWasm ? "custom" : "default";
+  if (!cachedSqlite3 || cachedLocateKey !== key) {
+    cachedSqlite3 = initSqlite3(locateWasm ? { locateFile: locateWasm } : undefined);
+    cachedLocateKey = key;
   }
   return cachedSqlite3;
 }
@@ -68,7 +97,7 @@ function loadSqlite3(): Promise<Sqlite3Static> {
 export async function createDb(
   options: CreateDbOptions = {},
 ): Promise<DbHandle> {
-  const sqlite3 = await loadSqlite3();
+  const sqlite3 = await loadSqlite3(options.locateWasm);
   const rawDb = new sqlite3.oo1.DB(options.filename ?? ":memory:", "c");
   if (options.migrationSql) {
     rawDb.exec(options.migrationSql);
