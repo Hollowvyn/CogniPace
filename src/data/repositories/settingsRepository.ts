@@ -1,14 +1,16 @@
-/** Repository for settings mutations. */
-import { UserSettingsPatch } from "@features/settings/server";
+/**
+ * Legacy RPC senders.
+ *
+ * `updateSettings` was removed in Phase 6 — every caller now goes
+ * through `@features/settings` (the Repository + curated usecases).
+ * `resetStudyHistory` stays here until the Study feature migrates
+ * in Phase 7, at which point it moves into
+ * `features/study/messaging/client.ts`.
+ */
 import { sendMessage } from "@libs/runtime-rpc/client";
 
-
-/** Persists a partial settings update through the background worker. */
-export async function updateSettings(payload: UserSettingsPatch) {
-  return sendMessage("UPDATE_SETTINGS", payload);
-}
-
-/** Clears all local study history while preserving settings, courses, and library data. */
+/** Clears all local study history while preserving settings, tracks,
+ *  and the problem library. Moves to features/study in Phase 7. */
 export async function resetStudyHistory() {
   return sendMessage("RESET_STUDY_HISTORY", {});
 }

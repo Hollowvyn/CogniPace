@@ -1,6 +1,7 @@
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
 import type { SettingsRepository } from "../data/SettingsRepository";
+import type { UserSettings } from "../domain/UserSettings";
 import type { TrackGroupId, TrackId } from "@shared/ids";
 
 /**
@@ -14,10 +15,10 @@ import type { TrackGroupId, TrackId } from "@shared/ids";
 export async function setActiveTrack(
   repo: SettingsRepository,
   args: { id: TrackId; groupId?: TrackGroupId } | null,
-): Promise<void> {
+): Promise<UserSettings> {
   const activeFocus: ActiveFocus =
     args === null
       ? null
       : { kind: "track", id: args.id, groupId: args.groupId };
-  await repo.update({ activeFocus });
+  return repo.update({ activeFocus });
 }

@@ -1,4 +1,8 @@
 /** Popup-local state and actions for the recommendation-first surface. */
+import {
+  settingsRepository,
+  setStudyMode as setStudyModeUsecase,
+} from "@features/settings";
 import { startTransition, useMemo, useRef, useState } from "react";
 
 import { fetchPopupShellPayload } from "../../../data/repositories/appShellRepository";
@@ -7,7 +11,6 @@ import {
   openSettingsPage,
 } from "../../../data/repositories/extensionNavigationRepository";
 import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
-import { updateSettings } from "../../../data/repositories/settingsRepository";
 import { StudyMode } from "../../../domain/types";
 import { RecommendedProblemView } from "../../../domain/views";
 import { createMockPopupShellPayload } from "../../mockData";
@@ -105,21 +108,15 @@ export function usePopupController() {
       scope: "course",
     });
 
-    let response: Awaited<ReturnType<typeof updateSettings>>;
+    // Hook → Usecase → Repository → Client → SW → DataSource → DB.
+    let saved;
     try {
-      response = await updateSettings({ studyMode: mode });
+      saved = await setStudyModeUsecase(settingsRepository, mode);
     } catch (error) {
-      response = {
-        ok: false,
-        error: popupErrorMessage(error),
-      };
-    }
-
-    if (!response.ok) {
       studyModeWriteInFlightRef.current = false;
       setPendingStudyMode(null);
       setStatus({
-        message: response.error ?? "Failed to update study mode.",
+        message: popupErrorMessage(error),
         isError: true,
         scope: "course",
       });
@@ -133,10 +130,7 @@ export function usePopupController() {
 
       return {
         ...current,
-        settings: response.data?.settings ?? {
-          ...current.settings,
-          studyMode: mode,
-        },
+        settings: saved,
       };
     });
     studyModeWriteInFlightRef.current = false;

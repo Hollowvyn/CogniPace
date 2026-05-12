@@ -1,4 +1,5 @@
 import type { SettingsRepository } from "../data/SettingsRepository";
+import type { UserSettings } from "../domain/UserSettings";
 
 /**
  * Curated usecase: set the daily-question goal. Throws on non-positive
@@ -9,11 +10,11 @@ import type { SettingsRepository } from "../data/SettingsRepository";
 export async function setDailyTarget(
   repo: SettingsRepository,
   count: number,
-): Promise<void> {
+): Promise<UserSettings> {
   if (!Number.isFinite(count) || count < 1) {
     throw new Error(
       `setDailyTarget: count must be a positive integer (got ${String(count)})`,
     );
   }
-  await repo.update({ dailyQuestionGoal: Math.floor(count) });
+  return repo.update({ dailyQuestionGoal: Math.floor(count) });
 }

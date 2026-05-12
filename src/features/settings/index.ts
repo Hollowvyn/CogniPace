@@ -61,6 +61,7 @@ export { settingsClient } from "./messaging/client";
 // `useSettingsScreen` which composes saveSettings / resetSettings.
 export { setActiveTrack } from "./usecases/setActiveTrack";
 export { setDailyTarget } from "./usecases/setDailyTarget";
+export { setSkipPremium } from "./usecases/setSkipPremium";
 export { setStudyMode } from "./usecases/setStudyMode";
 export { saveSettings } from "./usecases/saveSettings";
 export { resetSettings } from "./usecases/resetSettings";

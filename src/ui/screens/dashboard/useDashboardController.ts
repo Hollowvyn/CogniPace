@@ -6,6 +6,12 @@
  * cross-feature concerns (backup export/import, study-history reset)
  * stay here until Phase 7. */
 import {
+  settingsRepository,
+  setSkipPremium,
+  setStudyMode,
+  type UserSettings,
+} from "@features/settings";
+import {
   startTransition,
   useCallback,
   useEffect,
@@ -40,7 +46,6 @@ import {
 } from "../../state/useAppShellQuery";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
-import type { UserSettings } from "@features/settings";
 
 function isImportPayloadCandidate(
   value: unknown
@@ -149,17 +154,23 @@ export function useDashboardController() {
   );
 
   const onEnablePremium = useCallback(async (): Promise<void> => {
-    // Settings mutations from outside the settings screen still go
-    // through the SW message bus directly. Phase 7+: this caller moves
-    // into a Library-feature hook that uses the settings client.
-    const { updateSettings } = await import(
-      "../../../data/repositories/settingsRepository"
-    );
-    await runMutation(
-      updateSettings({ questionFilters: { skipPremium: false } }),
-      "Premium questions enabled.",
-    );
-  }, [runMutation]);
+    // Hook → Usecase → Repository → Client → SW → DataSource → DB.
+    try {
+      const saved = await setSkipPremium(settingsRepository, false);
+      setPayload((current) =>
+        current ? { ...current, settings: saved } : current,
+      );
+      setStatus({ message: "Premium questions enabled.", isError: false });
+      if (isExtensionContext()) {
+        await load({ clearStatusOnSuccess: false });
+      }
+    } catch (err) {
+      setStatus({
+        message: err instanceof Error ? err.message : "Action failed.",
+        isError: true,
+      });
+    }
+  }, [load, setPayload, setStatus]);
 
   const onToggleMode = useCallback(async (): Promise<void> => {
     const nextMode =
@@ -167,14 +178,22 @@ export function useDashboardController() {
     if (!nextMode) {
       return;
     }
-    const { updateSettings } = await import(
-      "../../../data/repositories/settingsRepository"
-    );
-    await runMutation(
-      updateSettings({ studyMode: nextMode }),
-      "Study mode updated.",
-    );
-  }, [payload?.settings.studyMode, runMutation]);
+    try {
+      const saved = await setStudyMode(settingsRepository, nextMode);
+      setPayload((current) =>
+        current ? { ...current, settings: saved } : current,
+      );
+      setStatus({ message: "Study mode updated.", isError: false });
+      if (isExtensionContext()) {
+        await load({ clearStatusOnSuccess: false });
+      }
+    } catch (err) {
+      setStatus({
+        message: err instanceof Error ? err.message : "Action failed.",
+        isError: true,
+      });
+    }
+  }, [load, payload?.settings.studyMode, setPayload, setStatus]);
 
   const onResetStudyHistory = useCallback(async (): Promise<void> => {
     await runMutation(resetStudyHistory(), "Study history reset.");
