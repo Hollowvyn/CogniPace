@@ -1,173 +1,24 @@
-import {Difficulty, Rating} from "../../../domain/types";
-import {TrackQuestionView, RecommendedProblemView} from "../../../domain/views";
-
-export interface OverlayDraftLogFields {
-  interviewPattern: string;
-  timeComplexity: string;
-  spaceComplexity: string;
-  languages: string;
-  notes: string;
-}
-
-export type OverlayHeaderStatusTone =
-  | "neutral"
-  | "accent"
-  | "warning"
-  | "danger";
-
-export interface OverlayHeaderStatusCard {
-  emphasized?: boolean;
-  label: string;
-  primary: string;
-  secondary: string;
-  tone: OverlayHeaderStatusTone;
-}
-
-export type OverlayHeaderStatus =
-  | {
-  cards: OverlayHeaderStatusCard[];
-  kind: "empty";
-}
-  | {
-  cards: OverlayHeaderStatusCard[];
-  kind: "history";
-};
-
-export type OverlayDraftChangeHandler = (
-  field: keyof OverlayDraftLogFields,
-  value: string
-) => void;
-
-export interface OverlayHeaderSectionViewModel {
-  difficulty: Difficulty;
-  onCollapse: () => void;
-  onHide: () => void;
-  onOpenSettings: () => void;
-  sessionLabel: string;
-  status: OverlayHeaderStatus;
-  title: string;
-}
-
-export interface OverlayTimerSectionViewModel {
-  canPause: boolean;
-  canReset: boolean;
-  canStart: boolean;
-  display: string;
-  isRunning: boolean;
-  onPause: () => void;
-  onReset: () => void;
-  onStart: () => void;
-  startLabel: string;
-  targetDisplay?: string;
-}
-
-export interface OverlayAssessmentSectionViewModel {
-  disabledRatings: Rating[];
-  onSelectRating: (rating: Rating) => void;
-  selectedRating: Rating;
-}
-
-export interface OverlayLogSectionViewModel {
-  draft: OverlayDraftLogFields;
-  onChange: OverlayDraftChangeHandler;
-}
-
-export interface OverlayFeedbackViewModel {
-  isError: boolean;
-  message: string;
-}
-
-export interface OverlayAssistViewModel {
-  id?: string;
-  message: string;
-  tone?: "accent" | "danger" | "default" | "info" | "success" | "warning";
-}
-
-export interface CollapsedOverlayActionsViewModel {
-  canFail: boolean;
-  onHide: () => void;
-  canSubmit: boolean;
-  onExpand: () => void;
-  onFail: () => void;
-  onSubmit: () => void;
-}
-
-export interface ExpandedOverlayActionsViewModel {
-  canFail: boolean;
-  canRestart: boolean;
-  canSubmit: boolean;
-  canUpdate: boolean;
-  onFail: () => void;
-  onRestart: () => void;
-  onSubmit: () => void;
-  onUpdate: () => void;
-}
-
-export type OverlayPostSubmitNextViewModel =
-  | {
-  kind: "loading";
-  message: string;
-  title: string;
-}
-  | {
-  kind: "empty";
-  message: string;
-  title: string;
-}
-  | {
-  activeTrackId?: string;
-  kind: "track";
-  onOpenProblem: (target: {
-    slug: string;
-    courseId?: string;
-    chapterId?: string;
-  }) => Promise<void> | void;
-  view: TrackQuestionView;
-}
-  | {
-  kind: "recommended";
-  onOpenProblem: (
-    target: Pick<RecommendedProblemView, "slug">
-  ) => Promise<void> | void;
-  recommended: RecommendedProblemView;
-};
-
-export interface CollapsedOverlayViewModel {
-  actions: CollapsedOverlayActionsViewModel;
-  assist: OverlayAssistViewModel;
-  feedback: OverlayFeedbackViewModel | null;
-  timer: OverlayTimerSectionViewModel;
-}
-
-export interface DockedOverlayViewModel {
-  onRestore: () => void;
-}
-
-export interface ExpandedOverlayViewModel {
-  actions: ExpandedOverlayActionsViewModel;
-  actionAssist: OverlayAssistViewModel;
-  assessment: OverlayAssessmentSectionViewModel;
-  assessmentAssist: OverlayAssistViewModel;
-  feedback: OverlayFeedbackViewModel | null;
-  header: OverlayHeaderSectionViewModel;
-  onClickAway: () => void;
-  log: OverlayLogSectionViewModel;
-  postSubmitNext: OverlayPostSubmitNextViewModel | null;
-  timer: OverlayTimerSectionViewModel & {
-    targetDisplay: string;
-  };
-}
-
-export type OverlayRenderModel =
-  | {
-  model: CollapsedOverlayViewModel;
-  variant: "collapsed";
-}
-  | {
-  model: DockedOverlayViewModel;
-  variant: "docked";
-}
-  | {
-  model: ExpandedOverlayViewModel;
-  variant: "expanded";
-};
+/**
+ * Overlay panel view-model types — re-exports the per-type files split
+ * in Phase 5. Kept as the public surface for now so existing importers
+ * don't churn; Phase 6+ moves these into `features/overlay-session/ui/
+ * viewmodels/` and deletes this barrel.
+ */
+export type { OverlayDraftLogFields } from "./types/OverlayDraftLogFields";
+export type { OverlayHeaderStatusTone } from "./types/OverlayHeaderStatusTone";
+export type { OverlayHeaderStatusCard } from "./types/OverlayHeaderStatusCard";
+export type { OverlayHeaderStatus } from "./types/OverlayHeaderStatus";
+export type { OverlayDraftChangeHandler } from "./types/OverlayDraftChangeHandler";
+export type { OverlayHeaderSectionViewModel } from "./types/OverlayHeaderSectionViewModel";
+export type { OverlayTimerSectionViewModel } from "./types/OverlayTimerSectionViewModel";
+export type { OverlayAssessmentSectionViewModel } from "./types/OverlayAssessmentSectionViewModel";
+export type { OverlayLogSectionViewModel } from "./types/OverlayLogSectionViewModel";
+export type { OverlayFeedbackViewModel } from "./types/OverlayFeedbackViewModel";
+export type { OverlayAssistViewModel } from "./types/OverlayAssistViewModel";
+export type { CollapsedOverlayActionsViewModel } from "./types/CollapsedOverlayActionsViewModel";
+export type { ExpandedOverlayActionsViewModel } from "./types/ExpandedOverlayActionsViewModel";
+export type { OverlayPostSubmitNextViewModel } from "./types/OverlayPostSubmitNextViewModel";
+export type { CollapsedOverlayViewModel } from "./types/CollapsedOverlayViewModel";
+export type { DockedOverlayViewModel } from "./types/DockedOverlayViewModel";
+export type { ExpandedOverlayViewModel } from "./types/ExpandedOverlayViewModel";
+export type { OverlayRenderModel } from "./types/OverlayRenderModel";

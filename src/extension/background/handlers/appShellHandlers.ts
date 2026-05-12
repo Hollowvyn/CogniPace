@@ -31,7 +31,7 @@ import {
   buildProblemView,
   buildStudyStateView,
   buildTrackView,
-} from "../../../domain/views/hydrate";
+} from "../../../domain/views/utils/hydrate";
 import { ok } from "../responses";
 
 import type { Company } from "../../../domain/companies/model";

@@ -11,7 +11,7 @@ import { applyEdit } from "../../../src/domain/problems/operations";
 import {
   buildProblemView,
   buildTrackView,
-} from "../../../src/domain/views/hydrate";
+} from "../../../src/domain/views/utils/hydrate";
 import {
   makeCompanyV7,
   makeProblemV7,

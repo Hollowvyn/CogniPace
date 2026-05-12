@@ -317,7 +317,82 @@ describe("architecture / Phase 4 boundaries", () => {
   });
 });
 
-describe.skip("architecture / Phase 5+ boundaries (placeholder)", () => {
+describe("architecture / Phase 5 boundaries", () => {
+  it("domain/types/ and domain/views/ are folders with no top-level grab-bag .ts", () => {
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/domain/types.ts")),
+      "src/domain/types.ts should be split into the types/ folder",
+    ).toBe(false);
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/domain/views.ts")),
+      "src/domain/views.ts should be split into the views/ folder",
+    ).toBe(false);
+    expect(fs.existsSync(path.join(repoRoot, "src/domain/types/index.ts"))).toBe(true);
+    expect(fs.existsSync(path.join(repoRoot, "src/domain/views/index.ts"))).toBe(true);
+  });
+
+  it("libs/runtime-rpc/contracts is a folder (split per concern)", () => {
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/libs/runtime-rpc/contracts.ts")),
+      "contracts.ts should be split into the contracts/ folder",
+    ).toBe(false);
+    for (const name of [
+      "MessageRequestMap.ts",
+      "MessageResponseMap.ts",
+      "MessageType.ts",
+      "RuntimeMessage.ts",
+      "index.ts",
+    ]) {
+      expect(
+        fs.existsSync(
+          path.join(repoRoot, "src/libs/runtime-rpc/contracts", name),
+        ),
+        `missing src/libs/runtime-rpc/contracts/${name}`,
+      ).toBe(true);
+    }
+  });
+
+  it("overlay panel types are split under types/", () => {
+    const overlayTypes = path.join(
+      repoRoot,
+      "src/ui/screens/overlay/types",
+    );
+    expect(fs.existsSync(overlayTypes)).toBe(true);
+    const files = fs
+      .readdirSync(overlayTypes)
+      .filter((n) => n.endsWith(".ts"));
+    // Expect ~18 split type files (one per type).
+    expect(files.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("one named export per file under domain/types/ and domain/views/ (best-effort)", () => {
+    const roots = [
+      path.join(repoRoot, "src/domain/types"),
+      path.join(repoRoot, "src/domain/views"),
+    ];
+    for (const root of roots) {
+      if (!fs.existsSync(root)) continue;
+      const files = fs
+        .readdirSync(root, { withFileTypes: true })
+        .filter((e) => e.isFile() && e.name.endsWith(".ts"))
+        .map((e) => path.join(root, e.name));
+      for (const file of files) {
+        if (file.endsWith("/index.ts")) continue;
+        const text = read(file);
+        // Count distinct top-level export statements that declare names.
+        const exportCount =
+          (text.match(/^export (interface|type|enum|const|function)\s+\w+/gm) ?? [])
+            .length;
+        expect(
+          exportCount,
+          `${path.relative(repoRoot, file)} should export exactly 1 named symbol (got ${exportCount})`,
+        ).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+});
+
+describe.skip("architecture / Phase 6+ boundaries (placeholder)", () => {
   // Filled in as phases land. Listed by phase below.
   it.todo("Phase 6+: features/<x>/ui does not import features/<x>/data");
   it.todo("Phase 6+: features/<x>/domain does not import features/<x>/data impls");

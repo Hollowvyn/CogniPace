@@ -107,13 +107,16 @@ describe("architecture layout", () => {
     const overlayPanel = read(
       path.join(repoRoot, "src/ui/screens/overlay/OverlayPanel.tsx")
     );
-    const overlayTypes = read(
-      path.join(repoRoot, "src/ui/screens/overlay/overlayPanel.types.ts")
+    const overlayRenderModel = read(
+      path.join(
+        repoRoot,
+        "src/ui/screens/overlay/types/OverlayRenderModel.ts",
+      ),
     );
 
-    expect(overlayTypes).toContain('variant: "collapsed"');
-    expect(overlayTypes).toContain('variant: "expanded"');
-    expect(overlayTypes).not.toContain("collapsed: boolean");
+    expect(overlayRenderModel).toContain('variant: "collapsed"');
+    expect(overlayRenderModel).toContain('variant: "expanded"');
+    expect(overlayRenderModel).not.toContain("collapsed: boolean");
     expect(overlayPanel).toContain('renderModel.variant === "collapsed"');
   });
 });

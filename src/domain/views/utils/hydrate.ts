@@ -8,14 +8,14 @@
  */
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
-import { slugToTitle, slugToUrl } from "../problem/slug";
-import { listEditedFields } from "../problems/operations";
+import { slugToTitle, slugToUrl } from "../../problem/slug";
+import { listEditedFields } from "../../problems/operations";
 
-import type { Company } from "../companies/model";
-import type { Problem, EditableProblemField } from "../problems/model";
-import type { StudyState } from "../study-state/model";
-import type { Topic } from "../topics/model";
-import type { TrackWithGroups } from "../tracks/model";
+import type { Company } from "../../companies/model";
+import type { Problem, EditableProblemField } from "../../problems/model";
+import type { StudyState } from "../../study-state/model";
+import type { Topic } from "../../topics/model";
+import type { TrackWithGroups } from "../../tracks/model";
 import type {
   CompanyLabel,
   ProblemView,
@@ -23,7 +23,7 @@ import type {
   TopicLabel,
   TrackGroupView,
   TrackView,
-} from "../views";
+} from "../../views";
 
 const EDITABLE_FIELDS_ORDER: readonly EditableProblemField[] = [
   "title",

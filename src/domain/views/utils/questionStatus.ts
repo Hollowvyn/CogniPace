@@ -6,8 +6,8 @@
  */
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
-import type { Problem, StudyState } from "../types";
-import type { TrackChapterStatusView, TrackQuestionStatusView } from "../views";
+import type { Problem, StudyState } from "../../types";
+import type { TrackChapterStatusView, TrackQuestionStatusView } from "../../views";
 
 export interface TrackQuestionStatusInput {
   slug: string;

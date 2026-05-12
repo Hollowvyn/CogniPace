@@ -15,7 +15,7 @@ import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import {
   findCurrentSlugInGroup,
   trackQuestionStatus,
-} from "../views/questionStatus";
+} from "../views/utils/questionStatus";
 
 import type { ActiveFocus } from "./model";
 import type { TrackGroupWithProblems, TrackWithGroups } from "../tracks/model";
