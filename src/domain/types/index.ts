@@ -42,7 +42,7 @@ export type {
   TimingSettings,
   UserSettings,
   UserSettingsPatch,
-} from "../settings/model";
+} from "@features/settings";
 
 export type {
   ProblemSlug,

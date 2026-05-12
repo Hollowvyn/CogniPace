@@ -23,6 +23,7 @@
  * Production code should always use `getDb()`; tests construct their
  * own DB via `createDb()` in `client.ts`.
  */
+import { seedInitialSettings } from "@features/settings/server";
 import { tick } from "@libs/event-bus";
 
 import { listCatalogCompanySeeds } from "../../data/catalog/companiesSeed";
@@ -31,7 +32,6 @@ import { buildProblemSeed } from "../../data/catalog/problemsSeed";
 import { listCatalogTopicSeeds } from "../../data/catalog/topicsSeed";
 import { seedCatalogCompanies } from "../../data/companies/repository";
 import { seedCatalogProblems } from "../../data/problems/repository";
-import { seedInitialSettings } from "../../data/settings/repository";
 import { seedCatalogTopics } from "../../data/topics/repository";
 import { seedCatalogTracks } from "../../data/tracks/repository";
 import { buildTrackCatalogSeed } from "../../data/tracks/seed";

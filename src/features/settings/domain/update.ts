@@ -1,5 +1,5 @@
-import { UserSettings, UserSettingsPatch } from "./model";
 import { sanitizeStoredUserSettings } from "./sanitize";
+import { UserSettings, UserSettingsPatch } from "./UserSettings";
 
 export function cloneUserSettings(settings: UserSettings): UserSettings {
   return {

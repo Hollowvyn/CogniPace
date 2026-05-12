@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 
+import { createInitialUserSettings } from "@features/settings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../src/domain/common/constants";
-import { createInitialUserSettings } from "../../src/domain/settings";
 import {
   handleStartupDueCheck,
   maybeNotifyDueQueue,
@@ -39,8 +39,9 @@ vi.mock("@platform/db/instance", () => ({
     sqlite3: {} as never,
   })),
 }));
-vi.mock("../../src/data/settings/repository", () => ({
+vi.mock("@features/settings/server", () => ({
   getUserSettings: vi.fn(async () => undefined),
+  INITIAL_USER_SETTINGS: {} as never,
 }));
 
 function makeAppData(): AppData {

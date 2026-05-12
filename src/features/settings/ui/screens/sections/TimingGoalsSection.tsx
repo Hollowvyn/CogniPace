@@ -1,11 +1,11 @@
 import { SurfaceFieldGrid } from "@design-system/atoms";
+import { UserSettings } from "@features/settings";
 import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
-import { UserSettings } from "../../../../../../domain/settings";
 import { SwitchSetting } from "../components/SettingsInputs";
 import {
   createGoalTextDraft,

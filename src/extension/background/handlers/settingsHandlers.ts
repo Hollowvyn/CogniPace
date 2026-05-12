@@ -1,4 +1,10 @@
 /** Background handlers for settings and backup import/export operations. */
+import {
+  createInitialUserSettings,
+  getUserSettings,
+  mergeUserSettings,
+  saveUserSettings,
+} from "@features/settings/server";
 import { normalizeStudyState } from "@libs/fsrs/studyState";
 import { getDb } from "@platform/db/instance";
 import {
@@ -19,14 +25,7 @@ import {
   listProblems,
   upsertProblem,
 } from "../../../data/problems/repository";
-import {
-  getAppData,
-  mergeSettings,
-} from "../../../data/repositories/appDataRepository";
-import {
-  getUserSettings,
-  saveUserSettings,
-} from "../../../data/settings/repository";
+import { getAppData } from "../../../data/repositories/appDataRepository";
 import {
   appendAttempt,
   clearAllStudyHistory,
@@ -48,10 +47,6 @@ import {
   slugToUrl,
   normalizeSlug,
 } from "../../../domain/problem/slug";
-import {
-  createInitialUserSettings,
-  mergeUserSettings,
-} from "../../../domain/settings";
 import { ExportPayload, StudyState } from "../../../domain/types";
 import { ok } from "../responses";
 
@@ -217,17 +212,9 @@ export async function importData(payload: ExportPayload) {
   return ok({ imported: true });
 }
 
-/** Applies a settings patch and returns the normalized saved settings.
- * Phase 5: settings live in SQLite, not the v7 blob — the merge runs
- * against the SQLite copy and the write path returns the round-tripped
- * value (charter lesson #6) so the UI's next read matches. */
-export async function updateSettings(payload: Record<string, unknown>) {
-  const { db } = await getDb();
-  const current = (await getUserSettings(db)) ?? createInitialUserSettings();
-  const merged = mergeSettings(current, payload);
-  const saved = await saveUserSettings(db, merged);
-  return ok({ settings: saved });
-}
+// updateSettings moved to features/settings/messaging/handlers.ts in
+// Phase 6. The router now imports it directly from
+// @features/settings/server.
 
 /** Clears all local study history while preserving settings, tracks, and the problem library. */
 export async function resetStudyHistory() {

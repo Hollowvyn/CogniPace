@@ -1,4 +1,4 @@
-import { UserSettings } from "../../../../../domain/settings";
+import { UserSettings } from "@features/settings";
 
 export type SettingsUpdate = (
   updater: (current: UserSettings) => UserSettings

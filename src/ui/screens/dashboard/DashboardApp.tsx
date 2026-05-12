@@ -1,4 +1,5 @@
 /** Dashboard screen composition that delegates all state to the dashboard controller. */
+import { SettingsScreen as SettingsView } from "@features/settings";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 
@@ -9,7 +10,6 @@ import { PreV7BackupSnackbar } from "./components/PreV7BackupSnackbar";
 import { AnalyticsView } from "./tabs/analytics/AnalyticsView";
 import { LibraryView } from "./tabs/library/LibraryView";
 import { OverviewView } from "./tabs/overview/OverviewView";
-import { SettingsView } from "./tabs/settings/SettingsView";
 import { TracksView } from "./tabs/tracks/TracksView";
 import { useDashboardController } from "./useDashboardController";
 

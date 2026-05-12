@@ -1,7 +1,8 @@
 import {
   hasGroupedUserSettings,
   sanitizeStoredUserSettings,
-} from "../../domain/settings";
+} from "@features/settings/server";
+
 import {
   ExportPayload,
   Problem,

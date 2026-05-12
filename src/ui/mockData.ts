@@ -1,4 +1,5 @@
-import { createInitialUserSettings } from "../domain/settings";
+import { createInitialUserSettings } from "@features/settings";
+
 import { AppShellPayload, PopupShellPayload } from "../domain/views";
 
 export function createMockPopupShellPayload(): PopupShellPayload {

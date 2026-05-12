@@ -1,9 +1,9 @@
 import type { Problem } from "./Problem";
 import type { StudyState } from "./StudyState";
 import type { Company } from "../companies/model";
-import type { UserSettings } from "../settings/model";
 import type { Topic } from "../topics/model";
 import type { TrackWithGroups } from "../tracks/model";
+import type { UserSettings } from "@features/settings";
 
 
 export interface ExportPayload {

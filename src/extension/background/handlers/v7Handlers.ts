@@ -6,6 +6,10 @@
  * (Phase 8 will rip the funnel).
  */
 import {
+  getUserSettings,
+  saveUserSettings,
+} from "@features/settings/server";
+import {
   readLocalStorage,
   removeLocalStorage,
 } from "@platform/chrome/storage";
@@ -25,10 +29,6 @@ import {
   getProblem,
 } from "../../../data/problems/repository";
 import { PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
-import {
-  getUserSettings,
-  saveUserSettings,
-} from "../../../data/settings/repository";
 import { upsertTopic } from "../../../data/topics/repository";
 import {
   createTrack,

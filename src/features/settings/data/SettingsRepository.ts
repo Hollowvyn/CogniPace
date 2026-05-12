@@ -18,9 +18,9 @@ import { eq } from "drizzle-orm";
 import {
   createInitialUserSettings,
   sanitizeStoredUserSettings,
-} from "../../domain/settings";
+} from "../domain";
 
-import type { UserSettings } from "../../domain/types";
+import type { UserSettings } from "../domain/UserSettings";
 
 /** Storage key for the entire UserSettings JSON document. */
 export const USER_SETTINGS_KEY = "user_settings";

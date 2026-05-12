@@ -1,5 +1,12 @@
 /** Dashboard-local controller for route state, filters, settings draft, and runtime mutations. */
 import {
+  areUserSettingsEqual,
+  cloneUserSettings,
+  createInitialUserSettings,
+  sanitizeStoredUserSettings,
+  type UserSettings,
+} from "@features/settings";
+import {
   startTransition,
   useCallback,
   useDeferredValue,
@@ -19,13 +26,6 @@ import {
   updateSettings,
 } from "../../../data/repositories/settingsRepository";
 import { setActiveFocus } from "../../../data/repositories/v7ActionRepository";
-import {
-  areUserSettingsEqual,
-  cloneUserSettings,
-  createInitialUserSettings,
-  UserSettings,
-} from "../../../domain/settings";
-import { sanitizeStoredUserSettings } from "../../../domain/settings/sanitize";
 import { createMockAppShellPayload } from "../../mockData";
 import {
   buildDashboardUrl,

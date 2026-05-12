@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 
-import { describe, it } from "vitest";
 
 import {
   isPersistedUserSettings,
   sanitizeStoredUserSettings,
-} from "../../../src/domain/settings/sanitize";
-import { createInitialUserSettings } from "../../../src/domain/settings/seed";
+ createInitialUserSettings } from "@features/settings";
+import { describe, it } from "vitest";
 
 describe("settings sanitization", () => {
   const initial = createInitialUserSettings();

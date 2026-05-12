@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 
+import { createInitialUserSettings } from "@features/settings";
 import { describe, it } from "vitest";
 
 import { sanitizeImportPayload } from "../../src/data/importexport/backup";
@@ -7,7 +8,6 @@ import {
   createDefaultStudyState,
   CURRENT_STORAGE_SCHEMA_VERSION,
 } from "../../src/domain/common/constants";
-import { createInitialUserSettings } from "../../src/domain/settings";
 import { Problem } from "../../src/domain/types";
 import { makeProblem } from "../support/domainFixtures";
 

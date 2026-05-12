@@ -1,4 +1,4 @@
-import { UserSettings } from "./model";
+import { UserSettings } from "./UserSettings";
 
 function stableStringify(value: unknown): string {
   if (!value || typeof value !== "object") {

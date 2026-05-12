@@ -1,4 +1,12 @@
 /** Repository for persisted app data stored in `chrome.storage.local`. */
+import {
+  areUserSettingsEqual,
+  createInitialUserSettings,
+  isPersistedUserSettings,
+  mergeUserSettings,
+  sanitizeStoredUserSettings,
+  UserSettingsPatch,
+} from "@features/settings/server";
 import { normalizeStudyState } from "@libs/fsrs/studyState";
 import {
   readLocalStorage,
@@ -9,14 +17,6 @@ import {
   CURRENT_STORAGE_SCHEMA_VERSION,
   STORAGE_KEY,
 } from "../../domain/common/constants";
-import {
-  areUserSettingsEqual,
-  createInitialUserSettings,
-  isPersistedUserSettings,
-  mergeUserSettings,
-  sanitizeStoredUserSettings,
-  UserSettingsPatch,
-} from "../../domain/settings";
 import { AppData } from "../../domain/types";
 
 /** Sidecar key holding the pre-v7 blob (auto-export-then-wipe migration). */

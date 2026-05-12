@@ -1,5 +1,10 @@
 /** Notification helpers for the background worker's local daily reminder. */
 import {
+  getUserSettings,
+  INITIAL_USER_SETTINGS,
+  type UserSettings,
+} from "@features/settings/server";
+import {
   readLocalStorage,
   writeLocalStorage,
 } from "@platform/chrome/storage";
@@ -9,9 +14,8 @@ import {
   getAppData,
   STORAGE_KEY,
 } from "../../data/repositories/appDataRepository";
-import { getUserSettings } from "../../data/settings/repository";
 import { buildTodayQueue } from "../../domain/queue/buildTodayQueue";
-import { INITIAL_USER_SETTINGS, UserSettings } from "../../domain/settings";
+
 
 const DUE_CHECK_ALARM = "due-check";
 const DUE_NOTIFICATION_STATE_KEY = "cognipace_due_notification_state";

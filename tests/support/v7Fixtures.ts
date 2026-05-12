@@ -4,6 +4,7 @@
  * live alongside the tracks repo tests (they need the SQLite shape, not
  * a v7-blob shape).
  */
+import { createInitialUserSettings } from "@features/settings";
 import {
   asCompanyId,
   asProblemSlug,
@@ -11,7 +12,6 @@ import {
 } from "@shared/ids";
 
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/domain/data/appDataV7";
-import { createInitialUserSettings } from "../../src/domain/settings";
 import { createDefaultStudyState } from "../../src/domain/study-state/defaults";
 
 import type { Company } from "../../src/domain/companies/model";

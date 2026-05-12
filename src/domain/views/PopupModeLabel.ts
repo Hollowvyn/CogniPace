@@ -1,4 +1,4 @@
-import type { StudyMode } from "../settings/model";
+import type { StudyMode } from "@features/settings";
 
 export interface PopupModeLabel {
   currentMode: StudyMode;

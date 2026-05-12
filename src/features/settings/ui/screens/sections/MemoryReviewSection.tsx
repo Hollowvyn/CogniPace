@@ -9,7 +9,7 @@ import { ReactNode } from "react";
 import { SelectSetting } from "../components/SettingsInputs";
 import { SettingsUpdate } from "../settingsTypes";
 
-import type { ReviewOrder, UserSettings } from "../../../../../../domain/settings";
+import type { ReviewOrder, UserSettings } from "@features/settings";
 
 const retentionMarks = [
   { label: "70%", value: 0.7 },

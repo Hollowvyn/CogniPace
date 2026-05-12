@@ -1,4 +1,9 @@
 /** Background handlers for catalog set imports and direct problem intake. */
+import {
+  createInitialUserSettings,
+  getUserSettings,
+  saveUserSettings,
+} from "@features/settings/server";
 import { getDb } from "@platform/db/instance";
 import { asProblemSlug } from "@shared/ids";
 
@@ -11,12 +16,7 @@ import {
   mergeSettings,
 } from "../../../data/repositories/appDataRepository";
 import { parseProblemInput } from "../../../data/repositories/problemRepository";
-import {
-  getUserSettings,
-  saveUserSettings,
-} from "../../../data/settings/repository";
 import { ensureStudyState } from "../../../data/studyStates/repository";
-import { createInitialUserSettings } from "../../../domain/settings";
 import { ok } from "../responses";
 
 import type { Difficulty } from "../../../domain/types";

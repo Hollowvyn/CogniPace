@@ -1,6 +1,5 @@
 /** Runtime-message payload contract — UI side sends, SW side receives. */
 import type { ActiveFocus } from "../../../domain/active-focus/model";
-import type { UserSettingsPatch } from "../../../domain/settings";
 import type {
   CuratedProblemInput,
   Difficulty,
@@ -9,6 +8,7 @@ import type {
   ReviewLogFields,
   ReviewMode,
 } from "../../../domain/types";
+import type { UserSettingsPatch } from "@features/settings/server";
 
 export interface MessageRequestMap {
   UPSERT_PROBLEM_FROM_PAGE: {

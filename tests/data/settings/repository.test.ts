@@ -13,19 +13,19 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { createInitialUserSettings } from "@features/settings";
+import {
+  getUserSettings,
+  saveUserSettings,
+  seedInitialSettings,
+  USER_SETTINGS_KEY,
+} from "@features/settings/server";
 import * as schema from "@platform/db/schema";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  getUserSettings,
-  saveUserSettings,
-  seedInitialSettings,
-  USER_SETTINGS_KEY,
-} from "../../../src/data/settings/repository";
-import { createInitialUserSettings } from "../../../src/domain/settings";
 
 import type { Db } from "@platform/db/client";
 

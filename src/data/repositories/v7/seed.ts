@@ -10,8 +10,9 @@
  * legacy `AppData` shape still nominally carries them during the
  * transitional period.
  */
+import { createInitialUserSettings } from "@features/settings/server";
+
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
-import { createInitialUserSettings } from "../../../domain/settings";
 
 import type { AppDataV7 } from "../../../domain/data/appDataV7";
 

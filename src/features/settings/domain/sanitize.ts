@@ -1,16 +1,16 @@
 import { asTrackGroupId, asTrackId } from "@shared/ids";
 
-import { DEFAULT_TRACK_ID } from "../common/constants";
+import { DEFAULT_TRACK_ID } from "../../../domain/common/constants";
 
+import { createInitialSetsEnabled, createInitialUserSettings } from "./seed";
 import {
   DifficultyGoalSettings,
   ReviewOrder,
   StudyMode,
   UserSettings,
-} from "./model";
-import { createInitialSetsEnabled, createInitialUserSettings } from "./seed";
+} from "./UserSettings";
 
-import type { ActiveFocus } from "../active-focus/model";
+import type { ActiveFocus } from "../../../domain/active-focus/model";
 
 type UnknownRecord = Record<string, unknown>;
 

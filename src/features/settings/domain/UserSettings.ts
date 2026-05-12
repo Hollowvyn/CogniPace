@@ -1,4 +1,4 @@
-import type { ActiveFocus } from "../active-focus/model";
+import type { ActiveFocus } from "../../../domain/active-focus/model";
 
 export type ReviewOrder = "dueFirst" | "mixByDifficulty" | "weakestFirst";
 

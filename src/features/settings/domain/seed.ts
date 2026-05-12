@@ -1,8 +1,8 @@
 import { asTrackId } from "@shared/ids";
 
-import { BUILT_IN_SETS, DEFAULT_TRACK_ID } from "../common/constants";
+import { BUILT_IN_SETS, DEFAULT_TRACK_ID } from "../../../domain/common/constants";
 
-import { UserSettings } from "./model";
+import { UserSettings } from "./UserSettings";
 
 export const INITIAL_USER_SETTINGS: UserSettings = {
   dailyQuestionGoal: 18,

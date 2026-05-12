@@ -1,4 +1,5 @@
 /** Central runtime router that dispatches validated messages to grouped handlers. */
+import { updateSettings } from "@features/settings/server";
 import { MessageType, RuntimeMessage } from "@libs/runtime-rpc/contracts";
 
 import { ExportPayload } from "../../domain/types";
@@ -31,7 +32,6 @@ import {
   exportData,
   importData,
   resetStudyHistory,
-  updateSettings,
 } from "./handlers/settingsHandlers";
 import {
   assignCompanyHandler,

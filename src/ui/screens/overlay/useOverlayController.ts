@@ -1,4 +1,5 @@
 /** Overlay controller that composes page bootstrap, timer state, session state, and render-model shaping. */
+import { createInitialUserSettings } from "@features/settings";
 import {
   defaultReviewMode,
   deriveQuickRating,
@@ -19,7 +20,6 @@ import {
   upsertProblemFromPage,
 } from "../../../data/repositories/problemSessionRepository";
 import { formatClock } from "../../../domain/common/time";
-import { createInitialUserSettings } from "../../../domain/settings";
 import { Rating, UserSettings } from "../../../domain/types";
 import { AppShellPayload } from "../../../domain/views";
 

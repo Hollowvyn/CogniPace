@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 
+import { createInitialUserSettings } from "@features/settings";
 import {
   applyReview,
   overrideLastReview,
@@ -14,7 +15,6 @@ import { createEmptyCard } from "ts-fsrs";
 import { describe, it } from "vitest";
 
 
-import { createInitialUserSettings } from "../../src/domain/settings";
 import { Rating, StudyState } from "../../src/domain/types";
 
 const settings = createInitialUserSettings();

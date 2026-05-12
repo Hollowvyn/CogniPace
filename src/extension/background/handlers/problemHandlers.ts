@@ -1,4 +1,8 @@
 /** Background handlers for problem-context, review-session, and page actions. */
+import {
+  createInitialUserSettings,
+  getUserSettings,
+} from "@features/settings/server";
 import {applyReview, overrideLastReview, resetSchedule,} from "@libs/fsrs/scheduler";
 import {getStudyStateSummary, normalizeReviewLogFields,} from "@libs/fsrs/studyState";
 import {canonicalProblemUrlForOpen,} from "@libs/runtime-rpc/validator";
@@ -12,9 +16,6 @@ import {
 import { getProblem, importProblem } from "../../../data/problems/repository";
 import { normalizeDifficulty } from "../../../data/repositories/problemRepository";
 import {
-  getUserSettings,
-} from "../../../data/settings/repository";
-import {
   appendAttempt,
   clearAttempts,
   ensureStudyState,
@@ -24,7 +25,6 @@ import {
 } from "../../../data/studyStates/repository";
 import {nowIso} from "../../../domain/common/time";
 import {isProblemPage, normalizeSlug} from "../../../domain/problem/slug";
-import { createInitialUserSettings } from "../../../domain/settings";
 import {ReviewLogFields} from "../../../domain/types";
 import {ok} from "../responses";
 

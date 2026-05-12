@@ -1,6 +1,6 @@
+import { UserSettings } from "@features/settings";
 import Stack from "@mui/material/Stack";
 
-import { UserSettings } from "../../../../../../domain/settings";
 import { SwitchSetting, TimeSetting } from "../components/SettingsInputs";
 import { SettingsUpdate } from "../settingsTypes";
 

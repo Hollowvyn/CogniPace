@@ -18,6 +18,12 @@
  * will use in Phase 6, so any wasm / proxy / Drizzle issue reproduces
  * here too. Resets on every reload — no persistence yet.
  */
+import { createInitialUserSettings } from "@features/settings";
+import {
+  getUserSettings,
+  saveUserSettings,
+  seedInitialSettings,
+} from "@features/settings/server";
 import { createDb, type DbHandle } from "@platform/db/client";
 import migrationSql from "@platform/db/migrations/0000_initial.sql";
 import * as schema from "@platform/db/schema";
@@ -54,11 +60,6 @@ import {
   removeProblem,
 } from "../data/problems/repository";
 import {
-  getUserSettings,
-  saveUserSettings,
-  seedInitialSettings,
-} from "../data/settings/repository";
-import {
   appendAttempt,
   ensureStudyState,
   getStudyState,
@@ -80,7 +81,7 @@ import {
   seedCatalogTracks,
 } from "../data/tracks/repository";
 import { buildTrackCatalogSeed } from "../data/tracks/seed";
-import { createInitialUserSettings } from "../domain/settings";
+
 
 let handle: DbHandle | undefined;
 
