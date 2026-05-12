@@ -565,7 +565,7 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "SET_ACTIVE_FOCUS":
       hasExactKeys(payload, ["focus"], `Payload for ${type}`);
       // `focus` is allowed to be null (clears the selection); else an
-      // object with kind: 'studySet' and id is expected.
+      // object with kind: 'track' and id is expected.
       if (payload.focus !== null && !isRecord(payload.focus)) {
         throw new Error('Invalid field "focus": expected null or an object.');
       }

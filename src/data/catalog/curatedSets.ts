@@ -1,5 +1,4 @@
-import { getStudyStateSummary } from "./studyState";
-import { AppData, CuratedProblemInput, Difficulty, StudyState } from "./types";
+import { CuratedProblemInput, Difficulty } from "./types";
 import { slugToTitle, slugToUrl, uniqueStrings } from "./utils";
 
 interface TopicPathProblemInput {
@@ -1619,10 +1618,6 @@ for (const runtime of PLAN_RUNTIME.values()) {
   }
 }
 
-function hasStartedStep(state?: StudyState): boolean {
-  return getStudyStateSummary(state).isStarted;
-}
-
 function resolvePlan(planId?: string): PlanRuntime {
   const byId = planId ? PLAN_RUNTIME.get(planId) : undefined;
   if (byId) {
@@ -1658,92 +1653,20 @@ export function getDefaultCurriculumSteps(planId?: string): CurriculumStep[] {
   return [...resolvePlan(planId).steps];
 }
 
-export function getCurriculumRecommendations(
-  data: AppData,
-  planId?: string,
-  maxItems = 1
-): {
-  planId: string;
-  planName: string;
-  sourceSet: string;
-  topic: string | null;
-  items: CurriculumStep[];
-  completed: boolean;
-} {
-  const runtime = resolvePlan(planId);
-  const { summary, steps } = runtime;
-
-  // v7: source-of-truth for "is this curated track enabled" is now the
-  // StudySet entity itself. The seed builder uses the plan id as the
-  // StudySet id, so the lookup is direct.
-  const studySet = data.studySetsById[summary.id];
-  if (studySet && studySet.enabled === false) {
-    return {
-      planId: summary.id,
-      planName: summary.name,
-      sourceSet: summary.sourceSet,
-      topic: null,
-      items: [],
-      completed: false,
-    };
-  }
-
-  const limit = Math.max(1, Math.floor(maxItems));
-  const firstPendingIndex = steps.findIndex(
-    (step) => !hasStartedStep(data.studyStatesBySlug[step.slug])
-  );
-
-  if (firstPendingIndex < 0) {
-    return {
-      planId: summary.id,
-      planName: summary.name,
-      sourceSet: summary.sourceSet,
-      topic: null,
-      items: [],
-      completed: true,
-    };
-  }
-
-  const topic = steps[firstPendingIndex].topic;
-  const items: CurriculumStep[] = [];
-
-  for (let i = firstPendingIndex; i < steps.length; i += 1) {
-    const step = steps[i];
-    if (step.topic !== topic && items.length > 0) {
-      break;
-    }
-
-    if (hasStartedStep(data.studyStatesBySlug[step.slug])) {
-      continue;
-    }
-
-    items.push(step);
-    if (items.length >= limit) {
-      break;
-    }
-  }
-
-  return {
-    planId: summary.id,
-    planName: summary.name,
-    sourceSet: summary.sourceSet,
-    topic,
-    items,
-    completed: false,
-  };
-}
-
 /**
- * v7 helper — returns the curated plan inputs in the structural shape
- * expected by `studySetsSeed.buildStudySetSeed`. Kept here so the original
- * STUDY_PLAN_INPUTS list remains the single catalog source of truth.
+ * Returns the curated plan inputs in the structural shape consumed by
+ * the tracks seed (`buildTrackCatalogSeed`) and the problems seed
+ * (`buildProblemSeed`). Kept here so the original STUDY_PLAN_INPUTS list
+ * remains the single catalog source of truth.
  */
-export function listCatalogPlans(): Array<{
+export interface CatalogPlan {
   id: string;
   name: string;
   description: string;
   sections: TopicPathSection[];
-}> {
+}
+
+export function listCatalogPlans(): CatalogPlan[] {
   return STUDY_PLAN_INPUTS.map((plan) => ({
     id: plan.id,
     name: plan.name,

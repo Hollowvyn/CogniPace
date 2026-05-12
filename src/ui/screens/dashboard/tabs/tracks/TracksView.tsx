@@ -64,7 +64,7 @@ interface TracksViewProps {
 
 /**
  * Lookup table for hydrating Track rows. Tracks tab gets `ProblemView` per
- * group from `studySetView.groups[].problems` but no study state — that
+ * group from `track.groups[].problems` but no study state — that
  * comes from `payload.library` keyed by slug.
  */
 interface SlugStudyData {

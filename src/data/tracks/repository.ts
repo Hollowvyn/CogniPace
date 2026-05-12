@@ -702,6 +702,6 @@ export async function seedCatalogTracks(
   }
 }
 
-// Re-export shared aliases for callers that previously imported from the
-// legacy v7 studySetRepository file.
+// drizzle-orm `sql` re-export — convenience for callers that need raw
+// SQL expressions in track-adjacent helpers (e.g. order-index bumps).
 export { sql };

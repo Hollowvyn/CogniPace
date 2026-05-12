@@ -1,13 +1,11 @@
 /**
  * Shared primitives + AppData root.
  *
- * The single source of truth is three aggregates: Problem
- * (`problemsBySlug`), Track (`studySetsById` + `studySetProgressById`), and
- * FSRSStudy (`studyStatesBySlug`). Everything else is derived.
- *
- * Aggregate-specific shapes live in their own folders (`problems/`,
- * `topics/`, `companies/`, `sets/`, `study-state/`); this file re-exports
- * them for back-compat with consumers that imported from `domain/types`.
+ * Every aggregate (Problem, StudyState, Topic, Company, Track, Settings)
+ * is SSoT in SQLite post-Phase-5. The legacy `AppData` shape kept in this
+ * file exists only as the transitional payload that non-migrated callers
+ * still consume after `hydrateRegistriesFromDb` populates it; Phase 8
+ * deletes it entirely.
  */
 import type { UserSettings } from "./settings/model";
 
@@ -28,31 +26,23 @@ export type {
   ProblemSlug,
   TopicId,
   CompanyId,
-  StudySetId,
-  SetGroupId,
+  TrackId,
+  TrackGroupId,
 } from "./common/ids";
 
 export type { Topic } from "./topics/model";
 export type { Company } from "./companies/model";
 export type {
-  StudySet,
-  StudySetKind,
-  SetGroup,
-  StudySetFilter,
-  CompanyFilter,
-  TopicFilter,
-  DifficultyFilter,
-  CustomFilter,
-  CourseStudySetConfig,
-  BaseStudySetConfig,
-} from "./sets/model";
-export type { StudySetProgress, SetGroupProgress } from "./sets/progress";
+  Track,
+  TrackGroup,
+  TrackGroupProblem,
+  TrackWithGroups,
+  TrackGroupWithProblems,
+} from "./tracks/model";
+export type { TrackProgress } from "./tracks/progress";
 export type { ActiveFocus } from "./active-focus/model";
 
-/**
- * Storage schema version. v7 introduces topicsById, companiesById,
- * studySetsById, studySetProgressById; v6 fields stay during the cutover.
- */
+/** Storage schema version on the legacy AppData blob. */
 export const STORAGE_SCHEMA_VERSION = 7;
 
 export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
@@ -110,7 +100,8 @@ export interface Problem {
   topicIds: string[];
   /** v7 — FK references to Company registry. */
   companyIds: string[];
-  /** @deprecated v6 set-membership string. Use StudySet.groups instead. */
+  /** @deprecated v6 set-membership string. Track memberships now live in
+   * `track_group_problems` and are read via the tracks repo. */
   sourceSet: string[];
   userEdits?: { [key: string]: true | undefined };
   createdAt: string;
@@ -156,24 +147,20 @@ export interface StudyState extends ReviewLogFields {
 }
 
 /**
- * AppData — the v7 single source of truth.
+ * Transitional AppData root — hydrated by the dashboard handler from
+ * SQLite (every aggregate that survived Phase 5). The blob shape is
+ * deliberately slim now; new aggregates do NOT get added here.
  */
 export interface AppData {
   schemaVersion: number;
-  /** Problem aggregate (carries v6 + v7 fields per Problem). */
+  /** Problem aggregate, hydrated from SQLite at read time. */
   problemsBySlug: Record<string, Problem>;
-  /** StudyState aggregate, sparse — only present after first review. */
+  /** StudyState aggregate, hydrated from SQLite at read time. */
   studyStatesBySlug: Record<string, StudyState>;
-  /** v7 — Topic registry (curated seed + user customs). */
+  /** Topic registry, hydrated from SQLite at read time. */
   topicsById: Record<string, import("./topics/model").Topic>;
-  /** v7 — Company registry. */
+  /** Company registry, hydrated from SQLite at read time. */
   companiesById: Record<string, import("./companies/model").Company>;
-  /** v7 — StudySet aggregate (courses + flat + derived). */
-  studySetsById: Record<string, import("./sets/model").StudySet>;
-  /** v7 — User-curated ordering across all StudySets. */
-  studySetOrder: string[];
-  /** v7 — Per-StudySet progress, lazily created when first focused. */
-  studySetProgressById: Record<string, import("./sets/progress").StudySetProgress>;
   settings: UserSettings;
   /** Set by the v6→v7 migration; surfaces in support diagnostics. */
   lastMigrationAt?: string;
@@ -244,12 +231,11 @@ export interface ExportPayload {
   problems: Problem[];
   studyStatesBySlug: Record<string, StudyState>;
   settings?: Partial<UserSettings>;
-  /** v7 — present once import/export migrates to aggregateRegistry. */
   topicsById?: Record<string, import("./topics/model").Topic>;
   companiesById?: Record<string, import("./companies/model").Company>;
-  studySetsById?: Record<string, import("./sets/model").StudySet>;
-  studySetOrder?: string[];
-  studySetProgressById?: Record<string, import("./sets/progress").StudySetProgress>;
+  /** Curated + user-defined tracks. Slim post-Phase-5: each track
+   * carries its groups, each group carries an ordered slug list. */
+  tracks?: Array<import("./tracks/model").TrackWithGroups>;
 }
 
 export interface ProblemSnapshot {

@@ -31,11 +31,12 @@ vi.mock("../../../../src/data/datasources/chrome/storage", () => ({
   removeLocalStorage: vi.fn(),
 }));
 
-// Phase 5: resetStudyHistory now clears the SQLite study_states +
-// attempt_history tables via clearAllStudyHistory. Mock the SQLite
-// path so the test doesn't try to load wasm — the test's contract
-// is "the v7 blob's studySetProgressById gets wiped"; the SQLite
-// side is covered by tests/data/studyStates/repository.test.ts.
+// Post-Phase-5 tracks slice: resetStudyHistory only wipes the SQLite
+// study_states + attempt_history tables (track progress is derived,
+// no separate aggregate to clear). Mock the SQLite path so this test
+// doesn't load wasm — the SQLite-side test
+// (tests/data/studyStates/repository.test.ts) verifies the actual
+// table truncation.
 vi.mock("../../../../src/data/db/instance", () => ({
   getDb: vi.fn().mockResolvedValue({ db: null }),
 }));
@@ -72,26 +73,22 @@ describe("Reset Study History", () => {
     assert.equal(Object.keys(before.studyStatesBySlug).length, 1);
     assert.equal(before.settings.dailyQuestionGoal, 42);
 
+    const writesBeforeReset = storageMocks.writeLocalStorage.mock.calls.length;
+
     // Execute reset
     await resetStudyHistory();
 
-    // Phase 5: study states live in SQLite — confirm the repo wipe
-    // fired; the SQLite-side test (tests/data/studyStates/) verifies
-    // the actual table truncation.
+    // Single contract: clearAllStudyHistory fires once. Wiping
+    // study_states + attempt_history is enough — track progress is
+    // derived from attempt_history, so there's no separate aggregate
+    // to clear. The reset itself doesn't touch chrome.storage either.
     assert.equal(
       (clearAllStudyHistory as ReturnType<typeof vi.fn>).mock.calls.length,
       1,
     );
-
-    // The v7 blob still carries studySetProgressById; verify the
-    // legacy wipe path ran for that aggregate. Problems + settings
-    // (also v7 blob residents but read from SQLite in production)
-    // are preserved on the v7 write so the legacy fields stay
-    // consistent during the transitional period.
-    const lastCall = storageMocks.writeLocalStorage.mock.calls.at(-1);
-    const savedData = lastCall?.[0][STORAGE_KEY];
-    assert.equal(Object.keys(savedData.studySetProgressById).length, 0);
-    assert.equal(savedData.problemsBySlug["two-sum"].leetcodeSlug, "two-sum");
-    assert.equal(savedData.settings.dailyQuestionGoal, 42);
+    assert.equal(
+      storageMocks.writeLocalStorage.mock.calls.length,
+      writesBeforeReset,
+    );
   });
 });

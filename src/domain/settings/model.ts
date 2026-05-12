@@ -40,7 +40,9 @@ export interface ExperimentalSettings {
 export interface UserSettings {
   dailyQuestionGoal: number;
   studyMode: StudyMode;
-  /** v6 — replaced by `StudySet.enabled` in v7. */
+  /** @deprecated v6 — replaced by `tracks.enabled` (SQLite). Kept on the
+   * settings shape for legacy import compat; new code consults the
+   * tracks repo. */
   setsEnabled: Record<string, boolean>;
   /** Discriminated current selection across all Tracks. The single source
    * of truth for "which Track is the user focused on right now". */

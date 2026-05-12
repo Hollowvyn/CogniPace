@@ -13,7 +13,6 @@ import {
 import {
   getAppData,
   mergeSettings,
-  mutateAppData,
 } from "../../../data/repositories/appDataRepository";
 import {
   getUserSettings,
@@ -26,9 +25,21 @@ import {
   upsertStudyState,
 } from "../../../data/studyStates/repository";
 import { listTopics, upsertTopic } from "../../../data/topics/repository";
+import {
+  addGroup,
+  addProblemToGroup,
+  createTrack,
+  listTracks,
+} from "../../../data/tracks/repository";
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
-import { asCompanyId, asProblemSlug, asTopicId } from "../../../domain/common/ids";
+import {
+  asCompanyId,
+  asProblemSlug,
+  asTopicId,
+  asTrackGroupId,
+  asTrackId,
+} from "../../../domain/common/ids";
 import { nowIso } from "../../../domain/common/time";
 import { normalizeStudyState } from "../../../domain/fsrs/studyState";
 import {
@@ -56,10 +67,9 @@ function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
   return out;
 }
 
-/** Exports the full persisted backup payload. Topics, companies,
- * settings, problems, and studyStates come from SQLite (Phase 4+5
- * SSoT); StudySet + StudySetProgress still come from the v7 blob
- * until the tracks slice migrates them. */
+/** Exports the full persisted backup payload. Every aggregate
+ * (topics, companies, settings, problems, studyStates, tracks) reads
+ * through its SQLite repo — the v7 blob is no longer consulted. */
 export async function exportData() {
   const data = await getAppData();
   const { db } = await getDb();
@@ -68,6 +78,7 @@ export async function exportData() {
   const problems = await listProblems(db);
   const studyStatesBySlug = await listStudyStates(db);
   const settings = await getUserSettings(db);
+  const tracks = await listTracks(db);
   const topicsById: Record<string, Topic> = {};
   for (const t of topics) topicsById[t.id] = t;
   const companiesById: Record<string, Company> = {};
@@ -79,9 +90,7 @@ export async function exportData() {
     settings: settings ?? data.settings,
     topicsById,
     companiesById,
-    studySetsById: data.studySetsById,
-    studySetOrder: data.studySetOrder,
-    studySetProgressById: data.studySetProgressById,
+    tracks,
   });
 }
 
@@ -89,17 +98,6 @@ export async function exportData() {
 export async function importData(payload: ExportPayload) {
   const sanitized = sanitizeImportPayload(payload);
   const { db } = await getDb();
-
-  // Studyset + progress still live in the v7 blob (until the tracks
-  // slice migrates them). Wipe + replace via mutateAppData.
-  await mutateAppData((data) => {
-    if (sanitized.studySetsById) data.studySetsById = sanitized.studySetsById;
-    if (sanitized.studySetOrder) data.studySetOrder = sanitized.studySetOrder;
-    if (sanitized.studySetProgressById) {
-      data.studySetProgressById = sanitized.studySetProgressById;
-    }
-    return data;
-  });
 
   // Route every SQLite-backed aggregate through its repo. Curated rows
   // already exist via SW boot seed — upsert is a safe no-op for matching
@@ -178,6 +176,42 @@ export async function importData(payload: ExportPayload) {
       await appendAttempt(db, branded, entry);
     }
   }
+  // Tracks: each track + its groups + group-problem memberships goes
+  // through the SQLite repo. We never touch curated rows here — the SW
+  // boot seeded them already; this loop only handles user-defined tracks
+  // (charter — curated tracks live in catalog code, not import payloads).
+  if (sanitized.tracks) {
+    for (const incoming of sanitized.tracks) {
+      if (incoming.isCurated) continue;
+      const trackId = asTrackId(incoming.id);
+      const created = await createTrack(db, {
+        id: trackId,
+        name: incoming.name,
+        description: incoming.description,
+        enabled: incoming.enabled,
+        isCurated: false,
+        orderIndex: incoming.orderIndex,
+      });
+      for (const group of incoming.groups) {
+        const groupId = asTrackGroupId(group.id);
+        await addGroup(db, {
+          id: groupId,
+          trackId: created.id,
+          topicId: group.topicId,
+          name: group.name,
+          description: group.description,
+          orderIndex: group.orderIndex,
+        });
+        for (const membership of group.problems) {
+          await addProblemToGroup(db, {
+            groupId,
+            problemSlug: asProblemSlug(membership.problemSlug),
+            orderIndex: membership.orderIndex,
+          });
+        }
+      }
+    }
+  }
 
   return ok({ imported: true });
 }
@@ -194,19 +228,12 @@ export async function updateSettings(payload: Record<string, unknown>) {
   return ok({ settings: saved });
 }
 
-/** Clears all local study history while preserving settings, courses, and the problem library. */
+/** Clears all local study history while preserving settings, tracks, and the problem library. */
 export async function resetStudyHistory() {
-  // Phase 5: SQLite owns study_states + attempt_history. Wipe those
-  // tables first; otherwise the next handler call hydrates the
-  // history right back in from the DB and the user-visible "reset"
-  // is a no-op.
+  // SQLite owns study_states + attempt_history. Wiping those tables
+  // also clears every per-track completion (track progress is derived
+  // from attempt history — no separate aggregate to reset).
   const { db } = await getDb();
   await clearAllStudyHistory(db);
-  // studySetProgressById still lives in the v7 blob until the tracks
-  // slice migrates it — clear it the legacy way.
-  await mutateAppData((data) => {
-    data.studySetProgressById = {};
-    return data;
-  });
   return ok({ reset: true });
 }

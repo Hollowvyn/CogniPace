@@ -3,7 +3,6 @@ import {
   CURRENT_STORAGE_SCHEMA_VERSION,
   STORAGE_KEY,
 } from "../../domain/common/constants";
-import { nowIso } from "../../domain/common/time";
 import { normalizeStudyState } from "../../domain/fsrs/studyState";
 import {
   areUserSettingsEqual,
@@ -14,8 +13,6 @@ import {
   UserSettingsPatch,
 } from "../../domain/settings";
 import { AppData } from "../../domain/types";
-import { listCatalogPlans } from "../catalog/curatedSets";
-import { buildStudySetSeed } from "../catalog/studySetsSeed";
 import {
   readLocalStorage,
   writeLocalStorage,
@@ -29,31 +26,15 @@ export type StoredAppData = Partial<AppData> & {
   schemaVersion?: number;
 };
 
-/** True when the stored blob lacks the v7 aggregate fields. */
-function needsV7SeedMigration(stored?: StoredAppData): boolean {
-  if (!stored) return true;
-  const hasTopics = stored.topicsById && Object.keys(stored.topicsById).length > 0;
-  const hasCompanies =
-    stored.companiesById && Object.keys(stored.companiesById).length > 0;
-  const hasSets =
-    stored.studySetsById && Object.keys(stored.studySetsById).length > 0;
-  return !(hasTopics && hasCompanies && hasSets);
-}
-
-/** Normalizes the stored payload into the current `AppData` runtime shape. */
+/**
+ * Normalizes the stored payload into the current `AppData` runtime shape.
+ * Post-Phase-5: every aggregate (problems, study states, topics,
+ * companies, tracks, settings) is SSoT in SQLite. The fields kept here
+ * are intentionally `{}` — the SW boot seeds SQLite, the dashboard
+ * handler hydrates them at read time. Phase 8 deletes the AppData
+ * blob entirely.
+ */
 export function normalizeStoredAppData(stored?: StoredAppData): AppData {
-  const seedNow = nowIso();
-  const runMigration = needsV7SeedMigration(stored);
-
-  // Phase 4+5: topics / companies / problems / settings live in SQLite,
-  // not the v7 blob. Their fields stay as `{}` here; the dashboard
-  // handler hydrates them at read time from the DB. StudySets remain
-  // in the v7 blob for now; Phase 5 tracks slice will migrate them.
-  const catalogPlans = runMigration ? listCatalogPlans() : null;
-  const seededStudySets = runMigration && catalogPlans
-    ? buildStudySetSeed(catalogPlans, seedNow)
-    : { studySetsById: {}, studySetOrder: [] };
-
   const data: AppData = {
     schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
     problemsBySlug: stored?.problemsBySlug ?? {},
@@ -63,27 +44,13 @@ export function normalizeStoredAppData(stored?: StoredAppData): AppData {
         normalizeStudyState(state),
       ])
     ),
-    // v7 aggregate fields. Topics + companies moved to SQLite (Phase
-    // 4+5) so those maps are no longer seeded here; the handler layer
-    // hydrates them from the DB. Courses still seed from catalog here.
     topicsById: stored?.topicsById ?? {},
     companiesById: stored?.companiesById ?? {},
-    studySetsById: {
-      ...seededStudySets.studySetsById,
-      ...(stored?.studySetsById ?? {}),
-    },
-    studySetOrder:
-      Array.isArray(stored?.studySetOrder) && stored.studySetOrder.length > 0
-        ? stored.studySetOrder
-        : seededStudySets.studySetOrder,
-    studySetProgressById: stored?.studySetProgressById ?? {},
     settings:
       stored?.settings === undefined
         ? createInitialUserSettings()
         : sanitizeStoredUserSettings(stored.settings),
-    lastMigrationAt: runMigration
-      ? (stored?.lastMigrationAt ?? seedNow)
-      : stored?.lastMigrationAt,
+    lastMigrationAt: stored?.lastMigrationAt,
   };
 
   return data;
@@ -102,8 +69,6 @@ export async function getAppData(): Promise<AppData> {
   const needsWriteBack =
     !stored ||
     stored.schemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION ||
-    !stored.studySetsById ||
-    !stored.studySetOrder ||
     settingsNeedsWriteBack;
 
   if (needsWriteBack) {
@@ -121,9 +86,6 @@ export async function saveAppData(data: AppData): Promise<void> {
     studyStatesBySlug: data.studyStatesBySlug,
     topicsById: data.topicsById,
     companiesById: data.companiesById,
-    studySetsById: data.studySetsById,
-    studySetOrder: data.studySetOrder,
-    studySetProgressById: data.studySetProgressById,
     settings: sanitizeStoredUserSettings(data.settings),
     lastMigrationAt: data.lastMigrationAt,
   };

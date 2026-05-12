@@ -1,12 +1,12 @@
 /**
  * Aggregate registry — the single source of truth for which AppDataV7
- * fields are aggregate roots. The import/export pipeline, the v6→v7
- * migration, and the repository purity tests all derive their key sets
- * from this registry.
+ * fields are aggregate roots in the v7 blob. The import/export pipeline
+ * derives its key set from this registry.
  *
- * Adding a new aggregate later means: write a sanitiser, register it
- * here. No need to touch the export builder, the import sanitiser, or
- * the migration script — they iterate this list.
+ * Post-Phase-5 tracks slice: tracks no longer live on the blob, so the
+ * three StudySet keys (`studySetsById`, `studySetOrder`,
+ * `studySetProgressById`) are gone. Backups now read/write the
+ * `tracks` aggregate at handler time via the SQLite repo.
  */
 import type { AppDataAggregateKey, AppDataV7 } from "../../../domain/data/appDataV7";
 
@@ -40,21 +40,6 @@ export const aggregates: readonly AggregateDescriptor[] = [
     exportable: true,
     sanitize: sanitizeRecord,
   },
-  {
-    key: "studySetsById",
-    exportable: true,
-    sanitize: sanitizeRecord,
-  },
-  {
-    key: "studySetOrder",
-    exportable: true,
-    sanitize: sanitizeStringArray,
-  },
-  {
-    key: "studySetProgressById",
-    exportable: true,
-    sanitize: sanitizeRecord,
-  },
 ] as const;
 
 /** Allowed keys at the top level of an `ExportPayload` for v7. */
@@ -78,14 +63,4 @@ function sanitizeRecord(input: unknown): AppDataV7[AppDataAggregateKey] {
     out[key] = value;
   }
   return out as AppDataV7[AppDataAggregateKey];
-}
-
-/** Defensive sanitiser for `string[]` aggregate fields (e.g. studySetOrder). */
-function sanitizeStringArray(input: unknown): AppDataV7[AppDataAggregateKey] {
-  if (!Array.isArray(input)) {
-    return [] as unknown as AppDataV7[AppDataAggregateKey];
-  }
-  return input.filter(
-    (value): value is string => typeof value === "string" && value.length > 0,
-  ) as unknown as AppDataV7[AppDataAggregateKey];
 }

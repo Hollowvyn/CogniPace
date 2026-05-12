@@ -115,7 +115,7 @@ function isV7Blob(blob: StoredBlob | undefined): blob is StoredBlob & {
 /**
  * Defensive merge that ensures a stored v7 blob has every aggregate root
  * present. Missing fields are filled from a fresh seed (curated topics,
- * companies, sets) so a partially-corrupted blob does not crash the app.
+ * companies) so a partially-corrupted blob does not crash the app.
  */
 function reconcileV7(blob: StoredBlob, now: string): AppDataV7 {
   const fresh = buildFreshAppDataV7(now);
@@ -125,9 +125,6 @@ function reconcileV7(blob: StoredBlob, now: string): AppDataV7 {
     studyStatesBySlug: aggregateValue(blob, "studyStatesBySlug", fresh),
     topicsById: aggregateValue(blob, "topicsById", fresh),
     companiesById: aggregateValue(blob, "companiesById", fresh),
-    studySetsById: aggregateValue(blob, "studySetsById", fresh),
-    studySetOrder: aggregateValue(blob, "studySetOrder", fresh),
-    studySetProgressById: aggregateValue(blob, "studySetProgressById", fresh),
     settings: (blob.settings as AppDataV7["settings"]) ?? fresh.settings,
     lastMigrationAt:
       typeof blob.lastMigrationAt === "string"

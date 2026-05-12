@@ -2,37 +2,26 @@
  * Builds a fresh v7 AppData snapshot. Used both at first launch (no
  * stored data) and during the v6→v7 migration (after the v6 sidecar
  * backup has been written).
+ *
+ * Post-Phase-5: topics, companies, problems, study states, settings,
+ * and tracks are all SSoT in SQLite. The fields kept here are
+ * intentionally `{}` — the SW boot seeds SQLite, the dashboard handler
+ * hydrates them at read time. They stay on the type only because the
+ * legacy `AppData` shape still nominally carries them during the
+ * transitional period.
  */
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 import { createInitialUserSettings } from "../../../domain/settings";
-import { listCatalogPlans } from "../../catalog/curatedSets";
-import { buildStudySetSeed } from "../../catalog/studySetsSeed";
 
 import type { AppDataV7 } from "../../../domain/data/appDataV7";
 
-/** Returns the freshly-seeded v7 AppData. `now` is used as the createdAt /
- * updatedAt for every seeded entity so the snapshot is deterministic.
- *
- * Phase 4+5: topics, companies, problems, and settings are the source
- * of truth in SQLite, not the v7 blob. Their fields are intentionally
- * `{}` here — the SW boot seeds the SQLite catalog, the dashboard
- * handler hydrates them at read time. The fields stay in the type
- * only because the v7 blob format still nominally carries them during
- * the transitional period.
- */
 export function buildFreshAppDataV7(now: string): AppDataV7 {
-  const plans = listCatalogPlans();
-  const { studySetsById, studySetOrder } = buildStudySetSeed(plans, now);
-
   return {
     schemaVersion: STORAGE_SCHEMA_VERSION_V7,
     problemsBySlug: {},
     studyStatesBySlug: {},
     topicsById: {},
     companiesById: {},
-    studySetsById,
-    studySetOrder,
-    studySetProgressById: {},
     settings: createInitialUserSettings(),
     lastMigrationAt: now,
   };

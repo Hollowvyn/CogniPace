@@ -1,5 +1,5 @@
 import { DEFAULT_TRACK_ID } from "../common/constants";
-import { asSetGroupId, asStudySetId } from "../common/ids";
+import { asTrackGroupId, asTrackId } from "../common/ids";
 
 import {
   DifficultyGoalSettings,
@@ -85,10 +85,10 @@ function sanitizeActiveFocus(value: unknown): ActiveFocus | undefined {
   if (typeof value.id !== "string" || !value.id.trim()) return undefined;
   const focus: ActiveFocus = {
     kind: "track",
-    id: asStudySetId(value.id),
+    id: asTrackId(value.id),
   };
   if (typeof value.groupId === "string" && value.groupId.trim()) {
-    focus.groupId = asSetGroupId(value.groupId);
+    focus.groupId = asTrackGroupId(value.groupId);
   }
   return focus;
 }
@@ -238,7 +238,7 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
   const sanitizedActiveFocus: ActiveFocus =
     explicitActiveFocus !== undefined
       ? explicitActiveFocus
-      : { kind: "track", id: asStudySetId(legacyCourseIdFallback) };
+      : { kind: "track", id: asTrackId(legacyCourseIdFallback) };
 
   return {
     dailyQuestionGoal: nonNegativeInteger(

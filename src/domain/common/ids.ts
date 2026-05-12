@@ -14,10 +14,6 @@ export type TopicId = Brand<string, "TopicId">;
 export type CompanyId = Brand<string, "CompanyId">;
 export type TrackId = Brand<string, "TrackId">;
 export type TrackGroupId = Brand<string, "TrackGroupId">;
-/** @deprecated alias for {@link TrackId}; remaining call sites will be renamed in the tracks slice. */
-export type StudySetId = TrackId;
-/** @deprecated alias for {@link TrackGroupId}; remaining call sites will be renamed in the tracks slice. */
-export type SetGroupId = TrackGroupId;
 
 /** Normalize and brand an arbitrary string as a Problem slug. */
 export function asProblemSlug(value: string): ProblemSlug {
@@ -53,15 +49,6 @@ export function newTrackId(): TrackId {
 export function newTrackGroupId(): TrackGroupId {
   return crypto.randomUUID() as TrackGroupId;
 }
-
-/** @deprecated use {@link asTrackId}. Kept until call sites migrate in the tracks slice. */
-export const asStudySetId = asTrackId;
-/** @deprecated use {@link asTrackGroupId}. */
-export const asSetGroupId = asTrackGroupId;
-/** @deprecated use {@link newTrackId}. */
-export const newStudySetId = newTrackId;
-/** @deprecated use {@link newTrackGroupId}. */
-export const newSetGroupId = newTrackGroupId;
 
 /**
  * Lowercase, trim, replace whitespace + invalid characters with single

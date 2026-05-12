@@ -2,7 +2,7 @@
 import { LibraryProblemRow } from "../../domain/views";
 
 export interface LibraryFilters {
-  /** Active track filter — "all" or a StudySetId. */
+  /** Active track filter — "all" or a TrackId. */
   trackId: string;
   difficulty: string;
   query: string;
