@@ -6,7 +6,7 @@ import {
   msToMinutes,
   parseGoalMinutes,
   resolveGoalTextDraft,
-} from "../../../../../../src/features/settings/ui/screens/GoalTextDraft";
+} from "../../../../../../src/features/settings/ui/screens/model/GoalTextDraft";
 
 describe("GoalTextDraft", () => {
   describe("msToMinutes / minutesToMs", () => {

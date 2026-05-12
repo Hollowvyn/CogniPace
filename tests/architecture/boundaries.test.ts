@@ -417,12 +417,15 @@ describe("architecture / Phase 6 boundaries", () => {
     expect(fs.existsSync(root)).toBe(true);
     for (const dir of [
       "data",
+      "data/repository",
+      "data/datasource",
       "domain",
       "domain/model",
-      "domain/model/UserSettings",
-      "domain/usecases",
       "messaging",
       "ui",
+      "ui/hooks",
+      "ui/screens",
+      "ui/screens/model",
     ]) {
       expect(
         fs.existsSync(path.join(root, dir)),
@@ -431,13 +434,60 @@ describe("architecture / Phase 6 boundaries", () => {
     }
   });
 
-  it("UserSettings model folder holds the per-type files + specific helpers", () => {
-    const dir = path.join(
-      repoRoot,
-      "src/features/settings/domain/model/UserSettings",
+  it("data/ splits Repository (UI side) from DataSource (SW side)", () => {
+    const dataDir = path.join(repoRoot, "src/features/settings/data");
+    expect(
+      fs.existsSync(path.join(dataDir, "repository/SettingsRepository.ts")),
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(dataDir, "datasource/SettingsDataSource.ts")),
+    ).toBe(true);
+  });
+
+  it("SettingsRepository is shipped as interface + class (DI-friendly)", () => {
+    const file = read(
+      path.join(
+        repoRoot,
+        "src/features/settings/data/repository/SettingsRepository.ts",
+      ),
     );
+    expect(file).toMatch(/export interface SettingsRepository/);
+    expect(file).toMatch(
+      /export class DefaultSettingsRepository implements SettingsRepository/,
+    );
+    // every action lives on the Repository (no separate usecase layer).
+    for (const method of [
+      "update(",
+      "setActiveTrack(",
+      "setDailyTarget(",
+      "setSkipPremium(",
+      "setStudyMode(",
+      "saveDraft(",
+      "resetToDefaults(",
+    ]) {
+      expect(
+        file.includes(method),
+        `SettingsRepository is missing \`${method}\` — every settings action is a method on the Repository`,
+      ).toBe(true);
+    }
+  });
+
+  it("settings has no domain/usecases/ (actions live on the Repository)", () => {
+    const usecasesDir = path.join(
+      repoRoot,
+      "src/features/settings/domain/usecases",
+    );
+    expect(
+      fs.existsSync(usecasesDir),
+      "settings has no cross-repo actions; usecases folder should not exist",
+    ).toBe(false);
+  });
+
+  it("domain/model/ is a flat folder: one DomainModel per file", () => {
+    const dir = path.join(repoRoot, "src/features/settings/domain/model");
     for (const name of [
-      // per-type files (one DomainModel per file)
+      // one DomainModel per file; functions for that model live
+      // inside the same file (the type IS the file).
       "UserSettings.ts",
       "UserSettingsPatch.ts",
       "StudyMode.ts",
@@ -448,18 +498,47 @@ describe("architecture / Phase 6 boundaries", () => {
       "QuestionFilterSettings.ts",
       "TimingSettings.ts",
       "ExperimentalSettings.ts",
-      // helpers specific to this model (live next to the model, not in
-      // a sibling utils/ — they're "what does this model do?")
-      "default.ts",
-      "equality.ts",
-      "sanitize.ts",
-      "clone.ts",
-      "merge.ts",
       "index.ts",
     ]) {
       expect(
         fs.existsSync(path.join(dir, name)),
-        `missing src/features/settings/domain/model/UserSettings/${name}`,
+        `missing src/features/settings/domain/model/${name}`,
+      ).toBe(true);
+    }
+  });
+
+  it("UserSettings.ts holds the aggregate + every function that operates on it", () => {
+    const file = read(
+      path.join(repoRoot, "src/features/settings/domain/model/UserSettings.ts"),
+    );
+    for (const symbol of [
+      "interface UserSettings",
+      "INITIAL_USER_SETTINGS",
+      "createInitialUserSettings",
+      "createInitialSetsEnabled",
+      "cloneUserSettings",
+      "mergeUserSettings",
+      "areUserSettingsEqual",
+      "sanitizeStoredUserSettings",
+      "isPersistedUserSettings",
+      "hasGroupedUserSettings",
+    ]) {
+      expect(
+        file.includes(symbol),
+        `UserSettings.ts is missing \`${symbol}\` — model-specific functions live next to the type`,
+      ).toBe(true);
+    }
+  });
+
+  it("ui/screens/model/ holds the view-level types", () => {
+    const dir = path.join(
+      repoRoot,
+      "src/features/settings/ui/screens/model",
+    );
+    for (const name of ["SettingsUpdate.ts", "GoalTextDraft.ts", "index.ts"]) {
+      expect(
+        fs.existsSync(path.join(dir, name)),
+        `missing src/features/settings/ui/screens/model/${name}`,
       ).toBe(true);
     }
   });
@@ -468,36 +547,6 @@ describe("architecture / Phase 6 boundaries", () => {
     const root = path.join(repoRoot, "src/features/settings");
     expect(fs.existsSync(path.join(root, "index.ts"))).toBe(true);
     expect(fs.existsSync(path.join(root, "server.ts"))).toBe(true);
-  });
-
-  it("curated usecases live under domain/usecases/", () => {
-    const usecasesDir = path.join(
-      repoRoot,
-      "src/features/settings/domain/usecases",
-    );
-    for (const name of [
-      "setActiveTrack.ts",
-      "setDailyTarget.ts",
-      "setSkipPremium.ts",
-      "setStudyMode.ts",
-      "saveSettings.ts",
-      "resetSettings.ts",
-      "index.ts",
-    ]) {
-      expect(
-        fs.existsSync(path.join(usecasesDir, name)),
-        `missing src/features/settings/domain/usecases/${name}`,
-      ).toBe(true);
-    }
-  });
-
-  it("domain/ has no top-level grab-bag .ts (everything lives under model/ or usecases/)", () => {
-    const domainDir = path.join(repoRoot, "src/features/settings/domain");
-    const topLevel = fs
-      .readdirSync(domainDir, { withFileTypes: true })
-      .filter((e) => e.isFile() && e.name.endsWith(".ts"))
-      .map((e) => e.name);
-    expect(topLevel.sort()).toEqual(["index.ts"]);
   });
 
   it("features/settings/data/ is consumed only via the index/server barrels", () => {
@@ -517,35 +566,19 @@ describe("architecture / Phase 6 boundaries", () => {
     }
   });
 
-  it("data/ holds the UI-side Repository + the SW-side DataSource", () => {
-    const dataDir = path.join(repoRoot, "src/features/settings/data");
-    for (const name of ["SettingsRepository.ts", "SettingsDataSource.ts"]) {
+  it("app/di provides DIProvider + useDI (DI surface lives in app/)", () => {
+    const di = path.join(repoRoot, "src/app/di");
+    for (const name of [
+      "DIServices.ts",
+      "DIContext.ts",
+      "DIProvider.tsx",
+      "useDI.ts",
+      "index.ts",
+    ]) {
       expect(
-        fs.existsSync(path.join(dataDir, name)),
-        `missing src/features/settings/data/${name}`,
+        fs.existsSync(path.join(di, name)),
+        `missing src/app/di/${name}`,
       ).toBe(true);
-    }
-  });
-
-  it("usecases code against the Repository, not the Client (UDF chain)", () => {
-    const usecasesDir = path.join(
-      repoRoot,
-      "src/features/settings/domain/usecases",
-    );
-    if (!fs.existsSync(usecasesDir)) return;
-    const files = fs
-      .readdirSync(usecasesDir)
-      .filter((f) => f.endsWith(".ts") && f !== "index.ts");
-    for (const name of files) {
-      const text = read(path.join(usecasesDir, name));
-      expect(
-        /SettingsRepository/.test(text),
-        `usecases/${name} should accept a SettingsRepository (the abstraction usecases code against)`,
-      ).toBe(true);
-      expect(
-        /SettingsClient/.test(text),
-        `usecases/${name} reaches past the Repository to the Client — go through the Repository`,
-      ).toBe(false);
     }
   });
 });

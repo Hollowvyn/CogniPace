@@ -24,7 +24,7 @@ import { PracticePlanSection } from "./sections/PracticePlanSection";
 import { QuestionFiltersSection } from "./sections/QuestionFiltersSection";
 import { TimingGoalsSection } from "./sections/TimingGoalsSection";
 
-import type { UserSettings } from "../../domain/model/UserSettings";
+import type { UserSettings } from "../../domain/model";
 
 export interface SettingsViewStatus {
   message: string;

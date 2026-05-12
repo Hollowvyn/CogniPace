@@ -12,8 +12,7 @@ import {
   minutesToMs,
   parseGoalMinutes,
   resolveGoalTextDraft,
-} from "../GoalTextDraft";
-import { SettingsUpdate } from "../settingsTypes";
+ SettingsUpdate } from "../model";
 
 export function TimingGoalsSection(props: {
   onUpdateSettings: SettingsUpdate;

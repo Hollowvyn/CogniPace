@@ -5,11 +5,11 @@
  * the SW-side data source, and the domain merge / sanitize helpers —
  * nothing React-bearing.
  *
- * Naming (Android-style; see plan §"MVI invariant"):
- *   - `SettingsDataSource` is the SW-side Drizzle I/O.
- *   - The UI-side `SettingsRepository` (in `./data/SettingsRepository`,
- *     exposed via `index.ts`) sits between the UI's Usecase and the
- *     `MessagingClient` that crosses the SW boundary.
+ * Naming (Android-style):
+ *   - `SettingsDataSource` (`./data/datasource/`) is the SW-side
+ *     Drizzle I/O.
+ *   - `SettingsRepository` (`./data/repository/`, exposed via
+ *     `index.ts`) is the UI-side abstraction the screen + hook call.
  *
  * Keeping `index.ts` (UI) and `server.ts` (SW) separate enforces the
  * Service-Worker bundle hygiene rule from the plan (no React, no MUI
@@ -18,7 +18,7 @@
 export type {
   UserSettings,
   UserSettingsPatch,
-} from "./domain/model/UserSettings";
+} from "./domain/model";
 
 // Handlers — central router (and Phase 8's app/background/router.ts)
 // dispatch to these.
@@ -30,7 +30,7 @@ export {
   saveUserSettings,
   seedInitialSettings,
   USER_SETTINGS_KEY,
-} from "./data/SettingsDataSource";
+} from "./data/datasource/SettingsDataSource";
 
 // Pure model helpers needed by SW-side handlers (merge incoming patch,
 // sanitize a stored snapshot, seed a default).
@@ -44,4 +44,4 @@ export {
   isPersistedUserSettings,
   mergeUserSettings,
   sanitizeStoredUserSettings,
-} from "./domain/model/UserSettings";
+} from "./domain/model";

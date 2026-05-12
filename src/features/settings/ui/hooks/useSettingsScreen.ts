@@ -23,17 +23,15 @@
  * The hook never reaches past the Repository; the Repository is where
  * Phase 9's data-flow library decision slots in.
  */
+import { useDI } from "@app/di";
 import { useCallback, useMemo, useState } from "react";
 
-import { settingsRepository } from "../../data/SettingsRepository";
 import {
   areUserSettingsEqual,
   cloneUserSettings,
   createInitialUserSettings,
   type UserSettings,
-} from "../../domain/model/UserSettings";
-import { resetSettings } from "../../domain/usecases/resetSettings";
-import { saveSettings } from "../../domain/usecases/saveSettings";
+} from "../../domain/model";
 
 /** Discriminated result returned by intent functions. Consumers narrow
  * on `ok` before reading `settings` or `error`. */
@@ -74,6 +72,7 @@ export function useSettingsScreen(
   args: UseSettingsScreenArgs,
 ): SettingsScreenModel {
   const { currentSettings } = args;
+  const { settingsRepository } = useDI();
   const [draftState, setDraftState] = useState<UserSettings | null>(null);
 
   // Project the draft. Compute on read so the View always sees a
@@ -111,11 +110,10 @@ export function useSettingsScreen(
       return { ok: true, settings: currentSettings ?? createInitialUserSettings() };
     }
     try {
-      // Hook → Usecase → Repository → Client → SW → DataSource → DB.
-      // The Usecase owns the sanitize step so the View can't ship an
-      // unsanitized draft; the Repository hides the transport so this
-      // hook stays the same when the Phase 9 data-flow library lands.
-      const saved = await saveSettings(settingsRepository, draftSettings);
+      // Hook → Repository → Client → SW → DataSource → DB.
+      // saveDraft on the repo owns the sanitize step so the View
+      // can't ship an unsanitized draft.
+      const saved = await settingsRepository.saveDraft(draftSettings);
       setDraftState(null);
       return { ok: true, settings: saved };
     } catch (err) {
@@ -124,7 +122,7 @@ export function useSettingsScreen(
         error: err instanceof Error ? err.message : "Failed to save settings.",
       };
     }
-  }, [currentSettings, draftSettings, hasChanges]);
+  }, [currentSettings, draftSettings, hasChanges, settingsRepository]);
 
   const discardDraft = useCallback(() => {
     setDraftState(null);
@@ -133,10 +131,10 @@ export function useSettingsScreen(
   const resetToDefaults =
     useCallback(async (): Promise<SettingsIntentResult> => {
       try {
-        // Hook → Usecase → Repository → Client → SW → DataSource → DB.
-        // The Usecase owns where the "defaults" come from (the seed
-        // file) so the View can't ship a half-correct factory reset.
-        const saved = await resetSettings(settingsRepository);
+        // resetToDefaults owns where the canonical defaults come from
+        // (the seed in the UserSettings model) so the View can't ship
+        // a half-correct factory reset.
+        const saved = await settingsRepository.resetToDefaults();
         setDraftState(null);
         return { ok: true, settings: saved };
       } catch (err) {
@@ -146,7 +144,7 @@ export function useSettingsScreen(
             err instanceof Error ? err.message : "Failed to reset settings.",
         };
       }
-    }, []);
+    }, [settingsRepository]);
 
   return {
     draftSettings,

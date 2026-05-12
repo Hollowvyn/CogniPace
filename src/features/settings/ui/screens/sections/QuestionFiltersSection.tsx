@@ -2,7 +2,7 @@ import { UserSettings } from "@features/settings";
 import Stack from "@mui/material/Stack";
 
 import { SwitchSetting } from "../components/SettingsInputs";
-import { SettingsUpdate } from "../settingsTypes";
+import { SettingsUpdate } from "../model";
 
 export function QuestionFiltersSection(props: {
   onUpdateSettings: SettingsUpdate;

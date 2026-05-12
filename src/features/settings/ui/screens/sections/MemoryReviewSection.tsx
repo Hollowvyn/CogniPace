@@ -7,7 +7,7 @@ import { ReactNode } from "react";
 
 
 import { SelectSetting } from "../components/SettingsInputs";
-import { SettingsUpdate } from "../settingsTypes";
+import { SettingsUpdate } from "../model";
 
 import type { ReviewOrder, UserSettings } from "@features/settings";
 

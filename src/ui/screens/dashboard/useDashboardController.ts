@@ -5,12 +5,7 @@
  * passes the persisted snapshot through and surfaces status. Other
  * cross-feature concerns (backup export/import, study-history reset)
  * stay here until Phase 7. */
-import {
-  settingsRepository,
-  setSkipPremium,
-  setStudyMode,
-  type UserSettings,
-} from "@features/settings";
+import { useDI } from "@app/di";
 import {
   startTransition,
   useCallback,
@@ -46,6 +41,7 @@ import {
 } from "../../state/useAppShellQuery";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
+import type { UserSettings } from "@features/settings";
 
 function isImportPayloadCandidate(
   value: unknown
@@ -55,6 +51,7 @@ function isImportPayloadCandidate(
 
 /** Coordinates dashboard screen state while keeping transport concerns in repositories. */
 export function useDashboardController() {
+  const { settingsRepository } = useDI();
   const mockPayload = useMemo(() => createMockAppShellPayload(), []);
   const { load, payload, setPayload, setStatus, status } =
     useAppShellQuery(mockPayload);
@@ -154,9 +151,9 @@ export function useDashboardController() {
   );
 
   const onEnablePremium = useCallback(async (): Promise<void> => {
-    // Hook → Usecase → Repository → Client → SW → DataSource → DB.
+    // Hook → Repository → Client → SW → DataSource → DB.
     try {
-      const saved = await setSkipPremium(settingsRepository, false);
+      const saved = await settingsRepository.setSkipPremium(false);
       setPayload((current) =>
         current ? { ...current, settings: saved } : current,
       );
@@ -170,16 +167,16 @@ export function useDashboardController() {
         isError: true,
       });
     }
-  }, [load, setPayload, setStatus]);
+  }, [load, setPayload, setStatus, settingsRepository]);
 
   const onToggleMode = useCallback(async (): Promise<void> => {
     const nextMode =
-      payload?.settings.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
+      payload?.settings?.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
     if (!nextMode) {
       return;
     }
     try {
-      const saved = await setStudyMode(settingsRepository, nextMode);
+      const saved = await settingsRepository.setStudyMode(nextMode);
       setPayload((current) =>
         current ? { ...current, settings: saved } : current,
       );
@@ -193,7 +190,13 @@ export function useDashboardController() {
         isError: true,
       });
     }
-  }, [load, payload?.settings.studyMode, setPayload, setStatus]);
+  }, [
+    load,
+    payload?.settings?.studyMode,
+    setPayload,
+    setStatus,
+    settingsRepository,
+  ]);
 
   const onResetStudyHistory = useCallback(async (): Promise<void> => {
     await runMutation(resetStudyHistory(), "Study history reset.");

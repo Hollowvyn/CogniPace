@@ -10,5 +10,5 @@
  * compose patches client-side and dispatch through UPDATE_SETTINGS, so
  * no new wire messages are needed for this phase.
  */
-export type { UserSettingsPatch } from "../domain/model/UserSettings";
+export type { UserSettingsPatch } from "../domain/model";
 export type { SettingsUpdateResponse } from "../../../domain/views/SettingsUpdateResponse";

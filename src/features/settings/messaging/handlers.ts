@@ -9,7 +9,7 @@ import { getDb } from "@platform/db/instance";
 
 import { mergeSettings } from "../../../data/repositories/appDataRepository";
 import { ok } from "../../../extension/background/responses";
-import { getUserSettings, saveUserSettings } from "../data/SettingsDataSource";
+import { getUserSettings, saveUserSettings } from "../data/datasource/SettingsDataSource";
 import { createInitialUserSettings } from "../domain";
 
 /** Applies a settings patch and returns the normalized saved settings.

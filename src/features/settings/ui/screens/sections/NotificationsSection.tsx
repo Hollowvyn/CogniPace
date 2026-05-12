@@ -2,7 +2,7 @@ import { UserSettings } from "@features/settings";
 import Stack from "@mui/material/Stack";
 
 import { SwitchSetting, TimeSetting } from "../components/SettingsInputs";
-import { SettingsUpdate } from "../settingsTypes";
+import { SettingsUpdate } from "../model";
 
 export function NotificationsSection(props: {
   onUpdateSettings: SettingsUpdate;

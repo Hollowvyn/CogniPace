@@ -9,13 +9,16 @@
  * Surface:
  *   - DomainModel types (UserSettings aggregate + every nested type).
  *   - Pure model helpers (defaults, equality, sanitize, clone, merge).
- *   - Repository (the abstraction usecases code against).
+ *   - Repository interface + default class + production singleton.
  *   - Messaging client (escape hatch for tests / advanced wiring).
- *   - Usecases (curated single-field + bulk save/reset).
  *   - ViewModel hook + Screen.
+ *
+ * No `usecases` re-export — every settings action is a method on the
+ * Repository. A `domain/usecases/` folder is reserved for features
+ * whose actions need to compose across multiple repositories.
  */
 
-// DomainModel types — pulled in through the UserSettings model folder.
+// DomainModel types.
 export type {
   DifficultyGoalSettings,
   ExperimentalSettings,
@@ -27,7 +30,7 @@ export type {
   TimingSettings,
   UserSettings,
   UserSettingsPatch,
-} from "./domain/model/UserSettings";
+} from "./domain/model";
 
 // Pure model helpers — safe for UI consumers (fixtures / mocks /
 // equality checks). Writes go through the Repository.
@@ -41,33 +44,23 @@ export {
   isPersistedUserSettings,
   mergeUserSettings,
   sanitizeStoredUserSettings,
-} from "./domain/model/UserSettings";
+} from "./domain/model";
 
-// Repository — the abstraction usecases code against. Hides the
-// transport (the messaging client today; a cache + client tomorrow).
-export type { SettingsRepository } from "./data/SettingsRepository";
+// Repository — the abstraction the screen calls. Methods cover every
+// settings action (update + curated + bulk).
+export type { SettingsRepository } from "./data/repository/SettingsRepository";
 export {
+  DefaultSettingsRepository,
   settingsRepository,
-  createSettingsRepository,
-} from "./data/SettingsRepository";
+} from "./data/repository/SettingsRepository";
 
 // Messaging client — exposed for tests + advanced composition. New
 // code should call the Repository, not the Client.
 export type { SettingsClient } from "./messaging/client";
 export { settingsClient } from "./messaging/client";
 
-// Usecases — Hook → Usecase → Repository → Client → SW → DataSource.
-export {
-  resetSettings,
-  saveSettings,
-  setActiveTrack,
-  setDailyTarget,
-  setSkipPremium,
-  setStudyMode,
-} from "./domain/usecases";
-
-// ViewModel hook (MVI). The View calls this; no parent passes the
-// draft / save / discard / reset wiring as props.
+// ViewModel hook (MVI). The View calls this; the hook gets the
+// Repository from `useDI()` so tests can inject a fake.
 export {
   useSettingsScreen,
   type SettingsIntentResult,

@@ -5,7 +5,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 import { NumberSetting } from "../components/SettingsInputs";
-import { SettingsUpdate } from "../settingsTypes";
+import { SettingsUpdate } from "../model";
 
 export function PracticePlanSection(props: {
   onUpdateSettings: SettingsUpdate;

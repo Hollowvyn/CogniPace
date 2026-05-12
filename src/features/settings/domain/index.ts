@@ -1,17 +1,14 @@
 /**
  * Domain barrel for the settings feature.
  *
- * Layout (template for Phase 7):
- *   - `model/` — main DomainModels, each as its own file or its own
- *     folder when it has sub-types + specific helpers. The `model/`
- *     folder is created at every layer that has typed shapes; for
- *     settings, only `domain/model/` is populated today.
- *   - `usecases/` — application-layer actions (Hook → Usecase →
- *     Repository chain).
- *   - `utils/` — cross-model helpers (reserved; empty today).
+ * Layout:
+ *   - `model/` — flat folder of DomainModels, one type per file.
+ *     Functions that operate *only* on a given model live inside that
+ *     model's file (the type is the file).
  *
- * Internal to the feature; cross-feature callers should go through
- * `features/settings/index.ts` (UI) or `server.ts` (SW) instead.
+ * Settings has no `usecases/` folder — every action is a method on
+ * `SettingsRepository`. A `domain/usecases/` folder is reserved for
+ * features whose actions need to compose across multiple repositories;
+ * none of settings' actions do.
  */
-export * from "./model/UserSettings";
-export * from "./usecases";
+export * from "./model";

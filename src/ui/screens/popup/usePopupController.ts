@@ -1,8 +1,5 @@
 /** Popup-local state and actions for the recommendation-first surface. */
-import {
-  settingsRepository,
-  setStudyMode as setStudyModeUsecase,
-} from "@features/settings";
+import { useDI } from "@app/di";
 import { startTransition, useMemo, useRef, useState } from "react";
 
 import { fetchPopupShellPayload } from "../../../data/repositories/appShellRepository";
@@ -42,6 +39,7 @@ function popupErrorMessage(error: unknown): string {
 
 /** Coordinates popup data loading, recommendation rotation, and user actions. */
 export function usePopupController() {
+  const { settingsRepository } = useDI();
   const mockPayload = useMemo(() => createMockPopupShellPayload(), []);
   const { load, payload, setPayload, setStatus, status } = useAppShellQuery(
     mockPayload,
@@ -108,10 +106,10 @@ export function usePopupController() {
       scope: "course",
     });
 
-    // Hook → Usecase → Repository → Client → SW → DataSource → DB.
+    // Hook → Repository → Client → SW → DataSource → DB.
     let saved;
     try {
-      saved = await setStudyModeUsecase(settingsRepository, mode);
+      saved = await settingsRepository.setStudyMode(mode);
     } catch (error) {
       studyModeWriteInFlightRef.current = false;
       setPendingStudyMode(null);
