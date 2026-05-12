@@ -1660,12 +1660,18 @@ const allChecks: CheckDef[] = [
       }
       await seedCatalogTracks(db, seed);
       await seedCatalogTracks(db, seed); // second call must not throw or duplicate
+      // dbDebug shares the wasm DB across "Run all" presses; only assert
+      // on the seed ids themselves rather than the global track count
+      // (other checks below create + delete non-curated tracks and
+      // partial failures can leak rows between runs).
+      const seedIdSet = new Set<string>(seed.tracks.map((t) => t.id));
       const listed = await listTracksRepo(db);
-      const total = listed.length;
-      const everyCurated = listed.every((t) => t.isCurated);
+      const seeded = listed.filter((t) => seedIdSet.has(t.id));
+      const everySeededCurated = seeded.every((t) => t.isCurated);
+      const allSeedsPresent = seeded.length === seed.tracks.length;
       return {
-        ok: total >= seed.tracks.length && everyCurated,
-        detail: `${total} tracks present (expected ≥${seed.tracks.length}); curated=${everyCurated}`,
+        ok: allSeedsPresent && everySeededCurated,
+        detail: `seeded=${seeded.length}/${seed.tracks.length}; curated=${everySeededCurated}`,
       };
     },
   },
