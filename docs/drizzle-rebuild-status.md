@@ -41,11 +41,12 @@ snapshot persistence (survives SW restart) and real-time reactivity
 | 2 — Schema + migration | ✅ done | 9 tables, 11 indexes, 6 FKs in `0000_initial.sql` |
 | 3 — sqlite-proxy + wasm client | ✅ done | Verified in real Chrome MV3 |
 | 4 — Topics end-to-end | ✅ done | First vertical slice |
-| **5 — Replicate the pattern** | **🔄 3/5** | companies ✅, settings ✅, problems ✅ — **studyStates 🔲, tracks 🔲** |
+| **5 — Replicate the pattern** | **🔄 4/5** | companies ✅, settings ✅, problems ✅, studyStates ✅ — **tracks 🔲** |
 | 6 — Snapshot persistence | ✅ done | `cognipace_db_snapshot_v1` + fingerprint wipe-on-schema-change |
 | 7 — Reactivity (lite) | ✅ done | `cognipace_db_tick` broadcast; existing `subscribeToAppDataChanges` picks it up |
 | 7 — Reactivity (full) | ⏸️ deferred | `chrome.runtime.Port` + TanStack adapter — only if lite feels sluggish |
-| 8 — Cleanup | 🔲 pending | Delete v7 blob entirely; remove dormant fields |
+| 8 — Cleanup v6/v7 blob | 🔲 pending | Delete `getAppData` / `mutateAppData` / `STORAGE_KEY`; remove dormant fields |
+| **9 — Repository façade** | **🔲 pending (new)** | Hide `Db` from handlers; collapse the data-access debt the slice-by-slice migration accumulated. See "Phase 9 outline" below. |
 
 ---
 
@@ -392,6 +393,74 @@ writes — they go entirely through SQLite.
 3. Regen migration (`drizzle-kit generate` — but pre-MVP, regen 0000_initial.sql in place is fine).
 4. Repo converts StudySet ↔ row by JSON-encoding the discriminated fields.
 5. Other steps same as A, but the domain stays untouched.
+
+---
+
+## Phase 9 outline — Repository façade (architectural debt)
+
+**Problem.** Each aggregate's repo module exports functions that take
+a `Db` parameter (`listProblems(db)`, `upsertProblem(db, ...)`, etc.).
+Handlers import both `getDb` from `instance.ts` AND the repo's
+functions, then thread `db` through. This is *data-access* rather
+than the *repository pattern* — the abstraction over the data source
+leaks outward. Symptoms:
+
+- Handlers import `getDb` everywhere — they know about the SQLite
+  lifecycle even though their job is just "save a problem."
+- Tests have to mock `chrome.storage` AND `getDb` AND each repo
+  module independently (see `tests/extension/background/handlers/settingsHandlers.test.ts`
+  for an example of the mock pile-up).
+- Swapping the data source (e.g. for an experiment, or migrating to a
+  different driver) means editing every handler that touches that
+  aggregate.
+
+**Fix.** Wrap each repo's exports in a façade object that hides the
+Db parameter:
+
+```ts
+// src/data/problems/repository.ts
+export const problemRepository = {
+  async upsertFromPage(args: ImportProblemArgs): Promise<Problem> {
+    const { db } = await getDb();
+    return importProblem(db, args);
+  },
+  async list(): Promise<Problem[]> {
+    const { db } = await getDb();
+    return listProblems(db);
+  },
+  // etc.
+};
+
+// Tests inject a different db via setTestDb() or similar:
+export function setRepositoryDb(db: Db): void { /* swap the cached handle */ }
+```
+
+Handlers then call `problemRepository.upsertFromPage({...})` — no
+`getDb`, no `db` parameter, no SQLite imports. Tests mock the façade
+object directly (one `vi.mock('.../repository', () => ({...}))` per
+aggregate).
+
+**Scope.** Six aggregates × ~8-12 functions each = ~60 façade wrappers.
+Plus handler refactor (~10 handler files). Plus test rewrites.
+Estimated 600-900 LoC of net new code + ~300 LoC of handler diffs.
+
+**Why defer.** Doing it before Phase 5 finishes (tracks slice) would
+mean tracks lands inconsistent with the rest of Phase 5. Doing it
+during Phase 8 conflates two concerns (deletion of v7 blob vs.
+abstraction refactor). It deserves its own coherent pass.
+
+**Recommended order:**
+1. Complete Phase 5 (tracks) — keeps all five aggregates consistent
+   with the Db-parameter pattern.
+2. Phase 8 — delete v7 blob code. Smaller diff because the Db
+   pattern is already established.
+3. Phase 9 — façade refactor. Done as one coherent pass across all
+   aggregates simultaneously, so the codebase never has a mixed state.
+
+After Phase 9, the rebuild's abstraction quality matches the
+original architectural intent: data source is an implementation
+detail, repos are the only thing the rest of the codebase knows
+about, and tests mock the repo not the underlying machinery.
 
 ---
 
