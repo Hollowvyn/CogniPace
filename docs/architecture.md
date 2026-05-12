@@ -38,11 +38,11 @@ Responsibilities:
 
 - render the compact recommendation-first surface
 - mount the shared provider stack and theme
-- show due count, streak, recommended problem, and course-next state
+- show due count, streak, recommended problem, and track-next state
 - toggle study mode
 - open problems or the dashboard
 - load through the narrow `GET_POPUP_SHELL_DATA` runtime read model so opening the popup does not require dashboard-only
-  library, analytics, or course-option projections
+  library, analytics, or track-option projections
 
 ### Dashboard
 
@@ -51,7 +51,7 @@ Screen: `src/ui/screens/dashboard/*`
 
 Responsibilities:
 
-- render overview, courses, library, analytics, and settings screens
+- render overview, tracks, library, analytics, and settings screens
 - mount the shared provider stack and theme
 - own dashboard-local state such as filters, settings draft, and import file
 - preserve the `?view=` deep-link contract
@@ -127,7 +127,7 @@ Location: `src/data/`
 Subdirectories:
 
 - `repositories/`
-  Repository-style access for app shell, courses, problem sessions, settings, backups, app data, and extension
+  Repository-style access for app shell, tracks, problem sessions, settings, backups, app data, and extension
   navigation
 - `datasources/chrome/`
   Raw Chrome platform access such as `chrome.storage.local`
@@ -152,8 +152,8 @@ Subdirectories:
   Slug identity and difficulty parsing
 - `fsrs/`
   Scheduler state, review policy, and FSRS mutations
-- `courses/`
-  Course progression and course-derived projections
+- `tracks/`
+  Track progression and track-derived projections
 - `queue/`
   Queue generation and recommendation building
 - `analytics/`
@@ -200,8 +200,8 @@ The intended runtime path for React surfaces is:
 This keeps React screens free of direct Chrome API calls and keeps domain logic free of UI concerns.
 
 The popup uses `GET_POPUP_SHELL_DATA` for its startup read. That payload contains only `settings`, `popup`, and
-`activeCourse`; dashboard and overlay surfaces continue to use the broader app-shell read model when they need queue,
-analytics, library, course-option, or dashboard-specific data.
+`activeFocus`; dashboard and overlay surfaces continue to use the broader app-shell read model when they need queue,
+analytics, library, track-option, or dashboard-specific data.
 
 React app-shell surfaces also subscribe to app-data storage changes through a data repository so cross-surface mutations
 stay coherent. Each surface reloads its own read model after a persisted app-data change instead of sharing stale
@@ -217,7 +217,7 @@ in-memory payloads or reading `chrome.storage` directly from UI code.
 - Dashboard route contract: `src/ui/navigation/dashboardRoutes.ts`
 - Library filters/selectors: `src/ui/presentation/library.ts`
 - Study-state labels and tones: `src/ui/presentation/studyState.ts`
-- Course ingest normalization: `src/ui/presentation/courseIngest.ts`
+- Track ingest normalization: `src/ui/presentation/trackIngest.ts`
 - App-shell query state: `src/ui/state/useAppShellQuery.ts`
 - Runtime-backed popup/dashboard reads: `src/data/repositories/appShellRepository.ts`
 - Cross-surface app-data change observation: `src/data/repositories/appDataChangeRepository.ts`
@@ -228,7 +228,7 @@ in-memory payloads or reading `chrome.storage` directly from UI code.
 - Problem slug rules: `src/domain/problem/slug.ts`
 - Difficulty parsing and solve-time goals: `src/domain/problem/difficulty.ts`
 - FSRS logic: `src/domain/fsrs/*`
-- Course progression: `src/domain/courses/courseProgress.ts`
+- Track progression: `src/domain/tracks/trackProgress.ts`
 - Queue logic: `src/domain/queue/*`
 - Runtime contracts: `src/extension/runtime/contracts.ts`
 - Background router and handlers: `src/extension/background/*`
@@ -260,12 +260,12 @@ Important persisted areas:
   and notes.
   Each attempt history entry may also include a structured `logSnapshot` used for review overrides and migration-safe
   history replay.
-- `coursesById`
-- `courseOrder`
-- `courseProgressById`
+- `studySetsById`
+- `studySetProgressById`
+- `studySetOrder`
 - `settings`
   Stores the current grouped user settings model. Top-level fields hold the daily question goal, study mode, active
-  course, and enabled source sets. Nested groups hold notification preferences, memory-review settings, question
+  track, and enabled source sets. Nested groups hold notification preferences, memory-review settings, question
   filters, timing goals, and experimental flags. Missing or malformed settings are seeded once into the current model.
   This grouped shape is the only supported persisted settings contract.
   Short-lived migration code is acceptable when explicitly approved for a release boundary, but legacy compatibility is
@@ -282,9 +282,9 @@ Export payload remains:
 - `problems`
 - `studyStatesBySlug`
 - `settings`
-- `coursesById`
-- `courseOrder`
-- `courseProgressById`
+- `studySetsById`
+- `studySetOrder`
+- `studySetProgressById`
 
 Review and history runtime contracts now include:
 
@@ -296,8 +296,8 @@ Review and history runtime contracts now include:
 - `OVERRIDE_LAST_REVIEW_RESULT`
   replaces the latest attempt entry and rebuilds the FSRS card from review history
 - `RESET_STUDY_HISTORY`
-  clears review history, FSRS cards, solve-time/rating state, suspended flags, and course progress derived from study
-  history while preserving settings, courses, source data, and the problem library
+  clears review history, FSRS cards, solve-time/rating state, suspended flags, and track progress derived from study
+  history while preserving settings, tracks, source data, and the problem library
 
 ## Constraints
 
