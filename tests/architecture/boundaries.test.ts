@@ -1,0 +1,112 @@
+/**
+ * Architecture-boundary tests.
+ *
+ * Grow these phase-by-phase. The rules a phase ships green ride here so
+ * regressions surface as red CI rather than as a runtime bug.
+ *
+ * Phase 0:
+ *   - path aliases exist in tsconfig and resolve from src
+ *   - no `forwardRef` import from "react"
+ *   - no barrel import of "@mui/material" or "@mui/icons-material"
+ *
+ * Phase 1+ adds (placeholder describe.skip blocks live here as a TODO
+ * list for the agent landing each phase):
+ *   - features/<x> may only be imported via index.ts / server.ts
+ *   - features/<x>/ui may not import features/<x>/data
+ *   - libs/** may not import features/, app/, platform/
+ *   - app/entrypoints/background.ts walks a graph free of react,
+ *     react-dom, @mui/*, design-system/*
+ *   - design-system/atoms/* each have a sibling *.a11y.test.tsx
+ *   - tick() calls pass a TickScope literal whose table matches schema
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { describe, expect, it } from "vitest";
+
+const testsDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(testsDir, "../..");
+
+function listFiles(root: string): string[] {
+  if (!fs.existsSync(root)) return [];
+  const entries = fs.readdirSync(root, { withFileTypes: true });
+  return entries.flatMap((entry) => {
+    const absolute = path.join(root, entry.name);
+    if (entry.isDirectory()) return listFiles(absolute);
+    return absolute;
+  });
+}
+
+function isSource(file: string): boolean {
+  return /\.(ts|tsx)$/.test(file) && !/\.d\.ts$/.test(file);
+}
+
+function srcFiles(): string[] {
+  return listFiles(path.join(repoRoot, "src")).filter(isSource);
+}
+
+function read(file: string): string {
+  return fs.readFileSync(file, "utf8");
+}
+
+describe("architecture / Phase 0 boundaries", () => {
+  it("tsconfig declares the six refactor path aliases", () => {
+    const tsconfig = JSON.parse(
+      read(path.join(repoRoot, "tsconfig.json")),
+    ) as { compilerOptions?: { paths?: Record<string, string[]> } };
+    const paths = tsconfig.compilerOptions?.paths ?? {};
+    expect(Object.keys(paths).sort()).toEqual(
+      [
+        "@app/*",
+        "@design-system/*",
+        "@features/*",
+        "@libs/*",
+        "@platform/*",
+        "@shared/*",
+      ].sort(),
+    );
+  });
+
+  it("no source file imports forwardRef from react", () => {
+    for (const file of srcFiles()) {
+      const text = read(file);
+      // Catch: import { forwardRef } from "react"
+      // and:    import { forwardRef as fr } from "react"
+      expect(
+        /import\s*\{[^}]*\bforwardRef\b[^}]*\}\s*from\s*['"]react['"]/.test(
+          text,
+        ),
+        `forwardRef imported in ${path.relative(repoRoot, file)}`,
+      ).toBe(false);
+    }
+  });
+
+  it("no source file uses a @mui/material or @mui/icons-material barrel import", () => {
+    for (const file of srcFiles()) {
+      const text = read(file);
+      expect(
+        /from\s*['"]@mui\/material['"]/.test(text),
+        `@mui/material barrel import in ${path.relative(repoRoot, file)} — use deep path`,
+      ).toBe(false);
+      expect(
+        /from\s*['"]@mui\/icons-material['"]/.test(text),
+        `@mui/icons-material barrel import in ${path.relative(repoRoot, file)} — use deep path`,
+      ).toBe(false);
+    }
+  });
+});
+
+describe.skip("architecture / Phase 1+ boundaries (placeholder)", () => {
+  // Filled in as phases land. Listed by phase below.
+  it.todo("Phase 1: no file imports any src/shared/*.ts proxy module");
+  it.todo("Phase 2: libs/** does not import features/, app/, platform/");
+  it.todo("Phase 3: platform/** does not import features/, app/");
+  it.todo("Phase 4: every design-system/atoms/*.tsx has a sibling *.a11y.test.tsx");
+  it.todo("Phase 4: no forwardRef anywhere in src/");
+  it.todo("Phase 6+: features/<x>/ui does not import features/<x>/data");
+  it.todo("Phase 6+: features/<x>/domain does not import features/<x>/data impls");
+  it.todo("Phase 6+: cross-feature imports go through features/<x>/index.ts or server.ts");
+  it.todo("Phase 6+: tick() calls pass a TickScope literal with a known table name");
+  it.todo("Phase 8: app/entrypoints/background.ts graph excludes react, react-dom, @mui/*, design-system/*");
+});

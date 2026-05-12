@@ -8,7 +8,15 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["chrome"]
+    "types": ["chrome"],
+    "paths": {
+      "@app/*": ["./src/app/*"],
+      "@features/*": ["./src/features/*"],
+      "@libs/*": ["./src/libs/*"],
+      "@platform/*": ["./src/platform/*"],
+      "@design-system/*": ["./src/design-system/*"],
+      "@shared/*": ["./src/shared/*"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.react.test.tsx"]
 }

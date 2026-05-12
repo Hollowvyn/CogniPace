@@ -43,6 +43,49 @@ const phaseZeroTsRules = {
   "@typescript-eslint/no-unnecessary-type-assertion": "off",
 };
 
+/**
+ * Architecture refactor lint rules — see docs/architecture refactor plan.
+ *
+ * - Forbid MUI barrel imports (use deep paths so tree-shaking works
+ *   reliably and the popup bundle stays under budget).
+ * - Forbid `forwardRef` import from React (React 19 accepts `ref` as a
+ *   plain prop; no compat shim needed).
+ * - Forbid deep cross-feature imports (Phase 6+ enforces; harmless
+ *   today because no feature folders exist yet).
+ */
+const archImportRules = {
+  "no-restricted-imports": [
+    "error",
+    {
+      patterns: [
+        {
+          group: ["@features/*/!(index|server)", "@features/*/!(index|server)/**"],
+          message:
+            "Cross-feature imports must go through features/<x>/index.ts (UI side) or features/<x>/server.ts (SW side).",
+        },
+      ],
+      paths: [
+        {
+          name: "@mui/material",
+          message:
+            'Use deep paths: import Button from "@mui/material/Button". Barrel imports defeat tree-shaking.',
+        },
+        {
+          name: "@mui/icons-material",
+          message:
+            'Use deep paths: import StarIcon from "@mui/icons-material/Star". Barrel imports defeat tree-shaking.',
+        },
+        {
+          name: "react",
+          importNames: ["forwardRef"],
+          message:
+            "No forwardRef in React 19 — accept a typed `ref` prop directly on the component.",
+        },
+      ],
+    },
+  ],
+};
+
 const reactHookRules = reactHooks.configs.flat.recommended.rules;
 
 export default [
@@ -98,6 +141,7 @@ export default [
       ...(config.rules ?? {}),
       ...phaseZeroTsRules,
       ...importRules,
+      ...archImportRules,
     },
   })),
   ...tseslint.configs.recommendedTypeChecked.map((config) => ({
@@ -126,6 +170,7 @@ export default [
       ...(config.rules ?? {}),
       ...phaseZeroTsRules,
       ...importRules,
+      ...archImportRules,
       ...reactHookRules,
       "no-unsanitized/method": "warn",
       "no-unsanitized/property": "warn",
