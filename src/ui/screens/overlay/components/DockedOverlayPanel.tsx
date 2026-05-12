@@ -71,7 +71,8 @@ export function DockedOverlayPanel(
 
   return (
     <Paper
-      data-testid="docked-overlay-panel"
+      aria-label="Docked overlay"
+      role="region"
       style={{transform: `translateY(${dockOffsetY}px)`}}
       sx={{
         border: (theme) => `1px solid ${theme.palette.divider}`,

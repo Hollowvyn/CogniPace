@@ -30,7 +30,7 @@ describe("OverlayPanel Docked", () => {
       <OverlayPanel renderModel={makeDockedRenderModel({ onRestore })} />
     );
 
-    expect(screen.getByTestId("docked-overlay-panel")).toHaveStyle({
+    expect(screen.getByRole("region", { name: "Docked overlay" })).toHaveStyle({
       width: "40px",
     });
     expect(screen.getByRole("button", { name: "Show overlay" })).toHaveStyle({
@@ -51,7 +51,7 @@ describe("OverlayPanel Docked", () => {
     firePointerEvent(dockTrigger, "pointerup", { clientY: 80 });
 
     expect(onRestore).toHaveBeenCalledTimes(0);
-    expect(screen.getByTestId("docked-overlay-panel")).toHaveStyle(
+    expect(screen.getByRole("region", { name: "Docked overlay" })).toHaveStyle(
       "transform: translateY(-20px)"
     );
   });
