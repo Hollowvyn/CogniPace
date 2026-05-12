@@ -32,6 +32,8 @@ import { seedCatalogCompanies } from "../companies/repository";
 import { seedCatalogProblems } from "../problems/repository";
 import { seedInitialSettings } from "../settings/repository";
 import { seedCatalogTopics } from "../topics/repository";
+import { seedCatalogTracks } from "../tracks/repository";
+import { buildTrackCatalogSeed } from "../tracks/seed";
 
 import { broadcastDbTick } from "./broadcast";
 import { createDb, type DbHandle } from "./client";
@@ -129,13 +131,15 @@ async function bootDb(): Promise<DbHandle> {
       await seedCatalogCompanies(handle.db, listCatalogCompanySeeds());
       await seedInitialSettings(handle.db);
       await seedCatalogProblems(handle.db, buildCatalogProblems());
+      await seedCatalogTracks(handle.db, buildTrackCatalogSeed());
       const bytes = serializeDb(handle);
       await writeSnapshotToStorage({ fingerprint, bytes });
     }
-    // Always ensure catalog problems are present, including on restore
-    // paths where an earlier snapshot may pre-date the Phase 5 problems
-    // slice. Idempotent via ON CONFLICT DO NOTHING.
+    // Always ensure catalog problems + tracks are present, including on
+    // restore paths where an earlier snapshot may pre-date the Phase 5
+    // problems / tracks slices. Idempotent via ON CONFLICT DO NOTHING.
     await seedCatalogProblems(handle.db, buildCatalogProblems());
+    await seedCatalogTracks(handle.db, buildTrackCatalogSeed());
   } else {
     if (stored) {
       console.log(
@@ -149,6 +153,8 @@ async function bootDb(): Promise<DbHandle> {
     await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
     await seedCatalogCompanies(handle.db, listCatalogCompanySeeds());
     await seedInitialSettings(handle.db);
+    await seedCatalogProblems(handle.db, buildCatalogProblems());
+    await seedCatalogTracks(handle.db, buildTrackCatalogSeed());
     const bytes = serializeDb(handle);
     await writeSnapshotToStorage({ fingerprint, bytes });
     console.log(`[CogniPace] bootDb: fresh seed complete, snapshot written (${bytes.length} bytes)`);
