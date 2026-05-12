@@ -1,11 +1,5 @@
 /** Runtime message contracts shared by the extension UI and background router. */
 import type { ActiveFocus } from "../../domain/active-focus/model";
-import type {
-  CompanyFilter,
-  CustomFilter,
-  DifficultyFilter,
-  TopicFilter,
-} from "../../domain/sets/model";
 import type { UserSettingsPatch } from "../../domain/settings";
 import type {
   CuratedProblemInput,
@@ -106,11 +100,6 @@ export interface MessageRequestMap {
   GET_DASHBOARD_DATA: Record<string, never>;
   GET_APP_SHELL_DATA: Record<string, never>;
   GET_POPUP_SHELL_DATA: Record<string, never>;
-  TRACK_COURSE_QUESTION_LAUNCH: {
-    slug: string;
-    trackId: string;
-    groupId: string;
-  };
   IMPORT_CURATED_SET: {
     setName: string;
   };
@@ -169,39 +158,17 @@ export interface MessageRequestMap {
     companyId: string;
     assigned?: boolean;
   };
-  CREATE_STUDY_SET:
-    | {
-        kind: "custom";
-        name: string;
-        description?: string;
-        filter?: CustomFilter;
-        problemSlugs?: string[];
-      }
-    | {
-        kind: "company";
-        name: string;
-        description?: string;
-        filter: CompanyFilter;
-      }
-    | {
-        kind: "topic";
-        name: string;
-        description?: string;
-        filter: TopicFilter;
-      }
-    | {
-        kind: "difficulty";
-        name: string;
-        description?: string;
-        filter: DifficultyFilter;
-      };
-  UPDATE_STUDY_SET: {
+  CREATE_TRACK: {
+    name: string;
+    description?: string;
+  };
+  UPDATE_TRACK: {
     id: string;
     name?: string;
     description?: string;
     enabled?: boolean;
   };
-  DELETE_STUDY_SET: {
+  DELETE_TRACK: {
     id: string;
   };
   SET_ACTIVE_FOCUS: {
@@ -232,7 +199,6 @@ export interface MessageResponseMap {
   GET_DASHBOARD_DATA: AppShellPayload;
   GET_APP_SHELL_DATA: AppShellPayload;
   GET_POPUP_SHELL_DATA: PopupShellPayload;
-  TRACK_COURSE_QUESTION_LAUNCH: { tracked: boolean };
   IMPORT_CURATED_SET: ImportSummaryResponse;
   IMPORT_CUSTOM_SET: ImportSummaryResponse;
   EXPORT_DATA: ExportPayload;
@@ -247,9 +213,13 @@ export interface MessageResponseMap {
   CREATE_CUSTOM_COMPANY: { ok: true; id: string };
   ASSIGN_TOPIC_TO_PROBLEM: ProblemMutationResponse;
   ASSIGN_COMPANY_TO_PROBLEM: ProblemMutationResponse;
-  CREATE_STUDY_SET: { ok: true; id: string };
-  UPDATE_STUDY_SET: { ok: true };
-  DELETE_STUDY_SET: { ok: true };
+  CREATE_TRACK: { ok: true; id: string };
+  UPDATE_TRACK:
+    | { ok: true }
+    | { ok: false; reason: "not-found" };
+  DELETE_TRACK:
+    | { ok: true }
+    | { ok: false; reason: "not-found" | "curated" };
   SET_ACTIVE_FOCUS: SettingsUpdateResponse;
   CONSUME_PRE_V7_BACKUP: { backup: unknown };
 }

@@ -102,9 +102,9 @@ export interface LibraryProblemRow {
 }
 
 export interface TrackMembership {
-  trackId: import("./common/ids").StudySetId;
+  trackId: import("./common/ids").TrackId;
   trackName: string;
-  groupId?: import("./common/ids").SetGroupId;
+  groupId?: import("./common/ids").TrackGroupId;
   groupName?: string;
 }
 
@@ -165,46 +165,34 @@ export interface StudyStateView extends StudyStateSummary, ReviewLogFields {
   confidence?: number;
 }
 
-/** Discriminated UI shape for a StudySet. Each case carries the data the
- * matching component renderer needs without forcing it to match across
- * variants. */
-export type StudySetView =
-  | {
-      kind: "flat";
-      id: string;
-      name: string;
-      description?: string;
-      enabled: boolean;
-      problems: ProblemView[];
-    }
-  | {
-      kind: "grouped";
-      id: string;
-      name: string;
-      description?: string;
-      enabled: boolean;
-      groups: Array<{
-        id: string;
-        name: string;
-        prerequisiteGroupIds: string[];
-        unlocked: boolean;
-        problems: ProblemView[];
-        /** v7 — count of slugs in this group that are marked completed in
-         * the StudySetProgress aggregate. Used for `Topic · 5/10` tab labels. */
-        completedCount: number;
-        /** v7 — total number of slugs in the group (denominator). */
-        totalCount: number;
-      }>;
-    }
-  | {
-      kind: "derived";
-      id: string;
-      name: string;
-      description?: string;
-      enabled: boolean;
-      filterDescription: string;
-      problems: ProblemView[];
-    };
+/**
+ * Hydrated UI shape for a Track. Slim per the charter: every Track is a
+ * named, ordered collection of TrackGroups; each group is a named,
+ * ordered list of problems with derived per-group completion counts.
+ * Single-group tracks render flat (no tab bar) — the UI just omits the
+ * Tabs component when `groups.length === 1`.
+ */
+export interface TrackView {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  isCurated: boolean;
+  groups: TrackGroupView[];
+}
+
+export interface TrackGroupView {
+  id: string;
+  name: string;
+  /** Optional curated-topic FK (null for user-created or untopic'd groups). */
+  topicId: string | null;
+  problems: ProblemView[];
+  /** Number of slugs in this group whose study_state has at least one
+   * non-Again attempt. Used for the `Topic · 5/10` tab label. */
+  completedCount: number;
+  /** Total number of slugs in the group (denominator). */
+  totalCount: number;
+}
 
 
 export interface PopupViewData {
@@ -231,7 +219,7 @@ export interface AppShellPayload extends PopupShellPayload {
   recommendedCandidates: RecommendedProblemView[];
   library: LibraryProblemRow[];
   /** Every Track hydrated for the dashboard's Tracks tab. */
-  tracks: StudySetView[];
+  tracks: TrackView[];
   /** v7 — flat list of every Topic, sorted by name; for Autocomplete inputs. */
   topicChoices: TopicLabel[];
   /** v7 — flat list of every Company, sorted by name; for Autocomplete inputs. */

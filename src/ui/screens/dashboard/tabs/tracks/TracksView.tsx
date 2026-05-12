@@ -1,17 +1,19 @@
 /**
- * Tracks tab — replaces the legacy CoursesView.
+ * Tracks tab — the dashboard's curated/user track surface.
  *
  * Layout:
- *   ── Active StudySet hero ─────────────────────────────────
+ *   ── Active Track hero ────────────────────────────────────
  *      header: name + Switch dropdown
- *      tabs:   one per SetGroup (every tab clickable; ratio in label)
+ *      tabs:   one per TrackGroup (every tab clickable; ratio in label);
+ *              single-group tracks render without the Tabs bar.
  *      body:   shared ProblemsTable in `tracks` variant
  *   ── Other tracks (collapsed disclosure) ──────────────────
  *      "Show ▾" reveals cards for inactive enabled tracks
  *      "+ New Track…" disabled with a "Coming next" tooltip
  *
- * Prereq locks were dropped per Phase G — completion is informational
- * (`Topic · 5/10` ratio in the tab label) and every tab is clickable.
+ * Slim charter shape: every Track is grouped; "flat" is a Track with
+ * a single group. Completion is informational (`Topic · 5/10` ratio in
+ * the tab label) and every tab is clickable.
  */
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -32,11 +34,11 @@ import {
   suspendProblem,
 } from "../../../../../data/repositories/v7ActionRepository";
 import {
-  asSetGroupId,
-  asStudySetId,
+  asTrackGroupId,
+  asTrackId,
   type ProblemSlug,
-  type SetGroupId,
-  type StudySetId,
+  type TrackGroupId,
+  type TrackId,
 } from "../../../../../domain/common/ids";
 import { SurfaceCard } from "../../../../components";
 import {
@@ -49,7 +51,7 @@ import type { ActiveFocus } from "../../../../../domain/active-focus/model";
 import type {
   AppShellPayload,
   ProblemView,
-  StudySetView,
+  TrackView,
 } from "../../../../../domain/views";
 
 interface TracksViewProps {
@@ -79,7 +81,7 @@ export function TracksView(props: TracksViewProps) {
   // Single source of truth: the persisted activeFocus. Click handlers
   // dispatch a mutation; storage subscription propagates the new payload
   // and re-renders this view.
-  const activeTrack = useMemo<StudySetView | null>(() => {
+  const activeTrack = useMemo<TrackView | null>(() => {
     if (activeFocus?.kind !== "track") return null;
     return tracks.find((view) => view.id === activeFocus.id) ?? null;
   }, [activeFocus, tracks]);
@@ -100,10 +102,11 @@ export function TracksView(props: TracksViewProps) {
     return map;
   }, [library]);
 
-  // Determine the user's chosen group within the active StudySet, derived
-  // from the persisted activeFocus.groupId.
-  const activeGroupId = useMemo<SetGroupId | null>(() => {
-    if (!activeTrack || activeTrack.kind !== "grouped") {
+  // Determine the user's chosen group within the active Track, derived
+  // from the persisted activeFocus.groupId. Single-group tracks always
+  // pick the lone group.
+  const activeGroupId = useMemo<TrackGroupId | null>(() => {
+    if (!activeTrack || activeTrack.groups.length === 0) {
       return null;
     }
     if (
@@ -112,10 +115,10 @@ export function TracksView(props: TracksViewProps) {
     ) {
       const saved = activeFocus.groupId;
       if (saved && activeTrack.groups.some((g) => g.id === saved)) {
-        return saved as SetGroupId;
+        return saved as TrackGroupId;
       }
     }
-    return asSetGroupId(activeTrack.groups[0]?.id ?? "");
+    return asTrackGroupId(activeTrack.groups[0]?.id ?? "");
   }, [activeTrack, activeFocus]);
 
   const editingRow = useMemo(() => {
@@ -134,20 +137,20 @@ export function TracksView(props: TracksViewProps) {
     );
   }
 
-  const otherStudySets = tracks.filter(
+  const otherTracks = tracks.filter(
     (set) =>
       set.enabled &&
       (!activeTrack || set.id !== activeTrack.id),
   );
 
-  const switchTrack = (id: StudySetId) => {
+  const switchTrack = (id: TrackId) => {
     void props.onSetActiveFocus({ kind: "track", id });
   };
-  const switchGroup = (groupId: SetGroupId) => {
+  const switchGroup = (groupId: TrackGroupId) => {
     if (!activeTrack) return;
     void props.onSetActiveFocus({
       kind: "track",
-      id: asStudySetId(activeTrack.id),
+      id: asTrackId(activeTrack.id),
       groupId,
     });
   };
@@ -173,12 +176,12 @@ export function TracksView(props: TracksViewProps) {
   return (
     <Stack spacing={3}>
       {activeTrack ? (
-        <ActiveStudySetSection
-          studySet={activeTrack}
+        <ActiveTrackSection
+          track={activeTrack}
           options={tracks}
           activeGroupId={activeGroupId}
           slugDataMap={slugDataMap}
-          dueCount={countDueInSet(activeTrack, slugDataMap)}
+          dueCount={countDueInTrack(activeTrack, slugDataMap)}
           onSwitch={switchTrack}
           onSwitchGroup={switchGroup}
           onEditProblem={handleEdit}
@@ -203,7 +206,7 @@ export function TracksView(props: TracksViewProps) {
           sx={{ mb: othersExpanded ? 2 : 0 }}
         >
           <Typography variant="subtitle1">
-            Other tracks · {otherStudySets.length}
+            Other tracks · {otherTracks.length}
           </Typography>
           <Button
             size="small"
@@ -215,11 +218,11 @@ export function TracksView(props: TracksViewProps) {
 
         {othersExpanded ? (
           <Stack spacing={1.5}>
-            {otherStudySets.map((set) => (
+            {otherTracks.map((track) => (
               <OtherTrackCard
-                key={set.id}
-                studySet={set}
-                onSetActive={() => switchTrack(asStudySetId(set.id))}
+                key={track.id}
+                track={track}
+                onSetActive={() => switchTrack(asTrackId(track.id))}
               />
             ))}
 
@@ -253,11 +256,8 @@ interface CompletionRollup {
   total: number;
 }
 
-function rollupCompletion(set: StudySetView): CompletionRollup {
-  if (set.kind !== "grouped") {
-    return { completed: 0, total: set.problems.length };
-  }
-  return set.groups.reduce<CompletionRollup>(
+function rollupCompletion(track: TrackView): CompletionRollup {
+  return track.groups.reduce<CompletionRollup>(
     (acc, group) => ({
       completed: acc.completed + group.completedCount,
       total: acc.total + group.totalCount,
@@ -266,17 +266,13 @@ function rollupCompletion(set: StudySetView): CompletionRollup {
   );
 }
 
-function countDueInSet(
-  set: StudySetView,
+function countDueInTrack(
+  track: TrackView,
   slugDataMap: Map<string, SlugStudyData>,
 ): number {
   const slugs = new Set<string>();
-  if (set.kind === "grouped") {
-    for (const group of set.groups) {
-      for (const problem of group.problems) slugs.add(problem.slug);
-    }
-  } else {
-    for (const problem of set.problems) slugs.add(problem.slug);
+  for (const group of track.groups) {
+    for (const problem of group.problems) slugs.add(problem.slug);
   }
   let count = 0;
   for (const slug of slugs) {
@@ -285,23 +281,23 @@ function countDueInSet(
   return count;
 }
 
-interface ActiveStudySetSectionProps {
-  studySet: StudySetView;
-  options: StudySetView[];
-  activeGroupId: SetGroupId | null;
+interface ActiveTrackSectionProps {
+  track: TrackView;
+  options: TrackView[];
+  activeGroupId: TrackGroupId | null;
   slugDataMap: Map<string, SlugStudyData>;
   dueCount: number;
-  onSwitch: (id: StudySetId) => void;
-  onSwitchGroup: (groupId: SetGroupId) => void;
+  onSwitch: (id: TrackId) => void;
+  onSwitchGroup: (groupId: TrackGroupId) => void;
   onEditProblem: (slug: ProblemSlug) => void;
   onSuspendProblem: (slug: ProblemSlug, suspend: boolean) => void | Promise<void>;
   onResetSchedule: (slug: ProblemSlug) => void | Promise<void>;
   onEnablePremium: () => void;
 }
 
-function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
+function ActiveTrackSection(props: ActiveTrackSectionProps) {
   const {
-    studySet,
+    track,
     options,
     activeGroupId,
     dueCount,
@@ -315,9 +311,9 @@ function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
   } = props;
 
   const switchOptions = options.filter(
-    (option) => option.enabled && option.id !== studySet.id,
+    (option) => option.enabled && option.id !== track.id,
   );
-  const rollup = rollupCompletion(studySet);
+  const rollup = rollupCompletion(track);
   const percent =
     rollup.total > 0 ? Math.round((rollup.completed / rollup.total) * 100) : 0;
 
@@ -335,11 +331,11 @@ function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
             Active track
           </Typography>
           <Typography variant="h5" component="h2">
-            {studySet.name}
+            {track.name}
           </Typography>
-          {studySet.description ? (
+          {track.description ? (
             <Typography variant="body2" color="text.secondary">
-              {studySet.description}
+              {track.description}
             </Typography>
           ) : null}
         </Stack>
@@ -354,7 +350,7 @@ function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
               onChange={(event) => {
                 const next = event.target.value as string;
                 if (next) {
-                  onSwitch(asStudySetId(next));
+                  onSwitch(asTrackId(next));
                 }
               }}
             >
@@ -386,27 +382,16 @@ function ActiveStudySetSection(props: ActiveStudySetSectionProps) {
         </Stack>
       ) : null}
 
-      {studySet.kind === "grouped" ? (
-        <GroupedStudySetBody
-          studySet={studySet}
-          activeGroupId={activeGroupId}
-          slugDataMap={slugDataMap}
-          onSwitchGroup={onSwitchGroup}
-          onEditProblem={onEditProblem}
-          onSuspendProblem={onSuspendProblem}
-          onResetSchedule={onResetSchedule}
-          onEnablePremium={onEnablePremium}
-        />
-      ) : (
-        <FlatStudySetBody
-          studySet={studySet}
-          slugDataMap={slugDataMap}
-          onEditProblem={onEditProblem}
-          onSuspendProblem={onSuspendProblem}
-          onResetSchedule={onResetSchedule}
-          onEnablePremium={onEnablePremium}
-        />
-      )}
+      <TrackBody
+        track={track}
+        activeGroupId={activeGroupId}
+        slugDataMap={slugDataMap}
+        onSwitchGroup={onSwitchGroup}
+        onEditProblem={onEditProblem}
+        onSuspendProblem={onSuspendProblem}
+        onResetSchedule={onResetSchedule}
+        onEnablePremium={onEnablePremium}
+      />
     </SurfaceCard>
   );
 }
@@ -426,8 +411,11 @@ function hydrateRows(
   });
 }
 
-function GroupedStudySetBody({
-  studySet,
+/** Renders the track's groups. Multi-group tracks show a scrollable Tabs
+ * bar with one tab per group; single-group tracks omit the Tabs bar and
+ * render the lone group's table directly. */
+function TrackBody({
+  track,
   activeGroupId,
   slugDataMap,
   onSwitchGroup,
@@ -436,19 +424,20 @@ function GroupedStudySetBody({
   onResetSchedule,
   onEnablePremium,
 }: {
-  studySet: Extract<StudySetView, { kind: "grouped" }>;
-  activeGroupId: SetGroupId | null;
+  track: TrackView;
+  activeGroupId: TrackGroupId | null;
   slugDataMap: Map<string, SlugStudyData>;
-  onSwitchGroup: (groupId: SetGroupId) => void;
+  onSwitchGroup: (groupId: TrackGroupId) => void;
   onEditProblem: (slug: ProblemSlug) => void;
   onSuspendProblem: (slug: ProblemSlug, suspend: boolean) => void | Promise<void>;
   onResetSchedule: (slug: ProblemSlug) => void | Promise<void>;
   onEnablePremium: () => void;
 }) {
   const activeGroup =
-    studySet.groups.find((g) => g.id === activeGroupId) ?? studySet.groups[0];
+    track.groups.find((g) => g.id === activeGroupId) ?? track.groups[0];
 
   const tabValue = activeGroup?.id ?? false;
+  const showTabs = track.groups.length > 1;
 
   const rows = useMemo(
     () => (activeGroup ? hydrateRows(activeGroup.problems, slugDataMap) : []),
@@ -457,65 +446,33 @@ function GroupedStudySetBody({
 
   return (
     <Stack spacing={2}>
-      <Tabs
-        value={tabValue}
-        onChange={(_, next) => {
-          if (typeof next === "string" && next) {
-            onSwitchGroup(asSetGroupId(next));
-          }
-        }}
-        variant="scrollable"
-        scrollButtons="auto"
-      >
-        {studySet.groups.map((group) => (
-          <Tab
-            key={group.id}
-            value={group.id}
-            label={<TabLabel name={group.name} completed={group.completedCount} total={group.totalCount} />}
-          />
-        ))}
-      </Tabs>
-
-      <ProblemsTable
-        rows={rows}
-        variant="tracks"
-        selectable
-        onEditProblem={onEditProblem}
-        onSuspendProblem={onSuspendProblem}
-        onResetSchedule={onResetSchedule}
-        onEnablePremium={onEnablePremium}
-      />
-    </Stack>
-  );
-}
-
-function FlatStudySetBody({
-  studySet,
-  slugDataMap,
-  onEditProblem,
-  onSuspendProblem,
-  onResetSchedule,
-  onEnablePremium,
-}: {
-  studySet: Extract<StudySetView, { kind: "flat" } | { kind: "derived" }>;
-  slugDataMap: Map<string, SlugStudyData>;
-  onEditProblem: (slug: ProblemSlug) => void;
-  onSuspendProblem: (slug: ProblemSlug, suspend: boolean) => void | Promise<void>;
-  onResetSchedule: (slug: ProblemSlug) => void | Promise<void>;
-  onEnablePremium: () => void;
-}) {
-  const rows = useMemo(
-    () => hydrateRows(studySet.problems, slugDataMap),
-    [studySet.problems, slugDataMap],
-  );
-
-  return (
-    <Stack spacing={2}>
-      {studySet.kind === "derived" ? (
-        <Typography variant="body2" color="text.secondary">
-          {studySet.filterDescription || "Derived from filter"}
-        </Typography>
+      {showTabs ? (
+        <Tabs
+          value={tabValue}
+          onChange={(_, next) => {
+            if (typeof next === "string" && next) {
+              onSwitchGroup(asTrackGroupId(next));
+            }
+          }}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          {track.groups.map((group) => (
+            <Tab
+              key={group.id}
+              value={group.id}
+              label={
+                <TabLabel
+                  name={group.name}
+                  completed={group.completedCount}
+                  total={group.totalCount}
+                />
+              }
+            />
+          ))}
+        </Tabs>
       ) : null}
+
       <ProblemsTable
         rows={rows}
         variant="tracks"
@@ -530,13 +487,13 @@ function FlatStudySetBody({
 }
 
 function OtherTrackCard({
-  studySet,
+  track,
   onSetActive,
 }: {
-  studySet: StudySetView;
+  track: TrackView;
   onSetActive: () => void;
 }) {
-  const rollup = rollupCompletion(studySet);
+  const rollup = rollupCompletion(track);
   const percent =
     rollup.total > 0 ? Math.round((rollup.completed / rollup.total) * 100) : 0;
   return (
@@ -555,11 +512,11 @@ function OtherTrackCard({
       >
         <Stack sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="body1" fontWeight={500}>
-            {studySet.name}
+            {track.name}
           </Typography>
-          {studySet.description ? (
+          {track.description ? (
             <Typography variant="body2" color="text.secondary">
-              {studySet.description}
+              {track.description}
             </Typography>
           ) : null}
           <Typography
@@ -569,7 +526,7 @@ function OtherTrackCard({
           >
             {rollup.total > 0
               ? `${rollup.completed} of ${rollup.total} completed`
-              : "Filter-based track"}
+              : "Empty track"}
           </Typography>
         </Stack>
         <Button size="small" variant="outlined" onClick={onSetActive}>

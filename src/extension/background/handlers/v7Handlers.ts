@@ -1,7 +1,9 @@
 /**
- * v7 message handlers — single landing zone for Question / Track / Topic /
- * Company / ActiveFocus mutations. All writes flow through the
- * `mutateAppData` funnel so persistence is serialised.
+ * v7 message handlers — single landing zone for Problem / Track / Topic /
+ * Company / ActiveFocus mutations. SQLite-backed writes go straight
+ * through their repo; legacy v7-blob writes still pass through the
+ * `mutateAppData` funnel for the slices that haven't migrated yet
+ * (Phase 8 will rip the funnel).
  */
 import { upsertCompany } from "../../../data/companies/repository";
 import {
@@ -13,33 +15,30 @@ import {
   editProblem,
   getProblem,
 } from "../../../data/problems/repository";
-import { mutateAppData , PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
-import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
+import { PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import {
   getUserSettings,
   saveUserSettings,
 } from "../../../data/settings/repository";
 import { upsertTopic } from "../../../data/topics/repository";
 import {
+  createTrack,
+  deleteTrack,
+  getTrackHeader,
+  updateTrack,
+} from "../../../data/tracks/repository";
+import {
   asCompanyId,
   asProblemSlug,
-  asSetGroupId,
-  asStudySetId,
   asTopicId,
-  newStudySetId,
+  asTrackId,
   type CompanyId,
-  type ProblemSlug,
-  type StudySetId,
   type TopicId,
 } from "../../../domain/common/ids";
-import { nowIso } from "../../../domain/common/time";
-import { FLAT_GROUP_ID } from "../../../domain/sets/model";
 import { ok } from "../responses";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
 import type { ProblemEditPatch } from "../../../domain/problems/operations";
-import type { StudySet } from "../../../domain/sets/model";
-import type { Difficulty } from "../../../domain/types";
 
 
 // ---------- Problem edits ----------
@@ -182,181 +181,65 @@ export async function assignCompanyHandler(payload: AssignCompanyPayload) {
   return ok({ slug });
 }
 
-// ---------- StudySet CRUD ----------
+// ---------- Track CRUD ----------
 
-interface DerivedFilter {
-  kind: "company" | "topic" | "difficulty" | "custom";
-  companyIds?: string[];
-  topicIds?: string[];
-  difficulties?: Difficulty[];
-  includePremium?: boolean;
-}
-
-export interface CreateStudySetPayload {
-  kind: "custom" | "company" | "topic" | "difficulty";
+export interface CreateTrackPayload {
   name: string;
   description?: string;
-  filter?: DerivedFilter;
-  problemSlugs?: string[];
 }
 
-export async function createStudySetHandler(payload: CreateStudySetPayload) {
-  const id: StudySetId = newStudySetId();
-  const now = nowIso();
-  await mutateAppData((data) => {
-    const flatGroup = {
-      id: FLAT_GROUP_ID,
-      prerequisiteGroupIds: [],
-      problemSlugs:
-        payload.kind === "custom"
-          ? (payload.problemSlugs ?? []).map((s) => asProblemSlug(s))
-          : ([] as ProblemSlug[]),
-    };
-    const baseConfig = {
-      trackProgress: true,
-      ordering: "manual" as const,
-    };
-    let next: StudySet;
-    switch (payload.kind) {
-      case "custom":
-        next = {
-          id,
-          kind: "custom",
-          name: payload.name,
-          description: payload.description,
-          isCurated: false,
-          enabled: true,
-          groups: [flatGroup],
-          config: baseConfig,
-          filter:
-            payload.filter && payload.filter.kind === "custom"
-              ? {
-                  kind: "custom",
-                  companyIds: payload.filter.companyIds?.map((id) =>
-                    asCompanyId(id),
-                  ) as CompanyId[] | undefined,
-                  topicIds: payload.filter.topicIds?.map((id) => asTopicId(id)) as
-                    | TopicId[]
-                    | undefined,
-                  difficulties: payload.filter.difficulties,
-                  includePremium: payload.filter.includePremium,
-                }
-              : undefined,
-          createdAt: now,
-          updatedAt: now,
-        };
-        break;
-      case "company":
-        next = {
-          id,
-          kind: "company",
-          name: payload.name,
-          description: payload.description,
-          isCurated: false,
-          enabled: true,
-          groups: [flatGroup],
-          config: baseConfig,
-          filter: {
-            kind: "company",
-            companyIds: (payload.filter?.companyIds ?? []).map((id) =>
-              asCompanyId(id),
-            ) as CompanyId[],
-          },
-          createdAt: now,
-          updatedAt: now,
-        };
-        break;
-      case "topic":
-        next = {
-          id,
-          kind: "topic",
-          name: payload.name,
-          description: payload.description,
-          isCurated: false,
-          enabled: true,
-          groups: [flatGroup],
-          config: baseConfig,
-          filter: {
-            kind: "topic",
-            topicIds: (payload.filter?.topicIds ?? []).map((id) =>
-              asTopicId(id),
-            ) as TopicId[],
-          },
-          createdAt: now,
-          updatedAt: now,
-        };
-        break;
-      case "difficulty":
-        next = {
-          id,
-          kind: "difficulty",
-          name: payload.name,
-          description: payload.description,
-          isCurated: false,
-          enabled: true,
-          groups: [flatGroup],
-          config: baseConfig,
-          filter: {
-            kind: "difficulty",
-            difficulties: payload.filter?.difficulties ?? [],
-          },
-          createdAt: now,
-          updatedAt: now,
-        };
-        break;
-    }
-
-    data.studySetsById[id] = next;
-    data.studySetOrder = [...data.studySetOrder, id];
-    return data;
+/** Creates a fresh user-defined Track in SQLite. Slim charter shape —
+ * no `kind` discriminator, no derived filter. If users want a
+ * filtered list (company / topic / difficulty), the library tab
+ * already filters on those facets. */
+export async function createTrackHandler(payload: CreateTrackPayload) {
+  const { db } = await getDb();
+  const track = await createTrack(db, {
+    name: payload.name,
+    description: payload.description,
   });
-  return ok({ id });
+  return ok({ id: track.id });
 }
 
-export interface UpdateStudySetPayload {
+export interface UpdateTrackPayload {
   id: string;
   name?: string;
   description?: string;
   enabled?: boolean;
 }
 
-export async function updateStudySetHandler(payload: UpdateStudySetPayload) {
-  const id = asStudySetId(payload.id);
-  await mutateAppData((data) => {
-    const existing = data.studySetsById[id];
-    if (!existing) return data;
-    data.studySetsById[id] = {
-      ...existing,
-      name: payload.name ?? existing.name,
-      description: payload.description ?? existing.description,
-      enabled: payload.enabled ?? existing.enabled,
-      updatedAt: nowIso(),
-    } as StudySet;
-    return data;
-  });
+export async function updateTrackHandler(payload: UpdateTrackPayload) {
+  const id = asTrackId(payload.id);
+  const { db } = await getDb();
+  const existing = await getTrackHeader(db, id);
+  if (!existing) {
+    return ok({ ok: false, reason: "not-found" });
+  }
+  const patch: Parameters<typeof updateTrack>[2] = {};
+  if (payload.name !== undefined) patch.name = payload.name;
+  if (payload.description !== undefined) patch.description = payload.description;
+  if (payload.enabled !== undefined) patch.enabled = payload.enabled;
+  await updateTrack(db, id, patch);
   return ok({ ok: true });
 }
 
-export interface DeleteStudySetPayload {
+export interface DeleteTrackPayload {
   id: string;
 }
 
-export async function deleteStudySetHandler(payload: DeleteStudySetPayload) {
-  const id = asStudySetId(payload.id);
-  await mutateAppData((data) => {
-    const existing = data.studySetsById[id];
-    if (!existing || existing.isCurated) return data;
-    delete data.studySetsById[id];
-    data.studySetOrder = data.studySetOrder.filter((sid) => sid !== id);
-    delete data.studySetProgressById[id];
-    return data;
-  });
-  // Phase 5: settings live in SQLite. The activeFocus check has to
-  // read from SQLite — `data.settings.activeFocus` in the v7 blob is
-  // stale after the settings slice and would miss the case where the
-  // user set activeFocus post-Phase-5 (so SQLite has it, blob does
-  // not).
+export async function deleteTrackHandler(payload: DeleteTrackPayload) {
+  const id = asTrackId(payload.id);
   const { db } = await getDb();
+  const existing = await getTrackHeader(db, id);
+  if (!existing) {
+    return ok({ ok: false, reason: "not-found" });
+  }
+  if (existing.isCurated) {
+    return ok({ ok: false, reason: "curated" });
+  }
+  // FK CASCADE wipes groups + group_problems automatically.
+  await deleteTrack(db, id);
+  // If the deleted track was the active focus, clear it.
   const current = await getUserSettings(db);
   if (
     current &&
@@ -385,35 +268,6 @@ export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
     activeFocus: payload.focus,
   });
   return ok({ settings: saved });
-}
-
-// ---------- Track launch tracking ----------
-
-export interface TrackQuestionLaunchPayload {
-  slug: string;
-  trackId: string;
-  groupId: string;
-}
-
-/** Records that the user launched a problem from a track context. Pins
- * the active group on the StudySetProgress aggregate so the user's
- * "where am I" pointer stays aligned across surfaces. */
-export async function trackQuestionLaunch(payload: TrackQuestionLaunchPayload) {
-  const slug = payload.slug.trim();
-  if (!slug || !payload.trackId || !payload.groupId) {
-    return ok({ tracked: false });
-  }
-  await mutateAppData((data) => {
-    markSlugLaunched(
-      data as unknown as Parameters<typeof markSlugLaunched>[0],
-      asStudySetId(payload.trackId),
-      asSetGroupId(payload.groupId),
-      asProblemSlug(slug),
-      nowIso(),
-    );
-    return data;
-  });
-  return ok({ tracked: true });
 }
 
 // ---------- Pre-v7 backup ----------

@@ -48,18 +48,3 @@ export function findCurrentSlugInGroup(
   return current ?? null;
 }
 
-/** Returns the first group whose slugs are not all started, or the last
- * group as a fallback so something is always "current". */
-export function firstIncompleteGroupId<G extends { id: string; problemSlugs: readonly string[] }>(
-  groups: readonly G[],
-  studyStatesBySlug: Record<string, StudyState>,
-  now?: Date,
-): string | null {
-  for (const group of groups) {
-    const allStarted = group.problemSlugs.every(
-      (slug) => getStudyStateSummary(studyStatesBySlug[slug], now).isStarted,
-    );
-    if (!allStarted) return group.id;
-  }
-  return groups[groups.length - 1]?.id ?? null;
-}

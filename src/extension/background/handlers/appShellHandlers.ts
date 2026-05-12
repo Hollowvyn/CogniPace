@@ -6,6 +6,7 @@ import { getAppData } from "../../../data/repositories/appDataRepository";
 import { getUserSettings } from "../../../data/settings/repository";
 import { listStudyStates } from "../../../data/studyStates/repository";
 import { listTopics } from "../../../data/topics/repository";
+import { listTracks } from "../../../data/tracks/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import {
   computeReviewStreakDays,
@@ -21,26 +22,29 @@ import {
   TrackCardView,
   LibraryProblemRow,
   PopupShellPayload,
-  StudySetView,
   TrackMembership,
+  TrackView,
 } from "../../../domain/views";
 import {
   buildProblemView,
-  buildStudySetView,
   buildStudyStateView,
+  buildTrackView,
 } from "../../../domain/views/hydrate";
 import { validateExtensionPagePath } from "../../runtime/validator";
 import { ok } from "../responses";
 
 import type { Company } from "../../../domain/companies/model";
 import type { Topic } from "../../../domain/topics/model";
+import type { TrackWithGroups } from "../../../domain/tracks/model";
 import type { AppData, Problem } from "../../../domain/types";
 
 /**
- * Loads topics + companies + settings from SQLite (Phase 4+5 SSoT) and
- * mutates `data.topicsById` / `data.companiesById` / `data.settings`
- * in place so downstream helpers — buildStudySetView, buildProblemView,
- * libraryRows, buildPopupShellPayload, etc. — read unchanged shapes.
+ * Loads topics + companies + settings + problems + studyStates from
+ * SQLite (Phase 4+5 SSoT) and mutates the legacy fields on `AppData` in
+ * place so non-tracks helpers (libraryRows, queue builders) read the
+ * same shape they always have. Tracks are NOT mirrored back into the
+ * blob — every consumer now gets `TrackWithGroups[]` directly via
+ * `loadTracks()` and view-builder calls take that explicit handle.
  */
 async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   const { db } = await getDb();
@@ -68,20 +72,34 @@ async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   data.studyStatesBySlug = studyStates;
 }
 
-/** Hydrates the v7 list of explicit StudySet memberships for a problem slug.
- * Derived sets (kind: company/topic/difficulty) aren't included here — they
- * carry no explicit slug list, so membership is defined by their filter and
- * resolved live by the consumer. */
-function getTrackMemberships(data: AppData, slug: string): TrackMembership[] {
+/**
+ * Loads every track (with groups + group-problem memberships) once
+ * via the SQLite tracks repo. Single round trip per shell render —
+ * the result is reused for both the dashboard's track list, the
+ * "active track" hero, and the library's `trackMemberships` column.
+ */
+async function loadTracks(): Promise<TrackWithGroups[]> {
+  const { db } = await getDb();
+  return listTracks(db);
+}
+
+/** Walks the loaded tracks to answer "which tracks contain this slug?"
+ * for the library row. Cheap because the slug set is small; if it ever
+ * grows, replace with `listMembershipsForSlug` keyed per row. */
+function trackMembershipsForSlug(
+  tracks: readonly TrackWithGroups[],
+  slug: string,
+): TrackMembership[] {
   const out: TrackMembership[] = [];
-  for (const studySet of Object.values(data.studySetsById)) {
-    for (const group of studySet.groups) {
-      if ((group.problemSlugs as readonly string[]).includes(slug)) {
+  for (const track of tracks) {
+    for (const group of track.groups) {
+      const found = group.problems.find((m) => m.problemSlug === slug);
+      if (found) {
         out.push({
-          trackId: studySet.id,
-          trackName: studySet.name,
+          trackId: track.id,
+          trackName: track.name,
           groupId: group.id,
-          groupName: group.nameOverride,
+          groupName: group.name,
         });
         break;
       }
@@ -90,58 +108,59 @@ function getTrackMemberships(data: AppData, slug: string): TrackMembership[] {
   return out;
 }
 
-/** Hydrates every StudySet for dashboard consumption. */
-function buildStudySetViews(data: AppData, now: Date): StudySetView[] {
-  const order = data.studySetOrder.length > 0
-    ? data.studySetOrder
-    : (Object.keys(data.studySetsById) as typeof data.studySetOrder);
-  const views: StudySetView[] = [];
-  for (const id of order) {
-    const studySet = data.studySetsById[id];
-    if (!studySet) continue;
-    const progress = data.studySetProgressById[id] ?? null;
-    views.push(
-      buildStudySetView({
-        studySet,
-        // v6/v7 transitional Problem is structurally compatible with the
-        // v7 Problem the hydrate helper expects.
-        problemsBySlug:
-          data.problemsBySlug as unknown as Parameters<
-            typeof buildStudySetView
-          >[0]["problemsBySlug"],
-        topicsById: data.topicsById,
-        companiesById: data.companiesById,
-        progress,
-        studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<
-          typeof buildStudySetView
-        >[0]["studyStatesBySlug"],
-        now,
-      }),
-    );
-  }
-  return views;
+/** Hydrates every track for dashboard consumption. */
+function buildTrackViews(
+  data: AppData,
+  tracks: readonly TrackWithGroups[],
+  now: Date,
+): TrackView[] {
+  return tracks.map((track) =>
+    buildTrackView({
+      track,
+      problemsBySlug: data.problemsBySlug as unknown as Parameters<
+        typeof buildTrackView
+      >[0]["problemsBySlug"],
+      topicsById: data.topicsById,
+      companiesById: data.companiesById,
+      studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<
+        typeof buildTrackView
+      >[0]["studyStatesBySlug"],
+      now,
+    }),
+  );
 }
 
-/**
- * Returns the active StudySet view based on `settings.activeFocus`. Falls
- * back to the v6 active course (looked up by id in `studySetsById`) so the
- * v6→v7 transition keeps a meaningful "active" reference even before the
- * user explicitly chooses one in the new UI.
- */
-function buildActiveStudySetView(
+/** Returns the hydrated view for the currently focused track, or `null`. */
+function activeTrackViewOf(
   data: AppData,
-  tracks: readonly StudySetView[],
-): StudySetView | null {
+  trackViews: readonly TrackView[],
+): TrackView | null {
   const focusedId =
     data.settings.activeFocus?.kind === "track"
       ? data.settings.activeFocus.id
       : null;
   if (!focusedId) return null;
-  return tracks.find((view) => view.id === focusedId) ?? null;
+  return trackViews.find((view) => view.id === focusedId) ?? null;
+}
+
+/** Returns the raw `TrackWithGroups` for the currently focused track,
+ * or `null`. Drives the active-track view builder which needs slug
+ * order + membership rows beyond what `TrackView` carries. */
+function activeTrackEntityOf(
+  data: AppData,
+  tracks: readonly TrackWithGroups[],
+): TrackWithGroups | null {
+  const focusedId =
+    data.settings.activeFocus?.kind === "track"
+      ? data.settings.activeFocus.id
+      : null;
+  if (!focusedId) return null;
+  return tracks.find((track) => track.id === focusedId) ?? null;
 }
 
 function libraryRows(
   payload: Awaited<ReturnType<typeof getAppData>>,
+  tracks: readonly TrackWithGroups[],
   now = new Date()
 ): LibraryProblemRow[] {
   const targetRetention = payload.settings.memoryReview.targetRetention;
@@ -149,9 +168,11 @@ function libraryRows(
   // (anything they've ever opened or imported) + every curated track
   // slug (so the library is non-empty even pre-seed / post-wipe).
   const slugs = new Set<string>(Object.keys(payload.problemsBySlug));
-  for (const studySet of Object.values(payload.studySetsById)) {
-    for (const group of studySet.groups) {
-      for (const slug of group.problemSlugs) slugs.add(slug as string);
+  for (const track of tracks) {
+    for (const group of track.groups) {
+      for (const membership of group.problems) {
+        slugs.add(membership.problemSlug);
+      }
     }
   }
 
@@ -178,7 +199,7 @@ function libraryRows(
           now,
           targetRetention,
         }),
-        trackMemberships: getTrackMemberships(payload, slug),
+        trackMemberships: trackMembershipsForSlug(tracks, slug),
         ...(suspendFlag.suspended ? { suspended: suspendFlag.reason } : {}),
       };
     })
@@ -233,26 +254,17 @@ function activeTrackCard(
 /** Builds the narrow popup payload without dashboard-only library or analytics data. */
 export function buildPopupShellPayload(
   data: Awaited<ReturnType<typeof getAppData>>,
+  tracks: readonly TrackWithGroups[],
   now = new Date()
 ): PopupShellPayload {
   const queue = buildTodayQueue(data, now);
-  const activeFocusId =
-    data.settings.activeFocus?.kind === "track"
-      ? data.settings.activeFocus.id
-      : null;
-  const tracks = buildStudySetViews(data, now);
-  const activeTrackView = buildActiveStudySetView(data, tracks);
-  const activeTrackEntity = activeFocusId
-    ? (data.studySetsById[activeFocusId] ?? null)
-    : null;
-  const activeTrackProgress = activeFocusId
-    ? (data.studySetProgressById[activeFocusId] ?? null)
-    : null;
+  const trackViews = buildTrackViews(data, tracks, now);
+  const activeTrackView = activeTrackViewOf(data, trackViews);
+  const activeTrackEntity = activeTrackEntityOf(data, tracks);
   const activeTrack = buildActiveTrackView({
     activeFocus: data.settings.activeFocus,
     trackView: activeTrackView,
     trackEntity: activeTrackEntity,
-    trackProgress: activeTrackProgress,
     studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<
       typeof buildActiveTrackView
     >[0]["studyStatesBySlug"],
@@ -284,18 +296,20 @@ export function buildPopupShellPayload(
 export async function getPopupShellData() {
   const data = await getAppData();
   await hydrateRegistriesFromDb(data);
-  return ok(buildPopupShellPayload(data));
+  const tracks = await loadTracks();
+  return ok(buildPopupShellPayload(data, tracks));
 }
 
 /** Builds the popup/dashboard app shell payload from the current persisted state. */
 export async function getAppShellData() {
   const data = await getAppData();
   await hydrateRegistriesFromDb(data);
+  const tracks = await loadTracks();
   const now = new Date();
-  const popupShell = buildPopupShellPayload(data, now);
+  const popupShell = buildPopupShellPayload(data, tracks, now);
   const queue = buildTodayQueue(data, now);
   const analytics = summarizeAnalytics(data, now);
-  const tracks = buildStudySetViews(data, now);
+  const trackViews = buildTrackViews(data, tracks, now);
 
   const topicChoices = Object.values(data.topicsById)
     .map((topic) => ({ id: topic.id, name: topic.name }))
@@ -309,8 +323,8 @@ export async function getAppShellData() {
     queue,
     analytics,
     recommendedCandidates: popupShell.popup.recommendedCandidates,
-    library: libraryRows(data, now),
-    tracks,
+    library: libraryRows(data, tracks, now),
+    tracks: trackViews,
     topicChoices,
     companyChoices,
   });

@@ -3,66 +3,75 @@ import { describe, expect, it } from "vitest";
 import { buildActiveTrackView } from "../../../src/domain/active-focus/buildActiveTrackView";
 import {
   asProblemSlug,
-  asSetGroupId,
-  asStudySetId,
+  asTrackGroupId,
+  asTrackId,
 } from "../../../src/domain/common/ids";
 
 import type { ActiveFocus } from "../../../src/domain/active-focus/model";
-import type { StudySet } from "../../../src/domain/sets/model";
+import type {
+  TrackGroupWithProblems,
+  TrackWithGroups,
+} from "../../../src/domain/tracks/model";
 import type { Problem, StudyState } from "../../../src/domain/types";
-import type { StudySetView } from "../../../src/domain/views";
+import type { TrackView } from "../../../src/domain/views";
 
-function makeStudySet(): StudySet {
-  return {
-    id: asStudySetId("Blind75"),
-    kind: "course",
-    name: "Blind 75",
-    description: "Core interview patterns.",
-    isCurated: true,
-    enabled: true,
-    config: {
-      trackProgress: true,
-      ordering: "manual",
-      enforcePrerequisites: false,
-      requireSequentialProblems: false,
-      showLockedTopics: false,
-      allowReorder: false,
-    },
-    groups: [
+function makeTrack(): TrackWithGroups {
+  const trackId = asTrackId("Blind75");
+  const arrays: TrackGroupWithProblems = {
+    id: asTrackGroupId("arrays"),
+    trackId,
+    name: "Arrays",
+    orderIndex: 0,
+    problems: [
       {
-        id: asSetGroupId("arrays"),
-        nameOverride: "Arrays",
-        prerequisiteGroupIds: [],
-        problemSlugs: [
-          asProblemSlug("two-sum"),
-          asProblemSlug("contains-duplicate"),
-        ],
+        groupId: asTrackGroupId("arrays"),
+        problemSlug: asProblemSlug("two-sum"),
+        orderIndex: 0,
       },
       {
-        id: asSetGroupId("graphs"),
-        nameOverride: "Graphs",
-        prerequisiteGroupIds: [asSetGroupId("arrays")],
-        problemSlugs: [asProblemSlug("clone-graph")],
+        groupId: asTrackGroupId("arrays"),
+        problemSlug: asProblemSlug("contains-duplicate"),
+        orderIndex: 1,
       },
     ],
+  };
+  const graphs: TrackGroupWithProblems = {
+    id: asTrackGroupId("graphs"),
+    trackId,
+    name: "Graphs",
+    orderIndex: 1,
+    problems: [
+      {
+        groupId: asTrackGroupId("graphs"),
+        problemSlug: asProblemSlug("clone-graph"),
+        orderIndex: 0,
+      },
+    ],
+  };
+  return {
+    id: trackId,
+    name: "Blind 75",
+    description: "Core interview patterns.",
+    enabled: true,
+    isCurated: true,
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
+    groups: [arrays, graphs],
   };
 }
 
-function makeView(): StudySetView {
+function makeView(): TrackView {
   return {
-    kind: "grouped",
     id: "Blind75",
     name: "Blind 75",
     description: "Core interview patterns.",
     enabled: true,
+    isCurated: true,
     groups: [
       {
         id: "arrays",
         name: "Arrays",
-        prerequisiteGroupIds: [],
-        unlocked: true,
+        topicId: null,
         problems: [],
         completedCount: 1,
         totalCount: 2,
@@ -70,8 +79,7 @@ function makeView(): StudySetView {
       {
         id: "graphs",
         name: "Graphs",
-        prerequisiteGroupIds: ["arrays"],
-        unlocked: false,
+        topicId: null,
         problems: [],
         completedCount: 0,
         totalCount: 1,
@@ -135,8 +143,7 @@ describe("buildActiveTrackView", () => {
     const view = buildActiveTrackView({
       activeFocus: null,
       trackView: makeView(),
-      trackEntity: makeStudySet(),
-      trackProgress: null,
+      trackEntity: makeTrack(),
       studyStatesBySlug: {},
       problemsBySlug,
     });
@@ -145,10 +152,9 @@ describe("buildActiveTrackView", () => {
 
   it("returns null when track view is missing", () => {
     const view = buildActiveTrackView({
-      activeFocus: { kind: "track", id: asStudySetId("Blind75") },
+      activeFocus: { kind: "track", id: asTrackId("Blind75") },
       trackView: null,
-      trackEntity: makeStudySet(),
-      trackProgress: null,
+      trackEntity: makeTrack(),
       studyStatesBySlug: {},
       problemsBySlug,
     });
@@ -161,13 +167,12 @@ describe("buildActiveTrackView", () => {
     };
     const focus: ActiveFocus = {
       kind: "track",
-      id: asStudySetId("Blind75"),
+      id: asTrackId("Blind75"),
     };
     const view = buildActiveTrackView({
       activeFocus: focus,
       trackView: makeView(),
-      trackEntity: makeStudySet(),
-      trackProgress: null,
+      trackEntity: makeTrack(),
       studyStatesBySlug,
       problemsBySlug,
     });
@@ -190,12 +195,11 @@ describe("buildActiveTrackView", () => {
     const view = buildActiveTrackView({
       activeFocus: {
         kind: "track",
-        id: asStudySetId("Blind75"),
-        groupId: asSetGroupId("graphs"),
+        id: asTrackId("Blind75"),
+        groupId: asTrackGroupId("graphs"),
       },
       trackView: makeView(),
-      trackEntity: makeStudySet(),
-      trackProgress: null,
+      trackEntity: makeTrack(),
       studyStatesBySlug: {},
       problemsBySlug,
     });
@@ -203,19 +207,11 @@ describe("buildActiveTrackView", () => {
     expect(view?.nextQuestion?.slug).toBe("clone-graph");
   });
 
-  it("returns null for non-grouped study set views (flat / derived)", () => {
-    const flatView: StudySetView = {
-      kind: "flat",
-      id: "Custom",
-      name: "Custom",
-      enabled: true,
-      problems: [],
-    };
+  it("returns null when the track entity is missing", () => {
     const view = buildActiveTrackView({
-      activeFocus: { kind: "track", id: asStudySetId("Custom") },
-      trackView: flatView,
-      trackEntity: makeStudySet(),
-      trackProgress: null,
+      activeFocus: { kind: "track", id: asTrackId("ghost") },
+      trackView: makeView(),
+      trackEntity: null,
       studyStatesBySlug: {},
       problemsBySlug,
     });

@@ -1,9 +1,7 @@
 /** Background handlers for problem-context, review-session, and page actions. */
 import { getDb } from "../../../data/db/instance";
 import { getProblem, importProblem } from "../../../data/problems/repository";
-import { mutateAppData } from "../../../data/repositories/appDataRepository";
 import { normalizeDifficulty } from "../../../data/repositories/problemRepository";
-import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
 import {
   getUserSettings,
 } from "../../../data/settings/repository";
@@ -15,7 +13,11 @@ import {
   replaceLastAttempt,
   upsertStudyState,
 } from "../../../data/studyStates/repository";
-import { asProblemSlug, asSetGroupId, asStudySetId } from "../../../domain/common/ids";
+import {
+  asProblemSlug,
+  asTrackGroupId,
+  asTrackId,
+} from "../../../domain/common/ids";
 import {nowIso} from "../../../domain/common/time";
 import {applyReview, overrideLastReview, resetSchedule,} from "../../../domain/fsrs/scheduler";
 import {getStudyStateSummary, normalizeReviewLogFields,} from "../../../domain/fsrs/studyState";
@@ -25,7 +27,7 @@ import {ReviewLogFields} from "../../../domain/types";
 import {canonicalProblemUrlForOpen,} from "../../runtime/validator";
 import {ok} from "../responses";
 
-import { trackQuestionLaunch } from "./v7Handlers";
+import { setActiveFocusHandler } from "./v7Handlers";
 
 function readSenderUrl(
   sender?: chrome.runtime.MessageSender
@@ -55,11 +57,17 @@ export async function openProblemPage(
     throw new Error("Invalid slug.");
   }
 
+  // Launched from a track context: update the user's "where am I"
+  // pointer (settings.activeFocus) so the next dashboard render lands
+  // on this chapter. Charter — there's no separate progress aggregate
+  // any more; settings owns the focus.
   if (payload.courseId && payload.chapterId) {
-    await trackQuestionLaunch({
-      slug,
-      trackId: payload.courseId,
-      groupId: payload.chapterId,
+    await setActiveFocusHandler({
+      focus: {
+        kind: "track",
+        id: asTrackId(payload.courseId),
+        groupId: asTrackGroupId(payload.chapterId),
+      },
     });
   }
 
@@ -188,18 +196,15 @@ export async function saveReviewResult(payload: {
   if (newAttempt) {
     await appendAttempt(db, branded, newAttempt);
   }
-  // Track-launch context still lives in the v7 blob (Phase 5 tracks slice
-  // will migrate StudySetProgress); call markSlugLaunched there.
+  // The user reviewed from a track context — pin activeFocus to that
+  // chapter so the next dashboard render lands here.
   if (payload.courseId && payload.chapterId) {
-    await mutateAppData((data) => {
-      markSlugLaunched(
-        data as unknown as Parameters<typeof markSlugLaunched>[0],
-        asStudySetId(payload.courseId!),
-        asSetGroupId(payload.chapterId!),
-        branded,
-        now,
-      );
-      return data;
+    await setActiveFocusHandler({
+      focus: {
+        kind: "track",
+        id: asTrackId(payload.courseId),
+        groupId: asTrackGroupId(payload.chapterId),
+      },
     });
   }
   const studyStateSummary = getStudyStateSummary(nextState);
@@ -279,15 +284,12 @@ export async function overrideLastReviewResult(payload: {
     await replaceLastAttempt(db, branded, replacedAttempt);
   }
   if (payload.courseId && payload.chapterId) {
-    await mutateAppData((data) => {
-      markSlugLaunched(
-        data as unknown as Parameters<typeof markSlugLaunched>[0],
-        asStudySetId(payload.courseId!),
-        asSetGroupId(payload.chapterId!),
-        branded,
-        now,
-      );
-      return data;
+    await setActiveFocusHandler({
+      focus: {
+        kind: "track",
+        id: asTrackId(payload.courseId),
+        groupId: asTrackGroupId(payload.chapterId),
+      },
     });
   }
   const studyStateSummary = getStudyStateSummary(nextState);
