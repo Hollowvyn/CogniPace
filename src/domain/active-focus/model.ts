@@ -3,13 +3,13 @@
  * UserSettings (replaces v6 `activeTrackId`). The `kind` discriminator is
  * kept for forward-compat with future variants (e.g. `{ kind: 'queue' }`).
  */
-import type { SetGroupId, StudySetId } from "../common/ids";
+import type { TrackGroupId, TrackId } from "../common/ids";
 
 export type ActiveFocus =
   | {
       readonly kind: "track";
-      id: StudySetId;
+      id: TrackId;
       /** Optional: when the focused Track is grouped, which group is active. */
-      groupId?: SetGroupId;
+      groupId?: TrackGroupId;
     }
   | null;

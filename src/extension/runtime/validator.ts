@@ -23,7 +23,6 @@ const MESSAGE_TYPES = {
   GET_DASHBOARD_DATA: true,
   GET_APP_SHELL_DATA: true,
   GET_POPUP_SHELL_DATA: true,
-  TRACK_COURSE_QUESTION_LAUNCH: true,
   IMPORT_CURATED_SET: true,
   IMPORT_CUSTOM_SET: true,
   EXPORT_DATA: true,
@@ -38,9 +37,9 @@ const MESSAGE_TYPES = {
   CREATE_CUSTOM_COMPANY: true,
   ASSIGN_TOPIC_TO_PROBLEM: true,
   ASSIGN_COMPANY_TO_PROBLEM: true,
-  CREATE_STUDY_SET: true,
-  UPDATE_STUDY_SET: true,
-  DELETE_STUDY_SET: true,
+  CREATE_TRACK: true,
+  UPDATE_TRACK: true,
+  DELETE_TRACK: true,
   SET_ACTIVE_FOCUS: true,
   CONSUME_PRE_V7_BACKUP: true,
 } satisfies Record<MessageType, true>;
@@ -440,16 +439,6 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "RESET_STUDY_HISTORY":
       hasExactKeys(payload, EMPTY_KEYS, `Payload for ${type}`);
       return;
-    case "TRACK_COURSE_QUESTION_LAUNCH":
-      hasExactKeys(
-        payload,
-        ["slug", "trackId", "groupId"],
-        `Payload for ${type}`
-      );
-      requireString(payload.slug, "slug");
-      requireString(payload.trackId, "trackId");
-      requireString(payload.groupId, "groupId");
-      return;
     case "IMPORT_CURATED_SET":
       hasExactKeys(payload, ["setName"], `Payload for ${type}`);
       requireString(payload.setName, "setName");
@@ -549,17 +538,16 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.companyId, "companyId");
       requireOptionalBoolean(payload.assigned, "assigned");
       return;
-    case "CREATE_STUDY_SET":
+    case "CREATE_TRACK":
       hasExactKeys(
         payload,
-        ["kind", "name", "description", "filter", "problemSlugs"],
+        ["name", "description"],
         `Payload for ${type}`
       );
-      requireString(payload.kind, "kind");
       requireString(payload.name, "name");
       requireOptionalString(payload.description, "description");
       return;
-    case "UPDATE_STUDY_SET":
+    case "UPDATE_TRACK":
       hasExactKeys(
         payload,
         ["id", "name", "description", "enabled"],
@@ -570,14 +558,14 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireOptionalString(payload.description, "description");
       requireOptionalBoolean(payload.enabled, "enabled");
       return;
-    case "DELETE_STUDY_SET":
+    case "DELETE_TRACK":
       hasExactKeys(payload, ["id"], `Payload for ${type}`);
       requireString(payload.id, "id");
       return;
     case "SET_ACTIVE_FOCUS":
       hasExactKeys(payload, ["focus"], `Payload for ${type}`);
       // `focus` is allowed to be null (clears the selection); else an
-      // object with kind: 'studySet' and id is expected.
+      // object with kind: 'track' and id is expected.
       if (payload.focus !== null && !isRecord(payload.focus)) {
         throw new Error('Invalid field "focus": expected null or an object.');
       }

@@ -6,12 +6,6 @@
 import { sendMessage } from "../../extension/runtime/client";
 
 import type { ActiveFocus } from "../../domain/active-focus/model";
-import type {
-  CompanyFilter,
-  CustomFilter,
-  DifficultyFilter,
-  TopicFilter,
-} from "../../domain/sets/model";
 import type { Difficulty } from "../../domain/types";
 
 export interface EditProblemPatch {
@@ -72,56 +66,27 @@ export async function assignCompanyToProblem(input: {
   return sendMessage("ASSIGN_COMPANY_TO_PROBLEM", input);
 }
 
-/** Create a custom StudySet (flat, with explicit slugs or a filter). */
-export async function createCustomStudySet(input: {
+/** Create a user-defined Track (slim — no kind, no filter). */
+export async function createTrack(input: {
   name: string;
   description?: string;
-  filter?: CustomFilter;
-  problemSlugs?: string[];
 }) {
-  return sendMessage("CREATE_STUDY_SET", { kind: "custom", ...input });
+  return sendMessage("CREATE_TRACK", input);
 }
 
-/** Create a derived company-filtered StudySet. */
-export async function createCompanyStudySet(input: {
-  name: string;
-  description?: string;
-  filter: CompanyFilter;
-}) {
-  return sendMessage("CREATE_STUDY_SET", { kind: "company", ...input });
-}
-
-/** Create a derived topic-filtered StudySet. */
-export async function createTopicStudySet(input: {
-  name: string;
-  description?: string;
-  filter: TopicFilter;
-}) {
-  return sendMessage("CREATE_STUDY_SET", { kind: "topic", ...input });
-}
-
-/** Create a derived difficulty-filtered StudySet. */
-export async function createDifficultyStudySet(input: {
-  name: string;
-  description?: string;
-  filter: DifficultyFilter;
-}) {
-  return sendMessage("CREATE_STUDY_SET", { kind: "difficulty", ...input });
-}
-
-/** Update a StudySet's metadata. */
-export async function updateStudySet(input: {
+/** Update a Track's metadata. */
+export async function updateTrack(input: {
   id: string;
   name?: string;
   description?: string;
   enabled?: boolean;
 }) {
-  return sendMessage("UPDATE_STUDY_SET", input);
+  return sendMessage("UPDATE_TRACK", input);
 }
 
-/** Delete a non-curated StudySet. */
-export async function deleteStudySet(id: string) {
-  return sendMessage("DELETE_STUDY_SET", { id });
+/** Delete a non-curated Track. FK CASCADE wipes its groups + memberships. */
+export async function deleteTrack(id: string) {
+  return sendMessage("DELETE_TRACK", { id });
 }
 
 /** Set (or clear) the user's currently active focus. */

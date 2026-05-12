@@ -58,9 +58,6 @@ function makeAppData(): AppData {
     },
     topicsById: {},
     companiesById: {},
-    studySetsById: {},
-    studySetOrder: [],
-    studySetProgressById: {},
     settings,
   };
 }

@@ -80,13 +80,13 @@ describe("v6 → v7 migration", () => {
     const result = await getAppDataV7();
 
     expect(result.schemaVersion).toBe(STORAGE_SCHEMA_VERSION_V7);
-    // Phase 4+5: topics and companies live in SQLite, not the v7 blob.
-    // Both registries are intentionally `{}` after migration; the SW
-    // seeds the catalogs into the DB at boot and the dashboard handler
-    // hydrates the runtime fields from there.
+    // Post-Phase-5 tracks slice: every aggregate (topics, companies,
+    // tracks) lives in SQLite. The blob's runtime fields are
+    // intentionally `{}` after migration — the SW seeds the catalogs
+    // into the DB at boot and the dashboard handler hydrates the
+    // runtime fields from there.
     expect(result.topicsById).toEqual({});
     expect(result.companiesById).toEqual({});
-    expect(Object.keys(result.studySetsById).length).toBeGreaterThan(0);
   });
 
   it("does not migrate when the stored blob is already v7", async () => {

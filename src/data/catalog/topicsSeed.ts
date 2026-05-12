@@ -2,7 +2,7 @@
  * Canonical Topic registry seed. Curated topic ids are stable slug-style
  * strings; their `name` is the user-facing label. The seed list mirrors
  * LeetCode's commonly used taxonomy plus the variants used by curated
- * StudySet seeds (Blind75, NeetCode, etc.).
+ * track seeds (Blind75, NeetCode, etc.).
  *
  * Topic synonyms (e.g., "Heap" / "Heaps" / "Heap / Priority Queue") all
  * resolve to a single canonical id at seed time so problems carry only

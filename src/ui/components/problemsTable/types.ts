@@ -6,9 +6,9 @@
 import type {
   CompanyId,
   ProblemSlug,
-  SetGroupId,
-  StudySetId,
   TopicId,
+  TrackGroupId,
+  TrackId,
 } from "../../../domain/common/ids";
 import type { Difficulty, StudyPhase } from "../../../domain/types";
 import type { ProblemView, StudyStateView } from "../../../domain/views";
@@ -18,9 +18,9 @@ export interface ProblemRowData {
   view: ProblemView;
   studyState: StudyStateView | null;
   trackMemberships: ReadonlyArray<{
-    trackId: StudySetId;
+    trackId: TrackId;
     trackName: string;
-    groupId?: SetGroupId;
+    groupId?: TrackGroupId;
     groupName?: string;
   }>;
   /** Combined flag: true when the problem is queue-skipped — either
@@ -65,4 +65,4 @@ export type RowsPerPage = (typeof ROWS_PER_PAGE_OPTIONS)[number];
 export type ProblemSelection = ReadonlySet<ProblemSlug>;
 
 // Re-export brands the consumer is likely to need.
-export type { CompanyId, ProblemSlug, StudySetId, SetGroupId, TopicId };
+export type { CompanyId, ProblemSlug, TrackId, TrackGroupId, TopicId };

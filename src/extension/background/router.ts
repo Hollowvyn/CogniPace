@@ -38,12 +38,11 @@ import {
   consumePreV7BackupHandler,
   createCustomCompanyHandler,
   createCustomTopicHandler,
-  createStudySetHandler,
-  deleteStudySetHandler,
+  createTrackHandler,
+  deleteTrackHandler,
   editProblemHandler,
   setActiveFocusHandler,
-  trackQuestionLaunch,
-  updateStudySetHandler,
+  updateTrackHandler,
 } from "./handlers/v7Handlers";
 
 /** Routes a validated runtime message to the appropriate grouped handler. */
@@ -94,10 +93,6 @@ export async function handleMessage(
       return getAppShellData();
     case "GET_POPUP_SHELL_DATA":
       return getPopupShellData();
-    case "TRACK_COURSE_QUESTION_LAUNCH":
-      return trackQuestionLaunch(
-        message.payload as Parameters<typeof trackQuestionLaunch>[0]
-      );
     case "IMPORT_CURATED_SET":
       return importCurated(
         message.payload as Parameters<typeof importCurated>[0]
@@ -147,17 +142,17 @@ export async function handleMessage(
       return assignCompanyHandler(
         message.payload as Parameters<typeof assignCompanyHandler>[0]
       );
-    case "CREATE_STUDY_SET":
-      return createStudySetHandler(
-        message.payload as Parameters<typeof createStudySetHandler>[0]
+    case "CREATE_TRACK":
+      return createTrackHandler(
+        message.payload as Parameters<typeof createTrackHandler>[0]
       );
-    case "UPDATE_STUDY_SET":
-      return updateStudySetHandler(
-        message.payload as Parameters<typeof updateStudySetHandler>[0]
+    case "UPDATE_TRACK":
+      return updateTrackHandler(
+        message.payload as Parameters<typeof updateTrackHandler>[0]
       );
-    case "DELETE_STUDY_SET":
-      return deleteStudySetHandler(
-        message.payload as Parameters<typeof deleteStudySetHandler>[0]
+    case "DELETE_TRACK":
+      return deleteTrackHandler(
+        message.payload as Parameters<typeof deleteTrackHandler>[0]
       );
     case "SET_ACTIVE_FOCUS":
       return setActiveFocusHandler(

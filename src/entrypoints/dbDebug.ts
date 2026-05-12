@@ -65,7 +65,21 @@ import {
   seedCatalogTopics,
   upsertTopic,
 } from "../data/topics/repository";
-import { asCompanyId, asProblemSlug, asTopicId } from "../domain/common/ids";
+import {
+  addGroup as addGroupRepo,
+  addProblemToGroup as addProblemToGroupRepo,
+  createTrack as createTrackRepo,
+  deleteTrack as deleteTrackRepo,
+  listTracks as listTracksRepo,
+  seedCatalogTracks,
+} from "../data/tracks/repository";
+import { buildTrackCatalogSeed } from "../data/tracks/seed";
+import {
+  asCompanyId,
+  asProblemSlug,
+  asTopicId,
+  asTrackId,
+} from "../domain/common/ids";
 import { createInitialUserSettings } from "../domain/settings";
 
 let handle: DbHandle | undefined;
@@ -1626,6 +1640,117 @@ const allChecks: CheckDef[] = [
         s.attempts.length === 1 &&
         s.attempts[0].rating === 2;
       return { ok, detail: JSON.stringify(states) };
+    },
+  },
+
+  // ---------- Tracks repo (Phase 5 tracks slice) ----------
+
+  {
+    category: "Repos",
+    label: "tracks repo: seedCatalogTracks plants the curated catalog idempotently",
+    run: async ({ db }) => {
+      const seed = buildTrackCatalogSeed();
+      // The group-membership rows FK to problems.slug — seed every slug the
+      // catalog mentions so the bulk insert clears the FK check.
+      const slugs = Array.from(
+        new Set(seed.groupProblems.map((m) => m.problemSlug as string)),
+      );
+      for (const slug of slugs) {
+        await db.insert(schema.problems).values({ slug }).onConflictDoNothing();
+      }
+      await seedCatalogTracks(db, seed);
+      await seedCatalogTracks(db, seed); // second call must not throw or duplicate
+      // dbDebug shares the wasm DB across "Run all" presses; only assert
+      // on the seed ids themselves rather than the global track count
+      // (other checks below create + delete non-curated tracks and
+      // partial failures can leak rows between runs).
+      const seedIdSet = new Set<string>(seed.tracks.map((t) => t.id));
+      const listed = await listTracksRepo(db);
+      const seeded = listed.filter((t) => seedIdSet.has(t.id));
+      const everySeededCurated = seeded.every((t) => t.isCurated);
+      const allSeedsPresent = seeded.length === seed.tracks.length;
+      return {
+        ok: allSeedsPresent && everySeededCurated,
+        detail: `seeded=${seeded.length}/${seed.tracks.length}; curated=${everySeededCurated}`,
+      };
+    },
+  },
+
+  {
+    category: "Repos",
+    label: "tracks repo: deleteTrack cascades groups + group-problem memberships",
+    run: async ({ db }) => {
+      const slug = uniq("trk-cascade");
+      await db.insert(schema.problems).values({ slug, title: "X" });
+      const track = await createTrackRepo(db, { name: "Cascade Demo" });
+      const group = await addGroupRepo(db, { trackId: track.id, name: "G" });
+      await addProblemToGroupRepo(db, {
+        groupId: group.id,
+        problemSlug: asProblemSlug(slug),
+      });
+      await deleteTrackRepo(db, track.id);
+      const groupsLeft = await db
+        .select()
+        .from(schema.trackGroups)
+        .where(eq(schema.trackGroups.trackId, track.id));
+      const membershipsLeft = await db
+        .select()
+        .from(schema.trackGroupProblems)
+        .where(eq(schema.trackGroupProblems.groupId, group.id));
+      await db.delete(schema.problems).where(eq(schema.problems.slug, slug));
+      return {
+        ok: groupsLeft.length === 0 && membershipsLeft.length === 0,
+        detail: `groupsLeft=${groupsLeft.length} membershipsLeft=${membershipsLeft.length}`,
+      };
+    },
+  },
+
+  {
+    category: "Repos",
+    label: "tracks repo: deleteTrack refuses curated tracks",
+    run: async ({ db }) => {
+      const id = asTrackId(uniq("trk-curated"));
+      await createTrackRepo(db, { id, name: "Curated", isCurated: true });
+      let threw = false;
+      try {
+        await deleteTrackRepo(db, id);
+      } catch {
+        threw = true;
+      }
+      // Cleanup — bypass the repo guard.
+      await db.delete(schema.tracks).where(eq(schema.tracks.id, id));
+      return { ok: threw, detail: `threw=${threw}` };
+    },
+  },
+
+  {
+    category: "Repos",
+    label: "tracks repo: listTracks composes RQB tree in track/group/problem order",
+    run: async ({ db }) => {
+      const slugA = uniq("trk-rqb-a");
+      const slugB = uniq("trk-rqb-b");
+      await db.insert(schema.problems).values({ slug: slugA, title: "A" });
+      await db.insert(schema.problems).values({ slug: slugB, title: "B" });
+      const track = await createTrackRepo(db, { name: "RQB Demo" });
+      const group = await addGroupRepo(db, { trackId: track.id, name: "G1" });
+      await addProblemToGroupRepo(db, {
+        groupId: group.id,
+        problemSlug: asProblemSlug(slugA),
+      });
+      await addProblemToGroupRepo(db, {
+        groupId: group.id,
+        problemSlug: asProblemSlug(slugB),
+      });
+      const list = await listTracksRepo(db);
+      const mine = list.find((t) => t.id === track.id);
+      const slugs = mine?.groups[0]?.problems.map((p) => p.problemSlug) ?? [];
+      await deleteTrackRepo(db, track.id);
+      await db.delete(schema.problems).where(eq(schema.problems.slug, slugA));
+      await db.delete(schema.problems).where(eq(schema.problems.slug, slugB));
+      return {
+        ok: slugs.length === 2 && slugs[0] === slugA && slugs[1] === slugB,
+        detail: `slugs=${JSON.stringify(slugs)}`,
+      };
     },
   },
 ];

@@ -3,19 +3,17 @@ import { describe, expect, it } from "vitest";
 import {
   asCompanyId,
   asProblemSlug,
-  asSetGroupId,
   asTopicId,
+  asTrackGroupId,
+  asTrackId,
 } from "../../../src/domain/common/ids";
 import { applyEdit } from "../../../src/domain/problems/operations";
 import {
   buildProblemView,
-  buildStudySetView,
+  buildTrackView,
 } from "../../../src/domain/views/hydrate";
 import {
-  emptyAppDataV7,
   makeCompanyV7,
-  makeCourseStudySetV7,
-  makeCustomStudySetV7,
   makeProblemV7,
   makeTopicV7,
 } from "../../support/v7Fixtures";
@@ -23,6 +21,7 @@ import {
 import type { Company } from "../../../src/domain/companies/model";
 import type { Problem } from "../../../src/domain/problems/model";
 import type { Topic } from "../../../src/domain/topics/model";
+import type { TrackWithGroups } from "../../../src/domain/tracks/model";
 
 
 describe("v7 view hydration", () => {
@@ -72,45 +71,95 @@ describe("v7 view hydration", () => {
     expect(view.companies).toEqual([]);
   });
 
-  it("renders a course StudySet as a grouped view with unlocked flags", () => {
-    const data = emptyAppDataV7();
-    data.problemsBySlug[asProblemSlug("two-sum")] = makeProblemV7("two-sum");
-    data.problemsBySlug[asProblemSlug("three-sum")] = makeProblemV7("three-sum");
-
-    const set = makeCourseStudySetV7("course", "Course", [
-      { id: "course::0", problemSlugs: ["two-sum"] },
-      { id: "course::1", problemSlugs: ["three-sum"] },
-    ]);
-    set.groups[1].prerequisiteGroupIds = [asSetGroupId("course::0")];
-
-    const view = buildStudySetView({
-      studySet: set,
-      problemsBySlug: data.problemsBySlug,
+  it("hydrates a multi-group Track with per-group problem views", () => {
+    const trackId = asTrackId("course");
+    const track: TrackWithGroups = {
+      id: trackId,
+      name: "Course",
+      enabled: true,
+      isCurated: true,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      groups: [
+        {
+          id: asTrackGroupId("course::0"),
+          trackId,
+          name: "Arrays",
+          orderIndex: 0,
+          problems: [
+            {
+              groupId: asTrackGroupId("course::0"),
+              problemSlug: asProblemSlug("two-sum"),
+              orderIndex: 0,
+            },
+          ],
+        },
+        {
+          id: asTrackGroupId("course::1"),
+          trackId,
+          name: "Hashing",
+          orderIndex: 1,
+          problems: [
+            {
+              groupId: asTrackGroupId("course::1"),
+              problemSlug: asProblemSlug("three-sum"),
+              orderIndex: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const problemsBySlug: Record<string, Problem> = {
+      [asProblemSlug("two-sum")]: makeProblemV7("two-sum"),
+      [asProblemSlug("three-sum")]: makeProblemV7("three-sum"),
+    };
+    const view = buildTrackView({
+      track,
+      problemsBySlug,
       topicsById: {},
       companiesById: {},
-      progress: null,
     });
-
-    expect(view.kind).toBe("grouped");
-    if (view.kind !== "grouped") return;
     expect(view.groups).toHaveLength(2);
-    expect(view.groups[0].problems[0]?.slug).toBe(asProblemSlug("two-sum"));
-    expect(view.groups[1].unlocked).toBe(false); // prereq not satisfied
+    expect(view.groups[0].name).toBe("Arrays");
+    expect(view.groups[0].problems[0]?.slug).toBe("two-sum");
+    expect(view.groups[1].problems[0]?.slug).toBe("three-sum");
+    // Slim shape — no `kind`, no `unlocked`.
+    expect((view as unknown as { kind?: string }).kind).toBeUndefined();
   });
 
-  it("renders a custom flat set as kind 'flat' when no filter is set", () => {
-    const set = makeCustomStudySetV7("flat", "Flat", ["two-sum"]);
-    const data = emptyAppDataV7();
-    data.problemsBySlug[asProblemSlug("two-sum")] = makeProblemV7("two-sum");
-    const view = buildStudySetView({
-      studySet: set,
-      problemsBySlug: data.problemsBySlug,
+  it("treats single-group tracks as just a track with one group", () => {
+    const trackId = asTrackId("flat");
+    const track: TrackWithGroups = {
+      id: trackId,
+      name: "Flat",
+      enabled: true,
+      isCurated: false,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      groups: [
+        {
+          id: asTrackGroupId("flat::0"),
+          trackId,
+          orderIndex: 0,
+          problems: [
+            {
+              groupId: asTrackGroupId("flat::0"),
+              problemSlug: asProblemSlug("two-sum"),
+              orderIndex: 0,
+            },
+          ],
+        },
+      ],
+    };
+    const view = buildTrackView({
+      track,
+      problemsBySlug: {
+        [asProblemSlug("two-sum")]: makeProblemV7("two-sum"),
+      },
       topicsById: {},
       companiesById: {},
-      progress: null,
     });
-    expect(view.kind).toBe("flat");
-    if (view.kind !== "flat") return;
-    expect(view.problems[0]?.slug).toBe(asProblemSlug("two-sum"));
+    expect(view.groups).toHaveLength(1);
+    expect(view.groups[0].problems[0]?.slug).toBe("two-sum");
   });
 });

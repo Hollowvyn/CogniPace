@@ -1,6 +1,6 @@
 /**
  * View-layer hydration helpers. Background view-builders call these to
- * convert raw entities into the UI-friendly `ProblemView` / `StudySetView`
+ * convert raw entities into the UI-friendly `ProblemView` / `TrackView`
  * shapes (FK ids resolved to display labels, flag maps flattened).
  *
  * UI components must NOT call these directly — they consume the result
@@ -9,21 +9,19 @@
 import { getStudyStateSummary } from "../fsrs/studyState";
 import { slugToTitle, slugToUrl } from "../problem/slug";
 import { listEditedFields } from "../problems/operations";
-import { isGroupUnlocked } from "../sets/prerequisites";
-import { resolveStudySetSlugs } from "../sets/services/resolveSlugs";
 
 import type { Company } from "../companies/model";
 import type { Problem, EditableProblemField } from "../problems/model";
-import type { StudySet } from "../sets/model";
-import type { StudySetProgress } from "../sets/progress";
 import type { StudyState } from "../study-state/model";
 import type { Topic } from "../topics/model";
+import type { TrackWithGroups } from "../tracks/model";
 import type {
   CompanyLabel,
   ProblemView,
-  StudySetView,
   StudyStateView,
   TopicLabel,
+  TrackGroupView,
+  TrackView,
 } from "../views";
 
 const EDITABLE_FIELDS_ORDER: readonly EditableProblemField[] = [
@@ -86,39 +84,36 @@ export function buildStudyStateView(
   };
 }
 
-export interface BuildStudySetViewInput {
-  studySet: StudySet;
+export interface BuildTrackViewInput {
+  track: TrackWithGroups;
   problemsBySlug: Record<string, Problem>;
   topicsById: Record<string, Topic>;
   companiesById: Record<string, Company>;
-  progress: StudySetProgress | null;
   /** SSoT for "is this slug done?" — derived from the user's review history,
-   * not the StudySetProgress aggregate, so progress matches what the rest of
-   * the app shows the moment a review is recorded. Optional for the
-   * v7-first tests that don't carry study-state context yet; treated as
-   * empty when omitted. */
+   * so per-group completion counts match the rest of the UI the moment a
+   * review is recorded. Optional for callers that don't carry study-state
+   * context yet (treated as empty when omitted). */
   studyStatesBySlug?: Record<string, StudyState>;
   now?: Date;
 }
 
-/** Hydrates a StudySet into its display-ready view shape. */
-export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
+/** Hydrates a Track (slim, charter-pure) into its display-ready view shape. */
+export function buildTrackView(input: BuildTrackViewInput): TrackView {
   const {
-    studySet,
+    track,
     problemsBySlug,
     topicsById,
     companiesById,
-    progress,
     studyStatesBySlug,
     now,
   } = input;
   const studyStates = studyStatesBySlug ?? {};
   const isSlugDone = (slug: string): boolean =>
     getStudyStateSummary(studyStates[slug], now).isStarted;
-  // Tracks tab always shows every curated slug — even ones the user has
-  // never opened. The Problem entity might not exist yet (fresh install
-  // pre-seed, mid-migration, the user wiped data), so synthesize a
-  // minimal display view from the slug itself when needed. Real details
+  // The Tracks tab always shows every curated slug — even ones the user
+  // has never opened. The Problem entity might not exist yet (fresh
+  // install pre-seed, mid-migration, user wiped data), so synthesize a
+  // minimal display view from the slug itself when missing. Real details
   // get filled in when the user opens the page.
   const hydrate = (slug: string): ProblemView => {
     const p = problemsBySlug[slug];
@@ -126,61 +121,34 @@ export function buildStudySetView(input: BuildStudySetViewInput): StudySetView {
     return synthesizeProblemView(slug);
   };
 
-  if (studySet.kind === "course") {
+  const groups: TrackGroupView[] = track.groups.map((group) => {
+    const slugs = group.problems.map((p) => p.problemSlug);
+    const completedCount = slugs.reduce(
+      (acc, slug) => (isSlugDone(slug) ? acc + 1 : acc),
+      0,
+    );
+    const displayName =
+      group.name ??
+      (group.topicId
+        ? (topicsById[group.topicId]?.name ?? String(group.id))
+        : track.name);
     return {
-      kind: "grouped",
-      id: studySet.id,
-      name: studySet.name,
-      description: studySet.description,
-      enabled: studySet.enabled,
-      groups: studySet.groups.map((group) => {
-        const completedCount = group.problemSlugs.reduce(
-          (acc, slug) => (isSlugDone(slug) ? acc + 1 : acc),
-          0,
-        );
-        return {
-          id: group.id,
-          name:
-            group.nameOverride ??
-            (group.topicId
-              ? (topicsById[group.topicId]?.name ?? group.id)
-              : group.id),
-          prerequisiteGroupIds: group.prerequisiteGroupIds,
-          unlocked: isGroupUnlocked(studySet, group, progress),
-          problems: group.problemSlugs.map(hydrate),
-          completedCount,
-          totalCount: group.problemSlugs.length,
-        };
-      }),
+      id: group.id,
+      name: displayName,
+      topicId: group.topicId ?? null,
+      problems: slugs.map(hydrate),
+      completedCount,
+      totalCount: slugs.length,
     };
-  }
+  });
 
-  if (studySet.kind === "custom" && !studySet.filter) {
-    // Flat custom set with explicit slugs — the synthetic flat group is
-    // the only group; project it as a flat view.
-    return {
-      kind: "flat",
-      id: studySet.id,
-      name: studySet.name,
-      description: studySet.description,
-      enabled: studySet.enabled,
-      problems: studySet.groups[0]?.problemSlugs
-        ? studySet.groups[0].problemSlugs.map(hydrate)
-        : [],
-    };
-  }
-
-  // Derived set (or custom-with-filter): resolve slugs live and present
-  // a flat list with a human-readable filter description.
-  const slugs = resolveStudySetSlugs({ studySet, problemsBySlug });
   return {
-    kind: "derived",
-    id: studySet.id,
-    name: studySet.name,
-    description: studySet.description,
-    enabled: studySet.enabled,
-    filterDescription: describeFilter(studySet, topicsById, companiesById),
-    problems: slugs.map(hydrate),
+    id: track.id,
+    name: track.name,
+    description: track.description,
+    enabled: track.enabled,
+    isCurated: track.isCurated,
+    groups,
   };
 }
 
@@ -240,38 +208,3 @@ function deriveEditedFields(problem: Problem): EditableProblemField[] {
   return EDITABLE_FIELDS_ORDER.filter((field) => edited.includes(field));
 }
 
-function describeFilter(
-  studySet: StudySet,
-  topicsById: Record<string, Topic>,
-  companiesById: Record<string, Company>,
-): string {
-  if (!("filter" in studySet) || !studySet.filter) return "";
-  const filter = studySet.filter;
-  const parts: string[] = [];
-  if ("companyIds" in filter && filter.companyIds && filter.companyIds.length > 0) {
-    const names = filter.companyIds
-      .map((id) => companiesById[id]?.name ?? id)
-      .join(", ");
-    parts.push(`Companies: ${names}`);
-  }
-  if ("topicIds" in filter && filter.topicIds && filter.topicIds.length > 0) {
-    const names = filter.topicIds
-      .map((id) => topicsById[id]?.name ?? id)
-      .join(", ");
-    parts.push(`Topics: ${names}`);
-  }
-  if (
-    "difficulties" in filter &&
-    filter.difficulties &&
-    filter.difficulties.length > 0
-  ) {
-    parts.push(`Difficulty: ${filter.difficulties.join(", ")}`);
-  }
-  if (
-    filter.kind === "custom" &&
-    filter.includePremium === false
-  ) {
-    parts.push("Free only");
-  }
-  return parts.join(" · ");
-}

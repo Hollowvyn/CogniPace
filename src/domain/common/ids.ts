@@ -12,8 +12,8 @@ type Brand<T, B> = T & { readonly __brand: B };
 export type ProblemSlug = Brand<string, "ProblemSlug">;
 export type TopicId = Brand<string, "TopicId">;
 export type CompanyId = Brand<string, "CompanyId">;
-export type StudySetId = Brand<string, "StudySetId">;
-export type SetGroupId = Brand<string, "SetGroupId">;
+export type TrackId = Brand<string, "TrackId">;
+export type TrackGroupId = Brand<string, "TrackGroupId">;
 
 /** Normalize and brand an arbitrary string as a Problem slug. */
 export function asProblemSlug(value: string): ProblemSlug {
@@ -30,24 +30,24 @@ export function asCompanyId(value: string): CompanyId {
   return slugify(value) as CompanyId;
 }
 
-/** Brand a slug-style or UUID string as a StudySet id. */
-export function asStudySetId(value: string): StudySetId {
-  return value.trim() as StudySetId;
+/** Brand a slug-style or UUID string as a Track id. */
+export function asTrackId(value: string): TrackId {
+  return value.trim() as TrackId;
 }
 
-/** Brand a UUID string as a SetGroup id. */
-export function asSetGroupId(value: string): SetGroupId {
-  return value.trim() as SetGroupId;
+/** Brand a UUID string as a TrackGroup id. */
+export function asTrackGroupId(value: string): TrackGroupId {
+  return value.trim() as TrackGroupId;
 }
 
-/** Generate a fresh UUID-based StudySet id (for user-created sets). */
-export function newStudySetId(): StudySetId {
-  return crypto.randomUUID() as StudySetId;
+/** Generate a fresh UUID-based Track id (for user-created tracks). */
+export function newTrackId(): TrackId {
+  return crypto.randomUUID() as TrackId;
 }
 
-/** Generate a fresh UUID-based SetGroup id. */
-export function newSetGroupId(): SetGroupId {
-  return crypto.randomUUID() as SetGroupId;
+/** Generate a fresh UUID-based TrackGroup id. */
+export function newTrackGroupId(): TrackGroupId {
+  return crypto.randomUUID() as TrackGroupId;
 }
 
 /**

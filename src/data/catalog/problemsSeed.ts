@@ -19,7 +19,7 @@ import { slugToTitle, slugToUrl } from "../../domain/problem/slug";
 
 import { resolveSeedTopicId } from "./topicsSeed";
 
-import type { CatalogPlan } from "./studySetsSeed";
+import type { CatalogPlan } from "./curatedSets";
 import type { Difficulty, Problem } from "../../domain/types";
 
 interface ProblemAccumulator {

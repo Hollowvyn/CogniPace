@@ -1,16 +1,13 @@
 /**
  * v7 AppData root — the single object persisted to extension storage.
- * Each `Record<id, Entity>` field corresponds to one aggregate's "table"
- * in the eventual SQLite migration. Background mutators read and return
- * an `AppDataV7` draft inside `mutateAppData`; only `appDataRepository`
- * performs storage IO.
+ * Post-Phase-5: most aggregates (problems, study states, topics, companies,
+ * tracks, settings) are SSoT in SQLite. The fields kept here exist solely
+ * for transitional hydration into the legacy `AppData` shape that
+ * non-migrated callers still read. Phase 8 will rip the blob entirely.
  */
 import type { ActiveFocus } from "../active-focus/model";
-import type { SetGroupId, StudySetId } from "../common/ids";
 import type { Company } from "../companies/model";
 import type { Problem } from "../problems/model";
-import type { StudySet } from "../sets/model";
-import type { StudySetProgress } from "../sets/progress";
 import type { UserSettings } from "../settings/model";
 import type { StudyState } from "../study-state/model";
 import type { Topic } from "../topics/model";
@@ -27,36 +24,25 @@ export interface AppDataV7 {
   topicsById: Record<string, Topic>;
   /** Company registry (curated seed + custom user companies). */
   companiesById: Record<string, Company>;
-  /** StudySet aggregate (courses + flat + derived). */
-  studySetsById: Record<string, StudySet>;
-  /** User-curated ordering across all StudySets. */
-  studySetOrder: StudySetId[];
-  /** Per-StudySet progress, lazily created when the user focuses a set. */
-  studySetProgressById: Record<string, StudySetProgress>;
-  /** UserSettings (now carries `activeFocus` instead of `activeTrackId`). */
+  /** UserSettings (carries `activeFocus`). */
   settings: UserSettings;
   /** Optional ISO timestamp recorded by the v6→v7 migration. */
   lastMigrationAt?: string;
 }
 
-export type StudySetIdRef = StudySetId;
-export type SetGroupIdRef = SetGroupId;
 /** Field names the import/export layer treats as aggregate roots. */
 export const APP_DATA_AGGREGATE_KEYS = [
   "problemsBySlug",
   "studyStatesBySlug",
   "topicsById",
   "companiesById",
-  "studySetsById",
-  "studySetOrder",
-  "studySetProgressById",
 ] as const satisfies readonly (keyof AppDataV7)[];
 
 export type AppDataAggregateKey = (typeof APP_DATA_AGGREGATE_KEYS)[number];
 
 /**
  * The active-focus discriminator currently has only one variant
- * (`studySet`); kept as a discriminated union for forward-compat. Re-export
+ * (`track`); kept as a discriminated union for forward-compat. Re-export
  * here for convenience of repository consumers.
  */
 export type { ActiveFocus };

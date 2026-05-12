@@ -18,17 +18,98 @@
 
 ## TL;DR
 
-The CogniPace data layer has migrated from a single `chrome.storage.local`
-JSON blob (`leetcode_spaced_repetition_data_v2`) to SQLite-WASM + Drizzle
-ORM through a `sqlite-proxy` adapter. Three of five Phase 5 aggregates
-(**topics, companies, problems, settings**) live entirely in SQLite, with
-snapshot persistence (survives SW restart) and real-time reactivity
-(open UI tabs auto-refresh on mutation). Two remain: **studyStates** and
-**tracks (StudySets)**, then Phase 8 cleanup.
+The CogniPace data layer has fully migrated from a single
+`chrome.storage.local` JSON blob (`leetcode_spaced_repetition_data_v2`)
+to SQLite-WASM + Drizzle ORM through a `sqlite-proxy` adapter. **All
+five Phase 5 aggregates** — topics, companies, problems, settings,
+studyStates, and now **tracks** (the slim charter-pure replacement for
+the legacy `StudySet` discriminated union) — live entirely in SQLite,
+with snapshot persistence (survives SW restart) and real-time
+reactivity (open UI tabs auto-refresh on mutation).
 
-**Branch:** `feat/drizzle-rebuild` (off `main`). 24 commits.
+The `StudySet` domain, the v7 blob's `studySetsById` /
+`studySetOrder` / `studySetProgressById` fields, and every
+`*StudySet*` repo file have been deleted. Phase 5 is **complete**.
 
-**Build & test:** `npm run check` passes (lint + typecheck + 244+ tests + esbuild build).
+What's left: Phase 8 (rip the remaining v7 blob plumbing —
+`getAppData` / `mutateAppData` / `STORAGE_KEY` / dormant AppData
+fields) and Phase 9 (UDF façade — hide `Db` from handler signatures
+behind per-aggregate APIs).
+
+**Branches in flight:**
+- `feat/drizzle-rebuild` — Phases 0–7 + Phase 5 (topics, companies,
+  problems, settings, studyStates). Merged to `main` on personal
+  laptop.
+- `feat/tracks-slice` — Phase 5 tracks slice (4 commits + 1 dbDebug
+  fix). Currently unmerged.
+
+**Build & test:** `npm run check` passes (lint + typecheck + 240
+tests + esbuild build) on every commit of the tracks slice.
+
+---
+
+## Tracks slice — what landed + what's next
+
+The Phase 5 tracks slice (the final aggregate to migrate) is **complete**
+on branch `feat/tracks-slice`. Five commits, ~2,000 net LoC deleted
+(the slim charter-pure Track shape weighs less than the old discriminated
+`StudySet` did, and the slice took the v7 blob's three set fields with
+it).
+
+### What's in the slice
+
+- **New slim Track domain** (`src/domain/tracks/`) — replaces `StudySet`'s
+  `course | flat | grouped | derived` discriminated union. A Track is a
+  named, ordered list of TrackGroups; each group is an ordered list of
+  problems. No `kind`, no `filter` union, no prerequisite DAG, no
+  separate `StudySetProgress` aggregate.
+- **SQLite repo + seed** (`src/data/tracks/`) — CRUD + group/problem
+  mutators, `listTracks()` via RQB (the one place the data-shape doc
+  earmarked for the relational query builder), `seedCatalogTracks()`
+  idempotent boot seed.
+- **Curated catalog seeded on boot** — Blind75, NeetCode150,
+  NeetCode250, LeetCode75, LeetCode150, ByteByteGo101, Grind75 all
+  flagged `is_curated=1`.
+- **Track progress is derived** (`src/domain/tracks/progress.ts`) —
+  `completedSlugs` / `startedAt` / `lastInteractedAt` computed live
+  from `study_states.attempt_history`. No table.
+- **`StudySetView` → `TrackView`** — every Track is grouped;
+  single-group tracks render without a Tabs bar in the dashboard.
+- **`activeFocus.groupId` is the "where am I" pointer** — when the user
+  opens or reviews a problem from a track context, the handler just
+  updates `settings.activeFocus`. The deleted `trackQuestionLaunch`
+  message used to write to a parallel `StudySetProgress` aggregate
+  that no longer exists.
+- **Renamed**: `StudySetId`/`SetGroupId` → `TrackId`/`TrackGroupId`,
+  message types `CREATE_STUDY_SET`/`UPDATE_STUDY_SET`/`DELETE_STUDY_SET`
+  → `CREATE_TRACK`/`UPDATE_TRACK`/`DELETE_TRACK`,
+  `TRACK_COURSE_QUESTION_LAUNCH` deleted.
+- **Deleted**: `src/domain/sets/` (entire dir), `studySetsSeed.ts`,
+  `v7/studySetRepository.ts`, `v7/studySetProgressRepository.ts`, dead
+  `getCurriculumRecommendations`, the three v7 blob track fields from
+  `AppDataV7` + `AppData`, and the related test files.
+
+### Verification
+
+- 15 better-sqlite3 tests in `tests/data/tracks/repository.test.ts`
+- 4 wasm-runtime checks in `src/entrypoints/dbDebug.ts` under the
+  "Repos" category (seed idempotency, FK cascade, curated-protection,
+  RQB ordering)
+- `npm run check` is green on every commit: lint + typecheck + 240
+  tests + esbuild build.
+
+### What's deferred
+
+- **Tracks UI** — the "+ New Track…" button in the dashboard is still a
+  `disabled` "Coming next" placeholder. Creating, editing, reordering,
+  and deleting custom tracks needs UI work. The repo + message
+  handlers are all in place, so this is pure product work.
+- **Phase 8** — much smaller now. Delete `appDataRepository.ts`'s
+  `getAppData`/`mutateAppData`/`STORAGE_KEY`, drop the residual
+  hydrated fields from `AppData`, retire `v7/appDataRepository.ts` and
+  the v6 `problemRepository.ts`. ~300–500 LoC.
+- **Phase 9** — UDF façade refactor. Standing rule from then on. See
+  "Phase 9 outline" below.
 
 ---
 
@@ -41,12 +122,13 @@ snapshot persistence (survives SW restart) and real-time reactivity
 | 2 — Schema + migration | ✅ done | 9 tables, 11 indexes, 6 FKs in `0000_initial.sql` |
 | 3 — sqlite-proxy + wasm client | ✅ done | Verified in real Chrome MV3 |
 | 4 — Topics end-to-end | ✅ done | First vertical slice |
-| **5 — Replicate the pattern** | **🔄 4/5** | companies ✅, settings ✅, problems ✅, studyStates ✅ — **tracks 🔲** |
+| **5 — Replicate the pattern** | **✅ 5/5** | companies ✅, settings ✅, problems ✅, studyStates ✅, tracks ✅ |
 | 6 — Snapshot persistence | ✅ done | `cognipace_db_snapshot_v1` + fingerprint wipe-on-schema-change |
 | 7 — Reactivity (lite) | ✅ done | `cognipace_db_tick` broadcast; existing `subscribeToAppDataChanges` picks it up |
 | 7 — Reactivity (full) | ⏸️ deferred | `chrome.runtime.Port` + TanStack adapter — only if lite feels sluggish |
-| 8 — Cleanup v6/v7 blob | 🔲 pending | Delete `getAppData` / `mutateAppData` / `STORAGE_KEY`; remove dormant fields |
+| 8 — Cleanup v6/v7 blob | 🔲 pending (much smaller now) | Delete `getAppData` / `mutateAppData` / `STORAGE_KEY`; remove the dormant `problemsBySlug` / `studyStatesBySlug` / `topicsById` / `companiesById` fields from AppData. The tracks slice already took the three StudySet fields with it, so this is ~300–500 LoC of deletions. |
 | **9 — Repository façade** | **🔲 pending (new)** | Hide `Db` from handlers; collapse the data-access debt the slice-by-slice migration accumulated. See "Phase 9 outline" below. |
+| **Tracks UI follow-up** | 🔲 product backlog | Create/edit/delete/reorder custom tracks. Repo + handlers are wired; the dashboard's "+ New Track…" button is still a `disabled` placeholder. Pure feature work — not blocked by the data layer. |
 
 ---
 
@@ -77,6 +159,23 @@ fdaec4b feat(db): real-time UI reactivity via cognipace_db_tick broadcast (Phase
 7fa5e82 feat(problems): SQLite reads + edit/assign writes (Phase 5 problems, step 1/2)
 6472e12 feat(problems): drop v7 problem blob; all writes route through SQLite (step 2/2)
 708c741 fix(problems): fail loud when editing an uninitialised problem
+db5ac4a docs(drizzle): full continuation doc for resuming the rebuild
+8a8df1e feat(studyStates): SQLite is the source of truth for StudyState + attempt_history (Phase 5)
+519a3c9 fix(overlay): getProblemContext reads from SQLite (Phase 5 regression)
+fd1eef2 fix(handlers): audit-uncovered Phase 5 regressions in reset + delete-set
+0d61222 docs(drizzle): add Phase 9 (repository façade) to the status doc
+de34ef4 docs(drizzle): codify the standing façade rule for post-Phase-9 work
+f97b230 docs(drizzle): elevate Phase 9 standing rule from façade to UDF
+
+# merged to main as PR #163 (squashed):
+d4c0d72 feat(db): rebuild data layer on SQLite-WASM + Drizzle (Phases 0–7) (#163)
+
+# feat/tracks-slice branch (Phase 5 tracks slice):
+f24fac9 feat(tracks): slim Track domain + SQLite repo + catalog seed (Phase 5 tracks, step 1/3)
+03989de feat(tracks): full rename to Track + handlers/views/UI read SQLite (Phase 5 tracks, step 2/3)
+1de17ac feat(tracks): delete StudySet domain + v7 blob track fields (Phase 5 tracks, step 3/3)
+319f178 feat(tracks): 3 dbDebug Repos checks for the tracks slice runtime path
+93dbd70 fix(dbDebug): seed-tracks check asserts only on the seeded ids
 ```
 
 ---

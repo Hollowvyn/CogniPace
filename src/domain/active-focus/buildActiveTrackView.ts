@@ -1,38 +1,38 @@
 /**
- * v7 derivation of the dashboard "active track" view. Replaces the v6
- * `buildActiveTrackView` so popup, Overview, and Tracks-tab surfaces all
- * read from the same StudySet + StudyState SSoT. Output shape matches
- * `ActiveTrackView` (renamed `ActiveTrackView` in a later phase) so UI
- * consumers don't move.
+ * Builds the dashboard / popup `ActiveTrackView` from the slim Track
+ * domain (post-Phase-5 tracks slice). Reads through the hydrated
+ * `TrackWithGroups` entity plus the user's study-state map; per-group
+ * completion is derived live — there is no `StudySetProgress` table any
+ * more.
+ *
+ * The user's "where am I" pointer:
+ *   - `activeFocus.groupId` (persisted in UserSettings) takes priority.
+ *   - Falls back to the first group with at least one unfinished slug.
+ *   - Falls back further to the first group in the track.
  */
 import { getStudyStateSummary } from "../fsrs/studyState";
 import {
   findCurrentSlugInGroup,
-  firstIncompleteGroupId,
   trackQuestionStatus,
 } from "../views/questionStatus";
 
 import type { ActiveFocus } from "./model";
-import type { StudySet } from "../sets/model";
-import type { StudySetProgress } from "../sets/progress";
+import type { TrackGroupWithProblems, TrackWithGroups } from "../tracks/model";
 import type { Problem, StudyState } from "../types";
 import type {
   ActiveTrackView,
   TrackChapterView,
   TrackQuestionView,
-  StudySetView,
+  TrackView,
 } from "../views";
 
 export interface BuildActiveTrackViewInput {
   activeFocus: ActiveFocus;
-  /** Hydrated track view for the active focus, if any. */
-  trackView: StudySetView | null;
-  /** Raw StudySet entity — drives per-question status from
-   * `group.problemSlugs`. */
-  trackEntity: StudySet | null;
-  /** Optional v7 progress aggregate — used for `activeChapterId` selection
-   * via `progress.activeGroupId`. Falls back to first incomplete group. */
-  trackProgress: StudySetProgress | null;
+  /** Hydrated view of the active track (matches the entity). */
+  trackView: TrackView | null;
+  /** Raw Track entity — drives per-question status from each group's
+   * `problems` membership list. */
+  trackEntity: TrackWithGroups | null;
   studyStatesBySlug: Record<string, StudyState>;
   problemsBySlug: Record<string, Problem>;
   now?: Date;
@@ -45,14 +45,13 @@ export function buildActiveTrackView(
     activeFocus,
     trackView,
     trackEntity,
-    trackProgress,
     studyStatesBySlug,
     problemsBySlug,
     now,
   } = input;
 
   if (!activeFocus || activeFocus.kind !== "track") return null;
-  if (!trackView || trackView.kind !== "grouped") return null;
+  if (!trackView) return null;
   if (!trackEntity) return null;
 
   const groups = trackEntity.groups;
@@ -60,10 +59,10 @@ export function buildActiveTrackView(
 
   const activeGroupId =
     activeFocus.groupId ??
-    trackProgress?.activeGroupId ??
     firstIncompleteGroupId(groups, studyStatesBySlug, now) ??
     groups[0].id;
-  const activeGroup = groups.find((group) => group.id === activeGroupId) ?? groups[0];
+  const activeGroup =
+    groups.find((group) => group.id === activeGroupId) ?? groups[0];
 
   const trackGroupViewsById = new Map(
     trackView.groups.map((view) => [view.id, view]),
@@ -77,8 +76,8 @@ export function buildActiveTrackView(
 
   const chapters: TrackChapterView[] = groups.map((group, index) => {
     const view = trackGroupViewsById.get(group.id);
-    const groupName = view?.name ?? group.nameOverride ?? group.id;
-    const slugs = group.problemSlugs as readonly string[];
+    const groupName = view?.name ?? group.name ?? group.id;
+    const slugs = group.problems.map((m) => m.problemSlug) as readonly string[];
     const completedInGroup = slugs.reduce(
       (acc, slug) =>
         getStudyStateSummary(studyStatesBySlug[slug], now).isStarted
@@ -101,9 +100,7 @@ export function buildActiveTrackView(
       const summary = getStudyStateSummary(studyStatesBySlug[slug], now);
       if (summary.isDue) dueCount += 1;
       const problem = problemsBySlug[slug];
-      const titleOverride = group.problemTitleOverrides?.[slug];
-      const fallbackTitle =
-        titleOverride ?? problem?.title ?? slugToReadableTitle(slug);
+      const fallbackTitle = problem?.title ?? slugToReadableTitle(slug);
       const fallbackUrl =
         problem?.url ?? `https://leetcode.com/problems/${slug}/`;
       const difficulty = problem?.difficulty ?? "Unknown";
@@ -165,8 +162,10 @@ export function buildActiveTrackView(
     dueCount,
     totalChapters: groups.length,
     completedChapters: totalCompletedGroups,
-    nextQuestionTitle: nextQuestion ? (nextQuestion as TrackQuestionView).title : undefined,
-    nextChapterTitle: activeGroupView?.name ?? activeGroup.id,
+    nextQuestionTitle: nextQuestion
+      ? (nextQuestion as TrackQuestionView).title
+      : undefined,
+    nextChapterTitle: activeGroupView?.name ?? activeGroup.name ?? activeGroup.id,
     activeChapterId: activeGroup.id,
     activeChapterTitle: activeGroupView?.name ?? null,
     nextQuestion,
@@ -184,9 +183,8 @@ function slugToReadableTitle(slug: string): string {
 
 /** Returns the slug picked as next-up for a focus, or null. */
 export function nextSlugForFocus(
-  trackEntity: StudySet | null,
+  trackEntity: TrackWithGroups | null,
   activeFocus: ActiveFocus,
-  trackProgress: StudySetProgress | null,
   studyStatesBySlug: Record<string, StudyState>,
   now?: Date,
 ): string | null {
@@ -195,13 +193,30 @@ export function nextSlugForFocus(
   if (groups.length === 0) return null;
   const activeGroupId =
     activeFocus.groupId ??
-    trackProgress?.activeGroupId ??
     firstIncompleteGroupId(groups, studyStatesBySlug, now) ??
     groups[0].id;
   const activeGroup = groups.find((g) => g.id === activeGroupId) ?? groups[0];
-  return findCurrentSlugInGroup(
-    activeGroup.problemSlugs as readonly string[],
-    studyStatesBySlug,
-    now,
-  );
+  const slugs = activeGroup.problems.map((m) => m.problemSlug) as readonly string[];
+  return findCurrentSlugInGroup(slugs, studyStatesBySlug, now);
+}
+
+/**
+ * Picks the first group with at least one un-started slug. Used as the
+ * fallback when the user has never explicitly picked a group within the
+ * track (no `activeFocus.groupId`).
+ */
+function firstIncompleteGroupId(
+  groups: ReadonlyArray<TrackGroupWithProblems>,
+  studyStatesBySlug: Record<string, StudyState>,
+  now?: Date,
+): string | undefined {
+  for (const group of groups) {
+    const slugs = group.problems.map((m) => m.problemSlug);
+    if (slugs.length === 0) continue;
+    const anyUnstarted = slugs.some(
+      (slug) => !getStudyStateSummary(studyStatesBySlug[slug], now).isStarted,
+    );
+    if (anyUnstarted) return group.id;
+  }
+  return undefined;
 }
