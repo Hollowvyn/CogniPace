@@ -53,6 +53,12 @@ import {
   seedInitialSettings,
 } from "../data/settings/repository";
 import {
+  appendAttempt,
+  ensureStudyState,
+  getStudyState,
+  upsertStudyState,
+} from "../data/studyStates/repository";
+import {
   getTopic,
   listTopics,
   removeTopic,
@@ -1339,6 +1345,125 @@ const allChecks: CheckDef[] = [
       return {
         ok: ghost === undefined,
         detail: `getProblem(ghost) returned ${ghost === undefined ? "undefined ✓" : JSON.stringify(ghost)}`,
+      };
+    },
+  },
+
+  // -------------------- Repos: studyStates (Phase 5) --------------------
+  {
+    category: "Repos",
+    label: "studyStates repo: ensureStudyState materialises a default + is idempotent",
+    run: async ({ db }) => {
+      const slug = asProblemSlug(uniq("repo-state"));
+      await importProblem(db, { slug });
+      const first = await ensureStudyState(db, slug);
+      const second = await ensureStudyState(db, slug);
+      // Cleanup
+      await removeProblem(db, slug);
+      const ok =
+        first.suspended === false &&
+        first.attemptHistory.length === 0 &&
+        first.createdAt === second.createdAt;
+      return {
+        ok,
+        detail: `first.suspended=${first.suspended} attempts=${first.attemptHistory.length} createdAt matches=${first.createdAt === second.createdAt}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "studyStates repo: upsertStudyState round-trips the FSRS card",
+    run: async ({ db }) => {
+      const slug = asProblemSlug(uniq("repo-fsrs"));
+      await importProblem(db, { slug });
+      const fresh = await ensureStudyState(db, slug);
+      const next = {
+        ...fresh,
+        suspended: true,
+        lastRating: 3 as const,
+        notes: "round-trip",
+        fsrsCard: {
+          due: "2026-06-01T00:00:00.000Z",
+          stability: 4.5,
+          difficulty: 2.1,
+          elapsedDays: 1,
+          scheduledDays: 7,
+          learningSteps: 0,
+          reps: 2,
+          lapses: 0,
+          state: "Review" as const,
+          lastReview: "2026-05-25T00:00:00.000Z",
+        },
+      };
+      const saved = await upsertStudyState(db, slug, next);
+      // Cleanup
+      await removeProblem(db, slug);
+      const ok =
+        saved.suspended === true &&
+        saved.lastRating === 3 &&
+        saved.notes === "round-trip" &&
+        saved.fsrsCard?.stability === 4.5 &&
+        saved.fsrsCard?.state === "Review";
+      return {
+        ok,
+        detail: `suspended=${saved.suspended} lastRating=${saved.lastRating} fsrs.stability=${saved.fsrsCard?.stability}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "studyStates repo: appendAttempt + getStudyState joins attempts in order",
+    run: async ({ db }) => {
+      const slug = asProblemSlug(uniq("repo-attempts"));
+      await importProblem(db, { slug });
+      await ensureStudyState(db, slug);
+      await appendAttempt(db, slug, {
+        reviewedAt: "2026-05-10T00:00:00.000Z",
+        rating: 1,
+        mode: "FULL_SOLVE",
+      });
+      await appendAttempt(db, slug, {
+        reviewedAt: "2026-05-12T00:00:00.000Z",
+        rating: 3,
+        mode: "RECALL",
+        logSnapshot: { notes: "second pass" },
+      });
+      const state = await getStudyState(db, slug);
+      // Cleanup
+      await removeProblem(db, slug);
+      const ok =
+        state?.attemptHistory.length === 2 &&
+        state.attemptHistory[0].rating === 1 &&
+        state.attemptHistory[1].rating === 3 &&
+        state.attemptHistory[1].logSnapshot?.notes === "second pass";
+      return {
+        ok,
+        detail: `attempts=${state?.attemptHistory.length} order=${state?.attemptHistory.map((a) => a.rating).join(",")}`,
+      };
+    },
+  },
+  {
+    category: "Repos",
+    label: "studyStates repo: FK cascade — deleting problem nukes state + attempts",
+    run: async ({ db }) => {
+      const slug = asProblemSlug(uniq("repo-cascade"));
+      await importProblem(db, { slug });
+      await ensureStudyState(db, slug);
+      await appendAttempt(db, slug, {
+        reviewedAt: "2026-05-10T00:00:00.000Z",
+        rating: 1,
+        mode: "FULL_SOLVE",
+      });
+      await removeProblem(db, slug);
+      const state = await getStudyState(db, slug);
+      const attemptRows = await db
+        .select()
+        .from(schema.attemptHistory)
+        .where(eq(schema.attemptHistory.problemSlug, slug));
+      const ok = state === undefined && attemptRows.length === 0;
+      return {
+        ok,
+        detail: `state=${state === undefined ? "gone ✓" : "still present"} attempts=${attemptRows.length}`,
       };
     },
   },

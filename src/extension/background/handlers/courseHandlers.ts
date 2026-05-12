@@ -7,16 +7,13 @@ import {
 } from "../../../data/problems/repository";
 import {
   mergeSettings,
-  mutateAppData,
 } from "../../../data/repositories/appDataRepository";
-import {
-  ensureStudyState,
-  parseProblemInput,
-} from "../../../data/repositories/problemRepository";
+import { parseProblemInput } from "../../../data/repositories/problemRepository";
 import {
   getUserSettings,
   saveUserSettings,
 } from "../../../data/settings/repository";
+import { ensureStudyState } from "../../../data/studyStates/repository";
 import { asProblemSlug } from "../../../domain/common/ids";
 import { createInitialUserSettings } from "../../../domain/settings";
 import { ok } from "../responses";
@@ -128,22 +125,12 @@ export async function addProblemByInput(payload: {
 }) {
   const parsed = parseProblemInput(payload.input);
   const { db } = await getDb();
+  const branded = asProblemSlug(parsed.slug);
   const problem = await importProblem(db, {
     slug: parsed.slug,
     url: parsed.url,
     topicIds: payload.topics,
   });
-  // StudyState still in v7 blob; Phase 5 studyStates slice will move it.
-  const updated = await mutateAppData((data) => {
-    data.problemsBySlug[parsed.slug] = problem;
-    const state = ensureStudyState(data, parsed.slug);
-    data.studyStatesBySlug[parsed.slug] = state;
-    return data;
-  });
-
-  return ok({
-    slug: parsed.slug,
-    problem,
-    studyState: updated.studyStatesBySlug[parsed.slug],
-  });
+  const studyState = await ensureStudyState(db, branded);
+  return ok({ slug: parsed.slug, problem, studyState });
 }

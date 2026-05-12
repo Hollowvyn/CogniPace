@@ -4,6 +4,7 @@ import { getDb } from "../../../data/db/instance";
 import { listProblems } from "../../../data/problems/repository";
 import { getAppData } from "../../../data/repositories/appDataRepository";
 import { getUserSettings } from "../../../data/settings/repository";
+import { listStudyStates } from "../../../data/studyStates/repository";
 import { listTopics } from "../../../data/topics/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import {
@@ -47,6 +48,7 @@ async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   const companies = await listCompanies(db);
   const settings = await getUserSettings(db);
   const problems = await listProblems(db);
+  const studyStates = await listStudyStates(db);
   const topicMap: Record<string, Topic> = {};
   for (const t of topics) topicMap[t.id] = t;
   data.topicsById = topicMap;
@@ -60,6 +62,10 @@ async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   const problemMap: Record<string, Problem> = {};
   for (const p of problems) problemMap[p.slug] = p;
   data.problemsBySlug = problemMap;
+  // Phase 5 studyStates: SQLite SSoT. listStudyStates returns the full
+  // map keyed by slug with attempts joined; the libraryRows/queue
+  // builders consume `data.studyStatesBySlug` unchanged.
+  data.studyStatesBySlug = studyStates;
 }
 
 /** Hydrates the v7 list of explicit StudySet memberships for a problem slug.
