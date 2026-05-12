@@ -352,6 +352,20 @@ export async function clearAttempts(
 }
 
 /**
+ * Wipe ALL study states and attempt history across every slug. Used
+ * by the user-facing "Reset study history" action in settings. Does
+ * NOT touch problems / settings / topics — only the study layer is
+ * cleared, matching the action's name and expectation.
+ *
+ * Order matters: attempt_history is wiped first to avoid relying on
+ * FK CASCADE (works either way, but explicit is clearer).
+ */
+export async function clearAllStudyHistory(db: Db): Promise<void> {
+  await db.delete(schema.attemptHistory);
+  await db.delete(schema.studyStates);
+}
+
+/**
  * Drop a study state and its attempt history. Triggered when a
  * Problem is removed (handled implicitly by FK CASCADE) or by an
  * explicit user reset. Throws if no row to delete — callers can

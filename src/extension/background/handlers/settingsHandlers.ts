@@ -21,6 +21,7 @@ import {
 } from "../../../data/settings/repository";
 import {
   appendAttempt,
+  clearAllStudyHistory,
   listStudyStates,
   upsertStudyState,
 } from "../../../data/studyStates/repository";
@@ -195,11 +196,17 @@ export async function updateSettings(payload: Record<string, unknown>) {
 
 /** Clears all local study history while preserving settings, courses, and the problem library. */
 export async function resetStudyHistory() {
+  // Phase 5: SQLite owns study_states + attempt_history. Wipe those
+  // tables first; otherwise the next handler call hydrates the
+  // history right back in from the DB and the user-visible "reset"
+  // is a no-op.
+  const { db } = await getDb();
+  await clearAllStudyHistory(db);
+  // studySetProgressById still lives in the v7 blob until the tracks
+  // slice migrates it — clear it the legacy way.
   await mutateAppData((data) => {
-    data.studyStatesBySlug = {};
     data.studySetProgressById = {};
     return data;
   });
-
   return ok({ reset: true });
 }

@@ -343,31 +343,27 @@ export interface DeleteStudySetPayload {
 
 export async function deleteStudySetHandler(payload: DeleteStudySetPayload) {
   const id = asStudySetId(payload.id);
-  let deletedActiveTrack = false;
   await mutateAppData((data) => {
     const existing = data.studySetsById[id];
     if (!existing || existing.isCurated) return data;
     delete data.studySetsById[id];
     data.studySetOrder = data.studySetOrder.filter((sid) => sid !== id);
     delete data.studySetProgressById[id];
-    if (
-      data.settings.activeFocus &&
-      data.settings.activeFocus.kind === "track" &&
-      data.settings.activeFocus.id === id
-    ) {
-      deletedActiveTrack = true;
-    }
     return data;
   });
-  // Phase 5: settings live in SQLite. If we just deleted the active
-  // track, clear settings.activeFocus there too so the popup/dashboard
-  // don't keep pointing at a now-missing track id.
-  if (deletedActiveTrack) {
-    const { db } = await getDb();
-    const current = await getUserSettings(db);
-    if (current && current.activeFocus?.kind === "track" && current.activeFocus.id === id) {
-      await saveUserSettings(db, { ...current, activeFocus: null });
-    }
+  // Phase 5: settings live in SQLite. The activeFocus check has to
+  // read from SQLite — `data.settings.activeFocus` in the v7 blob is
+  // stale after the settings slice and would miss the case where the
+  // user set activeFocus post-Phase-5 (so SQLite has it, blob does
+  // not).
+  const { db } = await getDb();
+  const current = await getUserSettings(db);
+  if (
+    current &&
+    current.activeFocus?.kind === "track" &&
+    current.activeFocus.id === id
+  ) {
+    await saveUserSettings(db, { ...current, activeFocus: null });
   }
   return ok({ ok: true });
 }
