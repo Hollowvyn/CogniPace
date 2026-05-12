@@ -29,13 +29,13 @@ The UI should feel like a sharp browser tool rather than a marketing site or mob
 - study-mode actions in the popup should name the next action explicitly, for example `Start study mode` or
   `Start freestyle mode`
 - popup sections should reserve space for helper copy and inline status so action feedback does not shift the layout
-- mode changes should update the existing course panel in place instead of swapping between visually unrelated cards
+- mode changes should update the existing track panel in place instead of swapping between visually unrelated cards
 - accessibility scope is desktop-only; see docs/decisions/0006-desktop-only-scope.md
 
 ## Dashboard Guidelines
 
 - the dashboard should feel like an operational control surface
-- overview, courses, library, analytics, and settings should stay visually distinct
+- overview, tracks, library, analytics, and settings should stay visually distinct
 - the dashboard should not drift into a generic product shell unrelated to study flow
 - dashboard shell and settings work should compose local dashboard surface primitives rather than one-off nested paper
   panels
@@ -68,16 +68,16 @@ Labels should explain the state directly, for example:
 - `Due now`
 - `Overdue`
 - `Review focus`
-- `Next in course`
+- `Next in track`
 
 ## UI Hierarchy Rules
 
 - lead with the next action
-- keep recommendation and course progression visibly separate
+- keep recommendation and track progression visibly separate
 - make secondary controls visually secondary
 - use status and difficulty badges sparingly but clearly
-- keep the recommendation panel visually strongest, with the active-course panel directly beneath it
-- when progress and next-up content belong to the same course flow, keep them in one panel instead of splitting them
+- keep the recommendation panel visually strongest, with the active-track panel directly beneath it
+- when progress and next-up content belong to the same track flow, keep them in one panel instead of splitting them
   into separate cards
 
 ## What Not To Design

@@ -27,7 +27,7 @@ Most interview prep workflows fail in one of two ways:
 This product addresses both by combining:
 
 - a recommended problem to review now
-- a structured next question in the active course
+- a structured next question in the active track
 
 ## Product Principles
 
@@ -49,7 +49,7 @@ This product addresses both by combining:
 The popup is the main surface and the core MVP interaction. It should answer:
 
 - what should I review now
-- what is next in my active course
+- what is next in my active track
 
 ### LeetCode Page Overlay
 
@@ -69,10 +69,10 @@ This is not a user-facing surface, but it is part of the product runtime and own
 The current product includes:
 
 - popup recommendations
-- active course next-question guidance
+- active track next-question guidance
 - FSRS-backed review scheduling
 - in-page overlay with timer and review controls
-- course management views
+- track management views
 - library inspection
 - analytics
 - settings and optional notifications
@@ -99,7 +99,7 @@ These are possible future directions, not approved work:
 - sync across browsers or devices
 - more advanced notification strategies
 - richer review analytics
-- broader course tooling
+- broader track tooling
 - future design-system standardization
 
 Any future candidate requires explicit human approval before implementation.
@@ -109,7 +109,7 @@ Any future candidate requires explicit human approval before implementation.
 The current product stage is successful when a user can:
 
 - open the popup and immediately see the best next review target
-- understand the next question in the active course
+- understand the next question in the active track
 - log review results from the LeetCode problem page
 - inspect progress and weak areas in the dashboard
 - adjust settings and backup data without needing an account

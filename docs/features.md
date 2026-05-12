@@ -25,37 +25,37 @@ Give the user the fastest possible answer to what to do next.
 1. User opens the extension popup
 2. Popup shows summary metrics
 3. Popup shows the recommended problem for the current moment
-4. Popup also shows course progression context or a freestyle-mode message in the course panel
+4. Popup also shows track progression context or a freestyle-mode message in the track panel
 5. User opens a problem or shuffles the recommendation
 
 ### Current Behavior
 
 - Shows due count and streak
 - Shows one current recommendation plus a pool of recommendation candidates
-- Shows recommendation and active-course progression as separate popup panels
-- Keeps shuffle as a compact recommendation-only action without changing course-next state
-- Uses a compact course-panel action to open the dashboard on the courses view
-- Keeps the course panel visible in both `studyPlan` and `freestyle`
-- Uses explicit course-panel actions to start `studyPlan` or `freestyle` rather than a blind mode toggle
+- Shows recommendation and active-track progression as separate popup panels
+- Keeps shuffle as a compact recommendation-only action without changing track-next state
+- Uses a compact track-panel action to open the dashboard on the tracks view
+- Keeps the track panel visible in both `studyPlan` and `freestyle`
+- Uses explicit track-panel actions to start `studyPlan` or `freestyle` rather than a blind mode toggle
 - Applies the selected popup mode immediately as pending local feedback, persists it through settings, and rolls back
   with
   inline error feedback if persistence fails
-- Keeps recommendation, course help text, and status feedback inside reserved inline slots so popup actions do not cause
+- Keeps recommendation, track help text, and status feedback inside reserved inline slots so popup actions do not cause
   jumpy reflow
-- Keeps one stable course card shell across `studyPlan`, `freestyle`, `no active course`, and `complete` states
+- Keeps one stable track card shell across `studyPlan`, `freestyle`, `no active track`, and `complete` states
 
 ### Key States And Edge Cases
 
 - no due recommendation exists
-- no active course exists
-- active course is fully traversed
-- recommended problem is also the next course problem
+- no active track exists
+- active track is fully traversed
+- recommended problem is also the next track problem
 
 ### In Scope
 
 - better explanation of why a problem is recommended
 - better empty states
-- clearer course progress cues
+- clearer track progress cues
 - tighter popup hierarchy and usability
 
 ### Out Of Scope
@@ -67,12 +67,12 @@ Give the user the fastest possible answer to what to do next.
 ### Acceptance Criteria
 
 - the user can tell what to review now
-- the user can tell what is next in the active course
+- the user can tell what is next in the active track
 - shuffle changes only the recommendation
 - mode switching is explicit rather than a blind toggle
 - popup remains compact and extension-appropriate
 
-## Course Progression
+## Track Progression
 
 ### Purpose
 
@@ -80,41 +80,41 @@ Provide guided traversal through curated learning paths without losing review aw
 
 ### User Flow
 
-1. User selects or inherits an active course
+1. User selects or inherits an active track
 2. Product tracks current chapter and question progression
-3. Popup and dashboard show the next course question
-4. Launching questions updates course progress context
+3. Popup and dashboard show the next track question
+4. Launching questions updates track progress context
 
 ### Current Behavior
 
-- supports curated courses and chapters
-- tracks active course and active chapter
-- computes next question and course completion data
-- shows course progress in popup and dashboard, with the popup using a single compact active-course panel that includes
+- supports curated tracks and chapters
+- tracks active track and active chapter
+- computes next question and track completion data
+- shows track progress in popup and dashboard, with the popup using a single compact active-track panel that includes
   progress and the up-next question
 
 ### Key States And Edge Cases
 
-- no active course
-- missing or invalid course ID
-- course complete
-- question exists in course but not yet in library
+- no active track
+- missing or invalid track ID
+- track complete
+- question exists in track but not yet in library
 
 ### In Scope
 
 - clearer chapter progression cues
-- better course switching and ingestion ergonomics
-- better visibility into course completion state
+- better track switching and ingestion ergonomics
+- better visibility into track completion state
 
 ### Out Of Scope
 
-- collaborative or shared courses
-- server-backed course sync
-- full authoring platform for courses
+- collaborative or shared tracks
+- server-backed track sync
+- full authoring platform for tracks
 
 ### Acceptance Criteria
 
-- an active course always resolves to a stable next-question view or explicit empty state
+- an active track always resolves to a stable next-question view or explicit empty state
 - chapter and next-question context are visible where relevant
 
 ## LeetCode Page Overlay
@@ -275,16 +275,16 @@ Give the user a broader control surface than the popup.
 
 1. User opens the dashboard from the popup or extension page
 2. Dashboard loads the app shell and overview data
-3. User uses the overview as an entry point into courses, library, analytics, or settings
+3. User uses the overview as an entry point into tracks, library, analytics, or settings
 
 ### Current Behavior
 
-- overview page surfaces recommendation, active course state, and summary metrics
+- overview page surfaces recommendation, active track state, and summary metrics
 - dashboard acts as the navigation root for the wider extension controls
 
 ### Key States And Edge Cases
 
-- no active course exists
+- no active track exists
 - no recommendation is currently available
 - empty-state sections still need to preserve navigability
 
@@ -301,43 +301,43 @@ Give the user a broader control surface than the popup.
 
 - dashboard overview helps users understand current state at a glance
 
-## Course Management
+## Track Management
 
 ### Purpose
 
-Support course inspection, course switching, and question ingestion into course paths.
+Support track inspection, track switching, and question ingestion into track paths.
 
 ### User Flow
 
-1. User opens the dashboard courses view
-2. User inspects course cards and chapter state
-3. User switches the active course, changes chapter focus, or adds problems to a course
+1. User opens the dashboard tracks view
+2. User inspects track cards and chapter state
+3. User switches the active track, changes chapter focus, or adds problems to a track
 
 ### Current Behavior
 
-- course cards
-- active course selection
+- track cards
+- active track selection
 - chapter selection
-- add-problem-to-course flow
+- add-problem-to-track flow
 
 ### Key States And Edge Cases
 
-- active course changes after progress already exists
-- chapter focus changes without changing the active course
+- active track changes after progress already exists
+- chapter focus changes without changing the active track
 - user adds a problem that is not yet fully represented in the library
 
 ### In Scope
 
-- better course management clarity
-- clearer course completion and next-step visibility
+- better track management clarity
+- clearer track completion and next-step visibility
 
 ### Out Of Scope
 
-- collaborative course authoring platform
+- collaborative track authoring platform
 
 ### Acceptance Criteria
 
-- users can inspect course progress and change the active course intentionally
+- users can inspect track progress and change the active track intentionally
 
 ## Library View
 
@@ -349,19 +349,19 @@ Provide a searchable and filterable view of tracked problems.
 
 1. User opens the dashboard library view
 2. User filters or searches for a problem
-3. User inspects review state, course membership, and problem metadata
+3. User inspects review state, track membership, and problem metadata
 
 ### Current Behavior
 
 - table of tracked problems
-- filters by query, course, difficulty, and status
-- displays review state summary and course memberships
+- filters by query, track, difficulty, and status
+- displays review state summary and track memberships
 - shows current retrievability (memory strength) per card with color-coded percentage
 
 ### Key States And Edge Cases
 
 - no problems match the current filter
-- a problem belongs to multiple course contexts
+- a problem belongs to multiple track contexts
 - imported problems have partial metadata
 
 ### In Scope
@@ -500,8 +500,8 @@ Let users tune study behavior and optional alerting.
 - notification time controls are disabled until reminders are enabled
 - save and discard actions are disabled until the draft differs from persisted settings
 - reset defaults uses the initial settings seed intentionally instead of reloading defaults on every read
-- invalid or missing active course falls back to defaults
-- history reset preserves settings, courses, source data, and the problem library
+- invalid or missing active track falls back to defaults
+- history reset preserves settings, tracks, source data, and the problem library
 
 ### In Scope
 
@@ -527,7 +527,7 @@ Allow users to preserve and restore local extension state.
 ### User Flow
 
 1. User exports a backup from the dashboard
-2. Product writes a versioned JSON payload with problems, study states, settings, and course data
+2. Product writes a versioned JSON payload with problems, study states, settings, and track data
 3. User later imports a valid backup to restore local state
 
 ### Current Behavior
@@ -579,7 +579,7 @@ Define the current persistence model and its limits.
 ### Key States And Edge Cases
 
 - stored data comes from an older schema
-- missing course data is normalized during load
+- missing track data is normalized during load
 - local-only persistence means state does not automatically follow the user across devices
 
 ### In Scope
