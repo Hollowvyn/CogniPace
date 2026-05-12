@@ -1,12 +1,26 @@
 /** Background handlers for problem-context, review-session, and page actions. */
-import {getAppData, mutateAppData,} from "../../../data/repositories/appDataRepository";
-import {ensureProblem, ensureStudyState, normalizeDifficulty,} from "../../../data/repositories/problemRepository";
+import { getDb } from "../../../data/db/instance";
+import { getProblem, importProblem } from "../../../data/problems/repository";
+import { mutateAppData } from "../../../data/repositories/appDataRepository";
+import { normalizeDifficulty } from "../../../data/repositories/problemRepository";
 import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
+import {
+  getUserSettings,
+} from "../../../data/settings/repository";
+import {
+  appendAttempt,
+  clearAttempts,
+  ensureStudyState,
+  getStudyState,
+  replaceLastAttempt,
+  upsertStudyState,
+} from "../../../data/studyStates/repository";
 import { asProblemSlug, asSetGroupId, asStudySetId } from "../../../domain/common/ids";
 import {nowIso} from "../../../domain/common/time";
 import {applyReview, overrideLastReview, resetSchedule,} from "../../../domain/fsrs/scheduler";
 import {getStudyStateSummary, normalizeReviewLogFields,} from "../../../domain/fsrs/studyState";
 import {isProblemPage, normalizeSlug} from "../../../domain/problem/slug";
+import { createInitialUserSettings } from "../../../domain/settings";
 import {ReviewLogFields} from "../../../domain/types";
 import {canonicalProblemUrlForOpen,} from "../../runtime/validator";
 import {ok} from "../responses";
@@ -75,53 +89,45 @@ export async function upsertFromPage(payload: {
   url?: string;
   topics?: string[];
 }) {
-  const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, {
-      slug: payload.slug,
-      title: payload.title,
-      difficulty: normalizeDifficulty(payload.difficulty),
-      isPremium: payload.isPremium,
-      url: payload.url,
-      topics: payload.topics,
-    });
-
-    const state = ensureStudyState(data, payload.slug);
-
-    return {
-      ...data,
-      problemsBySlug: {
-        ...data.problemsBySlug,
-        [problem.leetcodeSlug]: problem,
-      },
-      studyStatesBySlug: {
-        ...data.studyStatesBySlug,
-        [problem.leetcodeSlug]: state,
-      },
-    };
-  });
-
   const slug = normalizeSlug(payload.slug);
   if (!slug) {
     throw new Error("Invalid slug.");
   }
-
-  return ok({
-    problem: updated.problemsBySlug[slug],
-    studyState: updated.studyStatesBySlug[slug],
+  // Phase 5: SQLite owns problem + studyState writes. importProblem
+  // preserves sticky user-edits while accepting page-detect updates;
+  // ensureStudyState materialises a default state row if this is the
+  // user's first encounter with the problem.
+  const { db } = await getDb();
+  const branded = asProblemSlug(slug);
+  const difficulty = normalizeDifficulty(payload.difficulty);
+  const problem = await importProblem(db, {
+    slug,
+    ...(payload.title !== undefined ? { title: payload.title } : {}),
+    ...(difficulty !== undefined ? { difficulty } : {}),
+    ...(payload.isPremium !== undefined ? { isPremium: payload.isPremium } : {}),
+    ...(payload.url !== undefined ? { url: payload.url } : {}),
   });
+  const studyState = await ensureStudyState(db, branded);
+  return ok({ problem, studyState });
 }
 
 /** Fetches the persisted problem and study-state context for a slug. */
 export async function getProblemContext(payload: { slug: string }) {
-  const data = await getAppData();
   const slug = normalizeSlug(payload.slug);
   if (!slug) {
     return ok({problem: null, studyState: null});
   }
-
+  // Phase 5: SQLite is the SSoT for problem + study state. Reading
+  // from data.problemsBySlug / data.studyStatesBySlug would return
+  // null (those fields are dormant in the v7 blob), so the overlay
+  // would render "NO SUBMISSIONS YET" even when attempts exist.
+  const { db } = await getDb();
+  const branded = asProblemSlug(slug);
+  const problem = await getProblem(db, branded);
+  const studyState = await getStudyState(db, branded);
   return ok({
-    problem: data.problemsBySlug[slug] ?? null,
-    studyState: data.studyStatesBySlug[slug] ?? null,
+    problem: problem ?? null,
+    studyState: studyState ?? null,
   });
 }
 
@@ -159,36 +165,43 @@ export async function saveReviewResult(payload: {
   }
 
   const now = nowIso();
-  const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, {slug: normalized});
-    const current = ensureStudyState(data, normalized);
-    const logSnapshot = buildReviewLogFields(payload, current);
-
-    const nextState = applyReview({
-      state: current,
-      difficulty: problem.difficulty,
-      rating: payload.rating,
-      solveTimeMs: payload.solveTimeMs,
-      mode: payload.mode,
-      logSnapshot,
-      settings: data.settings,
-      now,
-    });
-
-    data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
-    if (payload.courseId && payload.chapterId) {
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  const problem = await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const logSnapshot = buildReviewLogFields(payload, current);
+  const settings = (await getUserSettings(db)) ?? createInitialUserSettings();
+  const nextState = applyReview({
+    state: current,
+    difficulty: problem.difficulty,
+    rating: payload.rating,
+    solveTimeMs: payload.solveTimeMs,
+    mode: payload.mode,
+    logSnapshot,
+    settings,
+    now,
+  });
+  await upsertStudyState(db, branded, nextState);
+  // applyReview appended one new entry at the tail of attemptHistory;
+  // persist that to attempt_history.
+  const newAttempt = nextState.attemptHistory[nextState.attemptHistory.length - 1];
+  if (newAttempt) {
+    await appendAttempt(db, branded, newAttempt);
+  }
+  // Track-launch context still lives in the v7 blob (Phase 5 tracks slice
+  // will migrate StudySetProgress); call markSlugLaunched there.
+  if (payload.courseId && payload.chapterId) {
+    await mutateAppData((data) => {
       markSlugLaunched(
         data as unknown as Parameters<typeof markSlugLaunched>[0],
-        asStudySetId(payload.courseId),
-        asSetGroupId(payload.chapterId),
-        asProblemSlug(normalized),
+        asStudySetId(payload.courseId!),
+        asSetGroupId(payload.chapterId!),
+        branded,
         now,
       );
-    }
-    return data;
-  });
-
-  const nextState = updated.studyStatesBySlug[normalized];
+      return data;
+    });
+  }
   const studyStateSummary = getStudyStateSummary(nextState);
   return ok({
     studyState: nextState,
@@ -212,20 +225,14 @@ export async function saveOverlayLogDraft(payload: {
     throw new Error("Invalid slug.");
   }
 
-  const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
-    const current = ensureStudyState(data, normalized);
-    const nextLogFields = buildReviewLogFields(payload, current);
-
-    data.studyStatesBySlug[normalized] = {
-      ...current,
-      ...nextLogFields,
-    };
-
-    return data;
-  });
-
-  return ok({studyState: updated.studyStatesBySlug[normalized]});
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const nextLogFields = buildReviewLogFields(payload, current);
+  const next = { ...current, ...nextLogFields };
+  const saved = await upsertStudyState(db, branded, next);
+  return ok({ studyState: saved });
 }
 
 /** Replaces the latest review result and rebuilds the schedule from history. */
@@ -248,35 +255,41 @@ export async function overrideLastReviewResult(payload: {
   }
 
   const now = nowIso();
-  const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, {slug: normalized});
-    const current = ensureStudyState(data, normalized);
-    const logSnapshot = buildReviewLogFields(payload, current);
-
-    const nextState = overrideLastReview({
-      state: current,
-      rating: payload.rating,
-      solveTimeMs: payload.solveTimeMs,
-      mode: payload.mode,
-      logSnapshot,
-      settings: data.settings,
-      now,
-    });
-
-    data.studyStatesBySlug[problem.leetcodeSlug] = nextState;
-    if (payload.courseId && payload.chapterId) {
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const logSnapshot = buildReviewLogFields(payload, current);
+  const settings = (await getUserSettings(db)) ?? createInitialUserSettings();
+  const nextState = overrideLastReview({
+    state: current,
+    rating: payload.rating,
+    solveTimeMs: payload.solveTimeMs,
+    mode: payload.mode,
+    logSnapshot,
+    settings,
+    now,
+  });
+  await upsertStudyState(db, branded, nextState);
+  // overrideLastReview replaced the tail entry rather than appending —
+  // mirror that in attempt_history.
+  const replacedAttempt =
+    nextState.attemptHistory[nextState.attemptHistory.length - 1];
+  if (replacedAttempt) {
+    await replaceLastAttempt(db, branded, replacedAttempt);
+  }
+  if (payload.courseId && payload.chapterId) {
+    await mutateAppData((data) => {
       markSlugLaunched(
         data as unknown as Parameters<typeof markSlugLaunched>[0],
-        asStudySetId(payload.courseId),
-        asSetGroupId(payload.chapterId),
-        asProblemSlug(normalized),
+        asStudySetId(payload.courseId!),
+        asSetGroupId(payload.chapterId!),
+        branded,
         now,
       );
-    }
-    return data;
-  });
-
-  const nextState = updated.studyStatesBySlug[normalized];
+      return data;
+    });
+  }
   const studyStateSummary = getStudyStateSummary(nextState);
   return ok({
     studyState: nextState,
@@ -309,16 +322,15 @@ export async function updateNotes(payload: { slug: string; notes: string }) {
   if (!normalized) {
     throw new Error("Invalid slug.");
   }
-
-  const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
-    const state = ensureStudyState(data, normalized);
-    state.notes = payload.notes;
-    data.studyStatesBySlug[normalized] = state;
-    return data;
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const saved = await upsertStudyState(db, branded, {
+    ...current,
+    notes: payload.notes,
   });
-
-  return ok({studyState: updated.studyStatesBySlug[normalized]});
+  return ok({ studyState: saved });
 }
 
 /** Updates the saved tags for a specific problem. */
@@ -327,16 +339,15 @@ export async function updateTags(payload: { slug: string; tags: string[] }) {
   if (!normalized) {
     throw new Error("Invalid slug.");
   }
-
-  const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
-    const state = ensureStudyState(data, normalized);
-    state.tags = payload.tags.map((tag) => tag.trim()).filter(Boolean);
-    data.studyStatesBySlug[normalized] = state;
-    return data;
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const saved = await upsertStudyState(db, branded, {
+    ...current,
+    tags: payload.tags.map((tag) => tag.trim()).filter(Boolean),
   });
-
-  return ok({studyState: updated.studyStatesBySlug[normalized]});
+  return ok({ studyState: saved });
 }
 
 /** Suspends or unsuspends a problem in the scheduler. */
@@ -348,16 +359,15 @@ export async function suspendProblem(payload: {
   if (!normalized) {
     throw new Error("Invalid slug.");
   }
-
-  const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
-    const state = ensureStudyState(data, normalized);
-    state.suspended = payload.suspend;
-    data.studyStatesBySlug[normalized] = state;
-    return data;
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const saved = await upsertStudyState(db, branded, {
+    ...current,
+    suspended: payload.suspend,
   });
-
-  return ok({studyState: updated.studyStatesBySlug[normalized]});
+  return ok({ studyState: saved });
 }
 
 /** Resets the schedule for a specific problem while optionally preserving notes. */
@@ -369,16 +379,14 @@ export async function resetProblem(payload: {
   if (!normalized) {
     throw new Error("Invalid slug.");
   }
-
-  const updated = await mutateAppData((data) => {
-    ensureProblem(data, {slug: normalized});
-    const state = data.studyStatesBySlug[normalized];
-    data.studyStatesBySlug[normalized] = resetSchedule(
-      state,
-      payload.keepNotes ?? true
-    );
-    return data;
-  });
-
-  return ok({studyState: updated.studyStatesBySlug[normalized]});
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const existing = await getStudyState(db, branded);
+  const reset = resetSchedule(existing, payload.keepNotes ?? true);
+  // Wipe attempt_history first — a reset means "start over"; the
+  // matching v7 semantics drop the prior log entries.
+  await clearAttempts(db, branded);
+  const saved = await upsertStudyState(db, branded, reset);
+  return ok({ studyState: saved });
 }

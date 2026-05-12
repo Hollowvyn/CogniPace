@@ -3,12 +3,23 @@
  * Company / ActiveFocus mutations. All writes flow through the
  * `mutateAppData` funnel so persistence is serialised.
  */
+import { upsertCompany } from "../../../data/companies/repository";
 import {
   readLocalStorage,
   removeLocalStorage,
 } from "../../../data/datasources/chrome/storage";
+import { getDb } from "../../../data/db/instance";
+import {
+  editProblem,
+  getProblem,
+} from "../../../data/problems/repository";
 import { mutateAppData , PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
+import {
+  getUserSettings,
+  saveUserSettings,
+} from "../../../data/settings/repository";
+import { upsertTopic } from "../../../data/topics/repository";
 import {
   asCompanyId,
   asProblemSlug,
@@ -22,17 +33,12 @@ import {
   type TopicId,
 } from "../../../domain/common/ids";
 import { nowIso } from "../../../domain/common/time";
-import {
-  applyEdit,
-  type ProblemEditPatch,
-} from "../../../domain/problems/operations";
 import { FLAT_GROUP_ID } from "../../../domain/sets/model";
 import { ok } from "../responses";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
-import type { Company } from "../../../domain/companies/model";
+import type { ProblemEditPatch } from "../../../domain/problems/operations";
 import type { StudySet } from "../../../domain/sets/model";
-import type { Topic } from "../../../domain/topics/model";
 import type { Difficulty } from "../../../domain/types";
 
 
@@ -46,33 +52,32 @@ export interface EditProblemPayload {
 
 export async function editProblemHandler(payload: EditProblemPayload) {
   const slug = asProblemSlug(payload.slug);
-  await mutateAppData((data) => {
-    const existing = data.problemsBySlug[slug];
-    if (!existing) return data;
-    const patch: ProblemEditPatch = {
-      ...payload.patch,
-      topicIds: payload.patch.topicIds?.map((id) => asTopicId(id)) as TopicId[] | undefined,
-      companyIds: payload.patch.companyIds?.map((id) => asCompanyId(id)) as
-        | CompanyId[]
-        | undefined,
-    };
-    const next = applyEdit(
-      // The runtime Problem carries v6 fields too; the operations layer
-      // ignores them.
-      existing as unknown as Parameters<typeof applyEdit>[0],
-      patch,
-      nowIso(),
-      payload.markUserEdit ?? true,
+  const patch: ProblemEditPatch = {
+    ...payload.patch,
+    topicIds: payload.patch.topicIds?.map((id) => asTopicId(id)) as
+      | TopicId[]
+      | undefined,
+    companyIds: payload.patch.companyIds?.map((id) => asCompanyId(id)) as
+      | CompanyId[]
+      | undefined,
+  };
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (!existing) {
+    // Fail loud per charter lesson #5. The library row may be a
+    // synthesised placeholder for a problem the user has seen
+    // referenced in a track but never actually opened on LeetCode —
+    // editing it doesn't make sense until it's been initialised by
+    // a page visit. Surface the requirement to the UI rather than
+    // silently succeeding or auto-creating a half-populated row.
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to edit. Visit the page and then come back.",
     );
-    // Stitch v6 fields back so handlers continue to see consistent data.
-    data.problemsBySlug[slug] = {
-      ...existing,
-      ...next,
-      // Mirror difficulty/title/url back onto v6 mirror fields.
-      id: existing.id,
-      leetcodeSlug: existing.leetcodeSlug,
-    };
-    return data;
+  }
+  await editProblem(db, {
+    slug,
+    patch,
+    markUserEdit: payload.markUserEdit ?? true,
   });
   return ok({ slug });
 }
@@ -85,25 +90,13 @@ export interface CreateCustomTopicPayload {
 }
 
 export async function createCustomTopicHandler(payload: CreateCustomTopicPayload) {
-  const id = asTopicId(payload.name);
-  if (!id) throw new Error("Topic name cannot be empty.");
-  const now = nowIso();
-  await mutateAppData((data) => {
-    const existing = data.topicsById[id];
-    const next: Topic = existing
-      ? { ...existing, name: payload.name, description: payload.description, updatedAt: now }
-      : {
-          id,
-          name: payload.name,
-          description: payload.description,
-          isCustom: true,
-          createdAt: now,
-          updatedAt: now,
-        };
-    data.topicsById[id] = next;
-    return data;
+  const { db } = await getDb();
+  const topic = await upsertTopic(db, {
+    name: payload.name,
+    description: payload.description,
+    isCustom: true,
   });
-  return ok({ id });
+  return ok({ id: topic.id });
 }
 
 export interface CreateCustomCompanyPayload {
@@ -114,25 +107,13 @@ export interface CreateCustomCompanyPayload {
 export async function createCustomCompanyHandler(
   payload: CreateCustomCompanyPayload,
 ) {
-  const id = asCompanyId(payload.name);
-  if (!id) throw new Error("Company name cannot be empty.");
-  const now = nowIso();
-  await mutateAppData((data) => {
-    const existing = data.companiesById[id];
-    const next: Company = existing
-      ? { ...existing, name: payload.name, description: payload.description, updatedAt: now }
-      : {
-          id,
-          name: payload.name,
-          description: payload.description,
-          isCustom: true,
-          createdAt: now,
-          updatedAt: now,
-        };
-    data.companiesById[id] = next;
-    return data;
+  const { db } = await getDb();
+  const company = await upsertCompany(db, {
+    name: payload.name,
+    description: payload.description,
+    isCustom: true,
   });
-  return ok({ id });
+  return ok({ id: company.id });
 }
 
 // ---------- Topic / company assignment ----------
@@ -146,23 +127,25 @@ export interface AssignTopicPayload {
 export async function assignTopicHandler(payload: AssignTopicPayload) {
   const slug = asProblemSlug(payload.slug);
   const topicId = asTopicId(payload.topicId);
-  await mutateAppData((data) => {
-    const existing = data.problemsBySlug[slug];
-    if (!existing) return data;
-    const current = (existing.topicIds ?? []) as TopicId[];
-    const has = current.includes(topicId);
-    const assigned = payload.assigned ?? true;
-    if (assigned && has) return data;
-    if (!assigned && !has) return data;
-    const next = assigned
-      ? [...current, topicId]
-      : current.filter((id) => id !== topicId);
-    data.problemsBySlug[slug] = {
-      ...existing,
-      topicIds: next,
-      updatedAt: nowIso(),
-    };
-    return data;
+  const assigned = payload.assigned ?? true;
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (!existing) {
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a topic to.",
+    );
+  }
+  const current = existing.topicIds as TopicId[];
+  const has = current.includes(topicId);
+  if (assigned && has) return ok({ slug });
+  if (!assigned && !has) return ok({ slug });
+  const nextIds = assigned
+    ? [...current, topicId]
+    : current.filter((id) => id !== topicId);
+  await editProblem(db, {
+    slug,
+    patch: { topicIds: nextIds },
+    markUserEdit: true,
   });
   return ok({ slug });
 }
@@ -176,23 +159,25 @@ export interface AssignCompanyPayload {
 export async function assignCompanyHandler(payload: AssignCompanyPayload) {
   const slug = asProblemSlug(payload.slug);
   const companyId = asCompanyId(payload.companyId);
-  await mutateAppData((data) => {
-    const existing = data.problemsBySlug[slug];
-    if (!existing) return data;
-    const current = (existing.companyIds ?? []) as CompanyId[];
-    const has = current.includes(companyId);
-    const assigned = payload.assigned ?? true;
-    if (assigned && has) return data;
-    if (!assigned && !has) return data;
-    const next = assigned
-      ? [...current, companyId]
-      : current.filter((id) => id !== companyId);
-    data.problemsBySlug[slug] = {
-      ...existing,
-      companyIds: next,
-      updatedAt: nowIso(),
-    };
-    return data;
+  const assigned = payload.assigned ?? true;
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (!existing) {
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a company to.",
+    );
+  }
+  const current = existing.companyIds as CompanyId[];
+  const has = current.includes(companyId);
+  if (assigned && has) return ok({ slug });
+  if (!assigned && !has) return ok({ slug });
+  const nextIds = assigned
+    ? [...current, companyId]
+    : current.filter((id) => id !== companyId);
+  await editProblem(db, {
+    slug,
+    patch: { companyIds: nextIds },
+    markUserEdit: true,
   });
   return ok({ slug });
 }
@@ -364,15 +349,22 @@ export async function deleteStudySetHandler(payload: DeleteStudySetPayload) {
     delete data.studySetsById[id];
     data.studySetOrder = data.studySetOrder.filter((sid) => sid !== id);
     delete data.studySetProgressById[id];
-    if (
-      data.settings.activeFocus &&
-      data.settings.activeFocus.kind === "track" &&
-      data.settings.activeFocus.id === id
-    ) {
-      data.settings = { ...data.settings, activeFocus: null };
-    }
     return data;
   });
+  // Phase 5: settings live in SQLite. The activeFocus check has to
+  // read from SQLite — `data.settings.activeFocus` in the v7 blob is
+  // stale after the settings slice and would miss the case where the
+  // user set activeFocus post-Phase-5 (so SQLite has it, blob does
+  // not).
+  const { db } = await getDb();
+  const current = await getUserSettings(db);
+  if (
+    current &&
+    current.activeFocus?.kind === "track" &&
+    current.activeFocus.id === id
+  ) {
+    await saveUserSettings(db, { ...current, activeFocus: null });
+  }
   return ok({ ok: true });
 }
 
@@ -383,11 +375,16 @@ export interface SetActiveFocusPayload {
 }
 
 export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
-  const updated = await mutateAppData((data) => {
-    data.settings = { ...data.settings, activeFocus: payload.focus };
-    return data;
+  const { db } = await getDb();
+  const current = await getUserSettings(db);
+  if (!current) {
+    throw new Error("setActiveFocusHandler: no settings row in DB (boot seed missing)");
+  }
+  const saved = await saveUserSettings(db, {
+    ...current,
+    activeFocus: payload.focus,
   });
-  return ok({ settings: updated.settings });
+  return ok({ settings: saved });
 }
 
 // ---------- Track launch tracking ----------

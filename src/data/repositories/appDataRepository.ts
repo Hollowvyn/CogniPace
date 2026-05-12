@@ -14,11 +14,8 @@ import {
   UserSettingsPatch,
 } from "../../domain/settings";
 import { AppData } from "../../domain/types";
-import { buildCompanySeed } from "../catalog/companiesSeed";
 import { listCatalogPlans } from "../catalog/curatedSets";
-import { buildProblemSeed } from "../catalog/problemsSeed";
 import { buildStudySetSeed } from "../catalog/studySetsSeed";
-import { buildTopicSeed } from "../catalog/topicsSeed";
 import {
   readLocalStorage,
   writeLocalStorage,
@@ -47,39 +44,30 @@ function needsV7SeedMigration(stored?: StoredAppData): boolean {
 export function normalizeStoredAppData(stored?: StoredAppData): AppData {
   const seedNow = nowIso();
   const runMigration = needsV7SeedMigration(stored);
-  // Curated Problem seed runs only on a totally-empty store — the very
-  // first launch. v6→v7 migrations preserve the user's existing
-  // problemsBySlug; later reads keep whatever's persisted (deleted
-  // problems stay deleted).
-  const isFirstEverLaunch = !stored;
 
-  // Seed the v7 aggregates from catalog data when missing. The seed is
-  // idempotent — subsequent reads keep the stored values intact.
-  const catalogPlans = runMigration || isFirstEverLaunch
-    ? listCatalogPlans()
-    : null;
-  const seededTopics = runMigration ? buildTopicSeed(seedNow) : {};
-  const seededCompanies = runMigration ? buildCompanySeed(seedNow) : {};
+  // Phase 4+5: topics / companies / problems / settings live in SQLite,
+  // not the v7 blob. Their fields stay as `{}` here; the dashboard
+  // handler hydrates them at read time from the DB. StudySets remain
+  // in the v7 blob for now; Phase 5 tracks slice will migrate them.
+  const catalogPlans = runMigration ? listCatalogPlans() : null;
   const seededStudySets = runMigration && catalogPlans
     ? buildStudySetSeed(catalogPlans, seedNow)
     : { studySetsById: {}, studySetOrder: [] };
-  const seededProblems = isFirstEverLaunch && catalogPlans
-    ? buildProblemSeed(catalogPlans, seedNow)
-    : {};
 
   const data: AppData = {
     schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
-    problemsBySlug: stored?.problemsBySlug ?? seededProblems,
+    problemsBySlug: stored?.problemsBySlug ?? {},
     studyStatesBySlug: Object.fromEntries(
       Object.entries(stored?.studyStatesBySlug ?? {}).map(([slug, state]) => [
         slug,
         normalizeStudyState(state),
       ])
     ),
-    // v7 aggregate fields. Seeded on first encounter (curated topics +
-    // companies + courses); preserved as-is once the user has any data.
-    topicsById: { ...seededTopics, ...(stored?.topicsById ?? {}) },
-    companiesById: { ...seededCompanies, ...(stored?.companiesById ?? {}) },
+    // v7 aggregate fields. Topics + companies moved to SQLite (Phase
+    // 4+5) so those maps are no longer seeded here; the handler layer
+    // hydrates them from the DB. Courses still seed from catalog here.
+    topicsById: stored?.topicsById ?? {},
+    companiesById: stored?.companiesById ?? {},
     studySetsById: {
       ...seededStudySets.studySetsById,
       ...(stored?.studySetsById ?? {}),

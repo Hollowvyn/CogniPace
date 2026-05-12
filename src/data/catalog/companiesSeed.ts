@@ -57,3 +57,17 @@ export function buildCompanySeed(now: string): Record<string, Company> {
 export function listSeedCompanyIds(): readonly CompanyId[] {
   return SEED.map((s) => s.id);
 }
+
+/** Returns the curated company seeds in seed order. Shape matches what the
+ * SQLite companies repository's `seedCatalogCompanies` consumes. */
+export function listCatalogCompanySeeds(): ReadonlyArray<{
+  id: CompanyId;
+  name: string;
+  description?: string;
+}> {
+  return SEED.map((s) => ({
+    id: s.id,
+    name: s.name,
+    ...(s.description !== undefined ? { description: s.description } : {}),
+  }));
+}

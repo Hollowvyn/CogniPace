@@ -1,16 +1,73 @@
 /** Background handlers for catalog set imports and direct problem intake. */
 import { getCuratedSet } from "../../../data/catalog/curatedSets";
+import { getDb } from "../../../data/db/instance";
+import {
+  importProblem,
+  getProblem,
+} from "../../../data/problems/repository";
 import {
   mergeSettings,
-  mutateAppData,
 } from "../../../data/repositories/appDataRepository";
+import { parseProblemInput } from "../../../data/repositories/problemRepository";
 import {
-  ensureProblem,
-  ensureStudyState,
-  importProblemsIntoSet,
-  parseProblemInput,
-} from "../../../data/repositories/problemRepository";
+  getUserSettings,
+  saveUserSettings,
+} from "../../../data/settings/repository";
+import { ensureStudyState } from "../../../data/studyStates/repository";
+import { asProblemSlug } from "../../../domain/common/ids";
+import { createInitialUserSettings } from "../../../domain/settings";
 import { ok } from "../responses";
+
+import type { Difficulty } from "../../../domain/types";
+
+/** Phase 5: setsEnabled lives in SQLite — read-merge-write rather
+ * than mutating data.settings inside mutateAppData. */
+async function enableSetInSqlite(setName: string): Promise<void> {
+  const { db } = await getDb();
+  const current = (await getUserSettings(db)) ?? createInitialUserSettings();
+  const next = mergeSettings(current, {
+    setsEnabled: { ...current.setsEnabled, [setName]: true },
+  });
+  await saveUserSettings(db, next);
+}
+
+interface SetItem {
+  slug: string;
+  title?: string;
+  difficulty?: Difficulty;
+  isPremium?: boolean;
+  url?: string;
+  topics?: string[];
+}
+
+/**
+ * Phase 5: route bulk problem imports through SQLite. Re-importing
+ * preserves sticky user-edits per importProblem (mergeImported).
+ * Returns counts: `added` = slugs that didn't exist before; `updated`
+ * = slugs that did.
+ */
+async function importSetIntoDb(
+  items: readonly SetItem[],
+): Promise<{ added: number; updated: number }> {
+  const { db } = await getDb();
+  let added = 0;
+  let updated = 0;
+  for (const item of items) {
+    const slug = asProblemSlug(item.slug);
+    if (!slug) continue;
+    const wasPresent = (await getProblem(db, slug)) !== undefined;
+    await importProblem(db, {
+      slug,
+      ...(item.title !== undefined ? { title: item.title } : {}),
+      ...(item.difficulty !== undefined ? { difficulty: item.difficulty } : {}),
+      ...(item.isPremium !== undefined ? { isPremium: item.isPremium } : {}),
+      ...(item.url !== undefined ? { url: item.url } : {}),
+    });
+    if (wasPresent) updated += 1;
+    else added += 1;
+  }
+  return { added, updated };
+}
 
 /** Imports a built-in curated set into the local library. */
 export async function importCurated(payload: { setName: string }) {
@@ -18,18 +75,8 @@ export async function importCurated(payload: { setName: string }) {
   if (setProblems.length === 0) {
     throw new Error(`Unknown curated set: ${payload.setName}`);
   }
-
-  let importResult = { added: 0, updated: 0 };
-  await mutateAppData((data) => {
-    importResult = importProblemsIntoSet(data, payload.setName, setProblems);
-    data.settings = mergeSettings(data.settings, {
-      setsEnabled: {
-        ...data.settings.setsEnabled,
-        [payload.setName]: true,
-      },
-    });
-    return data;
-  });
+  const importResult = await importSetIntoDb(setProblems);
+  await enableSetInSqlite(payload.setName);
 
   return ok({
     setName: payload.setName,
@@ -55,19 +102,11 @@ export async function importCustom(payload: {
   }
 
   const normalizedName = payload.setName?.trim() || "Custom";
-  let importResult = { added: 0, updated: 0 };
-
-  await mutateAppData((data) => {
-    importResult = importProblemsIntoSet(data, normalizedName, payload.items);
-    data.settings = mergeSettings(data.settings, {
-      setsEnabled: {
-        ...data.settings.setsEnabled,
-        [normalizedName]: true,
-        Custom: true,
-      },
-    });
-    return data;
-  });
+  const importResult = await importSetIntoDb(payload.items);
+  await enableSetInSqlite(normalizedName);
+  if (normalizedName !== "Custom") {
+    await enableSetInSqlite("Custom");
+  }
 
   return ok({
     setName: normalizedName,
@@ -85,31 +124,13 @@ export async function addProblemByInput(payload: {
   markAsStarted?: boolean;
 }) {
   const parsed = parseProblemInput(payload.input);
-  const updated = await mutateAppData((data) => {
-    const problem = ensureProblem(data, {
-      slug: parsed.slug,
-      url: parsed.url,
-      sourceSet: payload.sourceSet,
-      topics: payload.topics,
-    });
-    const state = ensureStudyState(data, parsed.slug);
-
-    return {
-      ...data,
-      problemsBySlug: {
-        ...data.problemsBySlug,
-        [problem.leetcodeSlug]: problem,
-      },
-      studyStatesBySlug: {
-        ...data.studyStatesBySlug,
-        [problem.leetcodeSlug]: state,
-      },
-    };
-  });
-
-  return ok({
+  const { db } = await getDb();
+  const branded = asProblemSlug(parsed.slug);
+  const problem = await importProblem(db, {
     slug: parsed.slug,
-    problem: updated.problemsBySlug[parsed.slug],
-    studyState: updated.studyStatesBySlug[parsed.slug],
+    url: parsed.url,
+    topicIds: payload.topics,
   });
+  const studyState = await ensureStudyState(db, branded);
+  return ok({ slug: parsed.slug, problem, studyState });
 }

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CogniPace · DB debug & verification</title>
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        max-width: 1040px;
+        margin: 1.5rem auto;
+        padding: 0 1rem;
+        color: #1d1d1f;
+      }
+      h1 {
+        font-size: 1.15rem;
+        margin: 0 0 0.25rem;
+      }
+      h3 {
+        margin: 1rem 0 0.25rem;
+        font-size: 0.95rem;
+      }
+      h4 {
+        margin: 0.75rem 0 0.25rem;
+        font-size: 0.8rem;
+        color: #555;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+      p {
+        color: #555;
+        margin: 0.25rem 0 1rem;
+      }
+      #status {
+        margin: 0.5rem 0 1rem;
+        padding: 0.4rem 0.6rem;
+        background: #f6f6f6;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.5rem;
+      }
+      .toolbar .label {
+        font-size: 0.75rem;
+        color: #777;
+        align-self: center;
+        margin-right: 0.4rem;
+      }
+      button {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.85rem;
+        border: 1px solid #ccc;
+        background: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #f3f3f3;
+      }
+      button.primary {
+        background: #0a5d22;
+        border-color: #0a5d22;
+        color: #fff;
+      }
+      button.primary:hover {
+        background: #08501d;
+      }
+      button.secondary {
+        background: #fff7ea;
+        border-color: #d4a755;
+      }
+      textarea#sql-input {
+        width: 100%;
+        min-height: 80px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+        resize: vertical;
+      }
+      .hint {
+        font-size: 0.75rem;
+        color: #888;
+        margin: 0.2rem 0 0.75rem;
+      }
+      #output {
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        padding: 0.75rem;
+        min-height: 12rem;
+        max-height: 40rem;
+        overflow: auto;
+      }
+      table {
+        border-collapse: collapse;
+        margin: 0.5rem 0;
+        font-size: 0.8rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        width: 100%;
+      }
+      th, td {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #e5e5e5;
+        text-align: left;
+        vertical-align: top;
+        white-space: nowrap;
+      }
+      th {
+        background: #f1f1f1;
+      }
+      pre.sql {
+        background: #f0f4ff;
+        padding: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        margin: 0.25rem 0 0.5rem;
+      }
+      .log {
+        padding: 0.3rem 0.5rem;
+        border-radius: 4px;
+        margin: 0.2rem 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.8rem;
+      }
+      .log.ok {
+        color: #0a5d22;
+        background: #e8f5e9;
+      }
+      .log.fail {
+        color: #8e0000;
+        background: #fdecea;
+        white-space: pre-wrap;
+      }
+      .summary {
+        margin-top: 0.75rem;
+        padding: 0.5rem 0.7rem;
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+      }
+      .summary.ok {
+        background: #c8e6c9;
+        color: #054d10;
+      }
+      .summary.fail {
+        background: #ffcdd2;
+        color: #6e0000;
+      }
+      .muted {
+        color: #777;
+      }
+      .small {
+        font-size: 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CogniPace · DB debug & verification</h1>
+    <p>
+      In-memory wasm SQLite with the latest Drizzle migration applied.
+      Use the toolbar to run typed verification checks across every
+      table / constraint / default / FK / JSON column / RQB query.
+      New checks should be appended as later phases land new schemas.
+      Resets on every reload — no persistence yet.
+    </p>
+    <div id="status">Loading…</div>
+
+    <div class="toolbar">
+      <span class="label">Verification:</span>
+      <button id="run-all" class="primary">Run all</button>
+      <button id="run-Defaults">Defaults</button>
+      <button id="run-CRUD">CRUD</button>
+      <button id="run-Foreign-keys">Foreign keys</button>
+      <button id="run-JSON-columns">JSON columns</button>
+      <button id="run-Indexes">Indexes</button>
+      <button id="run-RQB">RQB</button>
+      <button id="run-Repos">Repos</button>
+      <button id="run-Persistence">Persistence</button>
+    </div>
+    <div class="toolbar">
+      <span class="label">Data:</span>
+      <button id="seed" class="secondary">Seed sample data</button>
+      <button id="reset">Reset DB</button>
+      <button id="clear">Clear output</button>
+    </div>
+
+    <h3>SQL</h3>
+    <textarea
+      id="sql-input"
+      placeholder="SELECT name FROM sqlite_master WHERE type='table';"
+    >SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;</textarea>
+    <div class="hint">
+      Cmd/Ctrl+Enter to run · executes against the raw wasm DB via
+      <code>rawDb.exec</code> (no Drizzle parsing) · use the toolbar
+      buttons above for typed Drizzle assertions.
+    </div>
+    <div class="toolbar">
+      <button id="run-sql">Run SQL</button>
+    </div>
+
+    <h3>Output</h3>
+    <div id="output"></div>
+
+    <script src="dbDebug.js"></script>
+  </body>
+</html>

@@ -1,5 +1,11 @@
 /** Background handlers for app-shell reads and extension page navigation. */
+import { listCompanies } from "../../../data/companies/repository";
+import { getDb } from "../../../data/db/instance";
+import { listProblems } from "../../../data/problems/repository";
 import { getAppData } from "../../../data/repositories/appDataRepository";
+import { getUserSettings } from "../../../data/settings/repository";
+import { listStudyStates } from "../../../data/studyStates/repository";
+import { listTopics } from "../../../data/topics/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import {
   computeReviewStreakDays,
@@ -26,7 +32,41 @@ import {
 import { validateExtensionPagePath } from "../../runtime/validator";
 import { ok } from "../responses";
 
+import type { Company } from "../../../domain/companies/model";
+import type { Topic } from "../../../domain/topics/model";
 import type { AppData, Problem } from "../../../domain/types";
+
+/**
+ * Loads topics + companies + settings from SQLite (Phase 4+5 SSoT) and
+ * mutates `data.topicsById` / `data.companiesById` / `data.settings`
+ * in place so downstream helpers — buildStudySetView, buildProblemView,
+ * libraryRows, buildPopupShellPayload, etc. — read unchanged shapes.
+ */
+async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
+  const { db } = await getDb();
+  const topics = await listTopics(db);
+  const companies = await listCompanies(db);
+  const settings = await getUserSettings(db);
+  const problems = await listProblems(db);
+  const studyStates = await listStudyStates(db);
+  const topicMap: Record<string, Topic> = {};
+  for (const t of topics) topicMap[t.id] = t;
+  data.topicsById = topicMap;
+  const companyMap: Record<string, Company> = {};
+  for (const c of companies) companyMap[c.id] = c;
+  data.companiesById = companyMap;
+  if (settings) data.settings = settings;
+  // Phase 5 problems: SQLite is the SSoT. Replace data.problemsBySlug
+  // wholesale so downstream library/track-view code reads the same
+  // shape it always has — just sourced from the DB now.
+  const problemMap: Record<string, Problem> = {};
+  for (const p of problems) problemMap[p.slug] = p;
+  data.problemsBySlug = problemMap;
+  // Phase 5 studyStates: SQLite SSoT. listStudyStates returns the full
+  // map keyed by slug with attempts joined; the libraryRows/queue
+  // builders consume `data.studyStatesBySlug` unchanged.
+  data.studyStatesBySlug = studyStates;
+}
 
 /** Hydrates the v7 list of explicit StudySet memberships for a problem slug.
  * Derived sets (kind: company/topic/difficulty) aren't included here — they
@@ -243,12 +283,14 @@ export function buildPopupShellPayload(
 /** Builds the popup-only app shell payload from the current persisted state. */
 export async function getPopupShellData() {
   const data = await getAppData();
+  await hydrateRegistriesFromDb(data);
   return ok(buildPopupShellPayload(data));
 }
 
 /** Builds the popup/dashboard app shell payload from the current persisted state. */
 export async function getAppShellData() {
   const data = await getAppData();
+  await hydrateRegistriesFromDb(data);
   const now = new Date();
   const popupShell = buildPopupShellPayload(data, now);
   const queue = buildTodayQueue(data, now);

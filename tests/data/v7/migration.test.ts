@@ -80,8 +80,12 @@ describe("v6 → v7 migration", () => {
     const result = await getAppDataV7();
 
     expect(result.schemaVersion).toBe(STORAGE_SCHEMA_VERSION_V7);
-    expect(Object.keys(result.topicsById).length).toBeGreaterThan(0);
-    expect(Object.keys(result.companiesById).length).toBeGreaterThan(0);
+    // Phase 4+5: topics and companies live in SQLite, not the v7 blob.
+    // Both registries are intentionally `{}` after migration; the SW
+    // seeds the catalogs into the DB at boot and the dashboard handler
+    // hydrates the runtime fields from there.
+    expect(result.topicsById).toEqual({});
+    expect(result.companiesById).toEqual({});
     expect(Object.keys(result.studySetsById).length).toBeGreaterThan(0);
   });
 

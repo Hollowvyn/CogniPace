@@ -89,3 +89,17 @@ export function resolveSeedTopicId(displayName: string): TopicId | null {
 export function listSeedTopicIds(): readonly TopicId[] {
   return SEED.map((s) => s.id);
 }
+
+/** Returns the curated topic seeds in seed order. Shape matches what the
+ * SQLite topics repository's `seedCatalogTopics` consumes. */
+export function listCatalogTopicSeeds(): ReadonlyArray<{
+  id: TopicId;
+  name: string;
+  description?: string;
+}> {
+  return SEED.map((s) => ({
+    id: s.id,
+    name: s.name,
+    ...(s.description !== undefined ? { description: s.description } : {}),
+  }));
+}
