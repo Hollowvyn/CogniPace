@@ -24,6 +24,7 @@
  *     user can rebrand the list they see). If we ever need to lock the
  *     name on curated tracks, gate it here.
  */
+import * as schema from "@platform/db/schema";
 import {
   asProblemSlug,
   asTrackGroupId,
@@ -38,7 +39,6 @@ import {
 import { and, asc, eq, max, sql } from "drizzle-orm";
 
 import { nowIso } from "../../domain/common/time";
-import * as schema from "../db/schema";
 
 import type {
   Track,
@@ -47,7 +47,7 @@ import type {
   TrackGroupWithProblems,
   TrackWithGroups,
 } from "../../domain/tracks/model";
-import type { Db } from "../db/client";
+import type { Db } from "@platform/db/client";
 
 type TrackRow = typeof schema.tracks.$inferSelect;
 type TrackGroupRow = typeof schema.trackGroups.$inferSelect;

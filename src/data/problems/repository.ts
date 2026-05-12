@@ -26,6 +26,7 @@
  * undefined for the common "lookup by slug" case so callers don't
  * need defensive guards.
  */
+import * as schema from "@platform/db/schema";
 import {
   asCompanyId,
   asProblemSlug,
@@ -46,14 +47,13 @@ import {
   mergeImported,
   type ProblemEditPatch,
 } from "../../domain/problems/operations";
-import * as schema from "../db/schema";
 
 import type {
   Problem as StrictProblem,
   ProblemEditFlags,
 } from "../../domain/problems/model";
 import type { Difficulty, Problem } from "../../domain/types";
-import type { Db } from "../db/client";
+import type { Db } from "@platform/db/client";
 
 type ProblemRow = typeof schema.problems.$inferSelect;
 

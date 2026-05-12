@@ -2,8 +2,9 @@
 import {
   readLocalStorage,
   writeLocalStorage,
-} from "../../data/datasources/chrome/storage";
-import { getDb } from "../../data/db/instance";
+} from "@platform/chrome/storage";
+import { getDb } from "@platform/db/instance";
+
 import {
   getAppData,
   STORAGE_KEY,

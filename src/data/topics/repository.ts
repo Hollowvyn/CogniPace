@@ -5,11 +5,11 @@
  * the SW translates the throw into a `{ ok: false, error }` envelope.
  * No defensive try/catch in here.
  */
+import { type Db } from "@platform/db/client";
+import * as schema from "@platform/db/schema";
 import { asTopicId, type TopicId } from "@shared/ids";
 import { eq } from "drizzle-orm";
 
-import { type Db } from "../db/client";
-import * as schema from "../db/schema";
 
 import type { Topic } from "../../domain/topics/model";
 

@@ -13,6 +13,7 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import * as schema from "@platform/db/schema";
 import {
   asCompanyId,
   asProblemSlug,
@@ -23,7 +24,6 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as schema from "../../../src/data/db/schema";
 import {
   bulkImportProblems,
   editProblem,
@@ -35,13 +35,13 @@ import {
   upsertProblem,
 } from "../../../src/data/problems/repository";
 
-import type { Db } from "../../../src/data/db/client";
 import type { Problem } from "../../../src/domain/types";
+import type { Db } from "@platform/db/client";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
   __dirname,
-  "../../../src/data/db/migrations",
+  "../../../src/platform/db/migrations",
 );
 
 function freshDb(): Db {

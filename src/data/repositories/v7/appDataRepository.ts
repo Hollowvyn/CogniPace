@@ -14,14 +14,15 @@
  * The repository is intentionally the only place where chrome.storage is
  * touched in the v7 layer. Everything else is pure-mutator.
  */
-import { STORAGE_KEY } from "../../../domain/common/constants";
-import { nowIso } from "../../../domain/common/time";
-import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 import {
   readLocalStorage,
   removeLocalStorage,
   writeLocalStorage,
-} from "../../datasources/chrome/storage";
+} from "@platform/chrome/storage";
+
+import { STORAGE_KEY } from "../../../domain/common/constants";
+import { nowIso } from "../../../domain/common/time";
+import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 
 import { aggregates } from "./aggregateRegistry";
 import { buildFreshAppDataV7 } from "./seed";

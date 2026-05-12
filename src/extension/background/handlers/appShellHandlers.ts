@@ -1,8 +1,8 @@
 /** Background handlers for app-shell reads and extension page navigation. */
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
+import { getDb } from "@platform/db/instance";
 
 import { listCompanies } from "../../../data/companies/repository";
-import { getDb } from "../../../data/db/instance";
 import { listProblems } from "../../../data/problems/repository";
 import { getAppData } from "../../../data/repositories/appDataRepository";
 import { getUserSettings } from "../../../data/settings/repository";

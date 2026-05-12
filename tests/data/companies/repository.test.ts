@@ -6,6 +6,7 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import * as schema from "@platform/db/schema";
 import { asCompanyId } from "@shared/ids";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -19,14 +20,13 @@ import {
   seedCatalogCompanies,
   upsertCompany,
 } from "../../../src/data/companies/repository";
-import * as schema from "../../../src/data/db/schema";
 
-import type { Db } from "../../../src/data/db/client";
+import type { Db } from "@platform/db/client";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
   __dirname,
-  "../../../src/data/db/migrations",
+  "../../../src/platform/db/migrations",
 );
 
 function freshDb(): Db {

@@ -85,18 +85,18 @@ describe("architecture layout", () => {
     }
   });
 
-  it("routes runtime and storage access through repositories and datasources", () => {
+  it("routes runtime and storage access through repositories and platform adapters", () => {
     const appDataRepository = read(
       path.join(repoRoot, "src/data/repositories/appDataRepository.ts")
     );
     const storageDatasource = read(
-      path.join(repoRoot, "src/data/datasources/chrome/storage.ts")
+      path.join(repoRoot, "src/platform/chrome/storage.ts")
     );
     const appShellRepository = read(
       path.join(repoRoot, "src/data/repositories/appShellRepository.ts")
     );
 
-    expect(appDataRepository).toContain("datasources/chrome/storage");
+    expect(appDataRepository).toContain("@platform/chrome/storage");
     expect(storageDatasource).toContain("chrome.storage.local");
     expect(appShellRepository).toMatch(
       /(extension\/runtime|@libs\/runtime-rpc)\/client/,

@@ -12,13 +12,13 @@
  * - NULL columns survive the round-trip (no `[[fullTuple]]` wrapping)
  * - integer values arrive as numbers, not strings
  */
+import { execProxy } from "@platform/db/proxy";
 import sqlite3InitModule, {
   type Database,
   type Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { execProxy } from "../../../src/data/db/proxy";
 
 let sqlite3: Sqlite3Static;
 

@@ -2,13 +2,13 @@
 import {applyReview, overrideLastReview, resetSchedule,} from "@libs/fsrs/scheduler";
 import {getStudyStateSummary, normalizeReviewLogFields,} from "@libs/fsrs/studyState";
 import {canonicalProblemUrlForOpen,} from "@libs/runtime-rpc/validator";
+import { getDb } from "@platform/db/instance";
 import {
   asProblemSlug,
   asTrackGroupId,
   asTrackId,
 } from "@shared/ids";
 
-import { getDb } from "../../../data/db/instance";
 import { getProblem, importProblem } from "../../../data/problems/repository";
 import { normalizeDifficulty } from "../../../data/repositories/problemRepository";
 import {

@@ -6,6 +6,11 @@
  * (Phase 8 will rip the funnel).
  */
 import {
+  readLocalStorage,
+  removeLocalStorage,
+} from "@platform/chrome/storage";
+import { getDb } from "@platform/db/instance";
+import {
   asCompanyId,
   asProblemSlug,
   asTopicId,
@@ -15,11 +20,6 @@ import {
 } from "@shared/ids";
 
 import { upsertCompany } from "../../../data/companies/repository";
-import {
-  readLocalStorage,
-  removeLocalStorage,
-} from "../../../data/datasources/chrome/storage";
-import { getDb } from "../../../data/db/instance";
 import {
   editProblem,
   getProblem,

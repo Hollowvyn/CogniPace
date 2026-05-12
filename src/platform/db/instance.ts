@@ -25,17 +25,17 @@
  */
 import { tick } from "@libs/event-bus";
 
+import { listCatalogCompanySeeds } from "../../data/catalog/companiesSeed";
+import { listCatalogPlans } from "../../data/catalog/curatedSets";
+import { buildProblemSeed } from "../../data/catalog/problemsSeed";
+import { listCatalogTopicSeeds } from "../../data/catalog/topicsSeed";
+import { seedCatalogCompanies } from "../../data/companies/repository";
+import { seedCatalogProblems } from "../../data/problems/repository";
+import { seedInitialSettings } from "../../data/settings/repository";
+import { seedCatalogTopics } from "../../data/topics/repository";
+import { seedCatalogTracks } from "../../data/tracks/repository";
+import { buildTrackCatalogSeed } from "../../data/tracks/seed";
 import { nowIso } from "../../domain/common/time";
-import { listCatalogCompanySeeds } from "../catalog/companiesSeed";
-import { listCatalogPlans } from "../catalog/curatedSets";
-import { buildProblemSeed } from "../catalog/problemsSeed";
-import { listCatalogTopicSeeds } from "../catalog/topicsSeed";
-import { seedCatalogCompanies } from "../companies/repository";
-import { seedCatalogProblems } from "../problems/repository";
-import { seedInitialSettings } from "../settings/repository";
-import { seedCatalogTopics } from "../topics/repository";
-import { seedCatalogTracks } from "../tracks/repository";
-import { buildTrackCatalogSeed } from "../tracks/seed";
 
 
 import { createDb, type DbHandle } from "./client";

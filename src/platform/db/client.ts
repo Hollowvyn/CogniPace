@@ -36,7 +36,7 @@ export interface CreateDbOptions {
   filename?: string;
   /**
    * Concatenated migration SQL (typically the contents of
-   * `src/data/db/migrations/*.sql`). If omitted, the DB is left empty
+   * `src/platform/db/migrations/*.sql`). If omitted, the DB is left empty
    * — useful only for tests that build their own schema inline.
    */
   migrationSql?: string;

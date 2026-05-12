@@ -13,12 +13,12 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import * as schema from "@platform/db/schema";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import * as schema from "../../../src/data/db/schema";
 import {
   getUserSettings,
   saveUserSettings,
@@ -27,12 +27,12 @@ import {
 } from "../../../src/data/settings/repository";
 import { createInitialUserSettings } from "../../../src/domain/settings";
 
-import type { Db } from "../../../src/data/db/client";
+import type { Db } from "@platform/db/client";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
   __dirname,
-  "../../../src/data/db/migrations",
+  "../../../src/platform/db/migrations",
 );
 
 function freshDb(): Db {

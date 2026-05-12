@@ -1,5 +1,6 @@
 /** Background handlers for settings and backup import/export operations. */
 import { normalizeStudyState } from "@libs/fsrs/studyState";
+import { getDb } from "@platform/db/instance";
 import {
   asCompanyId,
   asProblemSlug,
@@ -13,7 +14,6 @@ import {
   listCompanies,
   upsertCompany,
 } from "../../../data/companies/repository";
-import { getDb } from "../../../data/db/instance";
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import {
   listProblems,

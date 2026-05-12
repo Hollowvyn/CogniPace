@@ -11,14 +11,14 @@
  * by reading back from the DB after every save instead of returning
  * the pre-write argument.
  */
+import { type Db } from "@platform/db/client";
+import * as schema from "@platform/db/schema";
 import { eq } from "drizzle-orm";
 
 import {
   createInitialUserSettings,
   sanitizeStoredUserSettings,
 } from "../../domain/settings";
-import { type Db } from "../db/client";
-import * as schema from "../db/schema";
 
 import type { UserSettings } from "../../domain/types";
 

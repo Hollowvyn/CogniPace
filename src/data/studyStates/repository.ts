@@ -29,12 +29,12 @@
  * `ensureStudyState` + `recordReview`. Before that, the slug simply
  * has no study state and views render "not started".
  */
+import * as schema from "@platform/db/schema";
 import { asProblemSlug, type ProblemSlug } from "@shared/ids";
 import { asc, desc, eq } from "drizzle-orm";
 
 import { nowIso } from "../../domain/common/time";
 import { createDefaultStudyState } from "../../domain/study-state/defaults";
-import * as schema from "../db/schema";
 
 import type {
   AttemptHistoryEntry,
@@ -44,7 +44,7 @@ import type {
   ReviewMode,
   StudyState,
 } from "../../domain/types";
-import type { Db } from "../db/client";
+import type { Db } from "@platform/db/client";
 
 type StudyStateRow = typeof schema.studyStates.$inferSelect;
 type StudyStateInsert = typeof schema.studyStates.$inferInsert;

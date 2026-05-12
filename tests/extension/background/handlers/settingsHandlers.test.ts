@@ -25,7 +25,7 @@ vi.stubGlobal("chrome", {
   },
 });
 
-vi.mock("../../../../src/data/datasources/chrome/storage", () => ({
+vi.mock("@platform/chrome/storage", () => ({
   readLocalStorage: storageMocks.readLocalStorage,
   writeLocalStorage: storageMocks.writeLocalStorage,
   removeLocalStorage: vi.fn(),
@@ -37,7 +37,7 @@ vi.mock("../../../../src/data/datasources/chrome/storage", () => ({
 // doesn't load wasm — the SQLite-side test
 // (tests/data/studyStates/repository.test.ts) verifies the actual
 // table truncation.
-vi.mock("../../../../src/data/db/instance", () => ({
+vi.mock("@platform/db/instance", () => ({
   getDb: vi.fn().mockResolvedValue({ db: null }),
 }));
 vi.mock("../../../../src/data/studyStates/repository", () => ({

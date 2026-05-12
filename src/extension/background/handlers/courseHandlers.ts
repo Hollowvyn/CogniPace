@@ -1,8 +1,8 @@
 /** Background handlers for catalog set imports and direct problem intake. */
+import { getDb } from "@platform/db/instance";
 import { asProblemSlug } from "@shared/ids";
 
 import { getCuratedSet } from "../../../data/catalog/curatedSets";
-import { getDb } from "../../../data/db/instance";
 import {
   importProblem,
   getProblem,

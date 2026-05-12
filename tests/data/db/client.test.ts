@@ -8,15 +8,15 @@
 import { readFile } from "node:fs/promises";
 import * as path from "node:path";
 
+import { createDb, type DbHandle } from "@platform/db/client";
+import * as schema from "@platform/db/schema";
 import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { createDb, type DbHandle } from "../../../src/data/db/client";
-import * as schema from "../../../src/data/db/schema";
 
 const MIGRATION_PATH = path.resolve(
   __dirname,
-  "../../../src/data/db/migrations/0000_initial.sql",
+  "../../../src/platform/db/migrations/0000_initial.sql",
 );
 
 let migrationSql = "";

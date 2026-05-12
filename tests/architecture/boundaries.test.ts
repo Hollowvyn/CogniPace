@@ -174,9 +174,74 @@ describe("architecture / Phase 2 boundaries", () => {
   });
 });
 
-describe.skip("architecture / Phase 3+ boundaries (placeholder)", () => {
+describe("architecture / Phase 3 boundaries", () => {
+  it("platform/** does not import from features/ or app/", () => {
+    const platformRoot = path.join(repoRoot, "src/platform");
+    if (!fs.existsSync(platformRoot)) return;
+    const files = listFiles(platformRoot).filter(isSource);
+    for (const file of files) {
+      const text = read(file);
+      const forbidden = [/@features\//, /@app\//, /\bsrc\/features\//, /\bsrc\/app\//];
+      for (const re of forbidden) {
+        expect(
+          re.test(text),
+          `${path.relative(repoRoot, file)} crosses the platform boundary (${re})`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("platform/db schema is split per table under schema/", () => {
+    const schemaDir = path.join(repoRoot, "src/platform/db/schema");
+    expect(fs.existsSync(schemaDir)).toBe(true);
+    for (const name of [
+      "topics.ts",
+      "companies.ts",
+      "problems.ts",
+      "studyStates.ts",
+      "attemptHistory.ts",
+      "tracks.ts",
+      "trackGroups.ts",
+      "trackGroupProblems.ts",
+      "settingsKv.ts",
+      "index.ts",
+      "utils/nowSql.ts",
+    ]) {
+      expect(
+        fs.existsSync(path.join(schemaDir, name)),
+        `missing src/platform/db/schema/${name}`,
+      ).toBe(true);
+    }
+  });
+
+  it("platform/chrome/storage.ts and platform/time/Clock.ts exist", () => {
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/platform/chrome/storage.ts")),
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/platform/time/Clock.ts")),
+    ).toBe(true);
+  });
+
+  it("no caller still references the moved src/data/{db,datasources}/* paths", () => {
+    const files = [
+      ...listFiles(path.join(repoRoot, "src")),
+      ...listFiles(path.join(repoRoot, "tests")),
+    ].filter(isSource);
+    const archTestDir = path.join(repoRoot, "tests/architecture");
+    for (const file of files) {
+      if (file.startsWith(archTestDir)) continue;
+      const text = read(file);
+      expect(
+        /from\s+['"][^'"]*\bdata\/(db|datasources)\//.test(text),
+        `${path.relative(repoRoot, file)} imports from moved data/{db,datasources}`,
+      ).toBe(false);
+    }
+  });
+});
+
+describe.skip("architecture / Phase 4+ boundaries (placeholder)", () => {
   // Filled in as phases land. Listed by phase below.
-  it.todo("Phase 3: platform/** does not import features/, app/");
   it.todo("Phase 4: every design-system/atoms/*.tsx has a sibling *.a11y.test.tsx");
   it.todo("Phase 4: no forwardRef anywhere in src/");
   it.todo("Phase 6+: features/<x>/ui does not import features/<x>/data");

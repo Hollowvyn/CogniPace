@@ -30,7 +30,7 @@ vi.stubGlobal("chrome", {
   },
 });
 
-vi.mock("../../../src/data/datasources/chrome/storage", () => ({
+vi.mock("@platform/chrome/storage", () => ({
   readLocalStorage: (keys: string[]) => storageMocks.readLocalStorage(keys),
   writeLocalStorage: (payload: Record<string, unknown>) =>
     storageMocks.writeLocalStorage(payload),

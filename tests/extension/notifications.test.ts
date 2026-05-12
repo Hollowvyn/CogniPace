@@ -17,7 +17,7 @@ const readLocalStorageMock = vi.fn();
 const writeLocalStorageMock = vi.fn();
 const getAppDataMock = vi.fn();
 
-vi.mock("../../src/data/datasources/chrome/storage", () => ({
+vi.mock("@platform/chrome/storage", () => ({
   readLocalStorage: (...args: unknown[]) => readLocalStorageMock(...args),
   writeLocalStorage: (...args: unknown[]) => writeLocalStorageMock(...args),
 }));
@@ -32,7 +32,7 @@ vi.mock("../../src/data/repositories/appDataRepository", () => ({
 // by getAppDataMock already carries the test's intended settings, so
 // stub the SQLite read to "no row present" and let the in-memory
 // data.settings fallback win.
-vi.mock("../../src/data/db/instance", () => ({
+vi.mock("@platform/db/instance", () => ({
   getDb: vi.fn(async () => ({
     db: {} as never,
     rawDb: {} as never,

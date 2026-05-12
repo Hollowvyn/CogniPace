@@ -3,8 +3,8 @@ import {
   assertAuthorizedRuntimeMessage,
   validateRuntimeMessage,
 } from "@libs/runtime-rpc/validator";
+import { flushSnapshot, getDb } from "@platform/db/instance";
 
-import { flushSnapshot, getDb } from "../../data/db/instance";
 import {
   getAppData,
   STORAGE_KEY,

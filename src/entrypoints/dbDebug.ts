@@ -18,6 +18,16 @@
  * will use in Phase 6, so any wasm / proxy / Drizzle issue reproduces
  * here too. Resets on every reload — no persistence yet.
  */
+import { createDb, type DbHandle } from "@platform/db/client";
+import migrationSql from "@platform/db/migrations/0000_initial.sql";
+import * as schema from "@platform/db/schema";
+import {
+  base64ToBytes,
+  bytesToBase64,
+  computeFingerprint,
+  deserializeDb,
+  serializeDb,
+} from "@platform/db/snapshot";
 import {
   asCompanyId,
   asProblemSlug,
@@ -35,16 +45,6 @@ import {
   seedCatalogCompanies,
   upsertCompany,
 } from "../data/companies/repository";
-import { createDb, type DbHandle } from "../data/db/client";
-import migrationSql from "../data/db/migrations/0000_initial.sql";
-import * as schema from "../data/db/schema";
-import {
-  base64ToBytes,
-  bytesToBase64,
-  computeFingerprint,
-  deserializeDb,
-  serializeDb,
-} from "../data/db/snapshot";
 import {
   bulkImportProblems,
   editProblem,
