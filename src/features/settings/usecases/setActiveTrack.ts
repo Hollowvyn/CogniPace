@@ -1,6 +1,6 @@
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
-import type { SettingsClient } from "../messaging/client";
+import type { SettingsRepository } from "../data/SettingsRepository";
 import type { TrackGroupId, TrackId } from "@shared/ids";
 
 /**
@@ -12,12 +12,12 @@ import type { TrackGroupId, TrackId } from "@shared/ids";
  * `null` clears the focus; passing only `id` leaves `groupId` unset.
  */
 export async function setActiveTrack(
-  client: SettingsClient,
+  repo: SettingsRepository,
   args: { id: TrackId; groupId?: TrackGroupId } | null,
 ): Promise<void> {
   const activeFocus: ActiveFocus =
     args === null
       ? null
       : { kind: "track", id: args.id, groupId: args.groupId };
-  await client.update({ activeFocus });
+  await repo.update({ activeFocus });
 }

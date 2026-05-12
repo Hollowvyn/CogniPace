@@ -40,7 +40,18 @@ export {
 } from "./domain/sanitize";
 export { cloneUserSettings, mergeUserSettings } from "./domain/update";
 
-// Messaging surface (typed client for UI callers).
+// Repository — the abstraction usecases code against. Hides the
+// transport (the messaging client today; a cache + client tomorrow).
+// Cross-feature callers reach for this; the messaging client itself
+// stays internal to the feature.
+export type { SettingsRepository } from "./data/SettingsRepository";
+export {
+  settingsRepository,
+  createSettingsRepository,
+} from "./data/SettingsRepository";
+
+// Messaging client — exposed for tests + advanced composition; new
+// code should call the Repository, not the Client.
 export type { SettingsClient } from "./messaging/client";
 export { settingsClient } from "./messaging/client";
 

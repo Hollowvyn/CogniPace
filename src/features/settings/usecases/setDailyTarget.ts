@@ -1,4 +1,4 @@
-import type { SettingsClient } from "../messaging/client";
+import type { SettingsRepository } from "../data/SettingsRepository";
 
 /**
  * Curated usecase: set the daily-question goal. Throws on non-positive
@@ -7,7 +7,7 @@ import type { SettingsClient } from "../messaging/client";
  * call site.
  */
 export async function setDailyTarget(
-  client: SettingsClient,
+  repo: SettingsRepository,
   count: number,
 ): Promise<void> {
   if (!Number.isFinite(count) || count < 1) {
@@ -15,5 +15,5 @@ export async function setDailyTarget(
       `setDailyTarget: count must be a positive integer (got ${String(count)})`,
     );
   }
-  await client.update({ dailyQuestionGoal: Math.floor(count) });
+  await repo.update({ dailyQuestionGoal: Math.floor(count) });
 }

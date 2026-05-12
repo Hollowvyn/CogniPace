@@ -1,7 +1,7 @@
 import { createInitialUserSettings } from "../domain/seed";
 
+import type { SettingsRepository } from "../data/SettingsRepository";
 import type { UserSettings } from "../domain/UserSettings";
-import type { SettingsClient } from "../messaging/client";
 
 /**
  * Bulk usecase: replace the persisted settings with the default
@@ -11,7 +11,7 @@ import type { SettingsClient } from "../messaging/client";
  * Returns the round-tripped settings as saved by the SW.
  */
 export async function resetSettings(
-  client: SettingsClient,
+  repo: SettingsRepository,
 ): Promise<UserSettings> {
-  return client.update(createInitialUserSettings());
+  return repo.update(createInitialUserSettings());
 }

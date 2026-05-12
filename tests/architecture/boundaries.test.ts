@@ -450,18 +450,48 @@ describe("architecture / Phase 6 boundaries", () => {
     }
   });
 
-  it("SettingsRepository is consumed only inside features/settings/ (data/ or barrels)", () => {
+  it("features/settings/data/ is consumed only via the index/server barrels", () => {
     const files = listFiles(path.join(repoRoot, "src")).filter(isSource);
     for (const file of files) {
       const relPath = path.relative(repoRoot, file);
       if (relPath.startsWith("src/features/settings/")) continue;
       const text = read(file);
-      // The repo functions are exposed via `@features/settings/server`;
-      // anyone reaching `features/settings/data/...` directly is a
-      // boundary violation.
+      // The Repository (UI side) flows out through @features/settings;
+      // the DataSource (SW side) flows out through
+      // @features/settings/server. Anyone reaching the data/ folder
+      // directly is a boundary violation.
       expect(
         /from\s+['"]@features\/settings\/data\//.test(text),
-        `${relPath} imports features/settings/data/* directly — go through @features/settings/server`,
+        `${relPath} imports features/settings/data/* directly — go through @features/settings or @features/settings/server`,
+      ).toBe(false);
+    }
+  });
+
+  it("data/ holds the UI-side Repository + the SW-side DataSource", () => {
+    const dataDir = path.join(repoRoot, "src/features/settings/data");
+    for (const name of ["SettingsRepository.ts", "SettingsDataSource.ts"]) {
+      expect(
+        fs.existsSync(path.join(dataDir, name)),
+        `missing src/features/settings/data/${name}`,
+      ).toBe(true);
+    }
+  });
+
+  it("usecases code against the Repository, not the Client (UDF chain)", () => {
+    const usecasesDir = path.join(repoRoot, "src/features/settings/usecases");
+    if (!fs.existsSync(usecasesDir)) return;
+    const files = fs
+      .readdirSync(usecasesDir)
+      .filter((f) => f.endsWith(".ts") && f !== "index.ts");
+    for (const name of files) {
+      const text = read(path.join(usecasesDir, name));
+      expect(
+        /SettingsRepository/.test(text),
+        `usecases/${name} should accept a SettingsRepository (the abstraction usecases code against)`,
+      ).toBe(true);
+      expect(
+        /SettingsClient/.test(text),
+        `usecases/${name} reaches past the Repository to the Client — go through the Repository`,
       ).toBe(false);
     }
   });

@@ -8,17 +8,27 @@
  * to start from) and react to the intent results — they never reach
  * into the draft.
  *
- * Save/reset go through `settingsClient.update(patch)` so the SW
- * receives the same wire shape as before; the bus broadcasts a tick
- * on success and any other surface (popup, overlay) refreshes on
- * its own.
+ * The full UDF chain (Android-style):
+ *
+ *   View intent
+ *     → Hook (this file)
+ *       → Usecase (saveSettings / resetSettings / curated single-field)
+ *         → Repository (SettingsRepository — UI-side abstraction)
+ *           → MessagingClient (settingsClient — typed sendMessage)
+ *             → SW boundary
+ *               → Handler (updateSettings)
+ *                 → DataSource (SettingsDataSource — Drizzle calls)
+ *                   → SQLite
+ *
+ * The hook never reaches past the Repository; the Repository is where
+ * Phase 9's data-flow library decision slots in.
  */
 import { useCallback, useMemo, useState } from "react";
 
+import { settingsRepository } from "../../data/SettingsRepository";
 import { areUserSettingsEqual } from "../../domain/equality";
 import { createInitialUserSettings } from "../../domain/seed";
 import { cloneUserSettings } from "../../domain/update";
-import { settingsClient } from "../../messaging/client";
 import { resetSettings } from "../../usecases/resetSettings";
 import { saveSettings } from "../../usecases/saveSettings";
 
@@ -100,9 +110,11 @@ export function useSettingsScreen(
       return { ok: true, settings: currentSettings ?? createInitialUserSettings() };
     }
     try {
-      // Hook → usecase → client → SW → repo. The usecase owns the
-      // sanitize step so the View can't ship an unsanitized draft.
-      const saved = await saveSettings(settingsClient, draftSettings);
+      // Hook → Usecase → Repository → Client → SW → DataSource → DB.
+      // The Usecase owns the sanitize step so the View can't ship an
+      // unsanitized draft; the Repository hides the transport so this
+      // hook stays the same when the Phase 9 data-flow library lands.
+      const saved = await saveSettings(settingsRepository, draftSettings);
       setDraftState(null);
       return { ok: true, settings: saved };
     } catch (err) {
@@ -120,10 +132,10 @@ export function useSettingsScreen(
   const resetToDefaults =
     useCallback(async (): Promise<SettingsIntentResult> => {
       try {
-        // Hook → usecase → client → SW → repo. The usecase owns where
-        // the "defaults" come from (the seed file) so the View can't
-        // ship a half-correct factory reset.
-        const saved = await resetSettings(settingsClient);
+        // Hook → Usecase → Repository → Client → SW → DataSource → DB.
+        // The Usecase owns where the "defaults" come from (the seed
+        // file) so the View can't ship a half-correct factory reset.
+        const saved = await resetSettings(settingsRepository);
         setDraftState(null);
         return { ok: true, settings: saved };
       } catch (err) {

@@ -1,8 +1,8 @@
 import { sanitizeStoredUserSettings } from "../domain/sanitize";
 import { cloneUserSettings } from "../domain/update";
 
+import type { SettingsRepository } from "../data/SettingsRepository";
 import type { UserSettings } from "../domain/UserSettings";
-import type { SettingsClient } from "../messaging/client";
 
 /**
  * Bulk usecase: persist a full UserSettings draft.
@@ -16,15 +16,15 @@ import type { SettingsClient } from "../messaging/client";
  *
  * Responsibilities owned here:
  *   - Sanitize the draft (drop unknown fields, coerce ranges) before
- *     it hits the wire — the SW trusts the contract.
+ *     it hits the repository — the SW trusts the contract.
  *   - Clone before sanitizing so the caller's draft isn't mutated.
  *
  * Returns the round-tripped settings as saved by the SW.
  */
 export async function saveSettings(
-  client: SettingsClient,
+  repo: SettingsRepository,
   draft: UserSettings,
 ): Promise<UserSettings> {
   const sanitized = sanitizeStoredUserSettings(cloneUserSettings(draft));
-  return client.update(sanitized);
+  return repo.update(sanitized);
 }

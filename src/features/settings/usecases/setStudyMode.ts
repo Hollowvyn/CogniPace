@@ -1,5 +1,5 @@
+import type { SettingsRepository } from "../data/SettingsRepository";
 import type { StudyMode } from "../domain/UserSettings";
-import type { SettingsClient } from "../messaging/client";
 
 /**
  * Curated usecase: toggle between the two study modes. Both popup and
@@ -8,8 +8,8 @@ import type { SettingsClient } from "../messaging/client";
  * payload to flip one flag.
  */
 export async function setStudyMode(
-  client: SettingsClient,
+  repo: SettingsRepository,
   mode: StudyMode,
 ): Promise<void> {
-  await client.update({ studyMode: mode });
+  await repo.update({ studyMode: mode });
 }
