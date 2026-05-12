@@ -1,5 +1,5 @@
-import type { SettingsRepository } from "../data/SettingsRepository";
-import type { StudyMode, UserSettings } from "../domain/UserSettings";
+import type { SettingsRepository } from "../../data/SettingsRepository";
+import type { StudyMode, UserSettings } from "../model/UserSettings";
 
 /**
  * Curated usecase: toggle between the two study modes. Both popup and

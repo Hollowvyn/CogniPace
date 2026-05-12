@@ -3,15 +3,19 @@
  * needs to display or mutate settings imports from here (and only
  * here). The SW-side equivalent lives in `./server.ts`; keeping them
  * separate guarantees the popup / dashboard / overlay bundles never
- * pull SW-only code (drizzle, repository impls) and the background
+ * pull SW-only code (Drizzle, DataSource impls) and the background
  * bundle never pulls React.
  *
- * Phase 6 surface: domain types, pure helpers safe for UI consumers,
- * the typed messaging client, curated usecases, and the settings
- * screen (wired into the dashboard rail by the composition root).
+ * Surface:
+ *   - DomainModel types (UserSettings aggregate + every nested type).
+ *   - Pure model helpers (defaults, equality, sanitize, clone, merge).
+ *   - Repository (the abstraction usecases code against).
+ *   - Messaging client (escape hatch for tests / advanced wiring).
+ *   - Usecases (curated single-field + bulk save/reset).
+ *   - ViewModel hook + Screen.
  */
 
-// Domain types (UserSettings + every nested setting interface).
+// DomainModel types — pulled in through the UserSettings model folder.
 export type {
   DifficultyGoalSettings,
   ExperimentalSettings,
@@ -23,48 +27,44 @@ export type {
   TimingSettings,
   UserSettings,
   UserSettingsPatch,
-} from "./domain/UserSettings";
+} from "./domain/model/UserSettings";
 
-// Pure domain helpers — safe for UI consumers (fixtures / mocks /
-// equality checks). Writes still go through `settingsClient`.
+// Pure model helpers — safe for UI consumers (fixtures / mocks /
+// equality checks). Writes go through the Repository.
 export {
   INITIAL_USER_SETTINGS,
-  createInitialUserSettings,
+  areUserSettingsEqual,
+  cloneUserSettings,
   createInitialSetsEnabled,
-} from "./domain/seed";
-export { areUserSettingsEqual } from "./domain/equality";
-export {
+  createInitialUserSettings,
   hasGroupedUserSettings,
   isPersistedUserSettings,
+  mergeUserSettings,
   sanitizeStoredUserSettings,
-} from "./domain/sanitize";
-export { cloneUserSettings, mergeUserSettings } from "./domain/update";
+} from "./domain/model/UserSettings";
 
 // Repository — the abstraction usecases code against. Hides the
 // transport (the messaging client today; a cache + client tomorrow).
-// Cross-feature callers reach for this; the messaging client itself
-// stays internal to the feature.
 export type { SettingsRepository } from "./data/SettingsRepository";
 export {
   settingsRepository,
   createSettingsRepository,
 } from "./data/SettingsRepository";
 
-// Messaging client — exposed for tests + advanced composition; new
+// Messaging client — exposed for tests + advanced composition. New
 // code should call the Repository, not the Client.
 export type { SettingsClient } from "./messaging/client";
 export { settingsClient } from "./messaging/client";
 
-// Usecases — Hook → usecase → client → SW → repo. UI surfaces outside
-// the settings editor call the curated single-field usecases directly
-// via the messaging client; the editor's bulk save/reset flow through
-// `useSettingsScreen` which composes saveSettings / resetSettings.
-export { setActiveTrack } from "./usecases/setActiveTrack";
-export { setDailyTarget } from "./usecases/setDailyTarget";
-export { setSkipPremium } from "./usecases/setSkipPremium";
-export { setStudyMode } from "./usecases/setStudyMode";
-export { saveSettings } from "./usecases/saveSettings";
-export { resetSettings } from "./usecases/resetSettings";
+// Usecases — Hook → Usecase → Repository → Client → SW → DataSource.
+export {
+  resetSettings,
+  saveSettings,
+  setActiveTrack,
+  setDailyTarget,
+  setSkipPremium,
+  setStudyMode,
+} from "./domain/usecases";
 
 // ViewModel hook (MVI). The View calls this; no parent passes the
 // draft / save / discard / reset wiring as props.

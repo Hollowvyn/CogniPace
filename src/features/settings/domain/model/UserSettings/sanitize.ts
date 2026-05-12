@@ -1,16 +1,24 @@
+/**
+ * Sanitize / validate a UserSettings snapshot. Coerces unknown
+ * inputs (e.g. imported backups, legacy v6 blobs) into a shape the
+ * rest of the app can trust. Lives next to the type because every
+ * rule here is "what does a valid UserSettings look like?" — a model
+ * question, not a util.
+ */
 import { asTrackGroupId, asTrackId } from "@shared/ids";
 
-import { DEFAULT_TRACK_ID } from "../../../domain/common/constants";
+import { DEFAULT_TRACK_ID } from "../../../../../domain/common/constants";
 
-import { createInitialSetsEnabled, createInitialUserSettings } from "./seed";
 import {
-  DifficultyGoalSettings,
-  ReviewOrder,
-  StudyMode,
-  UserSettings,
-} from "./UserSettings";
+  createInitialSetsEnabled,
+  createInitialUserSettings,
+} from "./default";
 
-import type { ActiveFocus } from "../../../domain/active-focus/model";
+import type { DifficultyGoalSettings } from "./DifficultyGoalSettings";
+import type { ReviewOrder } from "./ReviewOrder";
+import type { StudyMode } from "./StudyMode";
+import type { UserSettings } from "./UserSettings";
+import type { ActiveFocus } from "../../../../../domain/active-focus/model";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -22,7 +30,7 @@ function numberInRange(
   value: unknown,
   fallback: number,
   min: number,
-  max: number
+  max: number,
 ): number {
   return typeof value === "number" && Number.isFinite(value)
     ? Math.max(min, Math.min(max, value))
@@ -42,9 +50,7 @@ function positiveInteger(value: unknown, fallback: number): number {
 }
 
 function timeString(value: unknown, fallback: string): string {
-  return typeof value === "string" && isTimeString(value)
-    ? value
-    : fallback;
+  return typeof value === "string" && isTimeString(value) ? value : fallback;
 }
 
 function isTimeString(value: string): boolean {
@@ -103,15 +109,15 @@ function sanitizeSetsEnabled(value: unknown): Record<string, boolean> {
     ...createInitialSetsEnabled(),
     ...Object.fromEntries(
       Object.entries(value).filter(
-        (entry): entry is [string, boolean] => typeof entry[1] === "boolean"
-      )
+        (entry): entry is [string, boolean] => typeof entry[1] === "boolean",
+      ),
     ),
   };
 }
 
 function sanitizeDifficultyGoalMs(
   value: unknown,
-  fallback: DifficultyGoalSettings
+  fallback: DifficultyGoalSettings,
 ): DifficultyGoalSettings {
   let base: DifficultyGoalSettings;
   if (!isRecord(value)) {
@@ -126,8 +132,14 @@ function sanitizeDifficultyGoalMs(
 
   const STEP_MS = 60000;
   base.Easy = Math.max(10 * STEP_MS, Math.min(base.Easy, 58 * STEP_MS));
-  base.Medium = Math.max(base.Easy + STEP_MS, Math.min(base.Medium, 59 * STEP_MS));
-  base.Hard = Math.max(base.Medium + STEP_MS, Math.min(base.Hard, 60 * STEP_MS));
+  base.Medium = Math.max(
+    base.Easy + STEP_MS,
+    Math.min(base.Medium, 59 * STEP_MS),
+  );
+  base.Hard = Math.max(
+    base.Medium + STEP_MS,
+    Math.min(base.Hard, 60 * STEP_MS),
+  );
 
   return base;
 }
@@ -152,7 +164,9 @@ function isBooleanRecord(value: unknown): value is Record<string, boolean> {
   );
 }
 
-function isDifficultyGoalSettings(value: unknown): value is DifficultyGoalSettings {
+function isDifficultyGoalSettings(
+  value: unknown,
+): value is DifficultyGoalSettings {
   return (
     isRecord(value) &&
     isPositiveInteger(value.Easy) &&
@@ -161,6 +175,8 @@ function isDifficultyGoalSettings(value: unknown): value is DifficultyGoalSettin
   );
 }
 
+/** Cheap structural check — does this object at least carry the
+ *  grouped nested-object surface (notifications, memoryReview, …)? */
 export function hasGroupedUserSettings(value: unknown): boolean {
   if (!isRecord(value)) {
     return false;
@@ -175,6 +191,9 @@ export function hasGroupedUserSettings(value: unknown): boolean {
   );
 }
 
+/** Type guard — does this value match the full persisted UserSettings
+ *  shape exactly? Used to decide whether a stored blob can be loaded
+ *  as-is or must be sanitized. */
 export function isPersistedUserSettings(value: unknown): value is UserSettings {
   if (!hasGroupedUserSettings(value)) {
     return false;
@@ -208,25 +227,28 @@ export function isPersistedUserSettings(value: unknown): value is UserSettings {
   );
 }
 
+/** Coerce an arbitrary value into a valid UserSettings, replacing any
+ *  malformed fields with the canonical defaults. Idempotent: passing a
+ *  sanitized result back through yields the same shape. */
 export function sanitizeStoredUserSettings(value: unknown): UserSettings {
   const initial = createInitialUserSettings();
   const source = isRecord(value) ? value : {};
 
   const notifications = settingsRecord(
     source.notifications,
-    initial.notifications
+    initial.notifications,
   );
   const memoryReview = settingsRecord(source.memoryReview, initial.memoryReview);
   const questionFilters = settingsRecord(
     source.questionFilters,
-    initial.questionFilters
+    initial.questionFilters,
   );
   const timing = settingsRecord(source.timing, initial.timing);
   const experimental = settingsRecord(source.experimental, initial.experimental);
 
   const sanitizedRequireSolveTime = booleanValue(
     timing.requireSolveTime,
-    initial.timing.requireSolveTime
+    initial.timing.requireSolveTime,
   );
 
   // Honour the v6 `activeCourseId` field on legacy import payloads to
@@ -244,7 +266,7 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
   return {
     dailyQuestionGoal: nonNegativeInteger(
       source.dailyQuestionGoal,
-      initial.dailyQuestionGoal
+      initial.dailyQuestionGoal,
     ),
     studyMode: studyMode(source.studyMode, initial.studyMode),
     setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
@@ -252,11 +274,11 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     notifications: {
       enabled: booleanValue(
         notifications.enabled,
-        initial.notifications.enabled
+        initial.notifications.enabled,
       ),
       dailyTime: timeString(
         notifications.dailyTime,
-        initial.notifications.dailyTime
+        initial.notifications.dailyTime,
       ),
     },
     memoryReview: {
@@ -264,34 +286,33 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
         memoryReview.targetRetention,
         initial.memoryReview.targetRetention,
         0.7,
-        0.95
+        0.95,
       ),
       reviewOrder: reviewOrder(
         memoryReview.reviewOrder,
-        initial.memoryReview.reviewOrder
+        initial.memoryReview.reviewOrder,
       ),
     },
     questionFilters: {
       skipPremium: booleanValue(
         questionFilters.skipPremium,
-        initial.questionFilters.skipPremium
+        initial.questionFilters.skipPremium,
       ),
     },
     timing: {
       requireSolveTime: sanitizedRequireSolveTime,
-      hardMode: sanitizedRequireSolveTime && booleanValue(
-        timing.hardMode,
-        initial.timing.hardMode
-      ),
+      hardMode:
+        sanitizedRequireSolveTime &&
+        booleanValue(timing.hardMode, initial.timing.hardMode),
       difficultyGoalMs: sanitizeDifficultyGoalMs(
         timing.difficultyGoalMs,
-        initial.timing.difficultyGoalMs
+        initial.timing.difficultyGoalMs,
       ),
     },
     experimental: {
       autoDetectSolved: booleanValue(
         experimental.autoDetectSolved,
-        initial.experimental.autoDetectSolved
+        initial.experimental.autoDetectSolved,
       ),
     },
   };

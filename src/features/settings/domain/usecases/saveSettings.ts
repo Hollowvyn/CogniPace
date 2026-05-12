@@ -1,8 +1,10 @@
-import { sanitizeStoredUserSettings } from "../domain/sanitize";
-import { cloneUserSettings } from "../domain/update";
+import {
+  cloneUserSettings,
+  sanitizeStoredUserSettings,
+  type UserSettings,
+} from "../model/UserSettings";
 
-import type { SettingsRepository } from "../data/SettingsRepository";
-import type { UserSettings } from "../domain/UserSettings";
+import type { SettingsRepository } from "../../data/SettingsRepository";
 
 /**
  * Bulk usecase: persist a full UserSettings draft.

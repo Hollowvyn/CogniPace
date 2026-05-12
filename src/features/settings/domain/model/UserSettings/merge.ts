@@ -1,24 +1,14 @@
 import { sanitizeStoredUserSettings } from "./sanitize";
-import { UserSettings, UserSettingsPatch } from "./UserSettings";
 
-export function cloneUserSettings(settings: UserSettings): UserSettings {
-  return {
-    ...settings,
-    experimental: { ...settings.experimental },
-    memoryReview: { ...settings.memoryReview },
-    notifications: { ...settings.notifications },
-    questionFilters: { ...settings.questionFilters },
-    setsEnabled: { ...settings.setsEnabled },
-    timing: {
-      ...settings.timing,
-      difficultyGoalMs: { ...settings.timing.difficultyGoalMs },
-    },
-  };
-}
+import type { UserSettings } from "./UserSettings";
+import type { UserSettingsPatch } from "./UserSettingsPatch";
 
+/** Apply a `UserSettingsPatch` on top of a current snapshot. Nested
+ *  objects merge field-by-field; the result is sanitized so the SW
+ *  never persists a malformed snapshot. */
 export function mergeUserSettings(
   current: UserSettings,
-  patch: UserSettingsPatch
+  patch: UserSettingsPatch,
 ): UserSettings {
   return sanitizeStoredUserSettings({
     ...current,

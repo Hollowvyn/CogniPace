@@ -1,7 +1,7 @@
-import { createInitialUserSettings } from "../domain/seed";
+import { createInitialUserSettings } from "../model/UserSettings";
 
-import type { SettingsRepository } from "../data/SettingsRepository";
-import type { UserSettings } from "../domain/UserSettings";
+import type { SettingsRepository } from "../../data/SettingsRepository";
+import type { UserSettings } from "../model/UserSettings";
 
 /**
  * Bulk usecase: replace the persisted settings with the default

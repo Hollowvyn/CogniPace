@@ -7,9 +7,9 @@
  *
  * Naming (Android-style; see plan §"MVI invariant"):
  *   - `SettingsDataSource` is the SW-side Drizzle I/O.
- *   - The UI-side `SettingsRepository` lives in `./data/SettingsRepository`
- *     and is exposed via `index.ts`; it sits between the UI's Usecase
- *     and the `MessagingClient` that crosses the SW boundary.
+ *   - The UI-side `SettingsRepository` (in `./data/SettingsRepository`,
+ *     exposed via `index.ts`) sits between the UI's Usecase and the
+ *     `MessagingClient` that crosses the SW boundary.
  *
  * Keeping `index.ts` (UI) and `server.ts` (SW) separate enforces the
  * Service-Worker bundle hygiene rule from the plan (no React, no MUI
@@ -18,7 +18,7 @@
 export type {
   UserSettings,
   UserSettingsPatch,
-} from "./domain/UserSettings";
+} from "./domain/model/UserSettings";
 
 // Handlers — central router (and Phase 8's app/background/router.ts)
 // dispatch to these.
@@ -32,17 +32,16 @@ export {
   USER_SETTINGS_KEY,
 } from "./data/SettingsDataSource";
 
-// Pure domain helpers needed by SW-side handlers (merge incoming patch,
+// Pure model helpers needed by SW-side handlers (merge incoming patch,
 // sanitize a stored snapshot, seed a default).
-export { cloneUserSettings, mergeUserSettings } from "./domain/update";
-export { areUserSettingsEqual } from "./domain/equality";
 export {
-  createInitialUserSettings,
-  createInitialSetsEnabled,
   INITIAL_USER_SETTINGS,
-} from "./domain/seed";
-export {
+  areUserSettingsEqual,
+  cloneUserSettings,
+  createInitialSetsEnabled,
+  createInitialUserSettings,
   hasGroupedUserSettings,
   isPersistedUserSettings,
+  mergeUserSettings,
   sanitizeStoredUserSettings,
-} from "./domain/sanitize";
+} from "./domain/model/UserSettings";

@@ -27,7 +27,7 @@ import {
   type SettingsClient,
 } from "../messaging/client";
 
-import type { UserSettings, UserSettingsPatch } from "../domain/UserSettings";
+import type { UserSettings, UserSettingsPatch } from "../domain/model/UserSettings";
 
 /** The contract usecases code against. Implementations decide
  *  *how* the data moves; usecases only care that it does. */

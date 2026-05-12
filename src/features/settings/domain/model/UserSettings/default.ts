@@ -1,9 +1,22 @@
+/**
+ * Default-factory for the UserSettings DomainModel.
+ *
+ * Lives next to the type because the defaults are part of the model
+ * surface — "what does a fresh UserSettings look like?" is a model
+ * question, not a util. Replaces the older `seed.ts` name (which
+ * smelled like a database concept).
+ */
 import { asTrackId } from "@shared/ids";
 
-import { BUILT_IN_SETS, DEFAULT_TRACK_ID } from "../../../domain/common/constants";
+import {
+  BUILT_IN_SETS,
+  DEFAULT_TRACK_ID,
+} from "../../../../../domain/common/constants";
 
-import { UserSettings } from "./UserSettings";
+import type { UserSettings } from "./UserSettings";
 
+/** Canonical default snapshot. Cloned by `createInitialUserSettings`
+ *  so callers can mutate freely without disturbing this constant. */
 export const INITIAL_USER_SETTINGS: UserSettings = {
   dailyQuestionGoal: 18,
   studyMode: "studyPlan",
@@ -43,6 +56,7 @@ export const INITIAL_USER_SETTINGS: UserSettings = {
   },
 };
 
+/** Build a fresh, mutable UserSettings snapshot from the defaults. */
 export function createInitialUserSettings(): UserSettings {
   return {
     ...INITIAL_USER_SETTINGS,
@@ -58,6 +72,8 @@ export function createInitialUserSettings(): UserSettings {
   };
 }
 
+/** Default `setsEnabled` map. Kept for legacy v6 import paths; new
+ *  code consults the tracks repo for enabled-state. */
 export function createInitialSetsEnabled(): Record<string, boolean> {
   return {
     ...Object.fromEntries(BUILT_IN_SETS.map((setName) => [setName, true])),

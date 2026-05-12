@@ -26,13 +26,14 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { settingsRepository } from "../../data/SettingsRepository";
-import { areUserSettingsEqual } from "../../domain/equality";
-import { createInitialUserSettings } from "../../domain/seed";
-import { cloneUserSettings } from "../../domain/update";
-import { resetSettings } from "../../usecases/resetSettings";
-import { saveSettings } from "../../usecases/saveSettings";
-
-import type { UserSettings } from "../../domain/UserSettings";
+import {
+  areUserSettingsEqual,
+  cloneUserSettings,
+  createInitialUserSettings,
+  type UserSettings,
+} from "../../domain/model/UserSettings";
+import { resetSettings } from "../../domain/usecases/resetSettings";
+import { saveSettings } from "../../domain/usecases/saveSettings";
 
 /** Discriminated result returned by intent functions. Consumers narrow
  * on `ok` before reading `settings` or `error`. */

@@ -20,7 +20,7 @@ import {
   sanitizeStoredUserSettings,
 } from "../domain";
 
-import type { UserSettings } from "../domain/UserSettings";
+import type { UserSettings } from "../domain/model/UserSettings";
 
 /** Storage key for the entire UserSettings JSON document. */
 export const USER_SETTINGS_KEY = "user_settings";

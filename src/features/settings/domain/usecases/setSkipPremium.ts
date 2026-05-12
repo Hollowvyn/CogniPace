@@ -1,5 +1,5 @@
-import type { SettingsRepository } from "../data/SettingsRepository";
-import type { UserSettings } from "../domain/UserSettings";
+import type { SettingsRepository } from "../../data/SettingsRepository";
+import type { UserSettings } from "../model/UserSettings";
 
 /**
  * Curated usecase: toggle the "skip premium-locked problems" filter.

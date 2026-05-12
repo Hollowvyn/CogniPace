@@ -418,7 +418,9 @@ describe("architecture / Phase 6 boundaries", () => {
     for (const dir of [
       "data",
       "domain",
-      "usecases",
+      "domain/model",
+      "domain/model/UserSettings",
+      "domain/usecases",
       "messaging",
       "ui",
     ]) {
@@ -429,25 +431,73 @@ describe("architecture / Phase 6 boundaries", () => {
     }
   });
 
+  it("UserSettings model folder holds the per-type files + specific helpers", () => {
+    const dir = path.join(
+      repoRoot,
+      "src/features/settings/domain/model/UserSettings",
+    );
+    for (const name of [
+      // per-type files (one DomainModel per file)
+      "UserSettings.ts",
+      "UserSettingsPatch.ts",
+      "StudyMode.ts",
+      "ReviewOrder.ts",
+      "DifficultyGoalSettings.ts",
+      "NotificationSettings.ts",
+      "MemoryReviewSettings.ts",
+      "QuestionFilterSettings.ts",
+      "TimingSettings.ts",
+      "ExperimentalSettings.ts",
+      // helpers specific to this model (live next to the model, not in
+      // a sibling utils/ — they're "what does this model do?")
+      "default.ts",
+      "equality.ts",
+      "sanitize.ts",
+      "clone.ts",
+      "merge.ts",
+      "index.ts",
+    ]) {
+      expect(
+        fs.existsSync(path.join(dir, name)),
+        `missing src/features/settings/domain/model/UserSettings/${name}`,
+      ).toBe(true);
+    }
+  });
+
   it("features/settings exposes both UI (index.ts) and SW (server.ts) barrels", () => {
     const root = path.join(repoRoot, "src/features/settings");
     expect(fs.existsSync(path.join(root, "index.ts"))).toBe(true);
     expect(fs.existsSync(path.join(root, "server.ts"))).toBe(true);
   });
 
-  it("curated usecases live under usecases/ (setActiveTrack, setDailyTarget, setStudyMode)", () => {
-    const usecasesDir = path.join(repoRoot, "src/features/settings/usecases");
+  it("curated usecases live under domain/usecases/", () => {
+    const usecasesDir = path.join(
+      repoRoot,
+      "src/features/settings/domain/usecases",
+    );
     for (const name of [
       "setActiveTrack.ts",
       "setDailyTarget.ts",
+      "setSkipPremium.ts",
       "setStudyMode.ts",
+      "saveSettings.ts",
+      "resetSettings.ts",
       "index.ts",
     ]) {
       expect(
         fs.existsSync(path.join(usecasesDir, name)),
-        `missing src/features/settings/usecases/${name}`,
+        `missing src/features/settings/domain/usecases/${name}`,
       ).toBe(true);
     }
+  });
+
+  it("domain/ has no top-level grab-bag .ts (everything lives under model/ or usecases/)", () => {
+    const domainDir = path.join(repoRoot, "src/features/settings/domain");
+    const topLevel = fs
+      .readdirSync(domainDir, { withFileTypes: true })
+      .filter((e) => e.isFile() && e.name.endsWith(".ts"))
+      .map((e) => e.name);
+    expect(topLevel.sort()).toEqual(["index.ts"]);
   });
 
   it("features/settings/data/ is consumed only via the index/server barrels", () => {
@@ -478,7 +528,10 @@ describe("architecture / Phase 6 boundaries", () => {
   });
 
   it("usecases code against the Repository, not the Client (UDF chain)", () => {
-    const usecasesDir = path.join(repoRoot, "src/features/settings/usecases");
+    const usecasesDir = path.join(
+      repoRoot,
+      "src/features/settings/domain/usecases",
+    );
     if (!fs.existsSync(usecasesDir)) return;
     const files = fs
       .readdirSync(usecasesDir)

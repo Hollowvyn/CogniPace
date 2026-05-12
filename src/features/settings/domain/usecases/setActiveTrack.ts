@@ -1,7 +1,7 @@
 
-import type { ActiveFocus } from "../../../domain/active-focus/model";
-import type { SettingsRepository } from "../data/SettingsRepository";
-import type { UserSettings } from "../domain/UserSettings";
+import type { ActiveFocus } from "../../../../domain/active-focus/model";
+import type { SettingsRepository } from "../../data/SettingsRepository";
+import type { UserSettings } from "../model/UserSettings";
 import type { TrackGroupId, TrackId } from "@shared/ids";
 
 /**

@@ -10,7 +10,7 @@
  */
 import { sendMessage } from "@libs/runtime-rpc/client";
 
-import type { UserSettings, UserSettingsPatch } from "../domain/UserSettings";
+import type { UserSettings, UserSettingsPatch } from "../domain/model/UserSettings";
 
 export interface SettingsClient {
   /** Apply a (possibly partial) settings patch. Returns the round-tripped
