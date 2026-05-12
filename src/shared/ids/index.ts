@@ -8,9 +8,9 @@
  *
  * One type per file; import from `@shared/ids` (this barrel).
  */
-export type { Brand } from "./Brand";
+export type { Brand } from "./utils/Brand";
 
-export { slugify } from "./slugify";
+export { slugify } from "./utils/slugify";
 
 export type { ProblemSlug } from "./ProblemSlug";
 export { asProblemSlug } from "./ProblemSlug";

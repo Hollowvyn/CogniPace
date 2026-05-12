@@ -1,4 +1,4 @@
-import type { Brand } from "./Brand";
+import type { Brand } from "./utils/Brand";
 
 /** UUID-based identifier for a TrackGroup. */
 export type TrackGroupId = Brand<string, "TrackGroupId">;

@@ -1,4 +1,4 @@
-import type { Brand } from "./Brand";
+import type { Brand } from "./utils/Brand";
 
 /** Identifier for a Track. Curated tracks use slug-style ids; user
  *  tracks use UUIDs. The brand is the same regardless of origin. */

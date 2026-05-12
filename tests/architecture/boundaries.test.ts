@@ -101,15 +101,18 @@ describe("architecture / Phase 1 boundaries", () => {
   it("@shared/ids resolves to a real folder with the expected ID modules", () => {
     const ids = path.join(repoRoot, "src/shared/ids");
     expect(fs.existsSync(ids)).toBe(true);
+    // Convention: main models at the top of the folder; pure helpers
+    // (Brand utility, slugify) under utils/. See plan §"utils/ helpers
+    // convention".
     for (const name of [
-      "Brand.ts",
       "ProblemSlug.ts",
       "TopicId.ts",
       "CompanyId.ts",
       "TrackId.ts",
       "TrackGroupId.ts",
-      "slugify.ts",
       "index.ts",
+      "utils/Brand.ts",
+      "utils/slugify.ts",
     ]) {
       expect(fs.existsSync(path.join(ids, name))).toBe(true);
     }

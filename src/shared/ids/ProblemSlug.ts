@@ -1,6 +1,6 @@
-import { slugify } from "./slugify";
+import { slugify } from "./utils/slugify";
 
-import type { Brand } from "./Brand";
+import type { Brand } from "./utils/Brand";
 
 /** Slug-style identifier for a Problem (e.g., "two-sum"). */
 export type ProblemSlug = Brand<string, "ProblemSlug">;

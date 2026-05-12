@@ -46,15 +46,16 @@ describe("architecture / shared kernel", () => {
   it("contains the ids/ subfolder with branded ID modules", () => {
     const ids = path.join(sharedDir, "ids");
     expect(fs.existsSync(ids)).toBe(true);
+    // Main models at the top of the folder; pure helpers under utils/.
     const required = [
-      "Brand.ts",
       "ProblemSlug.ts",
       "TopicId.ts",
       "CompanyId.ts",
       "TrackId.ts",
       "TrackGroupId.ts",
-      "slugify.ts",
       "index.ts",
+      "utils/Brand.ts",
+      "utils/slugify.ts",
     ];
     for (const name of required) {
       expect(

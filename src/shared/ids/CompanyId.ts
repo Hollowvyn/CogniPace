@@ -1,6 +1,6 @@
-import { slugify } from "./slugify";
+import { slugify } from "./utils/slugify";
 
-import type { Brand } from "./Brand";
+import type { Brand } from "./utils/Brand";
 
 /** Slug-style identifier for a Company tag. */
 export type CompanyId = Brand<string, "CompanyId">;
