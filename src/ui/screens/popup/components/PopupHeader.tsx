@@ -1,11 +1,11 @@
+import {BrandMark, SurfaceIconButton, SurfaceTooltip} from "@design-system/atoms";
+import {cognipaceTokens} from "@design-system/theme";
 import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import {alpha} from "@mui/material/styles";
 
-import {BrandMark, SurfaceIconButton, SurfaceTooltip} from "../../../components";
-import {cognipaceTokens} from "../../../theme";
 
 export interface PopupHeaderProps {
   onOpenSettings: () => void;

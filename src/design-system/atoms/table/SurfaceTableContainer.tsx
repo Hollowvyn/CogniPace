@@ -1,9 +1,9 @@
+import { cognipaceTokens } from "@design-system/theme";
 import Paper from "@mui/material/Paper";
 import { alpha } from "@mui/material/styles";
 import TableContainer from "@mui/material/TableContainer";
 import { ReactNode } from "react";
 
-import { cognipaceTokens } from "../../theme";
 
 export function SurfaceTableContainer(props: {
   children: ReactNode;

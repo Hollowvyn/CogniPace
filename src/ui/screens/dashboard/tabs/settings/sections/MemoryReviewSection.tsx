@@ -1,3 +1,4 @@
+import { SurfaceControlRow } from "@design-system/atoms";
 import Box from "@mui/material/Box";
 import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
@@ -5,7 +6,6 @@ import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
 
-import { SurfaceControlRow } from "../../../../../components";
 import { SelectSetting } from "../components/SettingsInputs";
 import { SettingsUpdate } from "../settingsTypes";
 

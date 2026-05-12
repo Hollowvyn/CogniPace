@@ -1,9 +1,9 @@
+import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
 import { alpha } from "@mui/material/styles";
 import { ReactNode } from "react";
 
-import { Tone } from "../../presentation/studyState";
-import { cognipaceTokens } from "../../theme";
+import { Tone } from "../../../ui/presentation/studyState";
 import { toneStyles } from "../tone";
 
 /**

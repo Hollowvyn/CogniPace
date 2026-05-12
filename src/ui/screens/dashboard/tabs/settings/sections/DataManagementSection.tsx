@@ -1,3 +1,7 @@
+import {
+  SurfaceActionBar,
+  SurfaceControlRow,
+} from "@design-system/atoms";
 import DownloadRounded from "@mui/icons-material/DownloadRounded";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
 import UploadFileRounded from "@mui/icons-material/UploadFileRounded";
@@ -11,10 +15,6 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ChangeEvent, useState } from "react";
 
-import {
-  SurfaceActionBar,
-  SurfaceControlRow,
-} from "../../../../../components";
 
 export function HistoryResetSection(props: {
   onExportData: () => Promise<void>;

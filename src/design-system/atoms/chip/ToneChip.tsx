@@ -2,7 +2,7 @@ import Chip from "@mui/material/Chip";
 import { alpha } from "@mui/material/styles";
 import { memo } from "react";
 
-import { Tone } from "../../presentation/studyState";
+import { Tone } from "../../../ui/presentation/studyState";
 import { toneStyles } from "../tone";
 
 export const ToneChip = memo(function ToneChip(props: {

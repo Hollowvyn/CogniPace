@@ -1,11 +1,11 @@
 /** Reusable queue preview list for the dashboard overview surface. */
+import { InsetSurface, ToneChip } from "@design-system/atoms";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { AppShellPayload } from "../../../domain/views";
-import { InsetSurface, ToneChip } from "../../components";
 import {
   difficultyTone,
   formatDisplayDate,

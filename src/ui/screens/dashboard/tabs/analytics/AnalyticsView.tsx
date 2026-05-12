@@ -1,4 +1,10 @@
 /** Dashboard analytics screen for retention, due forecast, and weakest-item signals. */
+import {
+  InsetSurface,
+  MetricCard,
+  SurfaceCard,
+  SurfaceTableContainer,
+} from "@design-system/atoms";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -11,12 +17,6 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import { AppShellPayload } from "../../../../../domain/views";
-import {
-  InsetSurface,
-  MetricCard,
-  SurfaceCard,
-  SurfaceTableContainer,
-} from "../../../../components";
 
 export interface AnalyticsViewProps {
   payload: AppShellPayload | null;

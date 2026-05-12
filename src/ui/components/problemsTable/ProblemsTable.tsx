@@ -9,6 +9,8 @@
  * topics + companies, FSRS metric tiles, recent attempts, and inline
  * secondary actions (Edit / Suspend / Reset / Open in LeetCode).
  */
+import { ToneChip } from "@design-system/atoms/chip/ToneChip";
+import { SurfaceTableContainer } from "@design-system/atoms/table/SurfaceTableContainer";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import ErrorRounded from "@mui/icons-material/ErrorRounded";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
@@ -36,7 +38,6 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React, { Fragment, useCallback, useState } from "react";
 
-import { SurfaceTableContainer } from "../../components/table/SurfaceTableContainer";
 import {
   difficultyTone,
   formatDisplayDate,
@@ -44,7 +45,7 @@ import {
   formatStudyPhase,
   retrievalTone,
 } from "../../presentation/studyState";
-import { ToneChip } from "../chip/ToneChip";
+
 
 import { ProblemRowDetail } from "./ProblemRowDetail";
 import {

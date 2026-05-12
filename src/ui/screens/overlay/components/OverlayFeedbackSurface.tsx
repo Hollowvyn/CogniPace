@@ -1,4 +1,5 @@
-import {InlineStatusRegion} from "../../../components";
+import {InlineStatusRegion} from "@design-system/atoms";
+
 import {OverlayFeedbackViewModel} from "../overlayPanel.types";
 
 export function OverlayFeedbackSurface(

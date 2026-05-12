@@ -1,3 +1,5 @@
+import {FieldAssistRow, NumericDisplay, SurfaceIconButton, SurfaceTooltip} from "@design-system/atoms";
+import {cognipaceControlScale, cognipaceTokens} from "@design-system/theme";
 import CancelRounded from "@mui/icons-material/CancelRounded";
 import CheckRounded from "@mui/icons-material/CheckRounded";
 import KeyboardArrowUpRounded from "@mui/icons-material/KeyboardArrowUpRounded";
@@ -10,8 +12,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import {alpha} from "@mui/material/styles";
 
-import {FieldAssistRow, NumericDisplay, SurfaceIconButton, SurfaceTooltip} from "../../../components";
-import {cognipaceControlScale, cognipaceTokens} from "../../../theme";
+
 import {CollapsedOverlayViewModel} from "../overlayPanel.types";
 
 import {OverlayFeedbackSurface} from "./OverlayFeedbackSurface";

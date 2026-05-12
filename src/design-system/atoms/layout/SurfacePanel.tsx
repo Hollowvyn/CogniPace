@@ -1,8 +1,8 @@
+import { cognipaceTokens } from "@design-system/theme";
 import Paper from "@mui/material/Paper";
 import { alpha } from "@mui/material/styles";
 import { ReactNode } from "react";
 
-import { cognipaceTokens } from "../../theme";
 
 type SurfacePanelVariant = "chrome" | "solid";
 

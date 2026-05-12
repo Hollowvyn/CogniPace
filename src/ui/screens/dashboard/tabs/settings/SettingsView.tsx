@@ -1,8 +1,8 @@
 /** Dashboard settings screen for local review configuration and backup workflows. */
+import { SurfaceDivider } from "@design-system/atoms";
 import Box from "@mui/material/Box";
 
 import { UserSettings } from "../../../../../domain/settings";
-import { SurfaceDivider } from "../../../../components";
 
 import {
   SettingsCanvas,

@@ -1,15 +1,15 @@
 /** Dashboard page header with route metadata and transient status messaging. */
+import {
+  InlineStatusRegion,
+  SurfaceIconButton,
+  SurfaceTooltip,
+} from "@design-system/atoms";
 import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {
-  InlineStatusRegion,
-  SurfaceIconButton,
-  SurfaceTooltip,
-} from "../../../components";
 import { DashboardRoute } from "../../../navigation/dashboardRoutes";
 import { UiStatus } from "../../../state/useAppShellQuery";
 

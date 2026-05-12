@@ -9,6 +9,7 @@
  * for percent, track name, description, progress meter, current chapter
  * line, then the next-up problem inline with its CTA row underneath.
  */
+import { ProgressTrack, SurfaceCard, ToneChip } from "@design-system/atoms";
 import { getStudyPhaseLabel } from "@libs/fsrs/studyState";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
@@ -16,7 +17,6 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { ActiveTrackView, TrackQuestionView } from "../../../domain/views";
-import { ProgressTrack, SurfaceCard, ToneChip } from "../../components";
 import {
   difficultyTone,
   labelForStatus,
@@ -71,7 +71,10 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
           </Typography>
         ) : null}
 
-        <ProgressTrack value={course.completionPercent} />
+        <ProgressTrack
+          ariaLabel={`${course.name} completion`}
+          value={course.completionPercent}
+        />
 
         <Stack
           direction={{ md: "row", xs: "column" }}

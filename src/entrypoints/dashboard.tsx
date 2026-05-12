@@ -14,6 +14,6 @@ createRoot(mountNode).render(
   createElement(
     StrictMode,
     null,
-    createElement(AppProviders, null, createElement(DashboardApp))
+    createElement(AppProviders, { surface: "dashboard" }, createElement(DashboardApp))
   )
 );

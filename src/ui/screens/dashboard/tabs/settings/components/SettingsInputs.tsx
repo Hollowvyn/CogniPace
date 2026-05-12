@@ -1,3 +1,4 @@
+import { SurfaceControlRow } from "@design-system/atoms";
 import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
@@ -7,7 +8,6 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import { ReactNode } from "react";
 
-import { SurfaceControlRow } from "../../../../../components";
 
 export function NumberSetting(props: {
   error?: boolean;

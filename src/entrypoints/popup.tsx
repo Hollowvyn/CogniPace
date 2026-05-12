@@ -14,6 +14,6 @@ createRoot(mountNode).render(
   createElement(
     StrictMode,
     null,
-    createElement(AppProviders, null, createElement(PopupApp))
+    createElement(AppProviders, { surface: "popup" }, createElement(PopupApp))
   )
 );

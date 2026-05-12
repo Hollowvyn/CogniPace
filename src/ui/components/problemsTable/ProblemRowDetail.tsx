@@ -21,6 +21,8 @@
  * into a `+N more` chip whose tooltip lists the rest. The "Open in
  * LeetCode" CTA lives on the title in the collapsed row.
  */
+import { ToneChip } from "@design-system/atoms/chip/ToneChip";
+import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -34,8 +36,6 @@ import {
   retrievalTone,
   type Tone,
 } from "../../presentation/studyState";
-import { cognipaceTokens } from "../../theme";
-import { ToneChip } from "../chip/ToneChip";
 
 import type { ProblemsTableVariant } from "./ProblemsTable";
 import type { ProblemRowData } from "./types";

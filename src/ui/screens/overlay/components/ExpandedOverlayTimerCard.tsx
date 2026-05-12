@@ -1,9 +1,9 @@
+import {InsetSurface, NumericDisplay} from "@design-system/atoms";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {InsetSurface, NumericDisplay} from "../../../components";
 import {ExpandedOverlayViewModel} from "../overlayPanel.types";
 
 export function ExpandedOverlayTimerCard(

@@ -1,6 +1,6 @@
+import {cognipaceControlScale, cognipaceTokens} from "@design-system/theme";
 import {alpha} from "@mui/material/styles";
 
-import {cognipaceControlScale, cognipaceTokens} from "../../../theme";
 
 export const popupShellSx = {
   backgroundColor: alpha(cognipaceTokens.backgroundAlt, 0.96),

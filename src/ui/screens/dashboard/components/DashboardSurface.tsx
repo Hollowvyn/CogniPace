@@ -1,17 +1,17 @@
 /** Dashboard-specific surface primitives composed from the shared CogniPace theme. */
+import {
+  InsetSurface,
+  SurfaceActionBar,
+  SurfacePanel,
+  SurfaceSectionLabel,
+} from "@design-system/atoms";
+import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import { alpha } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import {
-  InsetSurface,
-  SurfaceActionBar,
-  SurfacePanel,
-  SurfaceSectionLabel,
-} from "../../../components";
-import { cognipaceTokens } from "../../../theme";
 
 export function DashboardFrame(props: { children: ReactNode }) {
   return (

@@ -15,6 +15,7 @@
  * a single group. Completion is informational (`Topic · 5/10` ratio in
  * the tab label) and every tab is clickable.
  */
+import { SurfaceCard } from "@design-system/atoms";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
@@ -40,7 +41,6 @@ import {
   resetProblemSchedule,
   suspendProblem,
 } from "../../../../../data/repositories/v7ActionRepository";
-import { SurfaceCard } from "../../../../components";
 import {
   ProblemsTable,
   type ProblemRowData,

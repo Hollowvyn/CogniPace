@@ -1,13 +1,13 @@
 /** Persistent dashboard rail navigation for switching between dashboard screens. */
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-
 import {
   BrandMark,
   SurfaceControlRow,
   SurfaceNavButton,
   SurfaceSectionLabel,
-} from "../../../components";
+} from "@design-system/atoms";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+
 import {
   dashboardRoutes,
   DashboardView,

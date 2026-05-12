@@ -1,8 +1,9 @@
+import {FieldAssistRow} from "@design-system/atoms";
+import {cognipaceControlScale} from "@design-system/theme";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 
-import {FieldAssistRow} from "../../../components";
-import {cognipaceControlScale} from "../../../theme";
+
 import {ExpandedOverlayActionsViewModel, OverlayAssistViewModel} from "../overlayPanel.types";
 
 const actionButtonSx = {

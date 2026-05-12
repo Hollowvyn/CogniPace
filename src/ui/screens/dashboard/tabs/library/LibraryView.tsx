@@ -8,6 +8,7 @@
  * primitive in `library` variant; this view supplies the rows, the
  * extra Track filter, and the secondary action handlers.
  */
+import { SurfaceCard } from "@design-system/atoms";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -22,7 +23,6 @@ import {
   AppShellPayload,
   LibraryProblemRow,
 } from "../../../../../domain/views";
-import { SurfaceCard } from "../../../../components";
 import {
   ProblemsTable,
   type ProblemRowData,

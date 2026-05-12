@@ -1,8 +1,8 @@
+import { cognipaceControlScale, cognipaceTokens } from "@design-system/theme";
 import Button, { ButtonProps } from "@mui/material/Button";
 import { alpha, Theme } from "@mui/material/styles";
 import { SxProps } from "@mui/system";
 
-import { cognipaceControlScale, cognipaceTokens } from "../../theme";
 
 export interface SurfaceNavButtonProps extends Omit<ButtonProps, "variant"> {
   active?: boolean;

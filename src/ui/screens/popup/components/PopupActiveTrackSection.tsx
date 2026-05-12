@@ -1,10 +1,3 @@
-import CallMadeRounded from "@mui/icons-material/CallMadeRounded";
-import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-
-import { ActiveTrackView, TrackQuestionView } from "../../../../domain/views";
 import {
   FieldAssistRow,
   InlineStatusRegion,
@@ -15,9 +8,17 @@ import {
   SurfaceSectionLabel,
   SurfaceTooltip,
   ToneChip,
-} from "../../../components";
+} from "@design-system/atoms";
+import { cognipaceControlScale } from "@design-system/theme";
+import CallMadeRounded from "@mui/icons-material/CallMadeRounded";
+import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+
+import { ActiveTrackView, TrackQuestionView } from "../../../../domain/views";
 import { UiStatus } from "../../../state/useAppShellQuery";
-import { cognipaceControlScale } from "../../../theme";
+
 
 import { popupSmallButtonSx } from "./popupStyles";
 
@@ -285,7 +286,10 @@ export function TrackPanelStudyPlan(props: {
         <Typography color="text.secondary" variant="body2">
           {props.track.description}
         </Typography>
-        <ProgressTrack value={props.track.completionPercent} />
+        <ProgressTrack
+          ariaLabel={`${props.track.name} completion`}
+          value={props.track.completionPercent}
+        />
         <Typography color="text.secondary" variant="body2">
           {props.track.completedQuestions}/{props.track.totalQuestions}{" "}
           questions traversed

@@ -78,7 +78,7 @@ mount.root.render(
     {value: mount.cache},
     createElement(
       AppProviders,
-      {portalContainer: mount.portalContainer},
+      {portalContainer: mount.portalContainer, surface: "overlay"},
       createElement(OverlayRoot, {
         documentRef: document,
         windowRef: window,

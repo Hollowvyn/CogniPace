@@ -36,6 +36,7 @@ export default defineConfig({
     include: [
       "tests/**/*.react.test.tsx",
       "src/features/**/__tests__/**/*.react.test.tsx",
+      "src/design-system/**/__tests__/**/*.{react.test,a11y.test}.tsx",
     ],
     setupFiles: ["tests/ui/support/setup.tsx"],
     coverage: {

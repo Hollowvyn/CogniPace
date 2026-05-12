@@ -1,9 +1,9 @@
+import { SurfaceControlRow } from "@design-system/atoms";
 import Stack from "@mui/material/Stack";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 import { StudyMode, UserSettings } from "../../../../../../domain/settings";
-import { SurfaceControlRow } from "../../../../../components";
 import { NumberSetting } from "../components/SettingsInputs";
 import { SettingsUpdate } from "../settingsTypes";
 

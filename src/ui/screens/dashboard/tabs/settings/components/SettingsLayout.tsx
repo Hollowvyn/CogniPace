@@ -1,9 +1,9 @@
+import { SurfaceCard } from "@design-system/atoms";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import { SurfaceCard } from "../../../../../components";
 
 type SettingsSectionWidth = "full" | "half" | "narrow" | "wide";
 

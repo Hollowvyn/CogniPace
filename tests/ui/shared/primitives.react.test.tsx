@@ -1,14 +1,14 @@
+import {
+  SurfaceControlRow,
+  SurfaceTableContainer,
+  ToneChip,
+} from "@design-system/atoms";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import { describe, expect, it } from "vitest";
 
-import {
-  SurfaceControlRow,
-  SurfaceTableContainer,
-  ToneChip,
-} from "../../../src/ui/components";
 import { render, screen } from "../support/render";
 
 describe("shared CogniPace UI primitives", () => {

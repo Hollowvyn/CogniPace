@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-import { Tone } from "../../presentation/studyState";
+import { Tone } from "../../../ui/presentation/studyState";
 import { InsetSurface } from "../layout/InsetSurface";
 
 export function StatusSurface(props: {

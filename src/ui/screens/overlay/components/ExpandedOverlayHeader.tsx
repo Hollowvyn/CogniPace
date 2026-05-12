@@ -1,3 +1,5 @@
+import {StatusSurface, SurfaceIconButton, SurfaceSectionLabel, SurfaceTooltip, ToneChip,} from "@design-system/atoms";
+import {cognipaceTokens} from "@design-system/theme";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import VisibilityOffRounded from "@mui/icons-material/VisibilityOffRounded";
@@ -6,9 +8,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import {Difficulty} from "../../../../domain/types";
-import {StatusSurface, SurfaceIconButton, SurfaceSectionLabel, SurfaceTooltip, ToneChip,} from "../../../components";
 import {difficultyTone} from "../../../presentation/studyState";
-import {cognipaceTokens} from "../../../theme";
 import {OverlayHeaderSectionViewModel, OverlayHeaderStatusCard, OverlayHeaderStatusTone,} from "../overlayPanel.types";
 
 const difficultyBadgeStyles: Record<

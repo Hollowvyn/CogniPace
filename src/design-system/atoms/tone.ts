@@ -1,8 +1,8 @@
 /** Internal tone tables shared across primitives. */
+import { cognipaceTokens } from "@design-system/theme";
 import { alpha } from "@mui/material/styles";
 
-import { Tone } from "../presentation/studyState";
-import { cognipaceTokens } from "../theme";
+import { Tone } from "../../ui/presentation/studyState";
 
 export type AssistTone = Tone | "warning";
 

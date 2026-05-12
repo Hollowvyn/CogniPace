@@ -1,11 +1,11 @@
 /** Popup screen composition for the compact extension surface. */
+import { InlineStatusRegion } from "@design-system/atoms";
+import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 
-import { InlineStatusRegion } from "../../components";
-import { cognipaceTokens } from "../../theme";
 
 import {
   TrackPanelCompleted,

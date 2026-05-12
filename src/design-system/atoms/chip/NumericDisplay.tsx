@@ -1,7 +1,7 @@
+import { cognipaceTokens } from "@design-system/theme";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import { cognipaceTokens } from "../../theme";
 
 export function NumericDisplay(props: {
   children: ReactNode;

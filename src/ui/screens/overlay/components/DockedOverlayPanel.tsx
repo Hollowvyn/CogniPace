@@ -1,11 +1,12 @@
+import {BrandMark, SurfaceTooltip} from "@design-system/atoms";
+import {cognipaceControlScale, cognipaceTokens} from "@design-system/theme";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Paper from "@mui/material/Paper";
 import {alpha} from "@mui/material/styles";
 import {type PointerEvent, useRef, useState} from "react";
 
-import {BrandMark, SurfaceTooltip} from "../../../components";
-import {cognipaceControlScale, cognipaceTokens} from "../../../theme";
+
 import {DockedOverlayViewModel} from "../overlayPanel.types";
 
 const DOCK_BOTTOM_OFFSET_PX = 10;

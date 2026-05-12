@@ -1,9 +1,9 @@
+import { SurfaceActionBar, SurfacePanel } from "@design-system/atoms";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
 import SaveRounded from "@mui/icons-material/SaveRounded";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
-import { SurfaceActionBar, SurfacePanel } from "../../../../../components";
 
 export function SettingsSaveBar(props: {
   canDiscardSettings: boolean;

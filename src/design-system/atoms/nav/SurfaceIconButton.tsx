@@ -1,8 +1,8 @@
+import { cognipaceControlScale, cognipaceTokens } from "@design-system/theme";
 import IconButton, { IconButtonProps } from "@mui/material/IconButton";
 import { alpha, Theme } from "@mui/material/styles";
 import { SxProps } from "@mui/system";
 
-import { cognipaceControlScale, cognipaceTokens } from "../../theme";
 
 export function SurfaceIconButton(props: IconButtonProps) {
   const { sx, ...rest } = props;

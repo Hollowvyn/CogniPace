@@ -1,10 +1,10 @@
+import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import { alpha } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { memo } from "react";
 
-import { cognipaceTokens } from "../theme";
 
 import { CogniPaceIcon } from "./CogniPaceIcon";
 

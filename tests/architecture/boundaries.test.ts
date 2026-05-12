@@ -240,10 +240,85 @@ describe("architecture / Phase 3 boundaries", () => {
   });
 });
 
-describe.skip("architecture / Phase 4+ boundaries (placeholder)", () => {
+describe("architecture / Phase 4 boundaries", () => {
+  it("no source file imports forwardRef from react", () => {
+    // Same assertion as Phase 0's positive check, restated here so the
+    // intent is visible on the Phase-4 rollout: atoms moved into
+    // design-system in Phase 4 must accept `ref` as a typed prop.
+    for (const file of srcFiles()) {
+      const text = read(file);
+      expect(
+        /import\s*\{[^}]*\bforwardRef\b[^}]*\}\s*from\s*['"]react['"]/.test(
+          text,
+        ),
+        `forwardRef imported in ${path.relative(repoRoot, file)}`,
+      ).toBe(false);
+    }
+  });
+
+  it("design-system/atoms/ has at least one *.a11y.test.tsx", () => {
+    const atomsRoot = path.join(repoRoot, "src/design-system/atoms");
+    if (!fs.existsSync(atomsRoot)) return;
+    const a11yTests = listFiles(atomsRoot).filter((f) =>
+      /\.a11y\.test\.tsx$/.test(f),
+    );
+    expect(
+      a11yTests.length,
+      "expected at least one *.a11y.test.tsx under src/design-system/atoms/",
+    ).toBeGreaterThan(0);
+  });
+
+  it("design-system/theme exposes the locked token + factory surface", () => {
+    const theme = path.join(repoRoot, "src/design-system/theme");
+    expect(fs.existsSync(theme)).toBe(true);
+    for (const name of [
+      "tokens/color.ts",
+      "tokens/typography.ts",
+      "tokens/spacing.ts",
+      "tokens/motion.ts",
+      "tokens/elevation.ts",
+      "tokens/radius.ts",
+      "tokens/zIndex.ts",
+      "surfaces/popup.ts",
+      "surfaces/dashboard.ts",
+      "surfaces/overlay.ts",
+      "createCogniTheme.ts",
+      "useReducedMotion.ts",
+      "index.ts",
+    ]) {
+      expect(
+        fs.existsSync(path.join(theme, name)),
+        `missing src/design-system/theme/${name}`,
+      ).toBe(true);
+    }
+  });
+
+  it("design-system/** does not import from features/, app/, or platform/", () => {
+    const dsRoot = path.join(repoRoot, "src/design-system");
+    if (!fs.existsSync(dsRoot)) return;
+    const files = listFiles(dsRoot).filter(isSource);
+    for (const file of files) {
+      const text = read(file);
+      const forbidden = [
+        /@features\//,
+        /@app\//,
+        /@platform\//,
+        /\bsrc\/features\//,
+        /\bsrc\/app\//,
+        /\bsrc\/platform\//,
+      ];
+      for (const re of forbidden) {
+        expect(
+          re.test(text),
+          `${path.relative(repoRoot, file)} crosses the design-system boundary (${re})`,
+        ).toBe(false);
+      }
+    }
+  });
+});
+
+describe.skip("architecture / Phase 5+ boundaries (placeholder)", () => {
   // Filled in as phases land. Listed by phase below.
-  it.todo("Phase 4: every design-system/atoms/*.tsx has a sibling *.a11y.test.tsx");
-  it.todo("Phase 4: no forwardRef anywhere in src/");
   it.todo("Phase 6+: features/<x>/ui does not import features/<x>/data");
   it.todo("Phase 6+: features/<x>/domain does not import features/<x>/data impls");
   it.todo("Phase 6+: cross-feature imports go through features/<x>/index.ts or server.ts");
