@@ -1,1 +1,1 @@
-export { getStudyStateSummary } from "../../domain/fsrs/studyState";
+export { getStudyStateSummary } from "@libs/fsrs/studyState";

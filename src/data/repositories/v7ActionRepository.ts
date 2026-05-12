@@ -3,7 +3,7 @@
  * a thin sendMessage wrapper — UI components import these rather than
  * constructing payload objects inline.
  */
-import { sendMessage } from "../../extension/runtime/client";
+import { sendMessage } from "@libs/runtime-rpc/client";
 
 import type { ActiveFocus } from "../../domain/active-focus/model";
 import type { Difficulty } from "../../domain/types";

@@ -98,7 +98,9 @@ describe("architecture layout", () => {
 
     expect(appDataRepository).toContain("datasources/chrome/storage");
     expect(storageDatasource).toContain("chrome.storage.local");
-    expect(appShellRepository).toContain("extension/runtime/client");
+    expect(appShellRepository).toMatch(
+      /(extension\/runtime|@libs\/runtime-rpc)\/client/,
+    );
   });
 
   it("uses explicit overlay variants instead of a shared boolean mode prop", () => {

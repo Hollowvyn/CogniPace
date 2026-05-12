@@ -1,13 +1,14 @@
 /** Service-worker bootstrap for background lifecycle, alarms, and runtime routing. */
+import {
+  assertAuthorizedRuntimeMessage,
+  validateRuntimeMessage,
+} from "@libs/runtime-rpc/validator";
+
 import { flushSnapshot, getDb } from "../../data/db/instance";
 import {
   getAppData,
   STORAGE_KEY,
 } from "../../data/repositories/appDataRepository";
-import {
-  assertAuthorizedRuntimeMessage,
-  validateRuntimeMessage,
-} from "../runtime/validator";
 
 import {
   handleStartupDueCheck,

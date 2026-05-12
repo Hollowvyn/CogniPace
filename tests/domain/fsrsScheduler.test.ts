@@ -1,18 +1,19 @@
 import assert from "node:assert/strict";
 
-import { createEmptyCard } from "ts-fsrs";
-import { describe, it } from "vitest";
-
 import {
   applyReview,
   overrideLastReview,
-} from "../../src/domain/fsrs/scheduler";
+} from "@libs/fsrs/scheduler";
 import {
   getFsrsScheduler,
   getStudyStateSummary,
   serializeFsrsCard,
   toFsrsRating,
-} from "../../src/domain/fsrs/studyState";
+} from "@libs/fsrs/studyState";
+import { createEmptyCard } from "ts-fsrs";
+import { describe, it } from "vitest";
+
+
 import { createInitialUserSettings } from "../../src/domain/settings";
 import { Rating, StudyState } from "../../src/domain/types";
 

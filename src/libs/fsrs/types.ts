@@ -9,4 +9,4 @@ export {
   StudyState,
   StudyStateSummary,
   UserSettings,
-} from "../types";
+} from "../../domain/types";

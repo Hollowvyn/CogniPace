@@ -1,12 +1,12 @@
 /** Review policy helpers used by the overlay quick-submit UX. */
-import { difficultyGoalMs } from "../problem/difficulty";
+import { difficultyGoalMs } from "../../domain/problem/difficulty";
 import {
   Difficulty,
   DifficultyGoalSettings,
   Rating,
   ReviewMode,
   StudyState,
-} from "../types";
+} from "../../domain/types";
 
 import { getStudyStateSummary } from "./studyState";
 

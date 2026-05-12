@@ -1,4 +1,5 @@
 /** Shared query hook for extension UI read models. */
+import { subscribeToTick } from "@libs/event-bus";
 import {
   startTransition,
   useCallback,
@@ -7,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import { subscribeToAppDataChanges } from "../../data/repositories/appDataChangeRepository";
+
 import { fetchAppShellPayload } from "../../data/repositories/appShellRepository";
 import { AppShellPayload, PopupShellPayload } from "../../domain/views";
 
@@ -90,7 +91,7 @@ export function useAppShellQuery<
       return undefined;
     }
 
-    return subscribeToAppDataChanges(() => {
+    return subscribeToTick(() => {
       if (storageRefreshInFlightRef.current) {
         return;
       }

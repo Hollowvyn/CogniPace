@@ -1,3 +1,4 @@
+import {defaultReviewMode} from "@libs/fsrs/reviewPolicy";
 import {useCallback, useState} from "react";
 
 import {
@@ -5,7 +6,6 @@ import {
   saveOverlayLogDraft,
   saveReviewResult,
 } from "../../../../data/repositories/problemSessionRepository";
-import {defaultReviewMode} from "../../../../domain/fsrs/reviewPolicy";
 import {Difficulty, Rating, ReviewMode, StudyState} from "../../../../domain/types";
 import {OverlayDraftLogFields} from "../overlayPanel.types";
 

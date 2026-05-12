@@ -1,4 +1,7 @@
 /** Background handlers for problem-context, review-session, and page actions. */
+import {applyReview, overrideLastReview, resetSchedule,} from "@libs/fsrs/scheduler";
+import {getStudyStateSummary, normalizeReviewLogFields,} from "@libs/fsrs/studyState";
+import {canonicalProblemUrlForOpen,} from "@libs/runtime-rpc/validator";
 import {
   asProblemSlug,
   asTrackGroupId,
@@ -20,12 +23,9 @@ import {
   upsertStudyState,
 } from "../../../data/studyStates/repository";
 import {nowIso} from "../../../domain/common/time";
-import {applyReview, overrideLastReview, resetSchedule,} from "../../../domain/fsrs/scheduler";
-import {getStudyStateSummary, normalizeReviewLogFields,} from "../../../domain/fsrs/studyState";
 import {isProblemPage, normalizeSlug} from "../../../domain/problem/slug";
 import { createInitialUserSettings } from "../../../domain/settings";
 import {ReviewLogFields} from "../../../domain/types";
-import {canonicalProblemUrlForOpen,} from "../../runtime/validator";
 import {ok} from "../responses";
 
 import { setActiveFocusHandler } from "./v7Handlers";

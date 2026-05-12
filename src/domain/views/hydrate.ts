@@ -6,7 +6,8 @@
  * UI components must NOT call these directly — they consume the result
  * over the message channel.
  */
-import { getStudyStateSummary } from "../fsrs/studyState";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
+
 import { slugToTitle, slugToUrl } from "../problem/slug";
 import { listEditedFields } from "../problems/operations";
 

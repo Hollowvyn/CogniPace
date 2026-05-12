@@ -1,1 +1,1 @@
-export { getStudyStateSummary } from "../fsrs/studyState";
+export { getStudyStateSummary } from "@libs/fsrs/studyState";

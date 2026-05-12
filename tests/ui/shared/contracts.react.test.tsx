@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
-
 import {
   defaultReviewMode,
   deriveQuickRating,
-} from "../../../src/domain/fsrs/reviewPolicy";
+} from "@libs/fsrs/reviewPolicy";
+import { describe, expect, it } from "vitest";
+
 import { StudyState } from "../../../src/domain/types";
 import {
   buildDashboardUrl,

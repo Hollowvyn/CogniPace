@@ -1,9 +1,10 @@
 /** Repository for persisted app data stored in `chrome.storage.local`. */
+import { normalizeStudyState } from "@libs/fsrs/studyState";
+
 import {
   CURRENT_STORAGE_SCHEMA_VERSION,
   STORAGE_KEY,
 } from "../../domain/common/constants";
-import { normalizeStudyState } from "../../domain/fsrs/studyState";
 import {
   areUserSettingsEqual,
   createInitialUserSettings,

@@ -23,6 +23,8 @@
  * Production code should always use `getDb()`; tests construct their
  * own DB via `createDb()` in `client.ts`.
  */
+import { tick } from "@libs/event-bus";
+
 import { nowIso } from "../../domain/common/time";
 import { listCatalogCompanySeeds } from "../catalog/companiesSeed";
 import { listCatalogPlans } from "../catalog/curatedSets";
@@ -35,7 +37,7 @@ import { seedCatalogTopics } from "../topics/repository";
 import { seedCatalogTracks } from "../tracks/repository";
 import { buildTrackCatalogSeed } from "../tracks/seed";
 
-import { broadcastDbTick } from "./broadcast";
+
 import { createDb, type DbHandle } from "./client";
 import migrationSql from "./migrations/0000_initial.sql";
 import { setOnMutationHook } from "./proxy";
@@ -167,7 +169,11 @@ async function bootDb(): Promise<DbHandle> {
   // same `run` proxy event; the broadcast is fire-and-forget so it
   // doesn't slow the mutation's response path.
   setOnMutationHook(() => {
-    broadcastDbTick();
+    // Wildcard scope: until per-feature scoped writers land in Phase 6+,
+    // every SQLite mutation wakes all subscribers (today's behavior).
+    // The scope filtering plumbing is in place so features can opt
+    // into narrow scopes without touching the proxy.
+    tick({ table: "*" });
     scheduleSnapshotSave();
   });
 

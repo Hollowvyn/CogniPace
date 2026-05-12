@@ -1,6 +1,7 @@
 /** Repository for backup import/export actions. */
+import { sendMessage } from "@libs/runtime-rpc/client";
+
 import { ExportPayload } from "../../domain/types";
-import { sendMessage } from "../../extension/runtime/client";
 
 /** Requests the current exported backup payload. */
 export async function exportData() {

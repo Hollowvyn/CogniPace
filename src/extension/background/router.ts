@@ -1,6 +1,7 @@
 /** Central runtime router that dispatches validated messages to grouped handlers. */
+import { MessageType, RuntimeMessage } from "@libs/runtime-rpc/contracts";
+
 import { ExportPayload } from "../../domain/types";
-import { MessageType, RuntimeMessage } from "../runtime/contracts";
 
 import {
   getAppShellData,

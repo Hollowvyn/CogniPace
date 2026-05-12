@@ -1,6 +1,7 @@
 /** Repository for settings mutations. */
+import { sendMessage } from "@libs/runtime-rpc/client";
+
 import { UserSettingsPatch } from "../../domain/settings";
-import { sendMessage } from "../../extension/runtime/client";
 
 /** Persists a partial settings update through the background worker. */
 export async function updateSettings(payload: UserSettingsPatch) {

@@ -119,9 +119,63 @@ describe("architecture / Phase 1 boundaries", () => {
   });
 });
 
-describe.skip("architecture / Phase 2+ boundaries (placeholder)", () => {
+describe("architecture / Phase 2 boundaries", () => {
+  it("libs/** does not import from features/, app/, or platform/", () => {
+    const libsRoot = path.join(repoRoot, "src/libs");
+    if (!fs.existsSync(libsRoot)) return;
+    const files = listFiles(libsRoot).filter(isSource);
+    for (const file of files) {
+      const text = read(file);
+      const forbidden = [/@features\//, /@app\//, /@platform\//, /\bsrc\/features\//, /\bsrc\/app\//, /\bsrc\/platform\//];
+      for (const re of forbidden) {
+        expect(
+          re.test(text),
+          `${path.relative(repoRoot, file)} imports across the libs boundary (${re})`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("libs/fsrs, libs/runtime-rpc, libs/screen-parsing, libs/event-bus all exist", () => {
+    for (const lib of [
+      "src/libs/fsrs",
+      "src/libs/runtime-rpc",
+      "src/libs/screen-parsing/dom",
+      "src/libs/event-bus",
+    ]) {
+      expect(fs.existsSync(path.join(repoRoot, lib))).toBe(true);
+    }
+  });
+
+  it("libs/event-bus exposes tick + subscribeToTick + useTickQuery", () => {
+    const index = read(path.join(repoRoot, "src/libs/event-bus/index.ts"));
+    expect(index).toContain("export { tick }");
+    expect(index).toContain("subscribeToTick");
+    expect(index).toContain("useTickQuery");
+    expect(index).toContain("TickScope");
+  });
+
+  it("no caller still references the deleted broadcast.ts / appDataChangeRepository.ts", () => {
+    const files = [
+      ...listFiles(path.join(repoRoot, "src")),
+      ...listFiles(path.join(repoRoot, "tests")),
+    ].filter(isSource);
+    const archTestDir = path.join(repoRoot, "tests/architecture");
+    for (const file of files) {
+      if (file.startsWith(archTestDir)) continue;
+      const text = read(file);
+      expect(
+        /\bdb\/broadcast\b|appDataChangeRepository|broadcastDbTick|subscribeToAppDataChanges/.test(
+          text,
+        ),
+        `${path.relative(repoRoot, file)} still references the removed broadcast module`,
+      ).toBe(false);
+    }
+  });
+});
+
+describe.skip("architecture / Phase 3+ boundaries (placeholder)", () => {
   // Filled in as phases land. Listed by phase below.
-  it.todo("Phase 2: libs/** does not import features/, app/, platform/");
   it.todo("Phase 3: platform/** does not import features/, app/");
   it.todo("Phase 4: every design-system/atoms/*.tsx has a sibling *.a11y.test.tsx");
   it.todo("Phase 4: no forwardRef anywhere in src/");

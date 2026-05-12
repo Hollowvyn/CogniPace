@@ -9,12 +9,12 @@
  * for percent, track name, description, progress meter, current chapter
  * line, then the next-up problem inline with its CTA row underneath.
  */
+import { getStudyPhaseLabel } from "@libs/fsrs/studyState";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { getStudyPhaseLabel } from "../../../domain/fsrs/studyState";
 import { ActiveTrackView, TrackQuestionView } from "../../../domain/views";
 import { ProgressTrack, SurfaceCard, ToneChip } from "../../components";
 import {

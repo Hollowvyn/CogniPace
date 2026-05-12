@@ -19,7 +19,7 @@ export function emitLocalStorageChange(
   }
 }
 
-vi.mock("../../../src/extension/runtime/client", () => {
+vi.mock("@libs/runtime-rpc/client", () => {
   return {
     sendMessage: (...args: unknown[]) => sendMessageMock(...args),
   };

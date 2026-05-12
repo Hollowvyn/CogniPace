@@ -1,5 +1,5 @@
 /** Shared runtime response helpers for background handlers. */
-import { RuntimeResponse } from "../runtime/client";
+import { RuntimeResponse } from "@libs/runtime-rpc/client";
 
 /** Wraps a successful handler result in the canonical runtime envelope. */
 export function ok<T>(data: T): RuntimeResponse<T> {

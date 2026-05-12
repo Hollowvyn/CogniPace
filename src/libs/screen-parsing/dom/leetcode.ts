@@ -1,6 +1,6 @@
-import {parseDifficulty} from "../../../../domain/problem/difficulty";
-import {normalizeSlug, slugToTitle} from "../../../../domain/problem/slug";
-import {Difficulty} from "../../../../domain/types";
+import { parseDifficulty } from "../../../domain/problem/difficulty";
+import { normalizeSlug, slugToTitle } from "../../../domain/problem/slug";
+import { Difficulty } from "../../../domain/types";
 
 export interface OverlayProblemPageSnapshot {
   difficulty: Difficulty;

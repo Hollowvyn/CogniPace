@@ -10,7 +10,8 @@
  *   - Falls back to the first group with at least one unfinished slug.
  *   - Falls back further to the first group in the track.
  */
-import { getStudyStateSummary } from "../fsrs/studyState";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
+
 import {
   findCurrentSlugInGroup,
   trackQuestionStatus,

@@ -1,5 +1,6 @@
 /** UI-only presentation helpers for study-state and recommendation labels. */
-import { getStudyPhaseLabel } from "../../domain/fsrs/studyState";
+import { getStudyPhaseLabel } from "@libs/fsrs/studyState";
+
 import { Difficulty, StudyPhase } from "../../domain/types";
 import { TrackQuestionStatusView, RecommendedReason } from "../../domain/views";
 

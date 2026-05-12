@@ -1,4 +1,6 @@
 /** Background handlers for app-shell reads and extension page navigation. */
+import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
+
 import { listCompanies } from "../../../data/companies/repository";
 import { getDb } from "../../../data/db/instance";
 import { listProblems } from "../../../data/problems/repository";
@@ -30,7 +32,6 @@ import {
   buildStudyStateView,
   buildTrackView,
 } from "../../../domain/views/hydrate";
-import { validateExtensionPagePath } from "../../runtime/validator";
 import { ok } from "../responses";
 
 import type { Company } from "../../../domain/companies/model";

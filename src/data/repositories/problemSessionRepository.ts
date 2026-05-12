@@ -1,6 +1,7 @@
 /** Repository for problem-session runtime actions triggered by UI surfaces. */
+import {sendMessage} from "@libs/runtime-rpc/client";
+
 import {Difficulty, Rating, ReviewLogFields, ReviewMode,} from "../../domain/types";
-import {sendMessage} from "../../extension/runtime/client";
 
 /** Upserts the current problem context detected from the LeetCode page. */
 export async function upsertProblemFromPage(input: {

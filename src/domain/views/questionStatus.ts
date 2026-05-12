@@ -4,7 +4,7 @@
  * StudyState plus the question's position in its group. Lifted out of the
  * v6 course module so it survives the v6 delete.
  */
-import { getStudyStateSummary } from "../fsrs/studyState";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
 import type { Problem, StudyState } from "../types";
 import type { TrackChapterStatusView, TrackQuestionStatusView } from "../views";

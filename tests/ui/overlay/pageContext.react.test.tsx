@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
-
 import {
   detectPremium,
   readProblemPageSnapshot,
-} from "../../../src/ui/screens/overlay/controller/pageContext";
+} from "@libs/screen-parsing/dom/leetcode";
+import { describe, expect, it } from "vitest";
+
 
 describe("overlay page context", () => {
   it("detects a premium marker near the problem heading", () => {

@@ -1,4 +1,5 @@
 /** Background handlers for settings and backup import/export operations. */
+import { normalizeStudyState } from "@libs/fsrs/studyState";
 import {
   asCompanyId,
   asProblemSlug,
@@ -42,7 +43,6 @@ import {
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
 import { nowIso } from "../../../domain/common/time";
-import { normalizeStudyState } from "../../../domain/fsrs/studyState";
 import {
   slugToTitle,
   slugToUrl,

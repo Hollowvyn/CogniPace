@@ -1,6 +1,7 @@
 /** Repository for loading extension UI read models. */
+import { sendMessage } from "@libs/runtime-rpc/client";
+
 import { AppShellPayload, PopupShellPayload } from "../../domain/views";
-import { sendMessage } from "../../extension/runtime/client";
 
 /** Fetches the broad app-shell payload used by dashboard and overlay flows. */
 export async function fetchAppShellPayload() {

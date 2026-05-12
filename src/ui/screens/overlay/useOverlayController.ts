@@ -1,4 +1,14 @@
 /** Overlay controller that composes page bootstrap, timer state, session state, and render-model shaping. */
+import {
+  defaultReviewMode,
+  deriveQuickRating,
+  goalForDifficulty,
+} from "@libs/fsrs/reviewPolicy";
+import {
+  getProblemSlugFromUrl,
+  isStaleOverlayRequest,
+  readProblemPageSnapshot,
+} from "@libs/screen-parsing/dom/leetcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { fetchAppShellPayload } from "../../../data/repositories/appShellRepository";
@@ -9,11 +19,6 @@ import {
   upsertProblemFromPage,
 } from "../../../data/repositories/problemSessionRepository";
 import { formatClock } from "../../../domain/common/time";
-import {
-  defaultReviewMode,
-  deriveQuickRating,
-  goalForDifficulty,
-} from "../../../domain/fsrs/reviewPolicy";
 import { createInitialUserSettings } from "../../../domain/settings";
 import { Rating, UserSettings } from "../../../domain/types";
 import { AppShellPayload } from "../../../domain/views";
@@ -23,11 +28,6 @@ import {
   buildHeaderStatus,
   buildSessionLabel,
 } from "./controller/headerStatus";
-import {
-  getProblemSlugFromUrl,
-  isStaleOverlayRequest,
-  readProblemPageSnapshot,
-} from "./controller/pageContext";
 import { deriveOverlaySubmitDecision } from "./controller/submitDecision";
 import { useOverlaySessionMachine } from "./controller/useOverlaySessionMachine";
 import { useOverlayTimer } from "./controller/useOverlayTimer";

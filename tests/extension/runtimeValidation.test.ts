@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 
-import { describe, it } from "vitest";
-
 import {
   assertAuthorizedRuntimeMessage,
   canonicalProblemUrlForOpen,
   validateExtensionPagePath,
   validateRuntimeMessage,
-} from "../../src/extension/runtime/validator";
+} from "@libs/runtime-rpc/validator";
+import { describe, it } from "vitest";
+
 
 describe("runtime validation", () => {
   it("rejects unknown message types", () => {
