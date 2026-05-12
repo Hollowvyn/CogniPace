@@ -1,7 +1,7 @@
 /** Background handlers for problem-context, review-session, and page actions. */
 import { getDb } from "../../../data/db/instance";
-import { importProblem } from "../../../data/problems/repository";
-import {getAppData, mutateAppData,} from "../../../data/repositories/appDataRepository";
+import { getProblem, importProblem } from "../../../data/problems/repository";
+import { mutateAppData } from "../../../data/repositories/appDataRepository";
 import { normalizeDifficulty } from "../../../data/repositories/problemRepository";
 import { markSlugLaunched } from "../../../data/repositories/v7/studySetProgressRepository";
 import {
@@ -113,15 +113,21 @@ export async function upsertFromPage(payload: {
 
 /** Fetches the persisted problem and study-state context for a slug. */
 export async function getProblemContext(payload: { slug: string }) {
-  const data = await getAppData();
   const slug = normalizeSlug(payload.slug);
   if (!slug) {
     return ok({problem: null, studyState: null});
   }
-
+  // Phase 5: SQLite is the SSoT for problem + study state. Reading
+  // from data.problemsBySlug / data.studyStatesBySlug would return
+  // null (those fields are dormant in the v7 blob), so the overlay
+  // would render "NO SUBMISSIONS YET" even when attempts exist.
+  const { db } = await getDb();
+  const branded = asProblemSlug(slug);
+  const problem = await getProblem(db, branded);
+  const studyState = await getStudyState(db, branded);
   return ok({
-    problem: data.problemsBySlug[slug] ?? null,
-    studyState: data.studyStatesBySlug[slug] ?? null,
+    problem: problem ?? null,
+    studyState: studyState ?? null,
   });
 }
 
