@@ -141,9 +141,17 @@ describe("DashboardApp", () => {
     });
 
     try {
-      const { user } = renderDashboardWithPayload(makePayload(), (type) =>
+      const initial = makePayload().settings;
+      const { user } = renderDashboardWithPayload(makePayload(), (type, payload) =>
         type === "UPDATE_SETTINGS"
-          ? Promise.resolve({ ok: true, data: {} })
+          ? Promise.resolve({
+              ok: true,
+              data: {
+                // The real SW handler always returns the round-tripped
+                // settings; mock the same shape (charter lesson #6).
+                settings: { ...initial, ...(payload as object) },
+              },
+            })
           : undefined
       );
 

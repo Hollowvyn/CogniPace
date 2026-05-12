@@ -1,18 +1,17 @@
-/** Dashboard-local controller for route state, filters, settings draft, and runtime mutations. */
-import {
-  areUserSettingsEqual,
-  cloneUserSettings,
-  createInitialUserSettings,
-  sanitizeStoredUserSettings,
-  type UserSettings,
-} from "@features/settings";
+/** Dashboard-local controller for route state, filters, and runtime
+ * mutations that haven't migrated to a feature yet. Settings-screen
+ * state (draft, save, discard, reset) now lives inside
+ * `features/settings/ui/hooks/useSettingsScreen` — the dashboard just
+ * passes the persisted snapshot through and surfaces status. Other
+ * cross-feature concerns (backup export/import, study-history reset)
+ * stay here until Phase 7. */
 import {
   startTransition,
   useCallback,
-  useDeferredValue,
   useEffect,
   useMemo,
   useState,
+  useDeferredValue,
 } from "react";
 
 import {
@@ -21,10 +20,7 @@ import {
   importData,
 } from "../../../data/repositories/backupRepository";
 import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
-import {
-  resetStudyHistory,
-  updateSettings,
-} from "../../../data/repositories/settingsRepository";
+import { resetStudyHistory } from "../../../data/repositories/settingsRepository";
 import { setActiveFocus } from "../../../data/repositories/v7ActionRepository";
 import { createMockAppShellPayload } from "../../mockData";
 import {
@@ -44,6 +40,7 @@ import {
 } from "../../state/useAppShellQuery";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
+import type { UserSettings } from "@features/settings";
 
 function isImportPayloadCandidate(
   value: unknown
@@ -62,8 +59,6 @@ export function useDashboardController() {
   const [filters, setFilters] = useState<LibraryFilters>(
     createDefaultLibraryFilters()
   );
-  const [settingsDraftState, setSettingsDraftState] =
-    useState<UserSettings | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const deferredQuery = useDeferredValue(filters.query);
   const { trackId, difficulty, status: filterStatus } = filters;
@@ -80,19 +75,6 @@ export function useDashboardController() {
       window.removeEventListener("popstate", handlePopState);
     };
   }, []);
-
-  const draftSettings = useMemo(() => {
-    const source = settingsDraftState ?? payload?.settings;
-    return source ? cloneUserSettings(source) : null;
-  }, [payload?.settings, settingsDraftState]);
-
-  const hasSettingsChanges =
-    payload?.settings && draftSettings
-      ? !areUserSettingsEqual(draftSettings, payload.settings)
-      : false;
-  const isDefaultSettingsDraft = draftSettings
-    ? areUserSettingsEqual(draftSettings, createInitialUserSettings())
-    : true;
 
   const rows = useMemo(
     () =>
@@ -167,10 +149,14 @@ export function useDashboardController() {
   );
 
   const onEnablePremium = useCallback(async (): Promise<void> => {
+    // Settings mutations from outside the settings screen still go
+    // through the SW message bus directly. Phase 7+: this caller moves
+    // into a Library-feature hook that uses the settings client.
+    const { updateSettings } = await import(
+      "../../../data/repositories/settingsRepository"
+    );
     await runMutation(
-      updateSettings({
-        questionFilters: { skipPremium: false },
-      }),
+      updateSettings({ questionFilters: { skipPremium: false } }),
       "Premium questions enabled.",
     );
   }, [runMutation]);
@@ -181,102 +167,14 @@ export function useDashboardController() {
     if (!nextMode) {
       return;
     }
-
+    const { updateSettings } = await import(
+      "../../../data/repositories/settingsRepository"
+    );
     await runMutation(
       updateSettings({ studyMode: nextMode }),
-      "Study mode updated."
+      "Study mode updated.",
     );
   }, [payload?.settings.studyMode, runMutation]);
-
-  const updateSettingsDraft = useCallback(
-    (updater: (current: UserSettings) => UserSettings) => {
-      setSettingsDraftState((current) =>
-        updater(
-          cloneUserSettings(
-            current ?? payload?.settings ?? createInitialUserSettings()
-          )
-        )
-      );
-    },
-    [payload?.settings, setSettingsDraftState]
-  );
-
-  const onSaveSettings = useCallback(async (): Promise<void> => {
-    if (!hasSettingsChanges || !draftSettings) {
-      return;
-    }
-
-    const nextSettings = sanitizeStoredUserSettings(cloneUserSettings(draftSettings));
-    const response = await updateSettings(nextSettings);
-    if (!response.ok) {
-      setStatus({
-        message: response.error ?? "Action failed.",
-        isError: true,
-      });
-      return;
-    }
-
-    const savedSettings = response.data?.settings ?? nextSettings;
-    setPayload((current) => {
-      if (!current) {
-        return current;
-      }
-
-      return {
-        ...current,
-        settings: cloneUserSettings(savedSettings),
-      };
-    });
-    setSettingsDraftState(null);
-    setStatus({
-      message: "Settings saved.",
-      isError: false,
-    });
-    if (isExtensionContext()) {
-      await load({ clearStatusOnSuccess: false });
-    }
-  }, [
-    draftSettings,
-    hasSettingsChanges,
-    load,
-    setPayload,
-    setSettingsDraftState,
-    setStatus,
-  ]);
-
-  const onDiscardSettings = useCallback((): void => {
-    setSettingsDraftState(null);
-  }, [setSettingsDraftState]);
-
-  const onResetSettingsToDefaults = useCallback(async (): Promise<void> => {
-    const nextSettings = createInitialUserSettings();
-    const response = await updateSettings(nextSettings);
-    if (!response.ok) {
-      setStatus({
-        message: response.error ?? "Failed to reset settings.",
-        isError: true,
-      });
-      return;
-    }
-
-    setPayload((current) => {
-      if (!current) {
-        return current;
-      }
-      return {
-        ...current,
-        settings: cloneUserSettings(nextSettings),
-      };
-    });
-    setSettingsDraftState(null);
-    setStatus({
-      message: "Settings reset to defaults.",
-      isError: false,
-    });
-    if (isExtensionContext()) {
-      await load({ clearStatusOnSuccess: false });
-    }
-  }, [load, setPayload, setSettingsDraftState, setStatus]);
 
   const onResetStudyHistory = useCallback(async (): Promise<void> => {
     await runMutation(resetStudyHistory(), "Study history reset.");
@@ -331,7 +229,6 @@ export function useDashboardController() {
     await runMutation(importData(parsed), "Backup imported.");
   }, [importFile, runMutation, setStatus]);
 
-
   const onSetActiveFocus = useCallback(
     async (focus: ActiveFocus): Promise<void> => {
       const response = await setActiveFocus(focus);
@@ -345,9 +242,7 @@ export function useDashboardController() {
       const savedSettings = response.data?.settings;
       if (savedSettings) {
         setPayload((current) =>
-          current
-            ? { ...current, settings: cloneUserSettings(savedSettings) }
-            : current,
+          current ? { ...current, settings: savedSettings } : current,
         );
       }
       if (isExtensionContext()) {
@@ -357,20 +252,27 @@ export function useDashboardController() {
     [load, setPayload, setStatus],
   );
 
+  const applySavedSettings = useCallback(
+    (saved: UserSettings): void => {
+      setPayload((current) =>
+        current ? { ...current, settings: saved } : current,
+      );
+      if (isExtensionContext()) {
+        void load({ clearStatusOnSuccess: false });
+      }
+    },
+    [load, setPayload],
+  );
+
   return {
-    draftSettings,
+    applySavedSettings,
     filters,
-    hasSettingsChanges,
     importFile,
-    isDefaultSettingsDraft,
     navigateToView,
     onEnablePremium,
     onExportData,
-    onDiscardSettings,
     onImportData,
     onOpenProblem,
-    onSaveSettings,
-    onResetSettingsToDefaults,
     onResetStudyHistory,
     onSetActiveFocus,
     onToggleMode,
@@ -380,9 +282,8 @@ export function useDashboardController() {
     rows,
     setFilters,
     setImportFile,
-    setSettingsDraftState,
+    setStatus,
     status,
-    updateSettingsDraft,
     view,
   };
 }

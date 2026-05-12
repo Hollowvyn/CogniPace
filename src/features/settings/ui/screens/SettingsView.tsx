@@ -1,8 +1,12 @@
-/** Dashboard settings screen for local review configuration and backup workflows. */
+/** Dashboard settings screen. The screen owns its own draft + intents
+ * via `useSettingsScreen` (the feature's ViewModel hook); the View is
+ * a function of that model. Cross-feature concerns (backup export /
+ * import, study-history reset) still arrive as props until those
+ * features migrate in Phase 7. */
 import { SurfaceDivider } from "@design-system/atoms";
-import { UserSettings } from "@features/settings";
 import Box from "@mui/material/Box";
 
+import { useSettingsScreen } from "../hooks/useSettingsScreen";
 
 import {
   SettingsCanvas,
@@ -20,34 +24,87 @@ import { PracticePlanSection } from "./sections/PracticePlanSection";
 import { QuestionFiltersSection } from "./sections/QuestionFiltersSection";
 import { TimingGoalsSection } from "./sections/TimingGoalsSection";
 
+import type { UserSettings } from "../../domain/UserSettings";
+
+export interface SettingsViewStatus {
+  message: string;
+  isError: boolean;
+}
+
 export interface SettingsViewProps {
-  canDiscardSettings: boolean;
-  canResetSettingsToDefaults: boolean;
-  canSaveSettings: boolean;
+  /** Persisted snapshot the feature's draft starts from. `null` while
+   *  the parent is still hydrating. */
+  currentSettings: UserSettings | null;
+  /** Bubble up status from save / reset intents so the parent surface
+   *  can render its toast / banner. */
+  onStatus: (status: SettingsViewStatus) => void;
+  /** Optional: parent updates its payload state when the SW
+   *  acknowledges a save. In real extension mode the bus tick also
+   *  triggers a re-fetch; this callback is what carries the new
+   *  snapshot in non-extension / test contexts where no tick fires. */
+  onSettingsSaved?: (saved: UserSettings) => void;
+
+  // Cross-feature concerns — still parent-owned until their features
+  // migrate. Phase 7 backup feature absorbs the export/import props;
+  // Phase 7 study feature absorbs onResetStudyHistory.
   importFile: File | null;
-  onDiscardSettings: () => void;
+  onSetImportFile: (file: File | null) => void;
   onExportData: () => Promise<void>;
   onImportData: () => Promise<void>;
-  onResetSettingsToDefaults: () => void;
   onResetStudyHistory: () => void;
-  onSaveSettings: () => void;
-  onSetImportFile: (file: File | null) => void;
-  onUpdateSettings: (updater: (current: UserSettings) => UserSettings) => void;
-  settingsDraft: UserSettings;
 }
 
 export function SettingsView(props: SettingsViewProps) {
+  const screen = useSettingsScreen({ currentSettings: props.currentSettings });
+
+  const handleSave = async (): Promise<void> => {
+    const result = await screen.saveDraft();
+    if (result.ok) {
+      props.onSettingsSaved?.(result.settings);
+      props.onStatus({ message: "Settings saved.", isError: false });
+    } else {
+      props.onStatus({ message: result.error, isError: true });
+    }
+  };
+
+  const handleResetToDefaults = async (): Promise<void> => {
+    const result = await screen.resetToDefaults();
+    if (result.ok) {
+      props.onSettingsSaved?.(result.settings);
+      props.onStatus({ message: "Settings reset to defaults.", isError: false });
+    } else {
+      props.onStatus({ message: result.error, isError: true });
+    }
+  };
+
+  // Loading guard: while the parent hasn't hydrated the snapshot yet,
+  // the draft has nothing to clone from. Render the chrome but keep
+  // the sections empty.
+  if (!screen.draftSettings) {
+    return (
+      <SettingsCanvas>
+        <SettingsGrid>
+          <Box sx={{ gridColumn: "1 / -1", minWidth: 0 }} />
+        </SettingsGrid>
+      </SettingsCanvas>
+    );
+  }
+
   return (
     <SettingsCanvas>
       <SettingsGrid>
         <Box sx={{ gridColumn: "1 / -1", minWidth: 0 }}>
           <SettingsSaveBar
-            canDiscardSettings={props.canDiscardSettings}
-            canResetSettingsToDefaults={props.canResetSettingsToDefaults}
-            canSaveSettings={props.canSaveSettings}
-            onDiscardSettings={props.onDiscardSettings}
-            onResetSettingsToDefaults={props.onResetSettingsToDefaults}
-            onSaveSettings={props.onSaveSettings}
+            canDiscardSettings={screen.hasChanges}
+            canResetSettingsToDefaults={!screen.isDefaultDraft}
+            canSaveSettings={screen.hasChanges}
+            onDiscardSettings={screen.discardDraft}
+            onResetSettingsToDefaults={() => {
+              void handleResetToDefaults();
+            }}
+            onSaveSettings={() => {
+              void handleSave();
+            }}
           />
         </Box>
 
@@ -58,8 +115,8 @@ export function SettingsView(props: SettingsViewProps) {
           width="wide"
         >
           <PracticePlanSection
-            onUpdateSettings={props.onUpdateSettings}
-            settingsDraft={props.settingsDraft}
+            onUpdateSettings={screen.updateDraft}
+            settingsDraft={screen.draftSettings}
           />
         </SettingsSection>
 
@@ -70,8 +127,8 @@ export function SettingsView(props: SettingsViewProps) {
           width="narrow"
         >
           <NotificationsSection
-            onUpdateSettings={props.onUpdateSettings}
-            settingsDraft={props.settingsDraft}
+            onUpdateSettings={screen.updateDraft}
+            settingsDraft={screen.draftSettings}
           />
         </SettingsSection>
 
@@ -82,8 +139,8 @@ export function SettingsView(props: SettingsViewProps) {
           width="wide"
         >
           <MemoryReviewSection
-            onUpdateSettings={props.onUpdateSettings}
-            settingsDraft={props.settingsDraft}
+            onUpdateSettings={screen.updateDraft}
+            settingsDraft={screen.draftSettings}
           />
         </SettingsSection>
 
@@ -94,8 +151,8 @@ export function SettingsView(props: SettingsViewProps) {
           width="narrow"
         >
           <QuestionFiltersSection
-            onUpdateSettings={props.onUpdateSettings}
-            settingsDraft={props.settingsDraft}
+            onUpdateSettings={screen.updateDraft}
+            settingsDraft={screen.draftSettings}
           />
         </SettingsSection>
 
@@ -106,8 +163,8 @@ export function SettingsView(props: SettingsViewProps) {
           width="full"
         >
           <TimingGoalsSection
-            onUpdateSettings={props.onUpdateSettings}
-            settingsDraft={props.settingsDraft}
+            onUpdateSettings={screen.updateDraft}
+            settingsDraft={screen.draftSettings}
           />
         </SettingsSection>
 

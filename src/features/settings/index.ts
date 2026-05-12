@@ -44,10 +44,24 @@ export { cloneUserSettings, mergeUserSettings } from "./domain/update";
 export type { SettingsClient } from "./messaging/client";
 export { settingsClient } from "./messaging/client";
 
-// Curated usecases — UI calls these; they own the patch shapes.
+// Usecases — Hook → usecase → client → SW → repo. UI surfaces outside
+// the settings editor call the curated single-field usecases directly
+// via the messaging client; the editor's bulk save/reset flow through
+// `useSettingsScreen` which composes saveSettings / resetSettings.
 export { setActiveTrack } from "./usecases/setActiveTrack";
 export { setDailyTarget } from "./usecases/setDailyTarget";
 export { setStudyMode } from "./usecases/setStudyMode";
+export { saveSettings } from "./usecases/saveSettings";
+export { resetSettings } from "./usecases/resetSettings";
+
+// ViewModel hook (MVI). The View calls this; no parent passes the
+// draft / save / discard / reset wiring as props.
+export {
+  useSettingsScreen,
+  type SettingsIntentResult,
+  type SettingsScreenModel,
+  type UseSettingsScreenArgs,
+} from "./ui/hooks/useSettingsScreen";
 
 // Screen — wired into the dashboard rail by the composition root.
 export { SettingsView as SettingsScreen } from "./ui/screens/SettingsView";

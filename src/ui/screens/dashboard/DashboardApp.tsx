@@ -63,27 +63,18 @@ export function DashboardApp() {
               <AnalyticsView payload={controller.payload} />
             ) : null}
 
-            {controller.view === "settings" && controller.draftSettings ? (
+            {controller.view === "settings" ? (
               <SettingsView
-                canDiscardSettings={controller.hasSettingsChanges}
-                canResetSettingsToDefaults={!controller.isDefaultSettingsDraft}
-                canSaveSettings={controller.hasSettingsChanges}
+                currentSettings={controller.payload?.settings ?? null}
                 importFile={controller.importFile}
-                onDiscardSettings={controller.onDiscardSettings}
                 onExportData={controller.onExportData}
                 onImportData={controller.onImportData}
-                onResetSettingsToDefaults={() => {
-                  void controller.onResetSettingsToDefaults();
-                }}
                 onResetStudyHistory={() => {
                   void controller.onResetStudyHistory();
                 }}
-                onSaveSettings={() => {
-                  void controller.onSaveSettings();
-                }}
                 onSetImportFile={controller.setImportFile}
-                onUpdateSettings={controller.updateSettingsDraft}
-                settingsDraft={controller.draftSettings}
+                onSettingsSaved={controller.applySavedSettings}
+                onStatus={controller.setStatus}
               />
             ) : null}
 
