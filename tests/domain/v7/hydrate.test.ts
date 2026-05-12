@@ -1,12 +1,12 @@
-import { describe, expect, it } from "vitest";
-
 import {
   asCompanyId,
   asProblemSlug,
   asTopicId,
   asTrackGroupId,
   asTrackId,
-} from "../../../src/domain/common/ids";
+} from "@shared/ids";
+import { describe, expect, it } from "vitest";
+
 import { applyEdit } from "../../../src/domain/problems/operations";
 import {
   buildProblemView,

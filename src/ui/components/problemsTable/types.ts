@@ -3,15 +3,15 @@
  * components so the controller hook + tests can import the shapes
  * without pulling React/MUI in.
  */
+import type { Difficulty, StudyPhase } from "../../../domain/types";
+import type { ProblemView, StudyStateView } from "../../../domain/views";
 import type {
   CompanyId,
   ProblemSlug,
   TopicId,
   TrackGroupId,
   TrackId,
-} from "../../../domain/common/ids";
-import type { Difficulty, StudyPhase } from "../../../domain/types";
-import type { ProblemView, StudyStateView } from "../../../domain/views";
+} from "@shared/ids";
 
 /** A single row passed to the table. */
 export interface ProblemRowData {

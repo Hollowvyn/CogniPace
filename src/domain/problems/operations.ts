@@ -11,8 +11,8 @@ import type {
   Problem,
   ProblemEditFlags,
 } from "./model";
-import type { CompanyId, TopicId } from "../common/ids";
 import type { Difficulty } from "../types";
+import type { CompanyId, TopicId } from "@shared/ids";
 
 export type ProblemEditPatch = Partial<{
   title: string;

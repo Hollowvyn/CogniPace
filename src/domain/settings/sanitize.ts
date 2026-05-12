@@ -1,5 +1,6 @@
+import { asTrackGroupId, asTrackId } from "@shared/ids";
+
 import { DEFAULT_TRACK_ID } from "../common/constants";
-import { asTrackGroupId, asTrackId } from "../common/ids";
 
 import {
   DifficultyGoalSettings,

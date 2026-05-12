@@ -8,7 +8,7 @@
  * topics tagged `isCustom: true`; those use UUIDs and are immediately
  * usable for assignment.
  */
-import type { TopicId } from "../common/ids";
+import type { TopicId } from "@shared/ids";
 
 export interface Topic {
   readonly id: TopicId;

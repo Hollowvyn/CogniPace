@@ -27,19 +27,19 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React, { useMemo, useState } from "react";
-
-import {
-  resetProblemSchedule,
-  suspendProblem,
-} from "../../../../../data/repositories/v7ActionRepository";
 import {
   asTrackGroupId,
   asTrackId,
   type ProblemSlug,
   type TrackGroupId,
   type TrackId,
-} from "../../../../../domain/common/ids";
+} from "@shared/ids";
+import React, { useMemo, useState } from "react";
+
+import {
+  resetProblemSchedule,
+  suspendProblem,
+} from "../../../../../data/repositories/v7ActionRepository";
 import { SurfaceCard } from "../../../../components";
 import {
   ProblemsTable,

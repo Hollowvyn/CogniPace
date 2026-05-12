@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
-
 import {
   asProblemSlug,
-} from "../../../src/domain/common/ids";
+} from "@shared/ids";
+import { describe, expect, it } from "vitest";
+
 import { createDefaultFilters } from "../../../src/ui/components/problemsTable/types";
 import { applyFiltersAndSort } from "../../../src/ui/components/problemsTable/useProblemsTable";
 

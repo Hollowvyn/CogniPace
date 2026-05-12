@@ -9,9 +9,9 @@
  *    SW wake re-seed is a no-op for unchanged rows and never overwrites
  *    a user's rename of a curated company.
  */
+import { asCompanyId, type CompanyId } from "@shared/ids";
 import { eq } from "drizzle-orm";
 
-import { asCompanyId, type CompanyId } from "../../domain/common/ids";
 import { type Db } from "../db/client";
 import * as schema from "../db/schema";
 

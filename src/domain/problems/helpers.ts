@@ -1,4 +1,4 @@
-import { asProblemSlug, slugify, type ProblemSlug } from "../common/ids";
+import { asProblemSlug, slugify, type ProblemSlug } from "@shared/ids";
 
 /**
  * Normalises raw problem identifiers (page-detected slugs, user-typed

@@ -1,5 +1,5 @@
 import { createInitialUserSettings } from "../domain/settings";
-import { AppShellPayload, PopupShellPayload } from "../shared/types";
+import { AppShellPayload, PopupShellPayload } from "../domain/views";
 
 export function createMockPopupShellPayload(): PopupShellPayload {
   return {

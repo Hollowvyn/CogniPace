@@ -6,6 +6,7 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { asCompanyId } from "@shared/ids";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -19,7 +20,6 @@ import {
   upsertCompany,
 } from "../../../src/data/companies/repository";
 import * as schema from "../../../src/data/db/schema";
-import { asCompanyId } from "../../../src/domain/common/ids";
 
 import type { Db } from "../../../src/data/db/client";
 

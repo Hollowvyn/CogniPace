@@ -24,8 +24,6 @@
  *     user can rebrand the list they see). If we ever need to lock the
  *     name on curated tracks, gate it here.
  */
-import { and, asc, eq, max, sql } from "drizzle-orm";
-
 import {
   asProblemSlug,
   asTrackGroupId,
@@ -36,7 +34,9 @@ import {
   type TopicId,
   type TrackGroupId,
   type TrackId,
-} from "../../domain/common/ids";
+} from "@shared/ids";
+import { and, asc, eq, max, sql } from "drizzle-orm";
+
 import { nowIso } from "../../domain/common/time";
 import * as schema from "../db/schema";
 

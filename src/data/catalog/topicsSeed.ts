@@ -8,7 +8,7 @@
  * resolve to a single canonical id at seed time so problems carry only
  * canonical references.
  */
-import { asTopicId, type TopicId } from "../../domain/common/ids";
+import { asTopicId, type TopicId } from "@shared/ids";
 
 import type { Topic } from "../../domain/topics/model";
 

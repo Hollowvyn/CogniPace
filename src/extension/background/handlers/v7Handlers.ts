@@ -5,6 +5,15 @@
  * `mutateAppData` funnel for the slices that haven't migrated yet
  * (Phase 8 will rip the funnel).
  */
+import {
+  asCompanyId,
+  asProblemSlug,
+  asTopicId,
+  asTrackId,
+  type CompanyId,
+  type TopicId,
+} from "@shared/ids";
+
 import { upsertCompany } from "../../../data/companies/repository";
 import {
   readLocalStorage,
@@ -27,14 +36,6 @@ import {
   getTrackHeader,
   updateTrack,
 } from "../../../data/tracks/repository";
-import {
-  asCompanyId,
-  asProblemSlug,
-  asTopicId,
-  asTrackId,
-  type CompanyId,
-  type TopicId,
-} from "../../../domain/common/ids";
 import { ok } from "../responses";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";

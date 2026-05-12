@@ -28,7 +28,7 @@ export type {
   CompanyId,
   TrackId,
   TrackGroupId,
-} from "./common/ids";
+} from "@shared/ids";
 
 export type { Topic } from "./topics/model";
 export type { Company } from "./companies/model";

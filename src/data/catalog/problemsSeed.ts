@@ -14,7 +14,8 @@ import {
   asProblemSlug,
   type ProblemSlug,
   type TopicId,
-} from "../../domain/common/ids";
+} from "@shared/ids";
+
 import { slugToTitle, slugToUrl } from "../../domain/problem/slug";
 
 import { resolveSeedTopicId } from "./topicsSeed";

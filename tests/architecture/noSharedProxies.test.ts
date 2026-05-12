@@ -1,16 +1,12 @@
 /**
- * Phase 0 scaffolding for the eventual rule:
+ * Strict (Phase 1+) rule: `src/shared/` is a kernel of one-thing-per-file
+ * subfolders (e.g. `ids/`). No top-level proxy modules, and no file
+ * outside `src/shared/` imports from a top-level `src/shared/*.ts`
+ * shim. If you want to share a type or helper across features, put it
+ * in a kebab/PascalCase subfolder of `src/shared/` (see `ids/`).
  *
- *   "no file in src/ may import from any src/shared/*.ts proxy module
- *    (the 13 re-export files that earlier phases left behind)."
- *
- * The proxies still exist today; Phase 1 deletes them and flips the
- * assertion in this file to strict-zero. Until then, this test:
- *
- *   - locks in the current allowlist (each proxy module + its known
- *     importer count) so a NEW caller importing through a proxy fails
- *     CI immediately;
- *   - serves as a record of the cleanup target for Phase 1.
+ * Was a snapshot in Phase 0; flipped to strict-zero when the 14
+ * re-export proxies were deleted in Phase 1.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -33,70 +29,91 @@ function listFiles(root: string): string[] {
   });
 }
 
-function isTsLike(file: string): boolean {
+function isSource(file: string): boolean {
   return /\.(ts|tsx)$/.test(file) && !/\.d\.ts$/.test(file);
 }
 
-function listSharedProxyModules(): string[] {
-  if (!fs.existsSync(sharedDir)) return [];
-  return fs
-    .readdirSync(sharedDir, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && isTsLike(entry.name))
-    .map((entry) => entry.name.replace(/\.tsx?$/, ""));
-}
-
-function countImportersOf(proxyModule: string): number {
-  const srcFiles = listFiles(srcDir).filter(isTsLike);
-  let count = 0;
-  for (const file of srcFiles) {
-    if (file.startsWith(sharedDir)) continue; // skip intra-shared
-    const text = fs.readFileSync(file, "utf8");
-    const importRegex = new RegExp(
-      String.raw`from\s+['"][^'"]*\bshared/${proxyModule}\b['"]`,
-    );
-    if (importRegex.test(text)) count += 1;
-  }
-  return count;
-}
-
-/**
- * Baseline captured at Phase 0. Phase 1 deletes each proxy and reduces
- * every entry here to 0; this file then flips to `expect(count).toBe(0)`.
- */
-const PHASE_0_IMPORTER_BASELINE: Record<string, number> = {
-  analytics: 0,
-  backup: 0,
-  constants: 0,
-  curatedSets: 0,
-  queue: 0,
-  recommendations: 0,
-  repository: 0,
-  runtime: 0,
-  runtimeValidation: 0,
-  scheduler: 0,
-  storage: 0,
-  studyState: 0,
-  types: 2,
-  utils: 0,
-};
-
-describe("architecture / shared proxy modules", () => {
-  it("captures the proxy modules that Phase 1 must delete", () => {
-    const proxies = listSharedProxyModules();
-    expect(proxies.sort()).toEqual(
-      Object.keys(PHASE_0_IMPORTER_BASELINE).sort(),
-    );
+describe("architecture / shared kernel", () => {
+  it("src/shared/ contains no top-level .ts files (only subfolders)", () => {
+    if (!fs.existsSync(sharedDir)) return; // allowed: empty kernel
+    const topLevelFiles = fs
+      .readdirSync(sharedDir, { withFileTypes: true })
+      .filter((e) => e.isFile() && /\.tsx?$/.test(e.name))
+      .map((e) => e.name);
+    expect(topLevelFiles).toEqual([]);
   });
 
-  it("no new importer is added through a shared proxy beyond Phase 0 baseline", () => {
-    for (const [proxyModule, baseline] of Object.entries(
-      PHASE_0_IMPORTER_BASELINE,
-    )) {
-      const actual = countImportersOf(proxyModule);
+  it("contains the ids/ subfolder with branded ID modules", () => {
+    const ids = path.join(sharedDir, "ids");
+    expect(fs.existsSync(ids)).toBe(true);
+    const required = [
+      "Brand.ts",
+      "ProblemSlug.ts",
+      "TopicId.ts",
+      "CompanyId.ts",
+      "TrackId.ts",
+      "TrackGroupId.ts",
+      "slugify.ts",
+      "index.ts",
+    ];
+    for (const name of required) {
       expect(
-        actual,
-        `src/shared/${proxyModule} importers (baseline ${baseline})`,
-      ).toBeLessThanOrEqual(baseline);
+        fs.existsSync(path.join(ids, name)),
+        `missing src/shared/ids/${name}`,
+      ).toBe(true);
+    }
+  });
+
+  it("no source file imports from a removed src/shared/<proxy>.ts module", () => {
+    const removedProxies = [
+      "analytics",
+      "backup",
+      "constants",
+      "curatedSets",
+      "queue",
+      "recommendations",
+      "repository",
+      "runtime",
+      "runtimeValidation",
+      "scheduler",
+      "storage",
+      "studyState",
+      "types",
+      "utils",
+    ];
+    const files = [
+      ...listFiles(srcDir),
+      ...listFiles(path.join(repoRoot, "tests")),
+    ].filter(isSource);
+    for (const file of files) {
+      const text = fs.readFileSync(file, "utf8");
+      for (const proxy of removedProxies) {
+        const re = new RegExp(
+          String.raw`from\s+['"][^'"]*\bshared/${proxy}['"]`,
+        );
+        expect(
+          re.test(text),
+          `${path.relative(repoRoot, file)} imports removed src/shared/${proxy}`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("no source file uses src/domain/common/ids (moved to @shared/ids)", () => {
+    const archTestDir = path.join(repoRoot, "tests/architecture");
+    const files = [
+      ...listFiles(srcDir),
+      ...listFiles(path.join(repoRoot, "tests")),
+    ]
+      .filter(isSource)
+      // Architecture tests legitimately reference removed paths as strings.
+      .filter((file) => !file.startsWith(archTestDir));
+    for (const file of files) {
+      const text = fs.readFileSync(file, "utf8");
+      expect(
+        /\bcommon\/ids\b/.test(text),
+        `${path.relative(repoRoot, file)} references domain/common/ids — use @shared/ids`,
+      ).toBe(false);
     }
   });
 });

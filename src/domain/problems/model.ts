@@ -6,8 +6,8 @@
  * `userEdits` tracks fields the user has manually overridden so that
  * subsequent imports do not clobber them.
  */
-import type { CompanyId, ProblemSlug, TopicId } from "../common/ids";
 import type { Difficulty } from "../types";
+import type { CompanyId, ProblemSlug, TopicId } from "@shared/ids";
 
 /** Fields the UI is allowed to edit on a Problem. */
 export type EditableProblemField =

@@ -1,4 +1,6 @@
 /** Background handlers for catalog set imports and direct problem intake. */
+import { asProblemSlug } from "@shared/ids";
+
 import { getCuratedSet } from "../../../data/catalog/curatedSets";
 import { getDb } from "../../../data/db/instance";
 import {
@@ -14,7 +16,6 @@ import {
   saveUserSettings,
 } from "../../../data/settings/repository";
 import { ensureStudyState } from "../../../data/studyStates/repository";
-import { asProblemSlug } from "../../../domain/common/ids";
 import { createInitialUserSettings } from "../../../domain/settings";
 import { ok } from "../responses";
 

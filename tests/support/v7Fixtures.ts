@@ -8,7 +8,8 @@ import {
   asCompanyId,
   asProblemSlug,
   asTopicId,
-} from "../../src/domain/common/ids";
+} from "@shared/ids";
+
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/domain/data/appDataV7";
 import { createInitialUserSettings } from "../../src/domain/settings";
 import { createDefaultStudyState } from "../../src/domain/study-state/defaults";

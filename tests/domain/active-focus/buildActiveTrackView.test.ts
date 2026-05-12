@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-
-import { buildActiveTrackView } from "../../../src/domain/active-focus/buildActiveTrackView";
 import {
   asProblemSlug,
   asTrackGroupId,
   asTrackId,
-} from "../../../src/domain/common/ids";
+} from "@shared/ids";
+import { describe, expect, it } from "vitest";
+
+import { buildActiveTrackView } from "../../../src/domain/active-focus/buildActiveTrackView";
 
 import type { ActiveFocus } from "../../../src/domain/active-focus/model";
 import type {

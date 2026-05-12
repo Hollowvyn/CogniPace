@@ -21,7 +21,8 @@ import {
   type TopicId,
   type TrackGroupId,
   type TrackId,
-} from "../../domain/common/ids";
+} from "@shared/ids";
+
 import { listCatalogPlans } from "../catalog/curatedSets";
 import { resolveSeedTopicId } from "../catalog/topicsSeed";
 

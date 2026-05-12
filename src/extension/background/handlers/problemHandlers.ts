@@ -1,4 +1,10 @@
 /** Background handlers for problem-context, review-session, and page actions. */
+import {
+  asProblemSlug,
+  asTrackGroupId,
+  asTrackId,
+} from "@shared/ids";
+
 import { getDb } from "../../../data/db/instance";
 import { getProblem, importProblem } from "../../../data/problems/repository";
 import { normalizeDifficulty } from "../../../data/repositories/problemRepository";
@@ -13,11 +19,6 @@ import {
   replaceLastAttempt,
   upsertStudyState,
 } from "../../../data/studyStates/repository";
-import {
-  asProblemSlug,
-  asTrackGroupId,
-  asTrackId,
-} from "../../../domain/common/ids";
 import {nowIso} from "../../../domain/common/time";
 import {applyReview, overrideLastReview, resetSchedule,} from "../../../domain/fsrs/scheduler";
 import {getStudyStateSummary, normalizeReviewLogFields,} from "../../../domain/fsrs/studyState";

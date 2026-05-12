@@ -5,6 +5,7 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { asProblemSlug } from "@shared/ids";
 import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -21,7 +22,6 @@ import {
   removeStudyState,
   upsertStudyState,
 } from "../../../src/data/studyStates/repository";
-import { asProblemSlug } from "../../../src/domain/common/ids";
 import { createDefaultStudyState } from "../../../src/domain/study-state/defaults";
 
 import type { Db } from "../../../src/data/db/client";

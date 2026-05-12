@@ -3,7 +3,7 @@
  * UserSettings (replaces v6 `activeTrackId`). The `kind` discriminator is
  * kept for forward-compat with future variants (e.g. `{ kind: 'queue' }`).
  */
-import type { TrackGroupId, TrackId } from "../common/ids";
+import type { TrackGroupId, TrackId } from "@shared/ids";
 
 export type ActiveFocus =
   | {

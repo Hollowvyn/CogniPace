@@ -14,7 +14,7 @@ import type {
   TopicId,
   TrackGroupId,
   TrackId,
-} from "../common/ids";
+} from "@shared/ids";
 
 export interface Track {
   readonly id: TrackId;

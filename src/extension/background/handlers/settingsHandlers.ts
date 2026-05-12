@@ -1,4 +1,12 @@
 /** Background handlers for settings and backup import/export operations. */
+import {
+  asCompanyId,
+  asProblemSlug,
+  asTopicId,
+  asTrackGroupId,
+  asTrackId,
+} from "@shared/ids";
+
 import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
 import {
   listCompanies,
@@ -33,13 +41,6 @@ import {
 } from "../../../data/tracks/repository";
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
-import {
-  asCompanyId,
-  asProblemSlug,
-  asTopicId,
-  asTrackGroupId,
-  asTrackId,
-} from "../../../domain/common/ids";
 import { nowIso } from "../../../domain/common/time";
 import { normalizeStudyState } from "../../../domain/fsrs/studyState";
 import {

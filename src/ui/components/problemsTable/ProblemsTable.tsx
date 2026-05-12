@@ -58,8 +58,8 @@ import {
 } from "./types";
 import { useProblemsTable } from "./useProblemsTable";
 
-import type { ProblemSlug } from "../../../domain/common/ids";
 import type { Difficulty, StudyPhase } from "../../../domain/types";
+import type { ProblemSlug } from "@shared/ids";
 
 export type ProblemsTableVariant = "tracks" | "library";
 

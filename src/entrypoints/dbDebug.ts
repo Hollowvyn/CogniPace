@@ -18,6 +18,12 @@
  * will use in Phase 6, so any wasm / proxy / Drizzle issue reproduces
  * here too. Resets on every reload — no persistence yet.
  */
+import {
+  asCompanyId,
+  asProblemSlug,
+  asTopicId,
+  asTrackId,
+} from "@shared/ids";
 import { eq, and } from "drizzle-orm";
 
 import { listCatalogCompanySeeds } from "../data/catalog/companiesSeed";
@@ -74,12 +80,6 @@ import {
   seedCatalogTracks,
 } from "../data/tracks/repository";
 import { buildTrackCatalogSeed } from "../data/tracks/seed";
-import {
-  asCompanyId,
-  asProblemSlug,
-  asTopicId,
-  asTrackId,
-} from "../domain/common/ids";
 import { createInitialUserSettings } from "../domain/settings";
 
 let handle: DbHandle | undefined;

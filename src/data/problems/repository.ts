@@ -26,8 +26,6 @@
  * undefined for the common "lookup by slug" case so callers don't
  * need defensive guards.
  */
-import { eq, inArray, sql } from "drizzle-orm";
-
 import {
   asCompanyId,
   asProblemSlug,
@@ -35,7 +33,9 @@ import {
   type CompanyId,
   type ProblemSlug,
   type TopicId,
-} from "../../domain/common/ids";
+} from "@shared/ids";
+import { eq, inArray, sql } from "drizzle-orm";
+
 import { nowIso } from "../../domain/common/time";
 import {
   leetcodeProblemUrl,

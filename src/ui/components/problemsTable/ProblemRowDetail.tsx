@@ -39,13 +39,13 @@ import { ToneChip } from "../chip/ToneChip";
 
 import type { ProblemsTableVariant } from "./ProblemsTable";
 import type { ProblemRowData } from "./types";
-import type { ProblemSlug } from "../../../domain/common/ids";
 import type {
   AttemptHistoryEntry,
   Rating,
   ReviewMode,
   StudyStateSummary,
 } from "../../../domain/types";
+import type { ProblemSlug } from "@shared/ids";
 
 
 const MAX_VISIBLE_CHIPS = 6;

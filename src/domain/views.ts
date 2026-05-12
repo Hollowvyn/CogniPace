@@ -102,9 +102,9 @@ export interface LibraryProblemRow {
 }
 
 export interface TrackMembership {
-  trackId: import("./common/ids").TrackId;
+  trackId: import("@shared/ids").TrackId;
   trackName: string;
-  groupId?: import("./common/ids").TrackGroupId;
+  groupId?: import("@shared/ids").TrackGroupId;
   groupName?: string;
 }
 

@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-
-import { normalizeStoredAppData } from "../../../../src/data/repositories/appDataRepository";
 import {
   asProblemSlug,
   asTrackGroupId,
   asTrackId,
-} from "../../../../src/domain/common/ids";
+} from "@shared/ids";
+import { describe, expect, it } from "vitest";
+
+import { normalizeStoredAppData } from "../../../../src/data/repositories/appDataRepository";
 import { buildPopupShellPayload } from "../../../../src/extension/background/handlers/appShellHandlers";
 import {
   makeProblem,

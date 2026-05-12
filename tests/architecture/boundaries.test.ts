@@ -97,9 +97,27 @@ describe("architecture / Phase 0 boundaries", () => {
   });
 });
 
-describe.skip("architecture / Phase 1+ boundaries (placeholder)", () => {
+describe("architecture / Phase 1 boundaries", () => {
+  it("@shared/ids resolves to a real folder with the expected ID modules", () => {
+    const ids = path.join(repoRoot, "src/shared/ids");
+    expect(fs.existsSync(ids)).toBe(true);
+    for (const name of [
+      "Brand.ts",
+      "ProblemSlug.ts",
+      "TopicId.ts",
+      "CompanyId.ts",
+      "TrackId.ts",
+      "TrackGroupId.ts",
+      "slugify.ts",
+      "index.ts",
+    ]) {
+      expect(fs.existsSync(path.join(ids, name))).toBe(true);
+    }
+  });
+});
+
+describe.skip("architecture / Phase 2+ boundaries (placeholder)", () => {
   // Filled in as phases land. Listed by phase below.
-  it.todo("Phase 1: no file imports any src/shared/*.ts proxy module");
   it.todo("Phase 2: libs/** does not import features/, app/, platform/");
   it.todo("Phase 3: platform/** does not import features/, app/");
   it.todo("Phase 4: every design-system/atoms/*.tsx has a sibling *.a11y.test.tsx");

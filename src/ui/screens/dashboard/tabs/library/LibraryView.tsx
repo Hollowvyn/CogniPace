@@ -32,7 +32,7 @@ import { LibraryFilters } from "../../../../presentation/library";
 
 import { EditProblemModal } from "./EditProblemModal";
 
-import type { ProblemSlug } from "../../../../../domain/common/ids";
+import type { ProblemSlug } from "@shared/ids";
 
 export interface LibraryViewProps {
   filters: LibraryFilters;
