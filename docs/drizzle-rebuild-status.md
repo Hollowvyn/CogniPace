@@ -457,9 +457,39 @@ abstraction refactor). It deserves its own coherent pass.
 3. Phase 9 — façade refactor. Done as one coherent pass across all
    aggregates simultaneously, so the codebase never has a mixed state.
 
-**Standing rule once Phase 9 lands.** From Phase 9 onward, the
-façade pattern is the only acceptable shape for data-layer code in
-this repo:
+**Standing rule once Phase 9 lands — Unidirectional Data Flow (UDF).**
+From Phase 9 onward, the façade pattern is the mechanism that
+enforces UDF as the architectural invariant. UDF means data moves
+through the app in exactly **one direction**:
+
+```
+  datasource (SQLite)
+       ↓
+   repository (façade — sole abstraction over the datasource)
+       ↓
+   handler / SW message boundary
+       ↓
+   view (dashboard / popup / overlay / content script)
+       │
+       │  mutation (sendMessage action)
+       ↓
+   handler  →  repository  →  datasource
+                                    │
+                                    ↓
+                            broadcastDbTick()
+                                    │
+                                    ↓
+                   subscribers re-read through the read path
+                   (view → handler → repository → datasource)
+```
+
+The view never writes to the datasource. It never holds state that
+drifts from a query result. Mutations always flow view → action →
+handler → repo → datasource, and the response loops back as a new
+read through the same chain — driven by the Phase 7 broadcast tick
+(`cognipace_db_tick`).
+
+**What this forbids:**
 
 - **No public repo function takes a `Db` parameter.** Internal helpers
   may; the exported façade object never does.
@@ -468,16 +498,42 @@ this repo:
 - **No test mocks `getDb` directly.** Tests mock the façade module
   (`vi.mock("…/data/<aggregate>/repository")`) — one mock per
   aggregate the handler depends on.
+- **No view writes to `chrome.storage.local` directly.** Storage is
+  reachable only through the repo. (The reactive subscribe path
+  reads the `cognipace_db_tick` key — that's a signal, not data.)
+- **No optimistic UI state that diverges from the repo.** If a view
+  needs "saving…" UX, it tracks request-in-flight, not a parallel
+  copy of the data.
+- **No handler keeps state across calls.** Handlers are pure
+  functions of (incoming message + current repo state). Anything
+  needing persistence belongs in the repo.
 - **New aggregates start as façades.** Skip the intermediate
   Db-parameter shape entirely; even the first slice of a new
   aggregate ships with the façade in place.
-- **Code review check.** Any PR that adds a `Db` parameter to an
-  exported function, or imports `getDb` from a handler, gets bounced.
 
-After Phase 9, the rebuild's abstraction quality matches the
-original architectural intent: data source is an implementation
-detail, repos are the only thing the rest of the codebase knows
-about, and tests mock the repo not the underlying machinery.
+**Code review checks** (catch the common drifts):
+
+| Smell | Fix |
+|---|---|
+| `import { getDb } from "…/instance"` inside a handler | Move the data access into the repo's façade method |
+| Repo function exported with `(db: Db, …)` signature | Make `db` resolved inside via `getDb()`; pass nothing from outside |
+| `vi.mock("…/data/db/instance")` in a handler test | Mock the façade module instead |
+| View component calls `chrome.storage.local.set` | Route through a handler + repo |
+| View holds local state mirroring server data, manually `setState`d on mutate | Trust the broadcast; refetch through the existing hook layer |
+| Handler caches a result between calls in module scope | Move the cache into the repo; treat handler as stateless |
+
+**Why UDF matters here beyond hygiene.** The Phase 7 reactivity
+bridge (`cognipace_db_tick` → `subscribeToAppDataChanges` →
+re-fetch) only works correctly when every mutation goes through the
+proxy. A view that writes around the repo silently breaks
+real-time sync everywhere else — and the failure mode is "data
+looks fresh in one tab, stale in another, no error."
+
+After Phase 9 + UDF discipline, the rebuild's abstraction quality
+matches the original architectural intent: data source is an
+implementation detail, repos are the only thing the rest of the
+codebase knows about, mutations are observable and broadcast-driven,
+and tests mock the repo, not the underlying machinery.
 
 ---
 
