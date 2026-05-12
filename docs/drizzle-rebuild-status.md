@@ -457,6 +457,23 @@ abstraction refactor). It deserves its own coherent pass.
 3. Phase 9 — façade refactor. Done as one coherent pass across all
    aggregates simultaneously, so the codebase never has a mixed state.
 
+**Standing rule once Phase 9 lands.** From Phase 9 onward, the
+façade pattern is the only acceptable shape for data-layer code in
+this repo:
+
+- **No public repo function takes a `Db` parameter.** Internal helpers
+  may; the exported façade object never does.
+- **No handler imports `getDb`.** If it touches data, it goes through
+  a façade method.
+- **No test mocks `getDb` directly.** Tests mock the façade module
+  (`vi.mock("…/data/<aggregate>/repository")`) — one mock per
+  aggregate the handler depends on.
+- **New aggregates start as façades.** Skip the intermediate
+  Db-parameter shape entirely; even the first slice of a new
+  aggregate ships with the façade in place.
+- **Code review check.** Any PR that adds a `Db` parameter to an
+  exported function, or imports `getDb` from a handler, gets bounced.
+
 After Phase 9, the rebuild's abstraction quality matches the
 original architectural intent: data source is an implementation
 detail, repos are the only thing the rest of the codebase knows
