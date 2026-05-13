@@ -29,12 +29,12 @@ import {
   editProblem,
 } from "../../../../../data/repositories/v7ActionRepository";
 
-import type { Difficulty } from "../../../../../domain/types";
 import type {
   CompanyLabel,
   ProblemView,
   TopicLabel,
 } from "../../../domain/model";
+import type { Difficulty } from "@features/problems";
 
 export interface EditProblemModalProps {
   open: boolean;

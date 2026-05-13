@@ -2,10 +2,11 @@ import {
   overrideLastReviewResult,
   saveOverlayLogDraft,
   saveReviewResult,
-} from "@features/problems";
+ Difficulty } from "@features/problems";
+import { Rating, ReviewMode, StudyState } from "@features/study";
 import {useCallback, useState} from "react";
 
-import {Difficulty, Rating, ReviewMode, StudyState} from "../../../../../domain/types";
+
 import {defaultReviewMode} from "../../../domain/policy/reviewPolicy";
 import {OverlayDraftLogFields} from "../overlayPanel.types";
 

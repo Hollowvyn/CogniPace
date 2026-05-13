@@ -1,4 +1,5 @@
-import {StudyState} from "../../../../../domain/types";
+import {StudyState} from "@features/study";
+
 import {OverlayDraftLogFields} from "../overlayPanel.types";
 
 export function emptyDraft(): OverlayDraftLogFields {

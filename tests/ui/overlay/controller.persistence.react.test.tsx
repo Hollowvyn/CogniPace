@@ -1,6 +1,6 @@
+import { StudyState } from "@features/study";
 import { describe, expect, it } from "vitest";
 
-import { StudyState } from "../../../src/domain/types";
 import { screen, waitFor, fireEvent } from "../support/render";
 import { sendMessageMock } from "../support/setup";
 

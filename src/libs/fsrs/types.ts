@@ -1,6 +1,13 @@
-export {
+/** Type re-exports for the FSRS lib's internal consumers (scheduler,
+ *  studyState). libs cannot import from features in general; this file
+ *  is an exempted leak (see `LIBS_FEATURE_TYPE_LEAKS` in
+ *  tests/architecture/boundaries.test.ts) — the FSRS scheduler is a
+ *  pure function over StudyState + UserSettings types, both of which
+ *  live in features. The proper long-term fix is to invert ownership
+ *  (StudyState lives in libs, features/study re-exports) — Phase E
+ *  territory under P7. */
+export type {
   AttemptHistoryEntry,
-  Difficulty,
   FsrsCardSnapshot,
   Rating,
   ReviewLogFields,
@@ -8,5 +15,6 @@ export {
   StudyPhase,
   StudyState,
   StudyStateSummary,
-  UserSettings,
-} from "../../domain/types";
+} from "@features/study";
+export type { Difficulty } from "@features/problems";
+export type { UserSettings } from "@features/settings";

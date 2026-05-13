@@ -59,7 +59,8 @@ import {
 } from "./types";
 import { useProblemsTable } from "./useProblemsTable";
 
-import type { Difficulty, StudyPhase } from "../../../../../domain/types";
+import type { Difficulty } from "../../../domain/model";
+import type { StudyPhase } from "@features/study";
 import type { ProblemSlug } from "@shared/ids";
 
 export type ProblemsTableVariant = "tracks" | "library";

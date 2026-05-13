@@ -2,13 +2,13 @@
 import { useDI } from "@app/di";
 import { appShellRepository, useAppShellQuery } from "@features/app-shell";
 import { openProblemPage, RecommendedProblemView } from "@features/problems";
+import { StudyMode } from "@features/settings";
 import { startTransition, useMemo, useRef, useState } from "react";
 
 import {
   openDashboardPage,
   openSettingsPage,
 } from "../../../data/repositories/extensionNavigationRepository";
-import { StudyMode } from "../../../domain/types";
 import { createMockPopupShellPayload } from "../../mockData";
 
 function currentRecommended(

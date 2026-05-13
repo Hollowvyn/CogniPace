@@ -44,7 +44,7 @@ import type {
   Rating,
   ReviewMode,
   StudyStateSummary,
-} from "../../../../../domain/types";
+} from "@features/study";
 import type { ProblemSlug } from "@shared/ids";
 
 

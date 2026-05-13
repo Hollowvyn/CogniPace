@@ -46,7 +46,7 @@ import {
   writeSnapshotToStorage,
 } from "./snapshot";
 
-import type { Problem } from "../../domain/types";
+import type { Problem } from "@features/problems";
 
 let bootPromise: Promise<DbHandle> | undefined;
 let liveHandle: DbHandle | undefined;

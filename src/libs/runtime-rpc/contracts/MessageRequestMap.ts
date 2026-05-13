@@ -1,13 +1,8 @@
 /** Runtime-message payload contract — UI side sends, SW side receives. */
-import type {
-  CuratedProblemInput,
-  Difficulty,
-  Rating,
-  ReviewLogFields,
-  ReviewMode,
-} from "../../../domain/types";
 import type { ExportPayload } from "@features/backup/server";
+import type { CuratedProblemInput, Difficulty } from "@features/problems";
 import type { UserSettingsPatch } from "@features/settings/server";
+import type { Rating, ReviewLogFields, ReviewMode } from "@features/study";
 
 export interface MessageRequestMap {
   UPSERT_PROBLEM_FROM_PAGE: {

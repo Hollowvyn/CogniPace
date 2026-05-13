@@ -2,9 +2,9 @@ import {
   defaultReviewMode,
   deriveQuickRating,
 } from "@features/overlay-session/domain/policy/reviewPolicy";
+import { StudyState } from "@features/study";
 import { describe, expect, it } from "vitest";
 
-import { StudyState } from "../../../src/domain/types";
 import {
   cloneDraft,
   draftFromStudyState,

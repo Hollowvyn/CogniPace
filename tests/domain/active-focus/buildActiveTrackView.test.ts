@@ -3,7 +3,8 @@ import { asProblemSlug, asTrackGroupId, asTrackId } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
 
-import type { Problem, StudyState } from "../../../src/domain/types";
+import type { Problem } from "@features/problems";
+import type { StudyState } from "@features/study";
 import type {
   TrackGroupWithProblems,
   TrackView,

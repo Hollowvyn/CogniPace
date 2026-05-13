@@ -109,6 +109,11 @@ describe("architecture / Phase 2 boundaries", () => {
     // ports) flips this to a required `now` parameter and removes the
     // platform import entirely.
     "src/libs/fsrs/utils.ts",
+    // Internal types barrel for FSRS lib consumers; re-exports
+    // StudyState / Difficulty / UserSettings from their owning
+    // features. Same inversion as fsrs/constants — Phase E flips the
+    // ownership.
+    "src/libs/fsrs/types.ts",
   ]);
 
   it("libs/** does not import from features/, app/, or platform/", () => {

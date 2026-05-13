@@ -35,7 +35,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 
 
-import type { Problem } from "../../../src/domain/types";
+import type { Problem } from "@features/problems";
 import type { Db } from "@platform/db/client";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

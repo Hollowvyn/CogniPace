@@ -1,5 +1,6 @@
 import {SurfaceCard} from "@design-system/atoms";
 import {cognipaceControlScale, cognipaceTokens} from "@design-system/theme";
+import {StudyMode} from "@features/settings";
 import CodeRounded from "@mui/icons-material/CodeRounded";
 import SchoolRounded from "@mui/icons-material/SchoolRounded";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -7,7 +8,6 @@ import Stack from "@mui/material/Stack";
 import {alpha} from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 
-import {StudyMode} from "../../../../domain/types";
 
 interface PopupModeOptionProps {
   active: boolean;

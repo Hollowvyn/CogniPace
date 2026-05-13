@@ -1,9 +1,9 @@
 /** UI-only presentation helpers for study-state and recommendation labels. */
-import { RecommendedReason } from "@features/problems";
+import { Difficulty, RecommendedReason } from "@features/problems";
+import { StudyPhase } from "@features/study";
 import { TrackQuestionStatusView } from "@features/tracks";
 import { getStudyPhaseLabel } from "@libs/fsrs/studyState";
 
-import { Difficulty, StudyPhase } from "../../domain/types";
 
 export type Tone = "default" | "accent" | "info" | "success" | "danger";
 

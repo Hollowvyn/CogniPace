@@ -1,6 +1,7 @@
-import { createDefaultStudyState } from "@libs/fsrs/constants";
 
-import { Problem, StudyState } from "../../src/domain/types";
+import { Problem } from "@features/problems";
+import { StudyState } from "@features/study";
+import { createDefaultStudyState } from "@libs/fsrs/constants";
 
 export function makeProblem(
   slug: string,

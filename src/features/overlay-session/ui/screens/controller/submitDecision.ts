@@ -1,4 +1,4 @@
-import { Rating } from "../../../../../domain/types";
+import { Rating } from "@features/study";
 
 export interface OverlaySubmitDecisionInput {
   elapsedMs: number;

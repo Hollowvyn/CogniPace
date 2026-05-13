@@ -12,7 +12,7 @@ import { asProblemSlug } from "@shared/ids";
 
 import { ok } from "../responses";
 
-import type { Difficulty } from "../../../domain/types";
+import type { Difficulty } from "@features/problems";
 
 /** Curated sets used to be tracked via a `settings.setsEnabled` map.
  *  That map died with the v7 cleanup — track enable/disable lives on

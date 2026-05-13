@@ -11,7 +11,7 @@ import {
 } from "../../src/extension/background/notifications";
 import { makeProblem, makeScheduledState } from "../support/domainFixtures";
 
-import type { AppData } from "../../src/domain/types";
+import type { AppData } from "../../src/domain/types/AppData";
 
 const readLocalStorageMock = vi.fn();
 const writeLocalStorageMock = vi.fn();

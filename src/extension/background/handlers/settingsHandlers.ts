@@ -17,6 +17,7 @@ import {
   mergeUserSettings,
   saveUserSettings,
 } from "@features/settings/server";
+import { StudyState } from "@features/study";
 import {
   appendAttempt,
   clearAllStudyHistory,
@@ -45,7 +46,6 @@ import { uniqueStrings } from "@shared/strings";
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import { getAppData } from "../../../data/repositories/appDataRepository";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../data/repositories/v7/constants";
-import { StudyState } from "../../../domain/types";
 import { ok } from "../responses";
 
 import type { ExportPayload } from "@features/backup/server";

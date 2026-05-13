@@ -5,7 +5,7 @@
  */
 import { sendMessage } from "@libs/runtime-rpc/client";
 
-import type { Difficulty } from "../../domain/types";
+import type { Difficulty } from "@features/problems";
 
 export interface EditProblemPatch {
   title?: string;

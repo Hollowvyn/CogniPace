@@ -1,4 +1,5 @@
-import { StudyState } from "../../../src/domain/types";
+import { StudyState } from "@features/study";
+
 import { OverlayRoot } from "../../../src/features/overlay-session/ui/screens/OverlayRoot";
 import { act, render } from "../support/render";
 import { sendMessageMock } from "../support/setup";

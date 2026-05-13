@@ -1,5 +1,6 @@
 import {StatusSurface, SurfaceIconButton, SurfaceSectionLabel, SurfaceTooltip, ToneChip,} from "@design-system/atoms";
 import {cognipaceTokens} from "@design-system/theme";
+import {Difficulty} from "@features/problems";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import VisibilityOffRounded from "@mui/icons-material/VisibilityOffRounded";
@@ -7,7 +8,6 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {Difficulty} from "../../../../../domain/types";
 import {difficultyTone} from "../../../../../ui/presentation/studyState";
 import {OverlayHeaderSectionViewModel, OverlayHeaderStatusCard, OverlayHeaderStatusTone,} from "../overlayPanel.types";
 

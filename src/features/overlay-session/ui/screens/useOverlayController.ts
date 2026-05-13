@@ -6,7 +6,8 @@ import {
   openProblemPage,
   upsertProblemFromPage,
 } from "@features/problems";
-import { createInitialUserSettings } from "@features/settings";
+import { createInitialUserSettings , UserSettings } from "@features/settings";
+import { Rating } from "@features/study";
 import {
   getProblemSlugFromUrl,
   isStaleOverlayRequest,
@@ -16,7 +17,7 @@ import { formatClock } from "@platform/time";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-import { Rating, UserSettings } from "../../../../domain/types";
+
 import {
   defaultReviewMode,
   deriveQuickRating,

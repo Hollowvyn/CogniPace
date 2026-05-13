@@ -25,9 +25,9 @@ import { getDb } from "@platform/db/instance";
 import { getAppData } from "../../../data/repositories/appDataRepository";
 import { ok } from "../responses";
 
-import type { AppData, Problem } from "../../../domain/types";
+import type { AppData } from "../../../domain/types/AppData";
 import type { AppShellPayload, PopupShellPayload } from "@features/app-shell";
-import type {
+import type { Problem ,
   Company,
   LibraryProblemRow,
   Topic,

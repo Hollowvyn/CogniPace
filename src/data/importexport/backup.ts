@@ -3,11 +3,6 @@ import { resolveSeedTopicId } from "@features/problems/server";
 import { sanitizeStoredUserSettings } from "@features/settings/server";
 
 import {
-  Problem,
-  StudyState,
-  UserSettings,
-} from "../../domain/types";
-import {
   aggregates as v7AggregateDescriptors,
   EXPORTABLE_AGGREGATE_KEYS,
 } from "../repositories/v7/aggregateRegistry";
@@ -21,6 +16,11 @@ import {
   slugToUrl,
   uniqueStrings,
 } from "./utils";
+
+import type { Problem } from "@features/problems";
+import type { UserSettings } from "@features/settings";
+import type { StudyState } from "@features/study";
+
 
 /**
  * v7 import allowlist. Aggregate keys are derived from the registry so

@@ -3,9 +3,8 @@
  * components so the controller hook + tests can import the shapes
  * without pulling React/MUI in.
  */
-import type { Difficulty, StudyPhase } from "../../../../../domain/types";
-import type { ProblemView } from "../../../domain/model";
-import type { StudyStateView } from "@features/study";
+import type { Difficulty, ProblemView } from "../../../domain/model";
+import type { StudyPhase , StudyStateView } from "@features/study";
 import type {
   CompanyId,
   ProblemSlug,

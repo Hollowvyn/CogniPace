@@ -14,7 +14,8 @@ import type {
   SortDirection,
   SortKey,
 } from "./types";
-import type { Difficulty, StudyPhase } from "../../../../../domain/types";
+import type { Difficulty } from "../../../domain/model";
+import type { StudyPhase } from "@features/study";
 
 export interface UseProblemsTableOptions {
   rows: ProblemRowData[];
