@@ -1,5 +1,17 @@
 /** Background handlers for settings and backup import/export operations. */
 import {
+  slugToTitle,
+  slugToUrl,
+  normalizeSlug,
+  resolveSeedTopicId,
+  listCompanies,
+  upsertCompany,
+  listProblems,
+  upsertProblem,
+  listTopics,
+  upsertTopic,
+} from "@features/problems/server";
+import {
   createInitialUserSettings,
   getUserSettings,
   mergeUserSettings,
@@ -27,32 +39,21 @@ import {
   asTrackId,
 } from "@shared/ids";
 
-import { resolveSeedTopicId } from "../../../data/catalog/topicsSeed";
-import {
-  listCompanies,
-  upsertCompany,
-} from "../../../data/companies/repository";
+
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
-import {
-  listProblems,
-  upsertProblem,
-} from "../../../data/problems/repository";
+
+
 import { getAppData } from "../../../data/repositories/appDataRepository";
-import { listTopics, upsertTopic } from "../../../data/topics/repository";
+
+
 import { uniqueStrings } from "../../../domain/common/collections";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
 import { nowIso } from "../../../domain/common/time";
-import {
-  slugToTitle,
-  slugToUrl,
-  normalizeSlug,
-} from "../../../domain/problem/slug";
 import { StudyState } from "../../../domain/types";
 import { ok } from "../responses";
 
-import type { Company } from "../../../domain/companies/model";
-import type { Topic } from "../../../domain/topics/model";
 import type { ExportPayload } from "@features/backup/server";
+import type { Company , Topic } from "@features/problems";
 
 /** Cross-walks legacy topics labels into v7 topicIds via the curated seed. */
 function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {

@@ -1,6 +1,4 @@
-import type { Problem } from "./Problem";
-import type { Company } from "../companies/model";
-import type { Topic } from "../topics/model";
+import type { Problem , Company , Topic } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
 

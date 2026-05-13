@@ -6,6 +6,12 @@
  * (Phase 8 will rip the funnel).
  */
 import {
+  editProblem,
+  getProblem,
+  upsertCompany,
+  upsertTopic,
+} from "@features/problems/server";
+import {
   getUserSettings,
   saveUserSettings,
 } from "@features/settings/server";
@@ -29,17 +35,12 @@ import {
   type TopicId,
 } from "@shared/ids";
 
-import { upsertCompany } from "../../../data/companies/repository";
-import {
-  editProblem,
-  getProblem,
-} from "../../../data/problems/repository";
+
 import { PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
-import { upsertTopic } from "../../../data/topics/repository";
 import { ok } from "../responses";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
-import type { ProblemEditPatch } from "../../../domain/problems/operations";
+import type { ProblemEditPatch } from "@features/problems";
 
 
 // ---------- Problem edits ----------

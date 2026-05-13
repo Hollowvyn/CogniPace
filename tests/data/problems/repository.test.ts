@@ -13,6 +13,16 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  bulkImportProblems,
+  editProblem,
+  getProblem,
+  getProblemsBySlugs,
+  importProblem,
+  listProblems,
+  removeProblem,
+  upsertProblem,
+} from "@features/problems/server";
 import * as schema from "@platform/db/schema";
 import {
   asCompanyId,
@@ -24,16 +34,6 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  bulkImportProblems,
-  editProblem,
-  getProblem,
-  getProblemsBySlugs,
-  importProblem,
-  listProblems,
-  removeProblem,
-  upsertProblem,
-} from "../../../src/data/problems/repository";
 
 import type { Problem } from "../../../src/domain/types";
 import type { Db } from "@platform/db/client";

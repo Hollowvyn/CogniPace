@@ -6,6 +6,13 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  getCompany,
+  listCompanies,
+  removeCompany,
+  seedCatalogCompanies,
+  upsertCompany,
+} from "@features/problems/server";
 import * as schema from "@platform/db/schema";
 import { asCompanyId } from "@shared/ids";
 import Database from "better-sqlite3";
@@ -13,13 +20,6 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  getCompany,
-  listCompanies,
-  removeCompany,
-  seedCatalogCompanies,
-  upsertCompany,
-} from "../../../src/data/companies/repository";
 
 import type { Db } from "@platform/db/client";
 

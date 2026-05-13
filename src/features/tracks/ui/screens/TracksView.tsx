@@ -16,6 +16,11 @@
  * the tab label) and every tab is clickable.
  */
 import { SurfaceCard } from "@design-system/atoms";
+import {
+  ProblemsTable,
+  type ProblemRowData,
+} from "@features/problems";
+import { EditProblemModal } from "@features/problems/ui/screens/library/EditProblemModal";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
@@ -41,11 +46,6 @@ import {
   resetProblemSchedule,
   suspendProblem,
 } from "../../../../data/repositories/v7ActionRepository";
-import {
-  ProblemsTable,
-  type ProblemRowData,
-} from "../../../../ui/components/problemsTable";
-import { EditProblemModal } from "../../../../ui/screens/dashboard/tabs/library/EditProblemModal";
 
 import type { ActiveFocus } from "../../../../domain/active-focus/model";
 import type {

@@ -1,5 +1,18 @@
 /** Central runtime router that dispatches validated messages to grouped handlers. */
 import { ExportPayload } from "@features/backup/server";
+import {
+  getProblemContext,
+  openProblemPage,
+  overrideLastReviewResult,
+  rateProblem,
+  resetProblem,
+  saveOverlayLogDraft,
+  saveReviewResult,
+  suspendProblem,
+  updateNotes,
+  updateTags,
+  upsertFromPage,
+} from "@features/problems/server";
 import { updateSettings } from "@features/settings/server";
 import { MessageType, RuntimeMessage } from "@libs/runtime-rpc/contracts";
 
@@ -14,19 +27,6 @@ import {
   importCurated,
   importCustom,
 } from "./handlers/courseHandlers";
-import {
-  getProblemContext,
-  openProblemPage,
-  overrideLastReviewResult,
-  rateProblem,
-  resetProblem,
-  saveOverlayLogDraft,
-  saveReviewResult,
-  suspendProblem,
-  updateNotes,
-  updateTags,
-  upsertFromPage,
-} from "./handlers/problemHandlers";
 import {
   exportData,
   importData,

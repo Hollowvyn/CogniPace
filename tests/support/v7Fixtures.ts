@@ -14,10 +14,8 @@ import {
 
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/domain/data/appDataV7";
 
-import type { Company } from "../../src/domain/companies/model";
 import type { AppDataV7 } from "../../src/domain/data/appDataV7";
-import type { Problem } from "../../src/domain/problems/model";
-import type { Topic } from "../../src/domain/topics/model";
+import type { Company , Problem , Topic } from "@features/problems";
 import type { StudyState } from "@features/study/server";
 
 

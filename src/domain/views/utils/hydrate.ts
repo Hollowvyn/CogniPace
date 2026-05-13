@@ -6,14 +6,10 @@
  * UI components must NOT call these directly — they consume the result
  * over the message channel.
  */
+import { slugToTitle, slugToUrl, listEditedFields } from "@features/problems";
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
-import { slugToTitle, slugToUrl } from "../../problem/slug";
-import { listEditedFields } from "../../problems/operations";
 
-import type { Company } from "../../companies/model";
-import type { Problem, EditableProblemField } from "../../problems/model";
-import type { Topic } from "../../topics/model";
 import type {
   CompanyLabel,
   ProblemView,
@@ -22,6 +18,7 @@ import type {
   TrackGroupView,
   TrackView,
 } from "../../views";
+import type { Company , Problem, EditableProblemField , Topic } from "@features/problems";
 import type { StudyState } from "@features/study";
 import type { TrackWithGroups } from "@features/tracks";
 
@@ -45,7 +42,7 @@ export function buildProblemView(
     slug: problem.slug,
     title: problem.title,
     difficulty: problem.difficulty,
-    isPremium: problem.isPremium,
+    isPremium: problem.isPremium ?? false,
     url: problem.url,
     leetcodeId: problem.leetcodeId,
     topics: hydrateTopics(problem.topicIds, topicsById),

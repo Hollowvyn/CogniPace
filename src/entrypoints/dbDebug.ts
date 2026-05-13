@@ -18,6 +18,26 @@
  * will use in Phase 6, so any wasm / proxy / Drizzle issue reproduces
  * here too. Resets on every reload — no persistence yet.
  */
+import {
+  bulkImportProblems,
+  editProblem,
+  getCompany,
+  getProblem,
+  getTopic,
+  importProblem,
+  listCatalogCompanySeeds,
+  listCatalogTopicSeeds,
+  listCompanies,
+  listProblems,
+  listTopics,
+  removeCompany,
+  removeProblem,
+  removeTopic,
+  seedCatalogCompanies,
+  seedCatalogTopics,
+  upsertCompany,
+  upsertTopic,
+} from "@features/problems/server";
 import { createInitialUserSettings } from "@features/settings";
 import {
   getUserSettings,
@@ -57,30 +77,6 @@ import {
 } from "@shared/ids";
 import { eq, and } from "drizzle-orm";
 
-import { listCatalogCompanySeeds } from "../data/catalog/companiesSeed";
-import { listCatalogTopicSeeds } from "../data/catalog/topicsSeed";
-import {
-  getCompany,
-  listCompanies,
-  removeCompany,
-  seedCatalogCompanies,
-  upsertCompany,
-} from "../data/companies/repository";
-import {
-  bulkImportProblems,
-  editProblem,
-  getProblem,
-  importProblem,
-  listProblems,
-  removeProblem,
-} from "../data/problems/repository";
-import {
-  getTopic,
-  listTopics,
-  removeTopic,
-  seedCatalogTopics,
-  upsertTopic,
-} from "../data/topics/repository";
 
 
 let handle: DbHandle | undefined;

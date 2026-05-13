@@ -7,6 +7,7 @@
  * stay here until Phase 7. */
 import { useDI } from "@app/di";
 import { isExtensionContext, useAppShellQuery } from "@features/app-shell";
+import { openProblemPage } from "@features/problems";
 import {
   startTransition,
   useCallback,
@@ -16,7 +17,6 @@ import {
   useDeferredValue,
 } from "react";
 
-import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
 import { resetStudyHistory } from "../../../data/repositories/settingsRepository";
 import { setActiveFocus } from "../../../data/repositories/v7ActionRepository";
 import { createMockAppShellPayload } from "../../mockData";

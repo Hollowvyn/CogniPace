@@ -1,10 +1,11 @@
 /** Runtime message validation and sender authorization safeguards. */
-import { assertImportPayloadShape } from "../../data/importexport/backup";
 import {
   isProblemPage,
   normalizeSlug,
   slugToUrl,
-} from "../../domain/problem/slug";
+} from "@features/problems";
+
+import { assertImportPayloadShape } from "../../data/importexport/backup";
 
 import { MessageType, RuntimeMessage } from "./contracts";
 

@@ -1,5 +1,6 @@
 /** Review policy helpers used by the overlay quick-submit UX. */
-import { difficultyGoalMs } from "../../domain/problem/difficulty";
+import { difficultyGoalMs } from "@features/problems";
+
 import {
   Difficulty,
   DifficultyGoalSettings,

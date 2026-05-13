@@ -1,19 +1,24 @@
 /**
- * Domain types barrel. One model per file under this folder; the
- * grab-bag `src/domain/types.ts` was split in Phase 5. Cross-feature
- * re-exports (settings, IDs, topics, companies, tracks, active-focus)
- * live here for back-compat — Phase 6+ migrates each to its owning
- * feature folder and tightens these re-exports incrementally.
+ * Domain types barrel. Phase 7 migrated each domain type into its
+ * owning feature; this barrel keeps the legacy import surface working
+ * during the transition. New code imports from @features/<x> directly.
  */
 export { STORAGE_SCHEMA_VERSION } from "./STORAGE_SCHEMA_VERSION";
 
-export type { Difficulty } from "./Difficulty";
-export type { SourceSet } from "./SourceSet";
+export type { AppData } from "./AppData";
 
-export type { Problem } from "./Problem";
+// Problems + taxonomy + catalog types migrated to @features/problems.
+export type {
+  Problem,
+  Difficulty,
+  SourceSet,
+  Topic,
+  Company,
+  CuratedProblemInput,
+  ProblemSnapshot,
+} from "@features/problems";
 
-// Study types migrated to @features/study in Phase 7; re-exported here
-// for transitional callers. New code imports from @features/study directly.
+// Study types migrated to @features/study.
 export type {
   StudyState,
   StudyStateSummary,
@@ -26,11 +31,7 @@ export type {
   FsrsCardSnapshot,
 } from "@features/study";
 
-export type { AppData } from "./AppData";
-export type { CuratedProblemInput } from "./CuratedProblemInput";
-export type { ProblemSnapshot } from "./ProblemSnapshot";
-
-// Cross-feature re-exports.
+// Settings cross-feature re-exports.
 export type {
   DifficultyGoalSettings,
   ExperimentalSettings,
@@ -44,19 +45,7 @@ export type {
   UserSettingsPatch,
 } from "@features/settings";
 
-export type {
-  ProblemSlug,
-  TopicId,
-  CompanyId,
-  TrackId,
-  TrackGroupId,
-} from "@shared/ids";
-
-export type { Topic } from "../topics/model";
-export type { Company } from "../companies/model";
-
-// Track types migrated to @features/tracks in Phase 7; re-exported here
-// for transitional callers.
+// Tracks + sub-types migrated to @features/tracks.
 export type {
   Track,
   TrackGroup,
@@ -65,5 +54,13 @@ export type {
   TrackGroupWithProblems,
   TrackProgress,
 } from "@features/tracks";
+
+export type {
+  ProblemSlug,
+  TopicId,
+  CompanyId,
+  TrackId,
+  TrackGroupId,
+} from "@shared/ids";
 
 export type { ActiveFocus } from "../active-focus/model";

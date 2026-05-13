@@ -8,7 +8,7 @@
  * - `settings.questionFilters.skipPremium` reframes premium gating as
  *   "treat premium as suspended" — the runtime check is identical.
  */
-import type { Problem } from "../../../../domain/types/Problem";
+import type { Problem } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
 

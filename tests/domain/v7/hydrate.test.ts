@@ -1,3 +1,4 @@
+import { applyEdit } from "@features/problems";
 import {
   asCompanyId,
   asProblemSlug,
@@ -7,7 +8,6 @@ import {
 } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
-import { applyEdit } from "../../../src/domain/problems/operations";
 import {
   buildProblemView,
   buildTrackView,
@@ -18,9 +18,7 @@ import {
   makeTopicV7,
 } from "../../support/v7Fixtures";
 
-import type { Company } from "../../../src/domain/companies/model";
-import type { Problem } from "../../../src/domain/problems/model";
-import type { Topic } from "../../../src/domain/topics/model";
+import type { Company , Problem , Topic } from "@features/problems";
 import type { TrackWithGroups } from "@features/tracks";
 
 

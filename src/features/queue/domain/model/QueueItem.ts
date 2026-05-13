@@ -1,4 +1,4 @@
-import type { Problem } from "../../../../domain/types/Problem";
+import type { Problem } from "@features/problems";
 import type { StudyState , StudyStateSummary } from "@features/study";
 
 export interface QueueItem {

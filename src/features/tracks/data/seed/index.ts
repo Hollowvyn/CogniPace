@@ -13,6 +13,8 @@
  * topic resolution); the actual SQLite writes flow through the tracks
  * repo so error handling stays consistent.
  */
+
+import { listCatalogPlans , resolveSeedTopicId } from "@features/problems/server";
 import {
   asProblemSlug,
   asTrackGroupId,
@@ -22,9 +24,6 @@ import {
   type TrackGroupId,
   type TrackId,
 } from "@shared/ids";
-
-import { listCatalogPlans } from "../../../../data/catalog/curatedSets";
-import { resolveSeedTopicId } from "../../../../data/catalog/topicsSeed";
 
 export interface SeedTrack {
   id: TrackId;

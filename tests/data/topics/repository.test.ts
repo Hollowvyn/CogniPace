@@ -12,6 +12,13 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  getTopic,
+  listTopics,
+  removeTopic,
+  seedCatalogTopics,
+  upsertTopic,
+} from "@features/problems/server";
 import * as schema from "@platform/db/schema";
 import { asTopicId } from "@shared/ids";
 import Database from "better-sqlite3";
@@ -19,13 +26,6 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  getTopic,
-  listTopics,
-  removeTopic,
-  seedCatalogTopics,
-  upsertTopic,
-} from "../../../src/data/topics/repository";
 
 import type { Db } from "@platform/db/client";
 

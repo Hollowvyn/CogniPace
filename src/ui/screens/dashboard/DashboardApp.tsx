@@ -1,5 +1,6 @@
 /** Dashboard screen composition that delegates all state to the dashboard controller. */
 import { AnalyticsScreen as AnalyticsView } from "@features/analytics";
+import { LibraryScreen as LibraryView } from "@features/problems";
 import { SettingsScreen as SettingsView } from "@features/settings";
 import { TracksScreen as TracksView } from "@features/tracks";
 import Box from "@mui/material/Box";
@@ -9,7 +10,6 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardRail } from "./components/DashboardRail";
 import { DashboardFrame } from "./components/DashboardSurface";
 import { PreV7BackupSnackbar } from "./components/PreV7BackupSnackbar";
-import { LibraryView } from "./tabs/library/LibraryView";
 import { OverviewView } from "./tabs/overview/OverviewView";
 import { useDashboardController } from "./useDashboardController";
 

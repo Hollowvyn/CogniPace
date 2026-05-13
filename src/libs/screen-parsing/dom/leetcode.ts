@@ -1,5 +1,5 @@
-import { parseDifficulty } from "../../../domain/problem/difficulty";
-import { normalizeSlug, slugToTitle } from "../../../domain/problem/slug";
+import { parseDifficulty , normalizeSlug, slugToTitle } from "@features/problems";
+
 import { Difficulty } from "../../../domain/types";
 
 export interface OverlayProblemPageSnapshot {

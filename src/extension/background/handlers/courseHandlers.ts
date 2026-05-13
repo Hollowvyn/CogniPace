@@ -1,5 +1,11 @@
 /** Background handlers for catalog set imports and direct problem intake. */
 import {
+  getCuratedSet,
+  getProblem,
+  importProblem,
+  parseProblemInput,
+} from "@features/problems/server";
+import {
   createInitialUserSettings,
   getUserSettings,
   mergeUserSettings,
@@ -9,12 +15,7 @@ import { ensureStudyState } from "@features/study/server";
 import { getDb } from "@platform/db/instance";
 import { asProblemSlug } from "@shared/ids";
 
-import { getCuratedSet } from "../../../data/catalog/curatedSets";
-import {
-  importProblem,
-  getProblem,
-} from "../../../data/problems/repository";
-import { parseProblemInput } from "../../../data/repositories/problemRepository";
+
 import { ok } from "../responses";
 
 import type { Difficulty } from "../../../domain/types";

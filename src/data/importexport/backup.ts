@@ -1,4 +1,5 @@
 import { type ExportPayload } from "@features/backup/server";
+import { resolveSeedTopicId } from "@features/problems/server";
 import { sanitizeStoredUserSettings } from "@features/settings/server";
 
 import {
@@ -6,7 +7,6 @@ import {
   StudyState,
   UserSettings,
 } from "../../domain/types";
-import { resolveSeedTopicId } from "../catalog/topicsSeed";
 import {
   aggregates as v7AggregateDescriptors,
   EXPORTABLE_AGGREGATE_KEYS,

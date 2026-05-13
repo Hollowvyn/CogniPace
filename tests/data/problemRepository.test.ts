@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 
-import { describe, it } from "vitest";
-
-import { normalizeStoredAppData } from "../../src/data/repositories/appDataRepository";
 import {
   ensureProblem,
   importProblemsIntoSet,
-} from "../../src/data/repositories/problemRepository";
+} from "@features/problems/server";
+import { describe, it } from "vitest";
+
+import { normalizeStoredAppData } from "../../src/data/repositories/appDataRepository";
 
 describe("problem repository", () => {
   it("preserves existing premium metadata when later upserts have no signal", () => {

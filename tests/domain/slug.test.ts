@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 
+import { normalizeSlug } from "@features/problems";
 import { describe, it } from "vitest";
 
-import { normalizeSlug } from "../../src/domain/problem/slug";
 
 describe("problem slug normalization", () => {
   it("accepts urls and slug noise", () => {

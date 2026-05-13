@@ -1,6 +1,4 @@
-import type { Company } from "../../../../domain/companies/model";
-import type { Topic } from "../../../../domain/topics/model";
-import type { Problem } from "../../../../domain/types/Problem";
+import type { Company , Topic , Problem } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
 import type { TrackWithGroups } from "@features/tracks";

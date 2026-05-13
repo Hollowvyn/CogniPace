@@ -1,13 +1,13 @@
 /** Popup-local state and actions for the recommendation-first surface. */
 import { useDI } from "@app/di";
 import { appShellRepository, useAppShellQuery } from "@features/app-shell";
+import { openProblemPage } from "@features/problems";
 import { startTransition, useMemo, useRef, useState } from "react";
 
 import {
   openDashboardPage,
   openSettingsPage,
 } from "../../../data/repositories/extensionNavigationRepository";
-import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
 import { StudyMode } from "../../../domain/types";
 import { RecommendedProblemView } from "../../../domain/views";
 import { createMockPopupShellPayload } from "../../mockData";

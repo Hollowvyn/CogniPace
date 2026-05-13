@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-
 import {
   applyEdit,
   listEditedFields,
   mergeImported,
   type ProblemEditPatch,
-} from "../../../src/domain/problems/operations";
+} from "@features/problems";
+import { describe, expect, it } from "vitest";
+
 import { makeProblemV7 } from "../../support/v7Fixtures";
 
 describe("Problem operations", () => {

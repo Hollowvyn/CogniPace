@@ -1,5 +1,5 @@
 import type { TrackQuestionStatusView } from "./TrackQuestionStatusView";
-import type { Difficulty } from "../types/Difficulty";
+import type { Difficulty } from "@features/problems";
 import type { StudyPhase } from "@features/study";
 
 

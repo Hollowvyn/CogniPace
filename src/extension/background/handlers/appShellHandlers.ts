@@ -3,6 +3,8 @@ import {
   computeReviewStreakDays,
   summarizeAnalytics,
 } from "@features/analytics/server";
+import { slugToTitle, slugToUrl } from "@features/problems";
+import { listCompanies , listProblems , listTopics } from "@features/problems/server";
 import {
   buildRecommendedCandidates,
   buildTodayQueue,
@@ -14,12 +16,9 @@ import { listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
 
-import { listCompanies } from "../../../data/companies/repository";
-import { listProblems } from "../../../data/problems/repository";
+
 import { getAppData } from "../../../data/repositories/appDataRepository";
-import { listTopics } from "../../../data/topics/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
-import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
 import {
   ActiveTrackView,
   AppShellPayload,
@@ -36,9 +35,8 @@ import {
 } from "../../../domain/views/utils/hydrate";
 import { ok } from "../responses";
 
-import type { Company } from "../../../domain/companies/model";
-import type { Topic } from "../../../domain/topics/model";
 import type { AppData, Problem } from "../../../domain/types";
+import type { Company , Topic } from "@features/problems";
 import type { TrackWithGroups } from "@features/tracks";
 
 /**

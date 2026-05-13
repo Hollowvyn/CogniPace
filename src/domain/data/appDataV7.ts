@@ -6,9 +6,7 @@
  * non-migrated callers still read. Phase 8 will rip the blob entirely.
  */
 import type { ActiveFocus } from "../active-focus/model";
-import type { Company } from "../companies/model";
-import type { Problem } from "../problems/model";
-import type { Topic } from "../topics/model";
+import type { Company , Problem , Topic } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
 

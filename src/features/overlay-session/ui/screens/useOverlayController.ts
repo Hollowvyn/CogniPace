@@ -1,5 +1,11 @@
 /** Overlay controller that composes page bootstrap, timer state, session state, and render-model shaping. */
 import { appShellRepository } from "@features/app-shell";
+import {
+  getProblemContext,
+  openExtensionPage,
+  openProblemPage,
+  upsertProblemFromPage,
+} from "@features/problems";
 import { createInitialUserSettings } from "@features/settings";
 import {
   defaultReviewMode,
@@ -13,12 +19,6 @@ import {
 } from "@libs/screen-parsing/dom/leetcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  getProblemContext,
-  openExtensionPage,
-  openProblemPage,
-  upsertProblemFromPage,
-} from "../../../../data/repositories/problemSessionRepository";
 import { formatClock } from "../../../../domain/common/time";
 import { Rating, UserSettings } from "../../../../domain/types";
 import { AppShellPayload } from "../../../../domain/views";
