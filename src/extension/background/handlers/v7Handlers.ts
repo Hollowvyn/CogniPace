@@ -33,7 +33,7 @@ import {
   asTrackId,
   type CompanyId,
   type TopicId,
- TrackId } from "@shared/ids";
+} from "@shared/ids";
 
 
 import { PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
@@ -246,25 +246,6 @@ export async function deleteTrackHandler(payload: DeleteTrackPayload) {
     await saveUserSettings(db, { ...current, activeTrackId: null });
   }
   return ok({ ok: true });
-}
-
-// ---------- Active focus ----------
-
-export interface SetActiveFocusPayload {
-  trackId: TrackId | null;
-}
-
-export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
-  const { db } = await getDb();
-  const current = await getUserSettings(db);
-  if (!current) {
-    throw new Error("setActiveFocusHandler: no settings row in DB (boot seed missing)");
-  }
-  const saved = await saveUserSettings(db, {
-    ...current,
-    activeTrackId: payload.trackId,
-  });
-  return ok({ settings: saved });
 }
 
 // ---------- Pre-v7 backup ----------

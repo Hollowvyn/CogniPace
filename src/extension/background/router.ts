@@ -41,7 +41,6 @@ import {
   createTrackHandler,
   deleteTrackHandler,
   editProblemHandler,
-  setActiveFocusHandler,
   updateTrackHandler,
 } from "./handlers/v7Handlers";
 
@@ -153,10 +152,6 @@ export async function handleMessage(
     case "DELETE_TRACK":
       return deleteTrackHandler(
         message.payload as Parameters<typeof deleteTrackHandler>[0]
-      );
-    case "SET_ACTIVE_FOCUS":
-      return setActiveFocusHandler(
-        message.payload as Parameters<typeof setActiveFocusHandler>[0]
       );
     case "CONSUME_PRE_V7_BACKUP":
       return consumePreV7BackupHandler();

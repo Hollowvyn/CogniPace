@@ -2,6 +2,7 @@
 import {
   createInitialUserSettings,
   getUserSettings,
+  saveUserSettings,
 } from "@features/settings/server";
 import {ReviewLogFields} from "@features/study";
 import {
@@ -19,7 +20,6 @@ import { getDb } from "@platform/db/instance";
 import {nowIso} from "@platform/time";
 import { asProblemSlug, asTrackId } from "@shared/ids";
 
-import { setActiveFocusHandler } from "../../../extension/background/handlers/v7Handlers";
 import {ok} from "../../../extension/background/responses";
 import { getProblem, importProblem } from "../data/datasource/ProblemDataSource";
 import { normalizeDifficulty } from "../data/repository/ProblemRepository";
@@ -56,10 +56,15 @@ export async function openProblemPage(
   // Launched from a track context: update the user's "where am I"
   // pointer (settings.activeTrackId) so the next dashboard render
   // lands on this track. Group selection is derived (first incomplete)
-  // — not persisted.
+  // — not persisted. Settings has one outlet (saveUserSettings); we
+  // call it directly inside the SW rather than round-tripping through
+  // a SET_ACTIVE_FOCUS message.
   if (payload.courseId) {
-    await setActiveFocusHandler({
-      trackId: asTrackId(payload.courseId),
+    const { db } = await getDb();
+    const current = (await getUserSettings(db)) ?? createInitialUserSettings();
+    await saveUserSettings(db, {
+      ...current,
+      activeTrackId: asTrackId(payload.courseId),
     });
   }
 
@@ -192,8 +197,9 @@ export async function saveReviewResult(payload: {
   // the next dashboard render lands on this track. Group selection
   // is derived (first incomplete); not persisted.
   if (payload.courseId) {
-    await setActiveFocusHandler({
-      trackId: asTrackId(payload.courseId),
+    await saveUserSettings(db, {
+      ...settings,
+      activeTrackId: asTrackId(payload.courseId),
     });
   }
   const studyStateSummary = getStudyStateSummary(nextState);
@@ -273,8 +279,9 @@ export async function overrideLastReviewResult(payload: {
     await replaceLastAttempt(db, branded, replacedAttempt);
   }
   if (payload.courseId) {
-    await setActiveFocusHandler({
-      trackId: asTrackId(payload.courseId),
+    await saveUserSettings(db, {
+      ...settings,
+      activeTrackId: asTrackId(payload.courseId),
     });
   }
   const studyStateSummary = getStudyStateSummary(nextState);

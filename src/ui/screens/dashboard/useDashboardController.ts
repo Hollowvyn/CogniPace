@@ -18,7 +18,6 @@ import {
 } from "react";
 
 import { resetStudyHistory } from "../../../data/repositories/settingsRepository";
-import { setActiveFocus } from "../../../data/repositories/v7ActionRepository";
 import { createMockAppShellPayload } from "../../mockData";
 import {
   buildDashboardUrl,
@@ -240,25 +239,27 @@ export function useDashboardController() {
 
   const onSetActiveFocus = useCallback(
     async (trackId: TrackId | null): Promise<void> => {
-      const response = await setActiveFocus(trackId);
-      if (!response.ok) {
+      let savedSettings: UserSettings;
+      try {
+        savedSettings = await settingsRepository.setActiveTrack(trackId);
+      } catch (err) {
         setStatus({
-          message: response.error ?? "Failed to update active track.",
+          message:
+            err instanceof Error && err.message
+              ? err.message
+              : "Failed to update active track.",
           isError: true,
         });
         return;
       }
-      const savedSettings = response.data?.settings;
-      if (savedSettings) {
-        setPayload((current) =>
-          current ? { ...current, settings: savedSettings } : current,
-        );
-      }
+      setPayload((current) =>
+        current ? { ...current, settings: savedSettings } : current,
+      );
       if (isExtensionContext()) {
         await load({ clearStatusOnSuccess: false });
       }
     },
-    [load, setPayload, setStatus],
+    [load, setPayload, setStatus, settingsRepository],
   );
 
   const applySavedSettings = useCallback(

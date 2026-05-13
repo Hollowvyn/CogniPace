@@ -55,6 +55,5 @@ export interface MessageResponseMap {
   DELETE_TRACK:
     | { ok: true }
     | { ok: false; reason: "not-found" | "curated" };
-  SET_ACTIVE_FOCUS: SettingsUpdateResponse;
   CONSUME_PRE_V7_BACKUP: { backup: unknown };
 }

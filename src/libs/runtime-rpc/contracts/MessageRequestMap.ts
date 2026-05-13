@@ -8,7 +8,6 @@ import type {
 } from "../../../domain/types";
 import type { ExportPayload } from "@features/backup/server";
 import type { UserSettingsPatch } from "@features/settings/server";
-import type { TrackId } from "@shared/ids";
 
 export interface MessageRequestMap {
   UPSERT_PROBLEM_FROM_PAGE: {
@@ -156,10 +155,6 @@ export interface MessageRequestMap {
   };
   DELETE_TRACK: {
     id: string;
-  };
-  SET_ACTIVE_FOCUS: {
-    /** The track to focus on, or null to clear the focus. */
-    trackId: TrackId | null;
   };
   CONSUME_PRE_V7_BACKUP: Record<string, never>;
 }

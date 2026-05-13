@@ -6,7 +6,6 @@
 import { sendMessage } from "@libs/runtime-rpc/client";
 
 import type { Difficulty } from "../../domain/types";
-import type { TrackId } from "@shared/ids";
 
 export interface EditProblemPatch {
   title?: string;
@@ -89,10 +88,8 @@ export async function deleteTrack(id: string) {
   return sendMessage("DELETE_TRACK", { id });
 }
 
-/** Set the user's currently active track, or pass `null` to clear it. */
-export async function setActiveFocus(trackId: TrackId | null) {
-  return sendMessage("SET_ACTIVE_FOCUS", { trackId });
-}
+// setActiveFocus moved to settingsRepository.setActiveTrack — there's
+// now a single outlet for every settings field through UPDATE_SETTINGS.
 
 /**
  * Read the v6 sidecar backup written during migration. The message

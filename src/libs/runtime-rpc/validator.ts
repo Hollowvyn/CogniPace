@@ -41,7 +41,6 @@ const MESSAGE_TYPES = {
   CREATE_TRACK: true,
   UPDATE_TRACK: true,
   DELETE_TRACK: true,
-  SET_ACTIVE_FOCUS: true,
   CONSUME_PRE_V7_BACKUP: true,
 } satisfies Record<MessageType, true>;
 
@@ -547,12 +546,6 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "DELETE_TRACK":
       hasExactKeys(payload, ["id"], `Payload for ${type}`);
       requireString(payload.id, "id");
-      return;
-    case "SET_ACTIVE_FOCUS":
-      hasExactKeys(payload, ["trackId"], `Payload for ${type}`);
-      if (payload.trackId !== null) {
-        requireString(payload.trackId, "trackId");
-      }
       return;
     case "CONSUME_PRE_V7_BACKUP":
       hasExactKeys(payload, EMPTY_KEYS, `Payload for ${type}`);
