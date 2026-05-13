@@ -3,8 +3,7 @@ import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import { startOfDay, ymd } from "../../../../domain/common/time";
 
 import type { AppData } from "../../../../domain/types/AppData";
-import type { StudyPhase } from "../../../../domain/types/StudyPhase";
-import type { StudyState } from "../../../../domain/types/StudyState";
+import type { StudyPhase , StudyState } from "@features/study";
 
 export interface AnalyticsSummary {
   streakDays: number;

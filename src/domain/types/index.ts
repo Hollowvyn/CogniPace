@@ -8,18 +8,23 @@
 export { STORAGE_SCHEMA_VERSION } from "./STORAGE_SCHEMA_VERSION";
 
 export type { Difficulty } from "./Difficulty";
-export type { StudyPhase } from "./StudyPhase";
-export type { Rating } from "./Rating";
-export type { ReviewMode } from "./ReviewMode";
-export type { ReviewLogFields } from "./ReviewLogFields";
 export type { SourceSet } from "./SourceSet";
-export type { FsrsCardState } from "./FsrsCardState";
-export type { FsrsCardSnapshot } from "./FsrsCardSnapshot";
 
 export type { Problem } from "./Problem";
-export type { AttemptHistoryEntry } from "./AttemptHistoryEntry";
-export type { StudyState } from "./StudyState";
-export type { StudyStateSummary } from "./StudyStateSummary";
+
+// Study types migrated to @features/study in Phase 7; re-exported here
+// for transitional callers. New code imports from @features/study directly.
+export type {
+  StudyState,
+  StudyStateSummary,
+  AttemptHistoryEntry,
+  StudyPhase,
+  Rating,
+  ReviewMode,
+  ReviewLogFields,
+  FsrsCardState,
+  FsrsCardSnapshot,
+} from "@features/study";
 
 export type { AppData } from "./AppData";
 export type { CuratedProblemInput } from "./CuratedProblemInput";

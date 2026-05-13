@@ -9,8 +9,8 @@
  *   "treat premium as suspended" — the runtime check is identical.
  */
 import type { Problem } from "../../../../domain/types/Problem";
-import type { StudyState } from "../../../../domain/types/StudyState";
 import type { UserSettings } from "@features/settings";
+import type { StudyState } from "@features/study";
 
 type EffectivelySuspendedReason = "manual" | "premium" | "both";
 

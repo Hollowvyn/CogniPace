@@ -33,17 +33,17 @@ import * as schema from "@platform/db/schema";
 import { asProblemSlug, type ProblemSlug } from "@shared/ids";
 import { asc, desc, eq } from "drizzle-orm";
 
-import { nowIso } from "../../domain/common/time";
-import { createDefaultStudyState } from "../../domain/study-state/defaults";
+import { nowIso } from "../../../../domain/common/time";
+import {
+  createDefaultStudyState,
+  type AttemptHistoryEntry,
+  type FsrsCardSnapshot,
+  type Rating,
+  type ReviewLogFields,
+  type ReviewMode,
+  type StudyState,
+} from "../../domain/model";
 
-import type {
-  AttemptHistoryEntry,
-  FsrsCardSnapshot,
-  Rating,
-  ReviewLogFields,
-  ReviewMode,
-  StudyState,
-} from "../../domain/types";
 import type { Db } from "@platform/db/client";
 
 type StudyStateRow = typeof schema.studyStates.$inferSelect;

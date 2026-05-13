@@ -1,5 +1,5 @@
 import type { Problem } from "../types/Problem";
-import type { StudyState } from "../types/StudyState";
+import type { StudyState } from "@features/study";
 
 export interface ProblemContextResponse {
   problem: Problem | null;

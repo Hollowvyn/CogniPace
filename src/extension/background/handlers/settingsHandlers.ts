@@ -5,6 +5,12 @@ import {
   mergeUserSettings,
   saveUserSettings,
 } from "@features/settings/server";
+import {
+  appendAttempt,
+  clearAllStudyHistory,
+  listStudyStates,
+  upsertStudyState,
+} from "@features/study/server";
 import { normalizeStudyState } from "@libs/fsrs/studyState";
 import { getDb } from "@platform/db/instance";
 import {
@@ -26,12 +32,6 @@ import {
   upsertProblem,
 } from "../../../data/problems/repository";
 import { getAppData } from "../../../data/repositories/appDataRepository";
-import {
-  appendAttempt,
-  clearAllStudyHistory,
-  listStudyStates,
-  upsertStudyState,
-} from "../../../data/studyStates/repository";
 import { listTopics, upsertTopic } from "../../../data/topics/repository";
 import {
   addGroup,

@@ -5,6 +5,7 @@ import {
   mergeUserSettings,
   saveUserSettings,
 } from "@features/settings/server";
+import { ensureStudyState } from "@features/study/server";
 import { getDb } from "@platform/db/instance";
 import { asProblemSlug } from "@shared/ids";
 
@@ -14,7 +15,6 @@ import {
   getProblem,
 } from "../../../data/problems/repository";
 import { parseProblemInput } from "../../../data/repositories/problemRepository";
-import { ensureStudyState } from "../../../data/studyStates/repository";
 import { ok } from "../responses";
 
 import type { Difficulty } from "../../../domain/types";

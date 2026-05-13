@@ -8,7 +8,7 @@ import type { QueueItem } from "./QueueItem";
 import type { TodayQueue } from "./TodayQueue";
 import type { AppData } from "../../../../domain/types/AppData";
 import type { Problem } from "../../../../domain/types/Problem";
-import type { StudyState } from "../../../../domain/types/StudyState";
+import type { StudyState } from "@features/study";
 
 function cloneStateOrDefault(state?: StudyState): StudyState {
   return state ? { ...state } : createDefaultStudyState();

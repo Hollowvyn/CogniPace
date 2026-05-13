@@ -46,7 +46,6 @@ const v7DomainDirs = [
   path.join(repoRoot, "src/domain/topics"),
   path.join(repoRoot, "src/domain/companies"),
   path.join(repoRoot, "src/domain/sets"),
-  path.join(repoRoot, "src/domain/study-state"),
   path.join(repoRoot, "src/domain/active-focus"),
   path.join(repoRoot, "src/domain/data"),
 ];

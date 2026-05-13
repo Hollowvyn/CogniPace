@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 
+import { clearAllStudyHistory } from "@features/study/server";
 import { beforeEach, describe, it, vi } from "vitest";
 
 import {
   getAppData,
   STORAGE_KEY,
 } from "../../../../src/data/repositories/appDataRepository";
-import { clearAllStudyHistory } from "../../../../src/data/studyStates/repository";
 import { resetStudyHistory } from "../../../../src/extension/background/handlers/settingsHandlers";
 import { makeProblem, makeScheduledState } from "../../../support/domainFixtures";
 
@@ -40,7 +40,7 @@ vi.mock("@platform/chrome/storage", () => ({
 vi.mock("@platform/db/instance", () => ({
   getDb: vi.fn().mockResolvedValue({ db: null }),
 }));
-vi.mock("../../../../src/data/studyStates/repository", () => ({
+vi.mock("@features/study/server", () => ({
   clearAllStudyHistory: vi.fn(),
   // Other exports left undefined — the test doesn't call them.
 }));

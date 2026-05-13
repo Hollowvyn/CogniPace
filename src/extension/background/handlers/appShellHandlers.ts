@@ -9,13 +9,13 @@ import {
   effectivelySuspendedFlag,
 } from "@features/queue/server";
 import { getUserSettings } from "@features/settings/server";
+import { listStudyStates } from "@features/study/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
 
 import { listCompanies } from "../../../data/companies/repository";
 import { listProblems } from "../../../data/problems/repository";
 import { getAppData } from "../../../data/repositories/appDataRepository";
-import { listStudyStates } from "../../../data/studyStates/repository";
 import { listTopics } from "../../../data/topics/repository";
 import { listTracks } from "../../../data/tracks/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";

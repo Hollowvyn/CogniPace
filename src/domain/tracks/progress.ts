@@ -14,7 +14,7 @@
  * `activeGroupId` is no longer part of the aggregate — the user's
  * "where am I" pointer lives on `UserSettings.activeFocus.groupId`.
  */
-import type { StudyState } from "../study-state/model";
+import type { StudyState } from "@features/study";
 import type { ProblemSlug, TrackGroupId, TrackId } from "@shared/ids";
 
 export interface TrackProgress {

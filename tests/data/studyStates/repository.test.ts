@@ -5,14 +5,6 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import * as schema from "@platform/db/schema";
-import { asProblemSlug } from "@shared/ids";
-import Database from "better-sqlite3";
-import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { beforeEach, describe, expect, it } from "vitest";
-
 import {
   appendAttempt,
   ensureStudyState,
@@ -21,8 +13,15 @@ import {
   listStudyStates,
   removeStudyState,
   upsertStudyState,
-} from "../../../src/data/studyStates/repository";
-import { createDefaultStudyState } from "../../../src/domain/study-state/defaults";
+ createDefaultStudyState } from "@features/study/server";
+import * as schema from "@platform/db/schema";
+import { asProblemSlug } from "@shared/ids";
+import Database from "better-sqlite3";
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { beforeEach, describe, expect, it } from "vitest";
+
 
 import type { Db } from "@platform/db/client";
 

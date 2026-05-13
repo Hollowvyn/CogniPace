@@ -3,6 +3,14 @@ import {
   createInitialUserSettings,
   getUserSettings,
 } from "@features/settings/server";
+import {
+  appendAttempt,
+  clearAttempts,
+  ensureStudyState,
+  getStudyState,
+  replaceLastAttempt,
+  upsertStudyState,
+} from "@features/study/server";
 import {applyReview, overrideLastReview, resetSchedule,} from "@libs/fsrs/scheduler";
 import {getStudyStateSummary, normalizeReviewLogFields,} from "@libs/fsrs/studyState";
 import {canonicalProblemUrlForOpen,} from "@libs/runtime-rpc/validator";
@@ -15,14 +23,6 @@ import {
 
 import { getProblem, importProblem } from "../../../data/problems/repository";
 import { normalizeDifficulty } from "../../../data/repositories/problemRepository";
-import {
-  appendAttempt,
-  clearAttempts,
-  ensureStudyState,
-  getStudyState,
-  replaceLastAttempt,
-  upsertStudyState,
-} from "../../../data/studyStates/repository";
 import {nowIso} from "../../../domain/common/time";
 import {isProblemPage, normalizeSlug} from "../../../domain/problem/slug";
 import {ReviewLogFields} from "../../../domain/types";

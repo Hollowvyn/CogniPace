@@ -5,6 +5,7 @@
  * a v7-blob shape).
  */
 import { createInitialUserSettings } from "@features/settings";
+import { createDefaultStudyState } from "@features/study/server";
 import {
   asCompanyId,
   asProblemSlug,
@@ -12,13 +13,12 @@ import {
 } from "@shared/ids";
 
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/domain/data/appDataV7";
-import { createDefaultStudyState } from "../../src/domain/study-state/defaults";
 
 import type { Company } from "../../src/domain/companies/model";
 import type { AppDataV7 } from "../../src/domain/data/appDataV7";
 import type { Problem } from "../../src/domain/problems/model";
-import type { StudyState } from "../../src/domain/study-state/model";
 import type { Topic } from "../../src/domain/topics/model";
+import type { StudyState } from "@features/study/server";
 
 
 const NOW = "2026-03-01T00:00:00.000Z";

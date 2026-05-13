@@ -1,6 +1,6 @@
 import type { TrackQuestionStatusView } from "./TrackQuestionStatusView";
 import type { Difficulty } from "../types/Difficulty";
-import type { StudyPhase } from "../types/StudyPhase";
+import type { StudyPhase } from "@features/study";
 
 
 export interface TrackQuestionView {

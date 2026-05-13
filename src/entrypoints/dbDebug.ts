@@ -24,6 +24,12 @@ import {
   saveUserSettings,
   seedInitialSettings,
 } from "@features/settings/server";
+import {
+  appendAttempt,
+  ensureStudyState,
+  getStudyState,
+  upsertStudyState,
+} from "@features/study/server";
 import { createDb, type DbHandle } from "@platform/db/client";
 import migrationSql from "@platform/db/migrations/0000_initial.sql";
 import * as schema from "@platform/db/schema";
@@ -59,12 +65,6 @@ import {
   listProblems,
   removeProblem,
 } from "../data/problems/repository";
-import {
-  appendAttempt,
-  ensureStudyState,
-  getStudyState,
-  upsertStudyState,
-} from "../data/studyStates/repository";
 import {
   getTopic,
   listTopics,

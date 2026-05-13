@@ -8,9 +8,9 @@
 import type { ActiveFocus } from "../active-focus/model";
 import type { Company } from "../companies/model";
 import type { Problem } from "../problems/model";
-import type { StudyState } from "../study-state/model";
 import type { Topic } from "../topics/model";
 import type { UserSettings } from "@features/settings";
+import type { StudyState } from "@features/study";
 
 export const STORAGE_SCHEMA_VERSION_V7 = 7 as const;
 

@@ -1,6 +1,4 @@
-import type { Rating } from "../types/Rating";
-import type { StudyPhase } from "../types/StudyPhase";
-import type { StudyState } from "../types/StudyState";
+import type { Rating , StudyPhase , StudyState } from "@features/study";
 
 export interface SaveReviewResultResponse {
   studyState: StudyState;

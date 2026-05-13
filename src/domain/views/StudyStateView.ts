@@ -1,7 +1,4 @@
-import type { AttemptHistoryEntry } from "../types/AttemptHistoryEntry";
-import type { Rating } from "../types/Rating";
-import type { ReviewLogFields } from "../types/ReviewLogFields";
-import type { StudyStateSummary } from "../types/StudyStateSummary";
+import type { AttemptHistoryEntry , Rating , ReviewLogFields , StudyStateSummary } from "@features/study";
 
 /**
  * Consolidated UI-ready view of a StudyState. Composes the FSRS-derived

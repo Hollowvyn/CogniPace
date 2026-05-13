@@ -1,6 +1,5 @@
 import type { Problem } from "../../../../domain/types/Problem";
-import type { StudyState } from "../../../../domain/types/StudyState";
-import type { StudyStateSummary } from "../../../../domain/types/StudyStateSummary";
+import type { StudyState , StudyStateSummary } from "@features/study";
 
 export interface QueueItem {
   slug: string;

@@ -1,4 +1,4 @@
-import type { StudyState } from "../types/StudyState";
+import type { StudyState } from "@features/study";
 
 export interface StudyStateMutationResponse {
   studyState: StudyState;
