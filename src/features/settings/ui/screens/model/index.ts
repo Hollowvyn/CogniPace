@@ -1,5 +1,3 @@
-/** View-side helpers for the settings screen — draft adapters and
- *  presentation utilities, not domain models. */
 export {
   createGoalTextDraft,
   minutesToMs,

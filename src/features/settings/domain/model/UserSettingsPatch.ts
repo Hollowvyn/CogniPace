@@ -6,11 +6,6 @@ import type { QuestionFilterSettings } from "./QuestionFilterSettings";
 import type { TimingSettings } from "./TimingSettings";
 import type { UserSettings } from "./UserSettings";
 
-/**
- * The patch shape the SW's `UPDATE_SETTINGS` handler accepts. Top-level
- * scalars are optional; nested object settings are deep-partial so a
- * caller can flip one nested flag without rebuilding the whole object.
- */
 export type UserSettingsPatch = Partial<
   Omit<
     UserSettings,

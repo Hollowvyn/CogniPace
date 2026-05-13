@@ -3,17 +3,18 @@
  *  boundaries. Idempotent. */
 import { asTrackGroupId, asTrackId } from "@shared/ids";
 
-import { DEFAULT_TRACK_ID } from "../../../../../domain/common/constants";
+import { DEFAULT_TRACK_ID } from "../../../../domain/common/constants";
+
 import {
   createInitialSetsEnabled,
   createInitialUserSettings,
-} from "../UserSettings";
+} from "./UserSettings";
 
-import type { ActiveFocus } from "../../../../../domain/active-focus/model";
-import type { DifficultyGoalSettings } from "../DifficultyGoalSettings";
-import type { ReviewOrder } from "../ReviewOrder";
-import type { StudyMode } from "../StudyMode";
-import type { UserSettings } from "../UserSettings";
+import type { DifficultyGoalSettings } from "./DifficultyGoalSettings";
+import type { ReviewOrder } from "./ReviewOrder";
+import type { StudyMode } from "./StudyMode";
+import type { UserSettings } from "./UserSettings";
+import type { ActiveFocus } from "../../../../domain/active-focus/model";
 
 type UnknownRecord = Record<string, unknown>;
 

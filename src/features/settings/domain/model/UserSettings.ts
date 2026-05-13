@@ -1,7 +1,3 @@
-/** UserSettings — aggregate DomainModel. The type + its identity ops
- *  (defaults, clone, merge, equality) live here; the boundary parser
- *  (`sanitizeStoredUserSettings`) lives in `utils/`. Sub-types each
- *  have their own sibling file. */
 import { asTrackId } from "@shared/ids";
 
 import {
@@ -9,7 +5,7 @@ import {
   DEFAULT_TRACK_ID,
 } from "../../../../domain/common/constants";
 
-import { sanitizeStoredUserSettings } from "./utils/sanitizeStoredUserSettings";
+import { sanitizeStoredUserSettings } from "./sanitizeStoredUserSettings";
 
 import type { ExperimentalSettings } from "./ExperimentalSettings";
 import type { MemoryReviewSettings } from "./MemoryReviewSettings";
@@ -20,19 +16,12 @@ import type { TimingSettings } from "./TimingSettings";
 import type { UserSettingsPatch } from "./UserSettingsPatch";
 import type { ActiveFocus } from "../../../../domain/active-focus/model";
 
-/* ────────────────────────────────────────────────────────────────────
- * Type
- * ──────────────────────────────────────────────────────────────────── */
-
 export interface UserSettings {
   dailyQuestionGoal: number;
   studyMode: StudyMode;
   /** @deprecated v6 — replaced by `tracks.enabled` (SQLite). Kept on the
-   * settings shape for legacy import compat; new code consults the
-   * tracks repo. */
+   * settings shape for legacy import compat; new code consults the tracks repo. */
   setsEnabled: Record<string, boolean>;
-  /** Discriminated current selection across all Tracks. The single source
-   * of truth for "which Track is the user focused on right now". */
   activeFocus: ActiveFocus;
   notifications: NotificationSettings;
   memoryReview: MemoryReviewSettings;
@@ -41,12 +30,6 @@ export interface UserSettings {
   experimental: ExperimentalSettings;
 }
 
-/* ────────────────────────────────────────────────────────────────────
- * Defaults — fresh snapshot factories
- * ──────────────────────────────────────────────────────────────────── */
-
-/** Canonical default snapshot. Cloned by `createInitialUserSettings`
- *  so callers can mutate freely without disturbing this constant. */
 export const INITIAL_USER_SETTINGS: UserSettings = {
   dailyQuestionGoal: 18,
   studyMode: "studyPlan",
@@ -86,7 +69,6 @@ export const INITIAL_USER_SETTINGS: UserSettings = {
   },
 };
 
-/** Build a fresh, mutable UserSettings snapshot from the defaults. */
 export function createInitialUserSettings(): UserSettings {
   return {
     ...INITIAL_USER_SETTINGS,
@@ -102,8 +84,8 @@ export function createInitialUserSettings(): UserSettings {
   };
 }
 
-/** Default `setsEnabled` map. Kept for legacy v6 import paths; new
- *  code consults the tracks repo for enabled-state. */
+/** Default `setsEnabled` map. Kept for legacy v6 import paths only;
+ *  new code consults the tracks repo for enabled-state. */
 export function createInitialSetsEnabled(): Record<string, boolean> {
   return {
     ...Object.fromEntries(BUILT_IN_SETS.map((setName) => [setName, true])),
@@ -112,13 +94,6 @@ export function createInitialSetsEnabled(): Record<string, boolean> {
   };
 }
 
-/* ────────────────────────────────────────────────────────────────────
- * Clone & merge
- * ──────────────────────────────────────────────────────────────────── */
-
-/** Deep clone a UserSettings snapshot. Every nested object is copied
- *  so callers can mutate the result freely without disturbing the
- *  source — used by the settings editor when seeding a draft. */
 export function cloneUserSettings(settings: UserSettings): UserSettings {
   return {
     ...settings,
@@ -134,9 +109,8 @@ export function cloneUserSettings(settings: UserSettings): UserSettings {
   };
 }
 
-/** Apply a `UserSettingsPatch` on top of a current snapshot. Nested
- *  objects merge field-by-field; the result is sanitized so the SW
- *  never persists a malformed snapshot. */
+/** Patch on top of `current`. Sanitises the result so the SW never
+ *  persists a malformed snapshot from a wire-shape patch. */
 export function mergeUserSettings(
   current: UserSettings,
   patch: UserSettingsPatch,
@@ -144,14 +118,8 @@ export function mergeUserSettings(
   return sanitizeStoredUserSettings({
     ...current,
     ...patch,
-    experimental: {
-      ...current.experimental,
-      ...(patch.experimental ?? {}),
-    },
-    memoryReview: {
-      ...current.memoryReview,
-      ...(patch.memoryReview ?? {}),
-    },
+    experimental: { ...current.experimental, ...(patch.experimental ?? {}) },
+    memoryReview: { ...current.memoryReview, ...(patch.memoryReview ?? {}) },
     notifications: {
       ...current.notifications,
       ...(patch.notifications ?? {}),
@@ -160,10 +128,7 @@ export function mergeUserSettings(
       ...current.questionFilters,
       ...(patch.questionFilters ?? {}),
     },
-    setsEnabled: {
-      ...current.setsEnabled,
-      ...(patch.setsEnabled ?? {}),
-    },
+    setsEnabled: { ...current.setsEnabled, ...(patch.setsEnabled ?? {}) },
     timing: {
       ...current.timing,
       ...(patch.timing ?? {}),
@@ -175,35 +140,23 @@ export function mergeUserSettings(
   });
 }
 
-/* ────────────────────────────────────────────────────────────────────
- * Equality
- * ──────────────────────────────────────────────────────────────────── */
-
-/** Stable JSON stringify with sorted keys — `JSON.stringify` doesn't
- *  guarantee key order, so we sort to make value-equality reliable. */
+/** JSON.stringify with sorted keys — needed because key order isn't
+ *  guaranteed, so a naive stringify-then-compare gives false negatives. */
 function stableStringify(value: unknown): string {
   if (!value || typeof value !== "object") {
     return JSON.stringify(value);
   }
-
   if (Array.isArray(value)) {
     return `[${value.map((item) => stableStringify(item)).join(",")}]`;
   }
-
   const entries = Object.entries(value as Record<string, unknown>).sort(
     ([left], [right]) => left.localeCompare(right),
   );
-
   return `{${entries
-    .map(
-      ([key, entryValue]) =>
-        `${JSON.stringify(key)}:${stableStringify(entryValue)}`,
-    )
+    .map(([key, v]) => `${JSON.stringify(key)}:${stableStringify(v)}`)
     .join(",")}}`;
 }
 
-/** Deep value equality between two UserSettings snapshots. Used by the
- *  settings editor to decide whether the user has unsaved changes. */
 export function areUserSettingsEqual(
   left: UserSettings,
   right: UserSettings,

@@ -1,5 +1,3 @@
-/** DomainModel barrel — one model per file, identity ops next to the
- *  type, boundary parsers under `utils/`. */
 export type { UserSettings } from "./UserSettings";
 export {
   INITIAL_USER_SETTINGS,
@@ -9,7 +7,7 @@ export {
   createInitialUserSettings,
   mergeUserSettings,
 } from "./UserSettings";
-export { sanitizeStoredUserSettings } from "./utils/sanitizeStoredUserSettings";
+export { sanitizeStoredUserSettings } from "./sanitizeStoredUserSettings";
 
 export type { UserSettingsPatch } from "./UserSettingsPatch";
 export type { StudyMode } from "./StudyMode";

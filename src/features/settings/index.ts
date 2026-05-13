@@ -1,7 +1,3 @@
-/** UI-side barrel for the settings feature. Cross-feature consumers
- *  import from here only (deep paths stay internal). */
-
-// DomainModel types.
 export type {
   DifficultyGoalSettings,
   ExperimentalSettings,
@@ -15,8 +11,6 @@ export type {
   UserSettingsPatch,
 } from "./domain/model";
 
-// Pure model helpers — safe for UI consumers (fixtures, mocks,
-// equality checks). Writes go through the Repository.
 export {
   INITIAL_USER_SETTINGS,
   areUserSettingsEqual,
@@ -27,14 +21,12 @@ export {
   sanitizeStoredUserSettings,
 } from "./domain/model";
 
-// Repository — the abstraction the screen calls.
 export type { SettingsRepository } from "./data/repository/SettingsRepository";
 export {
   DefaultSettingsRepository,
   settingsRepository,
 } from "./data/repository/SettingsRepository";
 
-// ViewModel hook + Screen.
 export {
   useSettingsScreen,
   type SettingsIntentResult,

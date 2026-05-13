@@ -1,8 +1,3 @@
-/** Dashboard settings screen. The screen owns its own draft + intents
- * via `useSettingsScreen` (the feature's ViewModel hook); the View is
- * a function of that model. Cross-feature concerns (backup export /
- * import, study-history reset) still arrive as props until those
- * features migrate in Phase 7. */
 import { SurfaceDivider } from "@design-system/atoms";
 import Box from "@mui/material/Box";
 
@@ -32,21 +27,14 @@ export interface SettingsViewStatus {
 }
 
 export interface SettingsViewProps {
-  /** Persisted snapshot the feature's draft starts from. `null` while
-   *  the parent is still hydrating. */
   currentSettings: UserSettings | null;
-  /** Bubble up status from save / reset intents so the parent surface
-   *  can render its toast / banner. */
   onStatus: (status: SettingsViewStatus) => void;
-  /** Optional: parent updates its payload state when the SW
-   *  acknowledges a save. In real extension mode the bus tick also
-   *  triggers a re-fetch; this callback is what carries the new
-   *  snapshot in non-extension / test contexts where no tick fires. */
+  /** Test-context fallback: in extension mode the bus tick triggers
+   *  a re-fetch; in non-extension tests this callback carries the
+   *  fresh snapshot instead. */
   onSettingsSaved?: (saved: UserSettings) => void;
-
-  // Cross-feature concerns — still parent-owned until their features
-  // migrate. Phase 7 backup feature absorbs the export/import props;
-  // Phase 7 study feature absorbs onResetStudyHistory.
+  // Cross-feature concerns — owned by the parent until backup/study
+  // features migrate in Phase 7.
   importFile: File | null;
   onSetImportFile: (file: File | null) => void;
   onExportData: () => Promise<void>;
@@ -77,9 +65,8 @@ export function SettingsView(props: SettingsViewProps) {
     }
   };
 
-  // Loading guard: while the parent hasn't hydrated the snapshot yet,
-  // the draft has nothing to clone from. Render the chrome but keep
-  // the sections empty.
+  // Render chrome only while the parent hydrates the snapshot — the
+  // draft has nothing to clone from yet, but the layout shift hurts.
   if (!screen.draftSettings) {
     return (
       <SettingsCanvas>
