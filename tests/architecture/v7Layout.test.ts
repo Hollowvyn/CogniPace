@@ -41,14 +41,18 @@ function read(filePath: string): string {
 }
 
 const v7RepoDir = path.join(repoRoot, "src/data/repositories/v7");
-const v7DomainDirs = [
-  path.join(repoRoot, "src/domain/problems"),
-  path.join(repoRoot, "src/domain/topics"),
-  path.join(repoRoot, "src/domain/companies"),
-  path.join(repoRoot, "src/domain/sets"),
-  path.join(repoRoot, "src/domain/active-focus"),
-  path.join(repoRoot, "src/domain/data"),
-];
+// After Phase A killed src/domain/{types/index,active-focus,common,
+// views,usecases}, the only domain code left is the v7-blob carry-over.
+// Phase B retires this folder entirely with the v7 funnel.
+const v7DomainDirs = [path.join(repoRoot, "src/domain/data")];
+
+/** The exact set of files allowed to live under src/domain/ after
+ *  Phase A. Phase B removes all three and the folder goes away. */
+const DEFERRED_LEGACY_DOMAIN_FILES = new Set([
+  "src/domain/data/appDataV7.ts",
+  "src/domain/types/AppData.ts",
+  "src/domain/types/STORAGE_SCHEMA_VERSION.ts",
+]);
 
 describe("v7 architecture", () => {
   it("only the appDataRepository touches chrome.storage in the v7 layer", () => {
@@ -114,6 +118,40 @@ describe("v7 architecture", () => {
         `${file} should not write to studyStatesBySlug[...]`,
       ).not.toMatch(/studyStatesBySlug\[[^\]]+\]\s*=/);
     }
+  });
+
+  it("src/domain/ contains only the deferred-to-Phase-B legacy files", () => {
+    // Phase A killed the transition stub (src/domain/types/index.ts),
+    // the views barrel, the common utilities, the active-focus module,
+    // and the empty usecases stub. What remains is the v7 funnel
+    // carry-over — three files retired together when Phase B kills
+    // the funnel. Re-introducing anything under src/domain/ is almost
+    // certainly a regression; this test catches it.
+    const domainRoot = path.join(repoRoot, "src/domain");
+    if (!fs.existsSync(domainRoot)) {
+      // Phase B has already shipped — folder is gone. Nothing to check.
+      return;
+    }
+    const actual = new Set(
+      listFiles(domainRoot)
+        .filter((f) => !f.endsWith(".test.ts"))
+        .map((f) => path.relative(repoRoot, f)),
+    );
+    const unexpected = [...actual].filter(
+      (f) => !DEFERRED_LEGACY_DOMAIN_FILES.has(f),
+    );
+    const missing = [...DEFERRED_LEGACY_DOMAIN_FILES].filter(
+      (f) => !actual.has(f),
+    );
+
+    expect(
+      unexpected,
+      `Unexpected file(s) under src/domain/. Phase A retired every domain shim; new code lives in features/, libs/, platform/, or shared/. If a Phase-B-deferred file legitimately needs a sibling, add it to DEFERRED_LEGACY_DOMAIN_FILES.`,
+    ).toEqual([]);
+    expect(
+      missing,
+      `Phase-B-deferred file(s) missing from src/domain/. If you killed one ahead of Phase B, remove it from DEFERRED_LEGACY_DOMAIN_FILES.`,
+    ).toEqual([]);
   });
 
   it("aggregate registry covers every AppDataV7 aggregate root", () => {
