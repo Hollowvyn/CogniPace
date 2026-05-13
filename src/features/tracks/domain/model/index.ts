@@ -1,3 +1,4 @@
+export type { ActiveFocus } from "./ActiveFocus";
 export type { Track } from "./Track";
 export type { TrackGroup } from "./TrackGroup";
 export type { TrackGroupProblem } from "./TrackGroupProblem";

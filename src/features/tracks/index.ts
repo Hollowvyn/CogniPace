@@ -1,4 +1,5 @@
 export type {
+  ActiveFocus,
   Track,
   TrackGroup,
   TrackGroupProblem,

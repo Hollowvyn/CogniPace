@@ -5,8 +5,8 @@
  */
 import { sendMessage } from "@libs/runtime-rpc/client";
 
-import type { ActiveFocus } from "../../domain/active-focus/model";
 import type { Difficulty } from "../../domain/types";
+import type { ActiveFocus } from "@features/tracks";
 
 export interface EditProblemPatch {
   title?: string;

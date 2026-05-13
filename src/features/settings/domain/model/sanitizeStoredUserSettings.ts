@@ -14,7 +14,7 @@ import type { DifficultyGoalSettings } from "./DifficultyGoalSettings";
 import type { ReviewOrder } from "./ReviewOrder";
 import type { StudyMode } from "./StudyMode";
 import type { UserSettings } from "./UserSettings";
-import type { ActiveFocus } from "../../../../domain/active-focus/model";
+import type { ActiveFocus } from "@features/tracks";
 
 type UnknownRecord = Record<string, unknown>;
 

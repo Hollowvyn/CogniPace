@@ -5,10 +5,10 @@
  * for transitional hydration into the legacy `AppData` shape that
  * non-migrated callers still read. Phase 8 will rip the blob entirely.
  */
-import type { ActiveFocus } from "../active-focus/model";
 import type { Company , Problem , Topic } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
+import type { ActiveFocus } from "@features/tracks";
 
 export const STORAGE_SCHEMA_VERSION_V7 = 7 as const;
 

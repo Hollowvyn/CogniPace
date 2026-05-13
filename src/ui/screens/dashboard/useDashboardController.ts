@@ -32,9 +32,9 @@ import {
   LibraryFilters,
 } from "../../presentation/library";
 
-import type { ActiveFocus } from "../../../domain/active-focus/model";
 import type { ExportPayload } from "@features/backup";
 import type { UserSettings } from "@features/settings";
+import type { ActiveFocus } from "@features/tracks";
 
 function isImportPayloadCandidate(value: unknown): value is ExportPayload {
   return Boolean(value) && typeof value === "object";

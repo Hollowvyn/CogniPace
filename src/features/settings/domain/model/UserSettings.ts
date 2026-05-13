@@ -14,7 +14,7 @@ import type { QuestionFilterSettings } from "./QuestionFilterSettings";
 import type { StudyMode } from "./StudyMode";
 import type { TimingSettings } from "./TimingSettings";
 import type { UserSettingsPatch } from "./UserSettingsPatch";
-import type { ActiveFocus } from "../../../../domain/active-focus/model";
+import type { ActiveFocus } from "@features/tracks";
 
 export interface UserSettings {
   dailyQuestionGoal: number;

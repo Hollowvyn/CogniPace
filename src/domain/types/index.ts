@@ -63,4 +63,4 @@ export type {
   TrackGroupId,
 } from "@shared/ids";
 
-export type { ActiveFocus } from "../active-focus/model";
+export type { ActiveFocus } from "@features/tracks";

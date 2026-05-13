@@ -39,8 +39,8 @@ import {
 import { PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import { ok } from "../responses";
 
-import type { ActiveFocus } from "../../../domain/active-focus/model";
 import type { ProblemEditPatch } from "@features/problems";
+import type { ActiveFocus } from "@features/tracks";
 
 
 // ---------- Problem edits ----------

@@ -47,12 +47,12 @@ import {
   suspendProblem,
 } from "../../../../data/repositories/v7ActionRepository";
 
-import type { ActiveFocus } from "../../../../domain/active-focus/model";
 import type {
   AppShellPayload,
   ProblemView,
   TrackView,
 } from "../../../../domain/views";
+import type { ActiveFocus } from "../../domain/model";
 
 interface TracksViewProps {
   payload: AppShellPayload | null;
