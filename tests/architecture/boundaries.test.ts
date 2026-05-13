@@ -279,7 +279,7 @@ describe("architecture / Phase 6 boundaries", () => {
     expect(fs.existsSync(path.join(dataDir, "datasource"))).toBe(true);
   });
 
-  it("SettingsRepository ships as an interface + a conforming singleton (DI seam)", () => {
+  it("SettingsRepository ships as interface + conforming singleton so DI can swap it in tests", () => {
     const file = read(
       path.join(
         repoRoot,
@@ -292,7 +292,7 @@ describe("architecture / Phase 6 boundaries", () => {
     ).toBe(true);
   });
 
-  it("features without cross-repo composition do not ship a domain/usecases/ folder", () => {
+  it("settings has no domain/usecases/ — single-repo features inline orchestration in the Repository", () => {
     expect(
       fs.existsSync(
         path.join(repoRoot, "src/features/settings/domain/usecases"),

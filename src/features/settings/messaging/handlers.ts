@@ -6,7 +6,7 @@ import {
   createInitialUserSettings,
   mergeUserSettings,
   type UserSettingsPatch,
-} from "../domain";
+} from "../domain/model";
 
 export async function updateSettings(payload: Record<string, unknown>) {
   const { db } = await getDb();

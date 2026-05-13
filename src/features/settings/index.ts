@@ -14,8 +14,6 @@ export type {
 export {
   INITIAL_USER_SETTINGS,
   areUserSettingsEqual,
-  cloneUserSettings,
-  createInitialSetsEnabled,
   createInitialUserSettings,
   mergeUserSettings,
   sanitizeStoredUserSettings,
