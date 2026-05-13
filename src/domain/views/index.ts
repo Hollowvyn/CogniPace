@@ -26,9 +26,13 @@ export type { LibraryProblemRow } from "./LibraryProblemRow";
 export type { TrackGroupView } from "./TrackGroupView";
 export type { TrackView } from "./TrackView";
 
-export type { PopupViewData } from "./PopupViewData";
-export type { PopupShellPayload } from "./PopupShellPayload";
-export type { AppShellPayload } from "./AppShellPayload";
+// AppShell payloads moved to @features/app-shell in Phase 7; re-exported
+// here for transitional callers. New code imports from @features/app-shell directly.
+export type {
+  PopupViewData,
+  PopupShellPayload,
+  AppShellPayload,
+} from "@features/app-shell";
 
 export type { SaveReviewResultResponse } from "./SaveReviewResultResponse";
 export type { ProblemContextResponse } from "./ProblemContextResponse";

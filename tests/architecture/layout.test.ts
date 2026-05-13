@@ -93,7 +93,10 @@ describe("architecture layout", () => {
       path.join(repoRoot, "src/platform/chrome/storage.ts")
     );
     const appShellRepository = read(
-      path.join(repoRoot, "src/data/repositories/appShellRepository.ts")
+      path.join(
+        repoRoot,
+        "src/features/app-shell/data/repository/AppShellRepository.ts",
+      ),
     );
 
     expect(appDataRepository).toContain("@platform/chrome/storage");

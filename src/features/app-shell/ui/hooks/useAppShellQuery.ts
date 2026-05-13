@@ -1,4 +1,3 @@
-/** Shared query hook for extension UI read models. */
 import { subscribeToTick } from "@libs/event-bus";
 import {
   startTransition,
@@ -8,17 +7,16 @@ import {
   useState,
 } from "react";
 
+import { appShellRepository } from "../../data/repository/AppShellRepository";
 
-import { fetchAppShellPayload } from "../../data/repositories/appShellRepository";
-import { AppShellPayload, PopupShellPayload } from "../../domain/views";
+import type {
+  AppShellPayload,
+  PopupShellPayload,
+  UiStatus,
+} from "../../domain/model";
 
-export interface UiStatus {
-  message: string;
-  isError: boolean;
-  scope?: "course" | "recommendation" | "surface";
-}
-
-/** Detects whether the current thread is running inside an extension context. */
+/** True when the current thread is running inside the extension's
+ *  chrome.runtime context (vs a vite dev server or jsdom test). */
 export function isExtensionContext(): boolean {
   return typeof chrome !== "undefined" && Boolean(chrome.runtime?.id);
 }
@@ -29,12 +27,14 @@ type FetchPayload<TPayload> = () => Promise<{
   error?: string;
 }>;
 
-/** Loads and caches a shared extension UI payload. */
+/** Loads and caches a shared extension UI payload. The fetcher can be
+ *  overridden so the popup hook can swap in the narrower fetch. */
 export function useAppShellQuery<
   TPayload extends PopupShellPayload = AppShellPayload,
 >(
   mockData: TPayload,
-  fetchPayload: FetchPayload<TPayload> = fetchAppShellPayload as FetchPayload<TPayload>
+  fetchPayload: FetchPayload<TPayload> = (() =>
+    appShellRepository.fetchAppShell()) as FetchPayload<TPayload>,
 ) {
   const [payload, setPayload] = useState<TPayload | null>(null);
   const [status, setStatus] = useState<UiStatus>({
@@ -79,7 +79,7 @@ export function useAppShellQuery<
       });
       return true;
     },
-    [fetchPayload, mockData]
+    [fetchPayload, mockData],
   );
 
   useEffect(() => {

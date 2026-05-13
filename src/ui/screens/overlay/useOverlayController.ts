@@ -1,4 +1,5 @@
 /** Overlay controller that composes page bootstrap, timer state, session state, and render-model shaping. */
+import { appShellRepository } from "@features/app-shell";
 import { createInitialUserSettings } from "@features/settings";
 import {
   defaultReviewMode,
@@ -12,7 +13,6 @@ import {
 } from "@libs/screen-parsing/dom/leetcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { fetchAppShellPayload } from "../../../data/repositories/appShellRepository";
 import {
   getProblemContext,
   openExtensionPage,
@@ -151,7 +151,7 @@ export function useOverlayController(
   const refreshPostSubmitNext = useCallback(
     async (currentSlug: string) => {
       const requestToken = ++postSubmitRequestTokenRef.current;
-      const response = await fetchAppShellPayload();
+      const response = await appShellRepository.fetchAppShell();
       if (requestToken !== postSubmitRequestTokenRef.current) {
         return;
       }
@@ -221,7 +221,7 @@ export function useOverlayController(
 
       const [context, shell] = await Promise.all([
         getProblemContext(slug),
-        fetchAppShellPayload(),
+        appShellRepository.fetchAppShell(),
       ]);
       if (
         isStaleOverlayRequest(

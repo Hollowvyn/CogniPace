@@ -1,8 +1,8 @@
 /** Popup-local state and actions for the recommendation-first surface. */
 import { useDI } from "@app/di";
+import { appShellRepository, useAppShellQuery } from "@features/app-shell";
 import { startTransition, useMemo, useRef, useState } from "react";
 
-import { fetchPopupShellPayload } from "../../../data/repositories/appShellRepository";
 import {
   openDashboardPage,
   openSettingsPage,
@@ -11,7 +11,6 @@ import { openProblemPage } from "../../../data/repositories/problemSessionReposi
 import { StudyMode } from "../../../domain/types";
 import { RecommendedProblemView } from "../../../domain/views";
 import { createMockPopupShellPayload } from "../../mockData";
-import { useAppShellQuery } from "../../state/useAppShellQuery";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],
@@ -43,7 +42,7 @@ export function usePopupController() {
   const mockPayload = useMemo(() => createMockPopupShellPayload(), []);
   const { load, payload, setPayload, setStatus, status } = useAppShellQuery(
     mockPayload,
-    fetchPopupShellPayload
+    () => appShellRepository.fetchPopupShell(),
   );
   const [recommendedIndex, setRecommendedIndex] = useState(0);
   const [pendingStudyMode, setPendingStudyMode] = useState<StudyMode | null>(

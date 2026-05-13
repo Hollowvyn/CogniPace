@@ -1,6 +1,6 @@
-import type { RecommendedProblemView } from "./RecommendedProblemView";
-import type { TrackCardView } from "./TrackCardView";
-import type { TrackQuestionView } from "./TrackQuestionView";
+import type { RecommendedProblemView } from "../../../../domain/views/RecommendedProblemView";
+import type { TrackCardView } from "../../../../domain/views/TrackCardView";
+import type { TrackQuestionView } from "../../../../domain/views/TrackQuestionView";
 
 export interface PopupViewData {
   dueCount: number;

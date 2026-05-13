@@ -1,10 +1,9 @@
-
-import type { CompanyLabel } from "./CompanyLabel";
-import type { LibraryProblemRow } from "./LibraryProblemRow";
 import type { PopupShellPayload } from "./PopupShellPayload";
-import type { RecommendedProblemView } from "./RecommendedProblemView";
-import type { TopicLabel } from "./TopicLabel";
-import type { TrackView } from "./TrackView";
+import type { CompanyLabel } from "../../../../domain/views/CompanyLabel";
+import type { LibraryProblemRow } from "../../../../domain/views/LibraryProblemRow";
+import type { RecommendedProblemView } from "../../../../domain/views/RecommendedProblemView";
+import type { TopicLabel } from "../../../../domain/views/TopicLabel";
+import type { TrackView } from "../../../../domain/views/TrackView";
 import type { AnalyticsSummary } from "@features/analytics";
 import type { TodayQueue } from "@features/queue";
 

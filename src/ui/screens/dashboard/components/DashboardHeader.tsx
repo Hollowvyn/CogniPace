@@ -4,6 +4,7 @@ import {
   SurfaceIconButton,
   SurfaceTooltip,
 } from "@design-system/atoms";
+import { UiStatus } from "@features/app-shell";
 import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import Box from "@mui/material/Box";
@@ -11,7 +12,6 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { DashboardRoute } from "../../../navigation/dashboardRoutes";
-import { UiStatus } from "../../../state/useAppShellQuery";
 
 import { DashboardHeaderPanel } from "./DashboardSurface";
 

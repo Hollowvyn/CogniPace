@@ -6,6 +6,7 @@
  * cross-feature concerns (backup export/import, study-history reset)
  * stay here until Phase 7. */
 import { useDI } from "@app/di";
+import { isExtensionContext, useAppShellQuery } from "@features/app-shell";
 import {
   startTransition,
   useCallback,
@@ -30,10 +31,6 @@ import {
   filterLibraryRows,
   LibraryFilters,
 } from "../../presentation/library";
-import {
-  isExtensionContext,
-  useAppShellQuery,
-} from "../../state/useAppShellQuery";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
 import type { ExportPayload } from "@features/backup";
