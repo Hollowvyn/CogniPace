@@ -4,10 +4,10 @@
  * stubbing `Date.now`. Production code receives `systemClock`; tests
  * pass a fake clock with a frozen `now` and a controllable advance.
  *
- * The interface is added as scaffolding for Phase 6+; today's domain
- * code still uses `nowIso()` from `src/domain/common/time.ts`. Threading
- * `Clock` through every caller is incremental — wire it in when a
- * feature is otherwise migrating to its bounded-context folder.
+ * The interface is the long-term answer; today's call sites still
+ * use the free `nowIso()` from `@platform/time` for pragmatism.
+ * Threading `Clock` through every caller is incremental — wire it in
+ * when a feature is otherwise being migrated.
  */
 export interface Clock {
   /** Current wall-clock time as ISO-8601 string. */

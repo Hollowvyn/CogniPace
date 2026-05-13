@@ -1,13 +1,11 @@
 import assert from "node:assert/strict";
 
 import { createInitialUserSettings } from "@features/settings";
+import { createDefaultStudyState } from "@libs/fsrs/constants";
 import { describe, it } from "vitest";
 
 import { sanitizeImportPayload } from "../../src/data/importexport/backup";
-import {
-  createDefaultStudyState,
-  CURRENT_STORAGE_SCHEMA_VERSION,
-} from "../../src/domain/common/constants";
+import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../src/data/repositories/v7/constants";
 import { Problem } from "../../src/domain/types";
 import { makeProblem } from "../support/domainFixtures";
 

@@ -11,11 +11,12 @@ import {
   writeLocalStorage,
 } from "@platform/chrome/storage";
 
+import { AppData } from "../../domain/types";
+
 import {
   CURRENT_STORAGE_SCHEMA_VERSION,
   STORAGE_KEY,
-} from "../../domain/common/constants";
-import { AppData } from "../../domain/types";
+} from "./v7/constants";
 
 /** Sidecar key holding the pre-v7 blob (auto-export-then-wipe migration). */
 export const PRE_V7_BACKUP_KEY = `${STORAGE_KEY}_pre_v7_backup` as const;

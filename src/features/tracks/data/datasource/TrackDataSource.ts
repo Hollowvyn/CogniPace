@@ -25,6 +25,7 @@
  *     name on curated tracks, gate it here.
  */
 import * as schema from "@platform/db/schema";
+import { nowIso } from "@platform/time";
 import {
   asProblemSlug,
   asTrackGroupId,
@@ -38,7 +39,6 @@ import {
 } from "@shared/ids";
 import { and, asc, eq, max, sql } from "drizzle-orm";
 
-import { nowIso } from "../../../../domain/common/time";
 
 import type {
   Track,

@@ -1,6 +1,6 @@
+import { createDefaultStudyState } from "@libs/fsrs/constants";
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
-import { createDefaultStudyState } from "../../../../domain/common/constants";
 
 import { isEffectivelySuspended } from "./effectivelySuspended";
 

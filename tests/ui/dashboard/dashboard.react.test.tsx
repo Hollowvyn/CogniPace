@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { STORAGE_KEY } from "../../../src/domain/common/constants";
+import { STORAGE_KEY } from "../../../src/data/repositories/v7/constants";
 import { DashboardApp } from "../../../src/ui/screens/dashboard/DashboardApp";
 import { makePayload } from "../support/appShellFixtures";
 import { render, screen, waitFor, fireEvent } from "../support/render";

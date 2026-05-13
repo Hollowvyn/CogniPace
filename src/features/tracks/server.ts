@@ -29,6 +29,7 @@ export {
   findCurrentSlugInGroup,
 } from "./domain/policy/questionStatus";
 
+export { DEFAULT_TRACK_ID, BUILT_IN_SETS } from "./domain/model";
 export { buildTrackCatalogSeed } from "./data/seed";
 
 export {

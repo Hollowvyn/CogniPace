@@ -1,9 +1,6 @@
+import { BUILT_IN_SETS, DEFAULT_TRACK_ID } from "@features/tracks";
 import { asTrackId } from "@shared/ids";
 
-import {
-  BUILT_IN_SETS,
-  DEFAULT_TRACK_ID,
-} from "../../../../domain/common/constants";
 
 import { sanitizeStoredUserSettings } from "./sanitizeStoredUserSettings";
 

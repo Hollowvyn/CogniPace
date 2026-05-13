@@ -30,10 +30,10 @@
  * has no study state and views render "not started".
  */
 import * as schema from "@platform/db/schema";
+import { nowIso } from "@platform/time";
 import { asProblemSlug, type ProblemSlug } from "@shared/ids";
 import { asc, desc, eq } from "drizzle-orm";
 
-import { nowIso } from "../../../../domain/common/time";
 import {
   createDefaultStudyState,
   type AttemptHistoryEntry,

@@ -98,6 +98,17 @@ describe("architecture / Phase 2 boundaries", () => {
   const LIBS_FEATURE_TYPE_LEAKS = new Set([
     "src/libs/runtime-rpc/contracts/MessageRequestMap.ts",
     "src/libs/runtime-rpc/contracts/MessageResponseMap.ts",
+    // The v6-shape baseline StudyState the FSRS scheduler builds when
+    // a problem has no prior history. Type-only import; the canonical
+    // StudyState lives in features/study. Phase B+ may invert this so
+    // StudyState lives in libs and features/study re-exports.
+    "src/libs/fsrs/constants.ts",
+    // Re-exports `nowIso` from @platform/time so the FSRS scheduler can
+    // fall back to system time when callers don't pass `now`. The
+    // optionality is the leak; Phase E (P7 — side effects through
+    // ports) flips this to a required `now` parameter and removes the
+    // platform import entirely.
+    "src/libs/fsrs/utils.ts",
   ]);
 
   it("libs/** does not import from features/, app/, or platform/", () => {

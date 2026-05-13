@@ -1,1 +1,1 @@
-export { CURRENT_STORAGE_SCHEMA_VERSION } from "../../domain/common/constants";
+export { CURRENT_STORAGE_SCHEMA_VERSION } from "../repositories/v7/constants";

@@ -1,9 +1,9 @@
 /** Boundary parser for UserSettings — coerces arbitrary input into a
  *  valid snapshot. Used at storage-read, backup-import, and merge
  *  boundaries. Idempotent. */
+import { DEFAULT_TRACK_ID } from "@features/tracks";
 import { asTrackGroupId, asTrackId } from "@shared/ids";
 
-import { DEFAULT_TRACK_ID } from "../../../../domain/common/constants";
 
 import {
   createInitialSetsEnabled,

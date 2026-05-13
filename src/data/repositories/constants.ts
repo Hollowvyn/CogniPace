@@ -1,1 +1,1 @@
-export { createDefaultStudyState } from "../../domain/common/constants";
+export { createDefaultStudyState } from "@libs/fsrs/constants";

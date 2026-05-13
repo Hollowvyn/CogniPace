@@ -1,4 +1,5 @@
-import { createDefaultStudyState } from "../../src/domain/common/constants";
+import { createDefaultStudyState } from "@libs/fsrs/constants";
+
 import { Problem, StudyState } from "../../src/domain/types";
 
 export function makeProblem(

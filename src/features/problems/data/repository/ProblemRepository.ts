@@ -1,6 +1,7 @@
-import { uniqueStrings } from "../../../../domain/common/collections";
-import { createDefaultStudyState } from "../../../../domain/common/constants";
-import { nowIso } from "../../../../domain/common/time";
+import { uniqueStrings } from "@libs/collections";
+import { createDefaultStudyState } from "@libs/fsrs/constants";
+import { nowIso } from "@platform/time";
+
 import {
   CuratedProblemInput,
   Difficulty,

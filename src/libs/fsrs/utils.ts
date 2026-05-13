@@ -1,2 +1,2 @@
-export { uniqueStrings } from "../../domain/common/collections";
-export { nowIso } from "../../domain/common/time";
+export { uniqueStrings } from "@libs/collections";
+export { nowIso } from "@platform/time";

@@ -12,10 +12,10 @@ import {
   isStaleOverlayRequest,
   readProblemPageSnapshot,
 } from "@libs/leetcode";
+import { formatClock } from "@platform/time";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 
-import { formatClock } from "../../../../domain/common/time";
 import { Rating, UserSettings } from "../../../../domain/types";
 import {
   defaultReviewMode,

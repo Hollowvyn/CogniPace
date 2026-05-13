@@ -1,2 +1,2 @@
-export { uniqueStrings } from "../../../../domain/common/collections";
+export { uniqueStrings } from "@libs/collections";
 export { slugToTitle, slugToUrl } from "../../domain/model";

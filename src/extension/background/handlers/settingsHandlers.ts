@@ -29,8 +29,10 @@ import {
   createTrack,
   listTracks,
 } from "@features/tracks/server";
+import { uniqueStrings } from "@libs/collections";
 import { normalizeStudyState } from "@libs/fsrs/studyState";
 import { getDb } from "@platform/db/instance";
+import { nowIso } from "@platform/time";
 import {
   asCompanyId,
   asProblemSlug,
@@ -42,9 +44,7 @@ import {
 
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import { getAppData } from "../../../data/repositories/appDataRepository";
-import { uniqueStrings } from "../../../domain/common/collections";
-import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/common/constants";
-import { nowIso } from "../../../domain/common/time";
+import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../data/repositories/v7/constants";
 import { StudyState } from "../../../domain/types";
 import { ok } from "../responses";
 

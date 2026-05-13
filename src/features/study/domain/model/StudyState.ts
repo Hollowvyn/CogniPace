@@ -21,7 +21,7 @@ export interface StudyState extends ReviewLogFields {
 /** Creates a fresh StudyState for a problem the user has just engaged
  *  with. The `now` parameter feeds createdAt/updatedAt — v7-required;
  *  v6 callers that don't care use the no-arg variant in
- *  `domain/common/constants.ts`. */
+ *  `@libs/fsrs/constants`. */
 export function createDefaultStudyState(now: string): StudyState {
   return {
     suspended: false,

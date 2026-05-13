@@ -19,12 +19,12 @@ import {
   removeLocalStorage,
   writeLocalStorage,
 } from "@platform/chrome/storage";
+import { nowIso } from "@platform/time";
 
-import { STORAGE_KEY } from "../../../domain/common/constants";
-import { nowIso } from "../../../domain/common/time";
 import { STORAGE_SCHEMA_VERSION_V7 } from "../../../domain/data/appDataV7";
 
 import { aggregates } from "./aggregateRegistry";
+import { STORAGE_KEY } from "./constants";
 import { buildFreshAppDataV7 } from "./seed";
 
 import type { AppDataV7 } from "../../../domain/data/appDataV7";

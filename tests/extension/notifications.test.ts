@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createInitialUserSettings } from "@features/settings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../src/domain/common/constants";
+import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../src/data/repositories/v7/constants";
 import {
   handleStartupDueCheck,
   maybeNotifyDueQueue,

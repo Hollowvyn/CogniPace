@@ -16,13 +16,13 @@ import {applyReview, overrideLastReview, resetSchedule,} from "@libs/fsrs/schedu
 import {getStudyStateSummary, normalizeReviewLogFields,} from "@libs/fsrs/studyState";
 import {canonicalProblemUrlForOpen,} from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
+import {nowIso} from "@platform/time";
 import {
   asProblemSlug,
   asTrackGroupId,
   asTrackId,
 } from "@shared/ids";
 
-import {nowIso} from "../../../domain/common/time";
 import { setActiveFocusHandler } from "../../../extension/background/handlers/v7Handlers";
 import {ok} from "../../../extension/background/responses";
 import { getProblem, importProblem } from "../data/datasource/ProblemDataSource";

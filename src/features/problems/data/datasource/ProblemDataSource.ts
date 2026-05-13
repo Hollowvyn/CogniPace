@@ -27,6 +27,7 @@
  * need defensive guards.
  */
 import * as schema from "@platform/db/schema";
+import { nowIso } from "@platform/time";
 import {
   asCompanyId,
   asProblemSlug,
@@ -37,7 +38,6 @@ import {
 } from "@shared/ids";
 import { eq, inArray, sql } from "drizzle-orm";
 
-import { nowIso } from "../../../../domain/common/time";
 import {
   leetcodeProblemUrl,
   slugToTitle,

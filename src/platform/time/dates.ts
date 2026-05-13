@@ -1,9 +1,6 @@
-/** Shared time and date formatting helpers used across domain and UI layers. */
-
-/** Returns the current timestamp in ISO-8601 format. */
-export function nowIso(): string {
-  return new Date().toISOString();
-}
+/** Pure date/time formatting helpers. No system-clock reads; safe to
+ *  call from anywhere without injection. Lives alongside the `Clock`
+ *  port since "time" is the conceptual home. */
 
 /** Adds whole days to an ISO timestamp and returns the updated ISO string. */
 export function addDaysIso(fromIso: string, days: number): string {
