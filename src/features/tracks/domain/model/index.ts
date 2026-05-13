@@ -1,6 +1,3 @@
-export type { ActiveFocus } from "./ActiveFocus";
-export { DEFAULT_TRACK_ID } from "./DefaultTrackId";
-export { BUILT_IN_SETS } from "./BuiltInTrackIds";
 export type { Track } from "./Track";
 export type { TrackGroup } from "./TrackGroup";
 export type { TrackGroupProblem } from "./TrackGroupProblem";

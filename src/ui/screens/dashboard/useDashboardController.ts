@@ -34,7 +34,7 @@ import {
 
 import type { ExportPayload } from "@features/backup";
 import type { UserSettings } from "@features/settings";
-import type { ActiveFocus } from "@features/tracks";
+import type { TrackId } from "@shared/ids";
 
 function isImportPayloadCandidate(value: unknown): value is ExportPayload {
   return Boolean(value) && typeof value === "object";
@@ -239,8 +239,8 @@ export function useDashboardController() {
   }, [backupRepository, importFile, load, setStatus]);
 
   const onSetActiveFocus = useCallback(
-    async (focus: ActiveFocus): Promise<void> => {
-      const response = await setActiveFocus(focus);
+    async (trackId: TrackId | null): Promise<void> => {
+      const response = await setActiveFocus(trackId);
       if (!response.ok) {
         setStatus({
           message: response.error ?? "Failed to update active track.",

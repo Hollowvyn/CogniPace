@@ -17,11 +17,7 @@ import {getStudyStateSummary, normalizeReviewLogFields,} from "@libs/fsrs/studyS
 import {canonicalProblemUrlForOpen,} from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
 import {nowIso} from "@platform/time";
-import {
-  asProblemSlug,
-  asTrackGroupId,
-  asTrackId,
-} from "@shared/ids";
+import { asProblemSlug, asTrackId } from "@shared/ids";
 
 import { setActiveFocusHandler } from "../../../extension/background/handlers/v7Handlers";
 import {ok} from "../../../extension/background/responses";
@@ -58,16 +54,12 @@ export async function openProblemPage(
   }
 
   // Launched from a track context: update the user's "where am I"
-  // pointer (settings.activeFocus) so the next dashboard render lands
-  // on this chapter. Charter — there's no separate progress aggregate
-  // any more; settings owns the focus.
-  if (payload.courseId && payload.chapterId) {
+  // pointer (settings.activeTrackId) so the next dashboard render
+  // lands on this track. Group selection is derived (first incomplete)
+  // — not persisted.
+  if (payload.courseId) {
     await setActiveFocusHandler({
-      focus: {
-        kind: "track",
-        id: asTrackId(payload.courseId),
-        groupId: asTrackGroupId(payload.chapterId),
-      },
+      trackId: asTrackId(payload.courseId),
     });
   }
 
@@ -196,15 +188,12 @@ export async function saveReviewResult(payload: {
   if (newAttempt) {
     await appendAttempt(db, branded, newAttempt);
   }
-  // The user reviewed from a track context — pin activeFocus to that
-  // chapter so the next dashboard render lands here.
-  if (payload.courseId && payload.chapterId) {
+  // The user reviewed from a track context — pin activeTrackId so
+  // the next dashboard render lands on this track. Group selection
+  // is derived (first incomplete); not persisted.
+  if (payload.courseId) {
     await setActiveFocusHandler({
-      focus: {
-        kind: "track",
-        id: asTrackId(payload.courseId),
-        groupId: asTrackGroupId(payload.chapterId),
-      },
+      trackId: asTrackId(payload.courseId),
     });
   }
   const studyStateSummary = getStudyStateSummary(nextState);
@@ -283,13 +272,9 @@ export async function overrideLastReviewResult(payload: {
   if (replacedAttempt) {
     await replaceLastAttempt(db, branded, replacedAttempt);
   }
-  if (payload.courseId && payload.chapterId) {
+  if (payload.courseId) {
     await setActiveFocusHandler({
-      focus: {
-        kind: "track",
-        id: asTrackId(payload.courseId),
-        groupId: asTrackGroupId(payload.chapterId),
-      },
+      trackId: asTrackId(payload.courseId),
     });
   }
   const studyStateSummary = getStudyStateSummary(nextState);

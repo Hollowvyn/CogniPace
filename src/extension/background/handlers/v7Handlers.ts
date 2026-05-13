@@ -33,14 +33,13 @@ import {
   asTrackId,
   type CompanyId,
   type TopicId,
-} from "@shared/ids";
+ TrackId } from "@shared/ids";
 
 
 import { PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import { ok } from "../responses";
 
 import type { ProblemEditPatch } from "@features/problems";
-import type { ActiveFocus } from "@features/tracks";
 
 
 // ---------- Problem edits ----------
@@ -243,12 +242,8 @@ export async function deleteTrackHandler(payload: DeleteTrackPayload) {
   await deleteTrack(db, id);
   // If the deleted track was the active focus, clear it.
   const current = await getUserSettings(db);
-  if (
-    current &&
-    current.activeFocus?.kind === "track" &&
-    current.activeFocus.id === id
-  ) {
-    await saveUserSettings(db, { ...current, activeFocus: null });
+  if (current && current.activeTrackId === id) {
+    await saveUserSettings(db, { ...current, activeTrackId: null });
   }
   return ok({ ok: true });
 }
@@ -256,7 +251,7 @@ export async function deleteTrackHandler(payload: DeleteTrackPayload) {
 // ---------- Active focus ----------
 
 export interface SetActiveFocusPayload {
-  focus: ActiveFocus;
+  trackId: TrackId | null;
 }
 
 export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
@@ -267,7 +262,7 @@ export async function setActiveFocusHandler(payload: SetActiveFocusPayload) {
   }
   const saved = await saveUserSettings(db, {
     ...current,
-    activeFocus: payload.focus,
+    activeTrackId: payload.trackId,
   });
   return ok({ settings: saved });
 }

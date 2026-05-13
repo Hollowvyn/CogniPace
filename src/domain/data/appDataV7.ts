@@ -8,7 +8,6 @@
 import type { Company , Problem , Topic } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
-import type { ActiveFocus } from "@features/tracks";
 
 export const STORAGE_SCHEMA_VERSION_V7 = 7 as const;
 
@@ -22,7 +21,7 @@ export interface AppDataV7 {
   topicsById: Record<string, Topic>;
   /** Company registry (curated seed + custom user companies). */
   companiesById: Record<string, Company>;
-  /** UserSettings (carries `activeFocus`). */
+  /** UserSettings (carries `activeTrackId`). */
   settings: UserSettings;
   /** Optional ISO timestamp recorded by the v6→v7 migration. */
   lastMigrationAt?: string;
@@ -43,4 +42,3 @@ export type AppDataAggregateKey = (typeof APP_DATA_AGGREGATE_KEYS)[number];
  * (`track`); kept as a discriminated union for forward-compat. Re-export
  * here for convenience of repository consumers.
  */
-export type { ActiveFocus };

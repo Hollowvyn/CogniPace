@@ -1,15 +1,10 @@
 import { buildActiveTrackView } from "@features/tracks/server";
-import {
-  asProblemSlug,
-  asTrackGroupId,
-  asTrackId,
-} from "@shared/ids";
+import { asProblemSlug, asTrackGroupId, asTrackId } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
 
 import type { Problem, StudyState } from "../../../src/domain/types";
 import type {
-  ActiveFocus,
   TrackGroupWithProblems,
   TrackView,
   TrackWithGroups,
@@ -139,9 +134,9 @@ const problemsBySlug: Record<string, Problem> = {
 };
 
 describe("buildActiveTrackView", () => {
-  it("returns null when activeFocus is null", () => {
+  it("returns null when activeTrackId is null", () => {
     const view = buildActiveTrackView({
-      activeFocus: null,
+      activeTrackId: null,
       trackView: makeView(),
       trackEntity: makeTrack(),
       studyStatesBySlug: {},
@@ -152,7 +147,7 @@ describe("buildActiveTrackView", () => {
 
   it("returns null when track view is missing", () => {
     const view = buildActiveTrackView({
-      activeFocus: { kind: "track", id: asTrackId("Blind75") },
+      activeTrackId: asTrackId("Blind75"),
       trackView: null,
       trackEntity: makeTrack(),
       studyStatesBySlug: {},
@@ -165,12 +160,8 @@ describe("buildActiveTrackView", () => {
     const studyStatesBySlug: Record<string, StudyState> = {
       "two-sum": startedState(),
     };
-    const focus: ActiveFocus = {
-      kind: "track",
-      id: asTrackId("Blind75"),
-    };
     const view = buildActiveTrackView({
-      activeFocus: focus,
+      activeTrackId: asTrackId("Blind75"),
       trackView: makeView(),
       trackEntity: makeTrack(),
       studyStatesBySlug,
@@ -191,25 +182,26 @@ describe("buildActiveTrackView", () => {
     expect(view.chapters[1].status).toBe("UPCOMING");
   });
 
-  it("respects the focus.groupId override when picking the active group", () => {
+  it("derives the active group from the first group with an unstarted slug", () => {
+    // First group ("arrays") is fully complete; the next-up group is "graphs".
+    const studyStatesBySlug: Record<string, StudyState> = {
+      "two-sum": startedState(),
+      "contains-duplicate": startedState(),
+    };
     const view = buildActiveTrackView({
-      activeFocus: {
-        kind: "track",
-        id: asTrackId("Blind75"),
-        groupId: asTrackGroupId("graphs"),
-      },
+      activeTrackId: asTrackId("Blind75"),
       trackView: makeView(),
       trackEntity: makeTrack(),
-      studyStatesBySlug: {},
+      studyStatesBySlug,
       problemsBySlug,
     });
-    expect(view?.activeChapterId).toBe("graphs");
+    expect(view?.activeChapterId).toBe(asTrackGroupId("graphs"));
     expect(view?.nextQuestion?.slug).toBe("clone-graph");
   });
 
   it("returns null when the track entity is missing", () => {
     const view = buildActiveTrackView({
-      activeFocus: { kind: "track", id: asTrackId("ghost") },
+      activeTrackId: asTrackId("ghost"),
       trackView: makeView(),
       trackEntity: null,
       studyStatesBySlug: {},

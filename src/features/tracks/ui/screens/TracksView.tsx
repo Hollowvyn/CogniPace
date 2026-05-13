@@ -47,14 +47,14 @@ import {
   suspendProblem,
 } from "../../../../data/repositories/v7ActionRepository";
 
-import type { ActiveFocus, TrackView } from "../../domain/model";
+import type { TrackView } from "../../domain/model";
 import type { AppShellPayload } from "@features/app-shell";
 
 interface TracksViewProps {
   payload: AppShellPayload | null;
   onOpenProblem: (target: { slug: string }) => Promise<void>;
   onEnablePremium: () => Promise<void>;
-  onSetActiveFocus: (focus: ActiveFocus) => Promise<void>;
+  onSetActiveFocus: (trackId: TrackId | null) => Promise<void>;
   onRefresh?: () => Promise<void>;
 }
 
@@ -72,18 +72,24 @@ export function TracksView(props: TracksViewProps) {
   const tracks = useMemo(() => props.payload?.tracks ?? [], [props.payload?.tracks]);
   const settings = props.payload?.settings;
   const library = useMemo(() => props.payload?.library ?? [], [props.payload?.library]);
-  const activeFocus = settings?.activeFocus ?? null;
+  const activeTrackId = settings?.activeTrackId ?? null;
 
-  // Single source of truth: the persisted activeFocus. Click handlers
+  // Single source of truth: the persisted activeTrackId. Click handlers
   // dispatch a mutation; storage subscription propagates the new payload
   // and re-renders this view.
   const activeTrack = useMemo<TrackView | null>(() => {
-    if (activeFocus?.kind !== "track") return null;
-    return tracks.find((view) => view.id === activeFocus.id) ?? null;
-  }, [activeFocus, tracks]);
+    if (!activeTrackId) return null;
+    return tracks.find((view) => view.id === activeTrackId) ?? null;
+  }, [activeTrackId, tracks]);
 
   const [othersExpanded, setOthersExpanded] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  // Group selection is local UI state — the user's "where am I within
+  // this track" cursor. Defaults to the first group; user clicks change
+  // it; it's not persisted across reloads (deliberate — keeps settings
+  // lightweight, and the right group is usually the first incomplete
+  // anyway). Resets to null when the active track changes.
+  const [selectedGroupId, setSelectedGroupId] = useState<TrackGroupId | null>(null);
 
   // Map slug → study state view + suspended flag for fast hydration in
   // the group/flat bodies.
@@ -98,24 +104,15 @@ export function TracksView(props: TracksViewProps) {
     return map;
   }, [library]);
 
-  // Determine the user's chosen group within the active Track, derived
-  // from the persisted activeFocus.groupId. Single-group tracks always
-  // pick the lone group.
+  // Active group within the focused track. Local selection wins; falls
+  // back to the first group. Resets when the active track changes.
   const activeGroupId = useMemo<TrackGroupId | null>(() => {
-    if (!activeTrack || activeTrack.groups.length === 0) {
-      return null;
-    }
-    if (
-      activeFocus?.kind === "track" &&
-      activeFocus.id === activeTrack.id
-    ) {
-      const saved = activeFocus.groupId;
-      if (saved && activeTrack.groups.some((g) => g.id === saved)) {
-        return saved as TrackGroupId;
-      }
+    if (!activeTrack || activeTrack.groups.length === 0) return null;
+    if (selectedGroupId && activeTrack.groups.some((g) => g.id === selectedGroupId)) {
+      return selectedGroupId;
     }
     return asTrackGroupId(activeTrack.groups[0]?.id ?? "");
-  }, [activeTrack, activeFocus]);
+  }, [activeTrack, selectedGroupId]);
 
   const editingRow = useMemo(() => {
     if (!editingSlug) return null;
@@ -140,15 +137,12 @@ export function TracksView(props: TracksViewProps) {
   );
 
   const switchTrack = (id: TrackId) => {
-    void props.onSetActiveFocus({ kind: "track", id });
+    setSelectedGroupId(null);
+    void props.onSetActiveFocus(id);
   };
   const switchGroup = (groupId: TrackGroupId) => {
     if (!activeTrack) return;
-    void props.onSetActiveFocus({
-      kind: "track",
-      id: asTrackId(activeTrack.id),
-      groupId,
-    });
+    setSelectedGroupId(groupId);
   };
 
   const handleEdit = (slug: ProblemSlug) => {

@@ -137,10 +137,7 @@ function activeTrackViewOf(
   data: AppData,
   trackViews: readonly TrackView[],
 ): TrackView | null {
-  const focusedId =
-    data.settings.activeFocus?.kind === "track"
-      ? data.settings.activeFocus.id
-      : null;
+  const focusedId = data.settings.activeTrackId;
   if (!focusedId) return null;
   return trackViews.find((view) => view.id === focusedId) ?? null;
 }
@@ -152,10 +149,7 @@ function activeTrackEntityOf(
   data: AppData,
   tracks: readonly TrackWithGroups[],
 ): TrackWithGroups | null {
-  const focusedId =
-    data.settings.activeFocus?.kind === "track"
-      ? data.settings.activeFocus.id
-      : null;
+  const focusedId = data.settings.activeTrackId;
   if (!focusedId) return null;
   return tracks.find((track) => track.id === focusedId) ?? null;
 }
@@ -264,7 +258,7 @@ export function buildPopupShellPayload(
   const activeTrackView = activeTrackViewOf(data, trackViews);
   const activeTrackEntity = activeTrackEntityOf(data, tracks);
   const activeTrack = buildActiveTrackView({
-    activeFocus: data.settings.activeFocus,
+    activeTrackId: data.settings.activeTrackId,
     trackView: activeTrackView,
     trackEntity: activeTrackEntity,
     studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<

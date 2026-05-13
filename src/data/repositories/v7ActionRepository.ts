@@ -6,7 +6,7 @@
 import { sendMessage } from "@libs/runtime-rpc/client";
 
 import type { Difficulty } from "../../domain/types";
-import type { ActiveFocus } from "@features/tracks";
+import type { TrackId } from "@shared/ids";
 
 export interface EditProblemPatch {
   title?: string;
@@ -89,9 +89,9 @@ export async function deleteTrack(id: string) {
   return sendMessage("DELETE_TRACK", { id });
 }
 
-/** Set (or clear) the user's currently active focus. */
-export async function setActiveFocus(focus: ActiveFocus) {
-  return sendMessage("SET_ACTIVE_FOCUS", { focus });
+/** Set the user's currently active track, or pass `null` to clear it. */
+export async function setActiveFocus(trackId: TrackId | null) {
+  return sendMessage("SET_ACTIVE_FOCUS", { trackId });
 }
 
 /**

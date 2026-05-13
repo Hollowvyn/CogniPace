@@ -7,22 +7,10 @@ import { isEffectivelySuspended } from "./effectivelySuspended";
 import type { QueueItem } from "./QueueItem";
 import type { TodayQueue } from "./TodayQueue";
 import type { AppData } from "../../../../domain/types/AppData";
-import type { Problem } from "@features/problems";
 import type { StudyState } from "@features/study";
 
 function cloneStateOrDefault(state?: StudyState): StudyState {
   return state ? { ...state } : createDefaultStudyState();
-}
-
-function isSetEnabled(
-  problem: Problem,
-  setsEnabled: Record<string, boolean>,
-): boolean {
-  if (problem.sourceSet.length === 0) {
-    return setsEnabled.Custom !== false;
-  }
-
-  return problem.sourceSet.some((set) => setsEnabled[set] !== false);
 }
 
 function sortByDueDateAsc(items: QueueItem[]): QueueItem[] {
@@ -117,9 +105,11 @@ export function buildTodayQueue(
     0,
     Math.round(data.settings.dailyQuestionGoal),
   );
-  const problems = Object.values(data.problemsBySlug).filter((problem) =>
-    isSetEnabled(problem, data.settings.setsEnabled),
-  );
+  // Every problem in the library is queue-eligible. Track enable/disable
+  // is enforced at the tracks repo level (Track.enabled column); a
+  // disabled track simply doesn't surface its problems in the library
+  // payload upstream. The v6 setsEnabled filter retired with Phase A.
+  const problems = Object.values(data.problemsBySlug);
 
   const due: QueueItem[] = [];
   const newCandidates: QueueItem[] = [];

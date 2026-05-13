@@ -71,43 +71,29 @@ describe("settings sanitization", () => {
     assert.equal(sanitized.timing.difficultyGoalMs.Hard, initial.timing.difficultyGoalMs.Hard);
   });
 
-  it("preserves enabled sets during sanitization", () => {
-    const customSets = { "Blind75": true, "NeetCode150": false };
-    const sanitized = sanitizeStoredUserSettings({
-      setsEnabled: customSets
-    });
-
-    assert.equal(sanitized.setsEnabled.Blind75, true);
-    assert.equal(sanitized.setsEnabled.NeetCode150, false);
-  });
-
-  it("derives activeFocus from legacy activeCourseId when activeFocus is missing", () => {
+  it("derives activeTrackId from legacy v6 activeCourseId when nothing else is set", () => {
     const sanitized = sanitizeStoredUserSettings({
       activeCourseId: "Grind75",
     });
-
-    assert.deepEqual(sanitized.activeFocus, {
-      kind: "track",
-      id: "Grind75",
-    });
+    assert.equal(sanitized.activeTrackId, "Grind75");
   });
 
-  it("preserves an explicit activeFocus", () => {
+  it("derives activeTrackId from legacy v7 activeFocus.id", () => {
     const sanitized = sanitizeStoredUserSettings({
       activeFocus: { kind: "track", id: "NeetCode150" },
     });
-
-    assert.deepEqual(sanitized.activeFocus, {
-      kind: "track",
-      id: "NeetCode150",
-    });
+    assert.equal(sanitized.activeTrackId, "NeetCode150");
   });
 
-  it("falls back to the default Track when no focus or legacy id is set", () => {
-    const sanitized = sanitizeStoredUserSettings({});
-    assert.deepEqual(sanitized.activeFocus, {
-      kind: "track",
-      id: "Blind75",
+  it("preserves an explicit activeTrackId", () => {
+    const sanitized = sanitizeStoredUserSettings({
+      activeTrackId: "Blind75",
     });
+    assert.equal(sanitized.activeTrackId, "Blind75");
+  });
+
+  it("defaults activeTrackId to null when no source is present", () => {
+    const sanitized = sanitizeStoredUserSettings({});
+    assert.equal(sanitized.activeTrackId, null);
   });
 });

@@ -1,5 +1,4 @@
 export type {
-  ActiveFocus,
   Track,
   TrackGroup,
   TrackGroupProblem,
@@ -22,14 +21,13 @@ export { computeTrackProgress } from "./domain/model";
 
 export {
   buildActiveTrackView,
-  nextSlugForFocus,
+  nextSlugForActiveTrack,
 } from "./domain/policy/buildActiveTrackView";
 export {
   trackQuestionStatus,
   findCurrentSlugInGroup,
 } from "./domain/policy/questionStatus";
 
-export { DEFAULT_TRACK_ID, BUILT_IN_SETS } from "./domain/model";
 export { buildTrackCatalogSeed } from "./data/seed";
 
 export {

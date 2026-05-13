@@ -1,14 +1,9 @@
 /**
- * Builds the dashboard / popup `ActiveTrackView` from the slim Track
- * domain (post-Phase-5 tracks slice). Reads through the hydrated
- * `TrackWithGroups` entity plus the user's study-state map; per-group
- * completion is derived live — there is no `StudySetProgress` table any
- * more.
- *
- * The user's "where am I" pointer:
- *   - `activeFocus.groupId` (persisted in UserSettings) takes priority.
- *   - Falls back to the first group with at least one unfinished slug.
- *   - Falls back further to the first group in the track.
+ * Builds the dashboard / popup `ActiveTrackView` for the user's
+ * currently-focused track. The "current group" within the track is
+ * derived live — first group with an unstarted slug, falling back to
+ * the first group. Group selection is NOT persisted; the user's only
+ * persisted track preference is which track is focused.
  */
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
@@ -17,7 +12,6 @@ import {
   trackQuestionStatus,
 } from "./questionStatus";
 
-import type { ActiveFocus } from "../model/ActiveFocus";
 import type { TrackGroupWithProblems } from "../model/TrackGroupWithProblems";
 import type { TrackWithGroups } from "../model/TrackWithGroups";
 import type {
@@ -28,9 +22,10 @@ import type {
 } from "../model/views";
 import type { Problem } from "@features/problems";
 import type { StudyState } from "@features/study";
+import type { TrackId } from "@shared/ids";
 
 export interface BuildActiveTrackViewInput {
-  activeFocus: ActiveFocus;
+  activeTrackId: TrackId | null;
   /** Hydrated view of the active track (matches the entity). */
   trackView: TrackView | null;
   /** Raw Track entity — drives per-question status from each group's
@@ -45,7 +40,7 @@ export function buildActiveTrackView(
   input: BuildActiveTrackViewInput,
 ): ActiveTrackView | null {
   const {
-    activeFocus,
+    activeTrackId,
     trackView,
     trackEntity,
     studyStatesBySlug,
@@ -53,7 +48,7 @@ export function buildActiveTrackView(
     now,
   } = input;
 
-  if (!activeFocus || activeFocus.kind !== "track") return null;
+  if (!activeTrackId) return null;
   if (!trackView) return null;
   if (!trackEntity) return null;
 
@@ -61,9 +56,7 @@ export function buildActiveTrackView(
   if (groups.length === 0) return null;
 
   const activeGroupId =
-    activeFocus.groupId ??
-    firstIncompleteGroupId(groups, studyStatesBySlug, now) ??
-    groups[0].id;
+    firstIncompleteGroupId(groups, studyStatesBySlug, now) ?? groups[0].id;
   const activeGroup =
     groups.find((group) => group.id === activeGroupId) ?? groups[0];
 
@@ -184,20 +177,19 @@ function slugToReadableTitle(slug: string): string {
     .join(" ");
 }
 
-/** Returns the slug picked as next-up for a focus, or null. */
-export function nextSlugForFocus(
+/** Returns the slug picked as next-up in the active track's current
+ *  group, or null. The "current group" is derived (first incomplete). */
+export function nextSlugForActiveTrack(
   trackEntity: TrackWithGroups | null,
-  activeFocus: ActiveFocus,
+  activeTrackId: TrackId | null,
   studyStatesBySlug: Record<string, StudyState>,
   now?: Date,
 ): string | null {
-  if (!trackEntity || !activeFocus || activeFocus.kind !== "track") return null;
+  if (!trackEntity || !activeTrackId) return null;
   const groups = trackEntity.groups;
   if (groups.length === 0) return null;
   const activeGroupId =
-    activeFocus.groupId ??
-    firstIncompleteGroupId(groups, studyStatesBySlug, now) ??
-    groups[0].id;
+    firstIncompleteGroupId(groups, studyStatesBySlug, now) ?? groups[0].id;
   const activeGroup = groups.find((g) => g.id === activeGroupId) ?? groups[0];
   const slugs = activeGroup.problems.map((m) => m.problemSlug) as readonly string[];
   return findCurrentSlugInGroup(slugs, studyStatesBySlug, now);
@@ -205,8 +197,7 @@ export function nextSlugForFocus(
 
 /**
  * Picks the first group with at least one un-started slug. Used as the
- * fallback when the user has never explicitly picked a group within the
- * track (no `activeFocus.groupId`).
+ * fallback when no group is explicitly picked.
  */
 function firstIncompleteGroupId(
   groups: ReadonlyArray<TrackGroupWithProblems>,

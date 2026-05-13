@@ -3,7 +3,6 @@ export {
   INITIAL_USER_SETTINGS,
   areUserSettingsEqual,
   cloneUserSettings,
-  createInitialSetsEnabled,
   createInitialUserSettings,
   mergeUserSettings,
 } from "./UserSettings";

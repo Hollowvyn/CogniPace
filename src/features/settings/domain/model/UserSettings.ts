@@ -1,6 +1,3 @@
-import { BUILT_IN_SETS, DEFAULT_TRACK_ID } from "@features/tracks";
-import { asTrackId } from "@shared/ids";
-
 
 import { sanitizeStoredUserSettings } from "./sanitizeStoredUserSettings";
 
@@ -11,15 +8,15 @@ import type { QuestionFilterSettings } from "./QuestionFilterSettings";
 import type { StudyMode } from "./StudyMode";
 import type { TimingSettings } from "./TimingSettings";
 import type { UserSettingsPatch } from "./UserSettingsPatch";
-import type { ActiveFocus } from "@features/tracks";
+import type { TrackId } from "@shared/ids";
 
 export interface UserSettings {
   dailyQuestionGoal: number;
   studyMode: StudyMode;
-  /** @deprecated v6 — replaced by `tracks.enabled` (SQLite). Kept on the
-   * settings shape for legacy import compat; new code consults the tracks repo. */
-  setsEnabled: Record<string, boolean>;
-  activeFocus: ActiveFocus;
+  /** ID of the user's currently-focused track. `null` on fresh install
+   *  until the user picks one. Group selection within the track is
+   *  derived (first-incomplete-group); not persisted. */
+  activeTrackId: TrackId | null;
   notifications: NotificationSettings;
   memoryReview: MemoryReviewSettings;
   questionFilters: QuestionFilterSettings;
@@ -30,17 +27,7 @@ export interface UserSettings {
 export const INITIAL_USER_SETTINGS: UserSettings = {
   dailyQuestionGoal: 18,
   studyMode: "studyPlan",
-  activeFocus: { kind: "track", id: asTrackId(DEFAULT_TRACK_ID) },
-  setsEnabled: {
-    Blind75: true,
-    ByteByteGo101: true,
-    NeetCode150: true,
-    NeetCode250: true,
-    Grind75: true,
-    LeetCode75: true,
-    LeetCode150: true,
-    Custom: true,
-  },
+  activeTrackId: null,
   notifications: {
     enabled: false,
     dailyTime: "09:00",
@@ -73,21 +60,10 @@ export function createInitialUserSettings(): UserSettings {
     memoryReview: { ...INITIAL_USER_SETTINGS.memoryReview },
     notifications: { ...INITIAL_USER_SETTINGS.notifications },
     questionFilters: { ...INITIAL_USER_SETTINGS.questionFilters },
-    setsEnabled: { ...INITIAL_USER_SETTINGS.setsEnabled },
     timing: {
       ...INITIAL_USER_SETTINGS.timing,
       difficultyGoalMs: { ...INITIAL_USER_SETTINGS.timing.difficultyGoalMs },
     },
-  };
-}
-
-/** Default `setsEnabled` map. Kept for legacy v6 import paths only;
- *  new code consults the tracks repo for enabled-state. */
-export function createInitialSetsEnabled(): Record<string, boolean> {
-  return {
-    ...Object.fromEntries(BUILT_IN_SETS.map((setName) => [setName, true])),
-    Custom: true,
-    LeetCode150: true,
   };
 }
 
@@ -98,7 +74,6 @@ export function cloneUserSettings(settings: UserSettings): UserSettings {
     memoryReview: { ...settings.memoryReview },
     notifications: { ...settings.notifications },
     questionFilters: { ...settings.questionFilters },
-    setsEnabled: { ...settings.setsEnabled },
     timing: {
       ...settings.timing,
       difficultyGoalMs: { ...settings.timing.difficultyGoalMs },
@@ -125,7 +100,6 @@ export function mergeUserSettings(
       ...current.questionFilters,
       ...(patch.questionFilters ?? {}),
     },
-    setsEnabled: { ...current.setsEnabled, ...(patch.setsEnabled ?? {}) },
     timing: {
       ...current.timing,
       ...(patch.timing ?? {}),

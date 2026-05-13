@@ -1,12 +1,9 @@
 /** Boundary parser for UserSettings — coerces arbitrary input into a
  *  valid snapshot. Used at storage-read, backup-import, and merge
  *  boundaries. Idempotent. */
-import { DEFAULT_TRACK_ID } from "@features/tracks";
-import { asTrackGroupId, asTrackId } from "@shared/ids";
-
+import { asTrackId, type TrackId } from "@shared/ids";
 
 import {
-  createInitialSetsEnabled,
   createInitialUserSettings,
 } from "./UserSettings";
 
@@ -14,7 +11,6 @@ import type { DifficultyGoalSettings } from "./DifficultyGoalSettings";
 import type { ReviewOrder } from "./ReviewOrder";
 import type { StudyMode } from "./StudyMode";
 import type { UserSettings } from "./UserSettings";
-import type { ActiveFocus } from "@features/tracks";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -81,34 +77,22 @@ function settingsRecord(value: unknown, fallback: object): UnknownRecord {
   return isRecord(value) ? value : (fallback as UnknownRecord);
 }
 
-function sanitizeActiveFocus(value: unknown): ActiveFocus | undefined {
-  if (value === null) return null;
-  if (!isRecord(value)) return undefined;
-  if (value.kind !== "track") return undefined;
-  if (typeof value.id !== "string" || !value.id.trim()) return undefined;
-  const focus: ActiveFocus = {
-    kind: "track",
-    id: asTrackId(value.id),
-  };
-  if (typeof value.groupId === "string" && value.groupId.trim()) {
-    focus.groupId = asTrackGroupId(value.groupId);
+/** Coerce arbitrary input into a `TrackId | null`. Recognises three
+ *  shapes for backwards compat: explicit string `activeTrackId`, v7
+ *  `activeFocus.id`, and v6 `activeCourseId`. Returns `null` when
+ *  none of them are present or valid. */
+function sanitizeActiveTrackId(source: UnknownRecord): TrackId | null {
+  if (typeof source.activeTrackId === "string" && source.activeTrackId.trim()) {
+    return asTrackId(source.activeTrackId);
   }
-  return focus;
-}
-
-function sanitizeSetsEnabled(value: unknown): Record<string, boolean> {
-  if (!isRecord(value)) {
-    return createInitialSetsEnabled();
+  if (isRecord(source.activeFocus)) {
+    const id = (source.activeFocus as UnknownRecord).id;
+    if (typeof id === "string" && id.trim()) return asTrackId(id);
   }
-
-  return {
-    ...createInitialSetsEnabled(),
-    ...Object.fromEntries(
-      Object.entries(value).filter(
-        (entry): entry is [string, boolean] => typeof entry[1] === "boolean",
-      ),
-    ),
-  };
+  if (typeof source.activeCourseId === "string" && source.activeCourseId.trim()) {
+    return asTrackId(source.activeCourseId);
+  }
+  return null;
 }
 
 function sanitizeDifficultyGoalMs(
@@ -164,26 +148,13 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     initial.timing.requireSolveTime,
   );
 
-  // Honour the v6 `activeCourseId` field on legacy import payloads to
-  // recover an active focus when none is set explicitly.
-  const legacyCourseIdFallback =
-    typeof source.activeCourseId === "string" && source.activeCourseId.trim()
-      ? source.activeCourseId
-      : DEFAULT_TRACK_ID;
-  const explicitActiveFocus = sanitizeActiveFocus(source.activeFocus);
-  const sanitizedActiveFocus: ActiveFocus =
-    explicitActiveFocus !== undefined
-      ? explicitActiveFocus
-      : { kind: "track", id: asTrackId(legacyCourseIdFallback) };
-
   return {
     dailyQuestionGoal: nonNegativeInteger(
       source.dailyQuestionGoal,
       initial.dailyQuestionGoal,
     ),
     studyMode: studyMode(source.studyMode, initial.studyMode),
-    setsEnabled: sanitizeSetsEnabled(source.setsEnabled),
-    activeFocus: sanitizedActiveFocus,
+    activeTrackId: sanitizeActiveTrackId(source),
     notifications: {
       enabled: booleanValue(
         notifications.enabled,

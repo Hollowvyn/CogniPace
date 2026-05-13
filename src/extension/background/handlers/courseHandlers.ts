@@ -5,12 +5,6 @@ import {
   importProblem,
   parseProblemInput,
 } from "@features/problems/server";
-import {
-  createInitialUserSettings,
-  getUserSettings,
-  mergeUserSettings,
-  saveUserSettings,
-} from "@features/settings/server";
 import { ensureStudyState } from "@features/study/server";
 import { getDb } from "@platform/db/instance";
 import { asProblemSlug } from "@shared/ids";
@@ -20,16 +14,11 @@ import { ok } from "../responses";
 
 import type { Difficulty } from "../../../domain/types";
 
-/** Phase 5: setsEnabled lives in SQLite — read-merge-write rather
- * than mutating data.settings inside mutateAppData. */
-async function enableSetInSqlite(setName: string): Promise<void> {
-  const { db } = await getDb();
-  const current = (await getUserSettings(db)) ?? createInitialUserSettings();
-  const next = mergeUserSettings(current, {
-    setsEnabled: { ...current.setsEnabled, [setName]: true },
-  });
-  await saveUserSettings(db, next);
-}
+/** Curated sets used to be tracked via a `settings.setsEnabled` map.
+ *  That map died with the v7 cleanup — track enable/disable lives on
+ *  the `tracks` table directly, and curated tracks are already enabled
+ *  by the boot seed. Importing a curated set now just imports the
+ *  problems; the track is already on. */
 
 interface SetItem {
   slug: string;
@@ -76,7 +65,6 @@ export async function importCurated(payload: { setName: string }) {
     throw new Error(`Unknown curated set: ${payload.setName}`);
   }
   const importResult = await importSetIntoDb(setProblems);
-  await enableSetInSqlite(payload.setName);
 
   return ok({
     setName: payload.setName,
@@ -103,10 +91,6 @@ export async function importCustom(payload: {
 
   const normalizedName = payload.setName?.trim() || "Custom";
   const importResult = await importSetIntoDb(payload.items);
-  await enableSetInSqlite(normalizedName);
-  if (normalizedName !== "Custom") {
-    await enableSetInSqlite("Custom");
-  }
 
   return ok({
     setName: normalizedName,

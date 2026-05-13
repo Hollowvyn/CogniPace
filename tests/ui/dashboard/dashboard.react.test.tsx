@@ -83,7 +83,6 @@ describe("DashboardApp", () => {
         "UPDATE_SETTINGS",
         expect.objectContaining({
           dailyQuestionGoal: 24,
-          activeFocus: { kind: "track", id: "Blind75" },
         })
       );
     });
