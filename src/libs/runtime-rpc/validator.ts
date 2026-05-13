@@ -564,11 +564,11 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireString(payload.id, "id");
       return;
     case "SET_ACTIVE_FOCUS":
-      hasExactKeys(payload, ["focus"], `Payload for ${type}`);
-      // `focus` is allowed to be null (clears the selection); else an
-      // object with kind: 'track' and id is expected.
-      if (payload.focus !== null && !isRecord(payload.focus)) {
-        throw new Error('Invalid field "focus": expected null or an object.');
+      hasExactKeys(payload, ["trackId"], `Payload for ${type}`);
+      // `trackId` is allowed to be null (clears the selection); else a
+      // non-empty string.
+      if (payload.trackId !== null) {
+        requireString(payload.trackId, "trackId");
       }
       return;
     case "CONSUME_PRE_V7_BACKUP":
