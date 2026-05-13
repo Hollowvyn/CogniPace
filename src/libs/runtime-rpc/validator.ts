@@ -445,9 +445,6 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
         "dailyQuestionGoal"
       );
       requireOptionalStudyMode(payload.studyMode, "studyMode");
-      // activeTrackId: string | null. Sanitizer maps malformed values
-      // to null downstream; we still reject non-string-non-null here
-      // so the wire contract is loud.
       if (payload.activeTrackId !== undefined && payload.activeTrackId !== null) {
         requireString(payload.activeTrackId, "activeTrackId");
       }
