@@ -3,6 +3,7 @@
  * a single card so the page doesn't repeat track context twice). */
 import { MetricCard, SurfaceCard, ToneChip } from "@design-system/atoms";
 import { QueuePreview } from "@features/queue";
+import { ActiveTrackOverviewCard } from "@features/tracks";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
@@ -11,7 +12,6 @@ import Typography from "@mui/material/Typography";
 
 import { AppShellPayload } from "../../../../../domain/views";
 import { RecommendedProblemCard } from "../../../../features/recommended/RecommendedProblemCard";
-import { ActiveTrackOverviewCard } from "../../../../features/tracks/ActiveTrackOverviewCard";
 import { DashboardView } from "../../../../navigation/dashboardRoutes";
 
 export interface OverviewViewProps {

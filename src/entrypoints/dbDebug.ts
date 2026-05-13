@@ -30,6 +30,15 @@ import {
   getStudyState,
   upsertStudyState,
 } from "@features/study/server";
+import { buildTrackCatalogSeed } from "@features/tracks/data/seed";
+import {
+  addGroup as addGroupRepo,
+  addProblemToGroup as addProblemToGroupRepo,
+  createTrack as createTrackRepo,
+  deleteTrack as deleteTrackRepo,
+  listTracks as listTracksRepo,
+  seedCatalogTracks,
+} from "@features/tracks/server";
 import { createDb, type DbHandle } from "@platform/db/client";
 import migrationSql from "@platform/db/migrations/0000_initial.sql";
 import * as schema from "@platform/db/schema";
@@ -72,15 +81,6 @@ import {
   seedCatalogTopics,
   upsertTopic,
 } from "../data/topics/repository";
-import {
-  addGroup as addGroupRepo,
-  addProblemToGroup as addProblemToGroupRepo,
-  createTrack as createTrackRepo,
-  deleteTrack as deleteTrackRepo,
-  listTracks as listTracksRepo,
-  seedCatalogTracks,
-} from "../data/tracks/repository";
-import { buildTrackCatalogSeed } from "../data/tracks/seed";
 
 
 let handle: DbHandle | undefined;

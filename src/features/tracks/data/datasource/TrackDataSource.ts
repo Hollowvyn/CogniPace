@@ -38,7 +38,7 @@ import {
 } from "@shared/ids";
 import { and, asc, eq, max, sql } from "drizzle-orm";
 
-import { nowIso } from "../../domain/common/time";
+import { nowIso } from "../../../../domain/common/time";
 
 import type {
   Track,
@@ -46,7 +46,7 @@ import type {
   TrackGroupProblem,
   TrackGroupWithProblems,
   TrackWithGroups,
-} from "../../domain/tracks/model";
+} from "../../domain/model";
 import type { Db } from "@platform/db/client";
 
 type TrackRow = typeof schema.tracks.$inferSelect;

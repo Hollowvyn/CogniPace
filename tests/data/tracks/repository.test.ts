@@ -12,17 +12,6 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import * as schema from "@platform/db/schema";
-import {
-  asProblemSlug,
-  asTrackGroupId,
-  asTrackId,
-} from "@shared/ids";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { beforeEach, describe, expect, it } from "vitest";
-
 import {
   addGroup,
   addProblemToGroup,
@@ -40,7 +29,18 @@ import {
   setTrackOrder,
   updateGroup,
   updateTrack,
-} from "../../../src/data/tracks/repository";
+} from "@features/tracks/server";
+import * as schema from "@platform/db/schema";
+import {
+  asProblemSlug,
+  asTrackGroupId,
+  asTrackId,
+} from "@shared/ids";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { beforeEach, describe, expect, it } from "vitest";
+
 
 import type { Db } from "@platform/db/client";
 

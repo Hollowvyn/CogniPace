@@ -30,8 +30,7 @@ export type { AppData } from "./AppData";
 export type { CuratedProblemInput } from "./CuratedProblemInput";
 export type { ProblemSnapshot } from "./ProblemSnapshot";
 
-// Cross-feature re-exports — same surface the grab-bag exposed. Phase
-// 6+ will migrate each to its owning feature folder and tighten these.
+// Cross-feature re-exports.
 export type {
   DifficultyGoalSettings,
   ExperimentalSettings,
@@ -55,12 +54,16 @@ export type {
 
 export type { Topic } from "../topics/model";
 export type { Company } from "../companies/model";
+
+// Track types migrated to @features/tracks in Phase 7; re-exported here
+// for transitional callers.
 export type {
   Track,
   TrackGroup,
   TrackGroupProblem,
   TrackWithGroups,
   TrackGroupWithProblems,
-} from "../tracks/model";
-export type { TrackProgress } from "../tracks/progress";
+  TrackProgress,
+} from "@features/tracks";
+
 export type { ActiveFocus } from "../active-focus/model";

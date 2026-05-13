@@ -8,12 +8,12 @@ import { describe, expect, it } from "vitest";
 import { buildActiveTrackView } from "../../../src/domain/active-focus/buildActiveTrackView";
 
 import type { ActiveFocus } from "../../../src/domain/active-focus/model";
+import type { Problem, StudyState } from "../../../src/domain/types";
+import type { TrackView } from "../../../src/domain/views";
 import type {
   TrackGroupWithProblems,
   TrackWithGroups,
-} from "../../../src/domain/tracks/model";
-import type { Problem, StudyState } from "../../../src/domain/types";
-import type { TrackView } from "../../../src/domain/views";
+} from "@features/tracks";
 
 function makeTrack(): TrackWithGroups {
   const trackId = asTrackId("Blind75");

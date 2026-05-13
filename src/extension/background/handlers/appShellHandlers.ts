@@ -10,6 +10,7 @@ import {
 } from "@features/queue/server";
 import { getUserSettings } from "@features/settings/server";
 import { listStudyStates } from "@features/study/server";
+import { listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
 
@@ -17,7 +18,6 @@ import { listCompanies } from "../../../data/companies/repository";
 import { listProblems } from "../../../data/problems/repository";
 import { getAppData } from "../../../data/repositories/appDataRepository";
 import { listTopics } from "../../../data/topics/repository";
-import { listTracks } from "../../../data/tracks/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
 import {
@@ -38,8 +38,8 @@ import { ok } from "../responses";
 
 import type { Company } from "../../../domain/companies/model";
 import type { Topic } from "../../../domain/topics/model";
-import type { TrackWithGroups } from "../../../domain/tracks/model";
 import type { AppData, Problem } from "../../../domain/types";
+import type { TrackWithGroups } from "@features/tracks";
 
 /**
  * Loads topics + companies + settings + problems + studyStates from

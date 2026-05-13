@@ -10,6 +10,12 @@ import {
   saveUserSettings,
 } from "@features/settings/server";
 import {
+  createTrack,
+  deleteTrack,
+  getTrackHeader,
+  updateTrack,
+} from "@features/tracks/server";
+import {
   readLocalStorage,
   removeLocalStorage,
 } from "@platform/chrome/storage";
@@ -30,12 +36,6 @@ import {
 } from "../../../data/problems/repository";
 import { PRE_V7_BACKUP_KEY } from "../../../data/repositories/appDataRepository";
 import { upsertTopic } from "../../../data/topics/repository";
-import {
-  createTrack,
-  deleteTrack,
-  getTrackHeader,
-  updateTrack,
-} from "../../../data/tracks/repository";
 import { ok } from "../responses";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";

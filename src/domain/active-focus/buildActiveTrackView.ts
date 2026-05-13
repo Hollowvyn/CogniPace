@@ -18,7 +18,6 @@ import {
 } from "../views/utils/questionStatus";
 
 import type { ActiveFocus } from "./model";
-import type { TrackGroupWithProblems, TrackWithGroups } from "../tracks/model";
 import type { Problem, StudyState } from "../types";
 import type {
   ActiveTrackView,
@@ -26,6 +25,7 @@ import type {
   TrackQuestionView,
   TrackView,
 } from "../views";
+import type { TrackGroupWithProblems, TrackWithGroups } from "@features/tracks";
 
 export interface BuildActiveTrackViewInput {
   activeFocus: ActiveFocus;

@@ -40,19 +40,19 @@ import React, { useMemo, useState } from "react";
 import {
   resetProblemSchedule,
   suspendProblem,
-} from "../../../../../data/repositories/v7ActionRepository";
+} from "../../../../data/repositories/v7ActionRepository";
 import {
   ProblemsTable,
   type ProblemRowData,
-} from "../../../../components/problemsTable";
-import { EditProblemModal } from "../library/EditProblemModal";
+} from "../../../../ui/components/problemsTable";
+import { EditProblemModal } from "../../../../ui/screens/dashboard/tabs/library/EditProblemModal";
 
-import type { ActiveFocus } from "../../../../../domain/active-focus/model";
+import type { ActiveFocus } from "../../../../domain/active-focus/model";
 import type {
   AppShellPayload,
   ProblemView,
   TrackView,
-} from "../../../../../domain/views";
+} from "../../../../domain/views";
 
 interface TracksViewProps {
   payload: AppShellPayload | null;

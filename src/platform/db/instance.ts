@@ -24,6 +24,8 @@
  * own DB via `createDb()` in `client.ts`.
  */
 import { seedInitialSettings } from "@features/settings/server";
+import { buildTrackCatalogSeed } from "@features/tracks/data/seed";
+import { seedCatalogTracks } from "@features/tracks/server";
 import { tick } from "@libs/event-bus";
 
 import { listCatalogCompanySeeds } from "../../data/catalog/companiesSeed";
@@ -33,8 +35,6 @@ import { listCatalogTopicSeeds } from "../../data/catalog/topicsSeed";
 import { seedCatalogCompanies } from "../../data/companies/repository";
 import { seedCatalogProblems } from "../../data/problems/repository";
 import { seedCatalogTopics } from "../../data/topics/repository";
-import { seedCatalogTracks } from "../../data/tracks/repository";
-import { buildTrackCatalogSeed } from "../../data/tracks/seed";
 import { nowIso } from "../../domain/common/time";
 
 

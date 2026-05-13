@@ -21,7 +21,7 @@ import {
 import type { Company } from "../../../src/domain/companies/model";
 import type { Problem } from "../../../src/domain/problems/model";
 import type { Topic } from "../../../src/domain/topics/model";
-import type { TrackWithGroups } from "../../../src/domain/tracks/model";
+import type { TrackWithGroups } from "@features/tracks";
 
 
 describe("v7 view hydration", () => {

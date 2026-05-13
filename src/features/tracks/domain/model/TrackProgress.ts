@@ -1,21 +1,7 @@
-/**
- * Track progress — derived view, not a stored aggregate. The legacy
- * `StudySetProgress` table is gone; "how far through this track is the
- * user" is recomputed from the user's review history each read.
- *
- * Definitions (charter `docs/drizzle-data-shape.md` § 8 follow-up):
- *   - completedSlugs: problems in the track whose `study_state` has at
- *     least one attempt with `rating > 0` (Hard / Good / Easy).
- *   - startedAt: MIN(attempt_history.reviewed_at) across the track's
- *     problems; null if the user has never attempted a problem in it.
- *   - lastInteractedAt: MAX(attempt_history.reviewed_at) across the
- *     track's problems; null when there is no history.
- *
- * `activeGroupId` is no longer part of the aggregate — the user's
- * "where am I" pointer lives on `UserSettings.activeFocus.groupId`.
- */
+import type { GroupCompletion } from "./GroupCompletion";
 import type { StudyState } from "@features/study";
 import type { ProblemSlug, TrackGroupId, TrackId } from "@shared/ids";
+
 
 export interface TrackProgress {
   trackId: TrackId;
@@ -24,11 +10,6 @@ export interface TrackProgress {
   lastInteractedAt: string | null;
   /** Per-group completion counts. Used for `Topic · 5/10` tab labels. */
   groupCompletion: Record<TrackGroupId, GroupCompletion>;
-}
-
-export interface GroupCompletion {
-  totalCount: number;
-  completedCount: number;
 }
 
 export interface ComputeTrackProgressInput {
@@ -42,7 +23,8 @@ export interface ComputeTrackProgressInput {
   studyStatesBySlug: Record<string, StudyState>;
 }
 
-/** Pure computation — no I/O. Repo composes the SQLite read then calls this. */
+/** Derived view; recomputed each read from study_states + attempt_history.
+ *  No stored progress aggregate. */
 export function computeTrackProgress(
   input: ComputeTrackProgressInput,
 ): TrackProgress {
@@ -69,7 +51,10 @@ export function computeTrackProgress(
           if (startedAt === null || attempt.reviewedAt < startedAt) {
             startedAt = attempt.reviewedAt;
           }
-          if (lastInteractedAt === null || attempt.reviewedAt > lastInteractedAt) {
+          if (
+            lastInteractedAt === null ||
+            attempt.reviewedAt > lastInteractedAt
+          ) {
             lastInteractedAt = attempt.reviewedAt;
           }
         }

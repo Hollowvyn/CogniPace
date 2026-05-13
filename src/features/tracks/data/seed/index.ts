@@ -23,8 +23,8 @@ import {
   type TrackId,
 } from "@shared/ids";
 
-import { listCatalogPlans } from "../catalog/curatedSets";
-import { resolveSeedTopicId } from "../catalog/topicsSeed";
+import { listCatalogPlans } from "../../../../data/catalog/curatedSets";
+import { resolveSeedTopicId } from "../../../../data/catalog/topicsSeed";
 
 export interface SeedTrack {
   id: TrackId;

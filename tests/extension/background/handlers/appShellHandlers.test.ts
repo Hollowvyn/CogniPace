@@ -12,7 +12,7 @@ import {
   makeScheduledState,
 } from "../../../support/domainFixtures";
 
-import type { TrackWithGroups } from "../../../../src/domain/tracks/model";
+import type { TrackWithGroups } from "@features/tracks";
 
 function makeTrack(
   id: string,

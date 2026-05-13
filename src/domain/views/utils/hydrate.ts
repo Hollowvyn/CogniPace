@@ -14,7 +14,6 @@ import { listEditedFields } from "../../problems/operations";
 import type { Company } from "../../companies/model";
 import type { Problem, EditableProblemField } from "../../problems/model";
 import type { Topic } from "../../topics/model";
-import type { TrackWithGroups } from "../../tracks/model";
 import type {
   CompanyLabel,
   ProblemView,
@@ -24,6 +23,7 @@ import type {
   TrackView,
 } from "../../views";
 import type { StudyState } from "@features/study";
+import type { TrackWithGroups } from "@features/tracks";
 
 const EDITABLE_FIELDS_ORDER: readonly EditableProblemField[] = [
   "title",
