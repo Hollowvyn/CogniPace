@@ -1,7 +1,7 @@
 import {
   detectPremium,
   readProblemPageSnapshot,
-} from "@libs/screen-parsing/dom/leetcode";
+} from "@libs/leetcode";
 import { describe, expect, it } from "vitest";
 
 

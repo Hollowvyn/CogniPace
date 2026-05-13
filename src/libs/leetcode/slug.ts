@@ -1,9 +1,9 @@
 /**
  * LeetCode slug helpers — canonical problem identifier normalization
  * and URL/title presentation. Pure functions over strings + the
- * `ProblemSlug` brand from `@shared/ids`. Lives in libs because both
- * libs/runtime-rpc (message validator) and libs/screen-parsing (DOM
- * parser) need them, and libs cannot import from features.
+ * `ProblemSlug` brand from `@shared/ids`. Lives alongside difficulty
+ * and DOM parsers in `@libs/leetcode`; consumers (the runtime-rpc
+ * validator, features/*) import via the barrel.
  */
 import { asProblemSlug, slugify, type ProblemSlug } from "@shared/ids";
 

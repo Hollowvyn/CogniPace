@@ -11,7 +11,7 @@ import {
   getProblemSlugFromUrl,
   isStaleOverlayRequest,
   readProblemPageSnapshot,
-} from "@libs/screen-parsing/dom/leetcode";
+} from "@libs/leetcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 

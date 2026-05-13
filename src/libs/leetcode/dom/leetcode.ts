@@ -1,9 +1,5 @@
-import {
-  parseDifficulty,
-  normalizeSlug,
-  slugToTitle,
-  type Difficulty,
-} from "@libs/leetcode";
+import { parseDifficulty, type Difficulty } from "../difficulty";
+import { normalizeSlug, slugToTitle } from "../slug";
 
 export interface OverlayProblemPageSnapshot {
   difficulty: Difficulty;
