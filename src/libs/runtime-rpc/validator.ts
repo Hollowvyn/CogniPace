@@ -69,8 +69,7 @@ const EMPTY_KEYS: readonly string[] = [];
 const SETTINGS_KEYS = [
   "dailyQuestionGoal",
   "studyMode",
-  "activeFocus",
-  "setsEnabled",
+  "activeTrackId",
   "notifications",
   "memoryReview",
   "questionFilters",
@@ -199,19 +198,6 @@ function requireOptionalReviewOrder(value: unknown, field: string): void {
 function requireOptionalStudyMode(value: unknown, field: string): void {
   if (value !== undefined && value !== "freestyle" && value !== "studyPlan") {
     throw new Error(`Invalid field "${field}": expected a study mode.`);
-  }
-}
-
-function validateSetsEnabled(value: unknown): void {
-  if (!isRecord(value)) {
-    throw new Error('Invalid field "setsEnabled": expected an object.');
-  }
-  for (const [key, enabled] of Object.entries(value)) {
-    if (typeof enabled !== "boolean") {
-      throw new Error(
-        `Invalid field "setsEnabled.${key}": expected a boolean.`
-      );
-    }
   }
 }
 
@@ -459,9 +445,11 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
         "dailyQuestionGoal"
       );
       requireOptionalStudyMode(payload.studyMode, "studyMode");
-      // activeFocus is validated by the receiving handler.
-      if (payload.setsEnabled !== undefined) {
-        validateSetsEnabled(payload.setsEnabled);
+      // activeTrackId: string | null. Sanitizer maps malformed values
+      // to null downstream; we still reject non-string-non-null here
+      // so the wire contract is loud.
+      if (payload.activeTrackId !== undefined && payload.activeTrackId !== null) {
+        requireString(payload.activeTrackId, "activeTrackId");
       }
       if (payload.notifications !== undefined) {
         validateNotifications(payload.notifications);
@@ -565,8 +553,6 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       return;
     case "SET_ACTIVE_FOCUS":
       hasExactKeys(payload, ["trackId"], `Payload for ${type}`);
-      // `trackId` is allowed to be null (clears the selection); else a
-      // non-empty string.
       if (payload.trackId !== null) {
         requireString(payload.trackId, "trackId");
       }
