@@ -5,8 +5,8 @@ import type { PopupShellPayload } from "./PopupShellPayload";
 import type { RecommendedProblemView } from "./RecommendedProblemView";
 import type { TopicLabel } from "./TopicLabel";
 import type { TrackView } from "./TrackView";
-import type { TodayQueue } from "../types/TodayQueue";
 import type { AnalyticsSummary } from "@features/analytics";
+import type { TodayQueue } from "@features/queue";
 
 export interface AppShellPayload extends PopupShellPayload {
   queue: TodayQueue;

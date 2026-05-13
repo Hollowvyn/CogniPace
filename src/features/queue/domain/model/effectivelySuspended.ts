@@ -8,11 +8,13 @@
  * - `settings.questionFilters.skipPremium` reframes premium gating as
  *   "treat premium as suspended" — the runtime check is identical.
  */
-import type { Problem, StudyState, UserSettings } from "../types";
+import type { Problem } from "../../../../domain/types/Problem";
+import type { StudyState } from "../../../../domain/types/StudyState";
+import type { UserSettings } from "@features/settings";
 
-export type EffectivelySuspendedReason = "manual" | "premium" | "both";
+type EffectivelySuspendedReason = "manual" | "premium" | "both";
 
-export interface EffectivelySuspendedFlag {
+interface EffectivelySuspendedFlag {
   suspended: boolean;
   reason?: EffectivelySuspendedReason;
 }

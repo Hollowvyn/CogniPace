@@ -1,4 +1,5 @@
 /** Notification helpers for the background worker's local daily reminder. */
+import { buildTodayQueue } from "@features/queue/server";
 import {
   getUserSettings,
   INITIAL_USER_SETTINGS,
@@ -14,7 +15,6 @@ import {
   getAppData,
   STORAGE_KEY,
 } from "../../data/repositories/appDataRepository";
-import { buildTodayQueue } from "../../domain/queue/buildTodayQueue";
 
 
 const DUE_CHECK_ALARM = "due-check";

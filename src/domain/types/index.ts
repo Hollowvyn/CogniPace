@@ -22,8 +22,6 @@ export type { StudyState } from "./StudyState";
 export type { StudyStateSummary } from "./StudyStateSummary";
 
 export type { AppData } from "./AppData";
-export type { QueueItem } from "./QueueItem";
-export type { TodayQueue } from "./TodayQueue";
 export type { CuratedProblemInput } from "./CuratedProblemInput";
 export type { ProblemSnapshot } from "./ProblemSnapshot";
 

@@ -1,15 +1,16 @@
-import { RecommendedProblemView, TodayQueue } from "./types";
+import type { TodayQueue } from "./TodayQueue";
+import type { RecommendedProblemView } from "../../../../domain/views/RecommendedProblemView";
 
 export function buildRecommendedCandidates(
   queue: TodayQueue,
-  activeCourseNextSlug?: string | null
+  activeCourseNextSlug?: string | null,
 ): RecommendedProblemView[] {
   const candidates = queue.items
     .filter(
       (item, index) =>
         item.category === "due" ||
         item.category === "reinforcement" ||
-        index === 0
+        index === 0,
     )
     .slice(0, 12)
     .map((item) => {

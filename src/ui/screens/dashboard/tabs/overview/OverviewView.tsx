@@ -2,13 +2,14 @@
  * consolidated active-track card (track progress + next-up problem in
  * a single card so the page doesn't repeat track context twice). */
 import { MetricCard, SurfaceCard, ToneChip } from "@design-system/atoms";
+import { QueuePreview } from "@features/queue";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+
 import { AppShellPayload } from "../../../../../domain/views";
-import { QueuePreview } from "../../../../features/queue/QueuePreview";
 import { RecommendedProblemCard } from "../../../../features/recommended/RecommendedProblemCard";
 import { ActiveTrackOverviewCard } from "../../../../features/tracks/ActiveTrackOverviewCard";
 import { DashboardView } from "../../../../navigation/dashboardRoutes";

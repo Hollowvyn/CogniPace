@@ -3,6 +3,11 @@ import {
   computeReviewStreakDays,
   summarizeAnalytics,
 } from "@features/analytics/server";
+import {
+  buildRecommendedCandidates,
+  buildTodayQueue,
+  effectivelySuspendedFlag,
+} from "@features/queue/server";
 import { getUserSettings } from "@features/settings/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
@@ -15,9 +20,6 @@ import { listTopics } from "../../../data/topics/repository";
 import { listTracks } from "../../../data/tracks/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
 import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
-import { buildRecommendedCandidates } from "../../../domain/queue/buildRecommendedCandidates";
-import { buildTodayQueue } from "../../../domain/queue/buildTodayQueue";
-import { effectivelySuspendedFlag } from "../../../domain/queue/effectivelySuspended";
 import {
   ActiveTrackView,
   AppShellPayload,

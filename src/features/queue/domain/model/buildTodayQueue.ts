@@ -1,7 +1,14 @@
-import { createDefaultStudyState } from "./constants";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
+
+import { createDefaultStudyState } from "../../../../domain/common/constants";
+
 import { isEffectivelySuspended } from "./effectivelySuspended";
-import { getStudyStateSummary } from "./studyState";
-import { AppData, Problem, QueueItem, StudyState } from "./types";
+
+import type { QueueItem } from "./QueueItem";
+import type { TodayQueue } from "./TodayQueue";
+import type { AppData } from "../../../../domain/types/AppData";
+import type { Problem } from "../../../../domain/types/Problem";
+import type { StudyState } from "../../../../domain/types/StudyState";
 
 function cloneStateOrDefault(state?: StudyState): StudyState {
   return state ? { ...state } : createDefaultStudyState();
@@ -9,7 +16,7 @@ function cloneStateOrDefault(state?: StudyState): StudyState {
 
 function isSetEnabled(
   problem: Problem,
-  setsEnabled: Record<string, boolean>
+  setsEnabled: Record<string, boolean>,
 ): boolean {
   if (problem.sourceSet.length === 0) {
     return setsEnabled.Custom !== false;
@@ -91,7 +98,7 @@ function interleaveByDifficulty(items: QueueItem[]): QueueItem[] {
 
 function orderItems(
   items: QueueItem[],
-  strategy: AppData["settings"]["memoryReview"]["reviewOrder"]
+  strategy: AppData["settings"]["memoryReview"]["reviewOrder"],
 ): QueueItem[] {
   if (strategy === "weakestFirst") {
     return sortWeakest(items);
@@ -104,17 +111,11 @@ function orderItems(
 
 export function buildTodayQueue(
   data: AppData,
-  now = new Date()
-): {
-  generatedAt: string;
-  dueCount: number;
-  newCount: number;
-  reinforcementCount: number;
-  items: QueueItem[];
-} {
+  now = new Date(),
+): TodayQueue {
   const dailyQuestionGoal = Math.max(
     0,
-    Math.round(data.settings.dailyQuestionGoal)
+    Math.round(data.settings.dailyQuestionGoal),
   );
   const problems = Object.values(data.problemsBySlug).filter((problem) =>
     isSetEnabled(problem, data.settings.setsEnabled),
@@ -126,7 +127,7 @@ export function buildTodayQueue(
 
   for (const problem of problems) {
     const state = cloneStateOrDefault(
-      data.studyStatesBySlug[problem.leetcodeSlug]
+      data.studyStatesBySlug[problem.leetcodeSlug],
     );
     if (isEffectivelySuspended(problem, state, data.settings)) {
       continue;
@@ -134,7 +135,7 @@ export function buildTodayQueue(
     const studyStateSummary = getStudyStateSummary(
       state,
       now,
-      data.settings.memoryReview.targetRetention
+      data.settings.memoryReview.targetRetention,
     );
 
     if (studyStateSummary.isDue) {
@@ -176,13 +177,13 @@ export function buildTodayQueue(
   const slotsAfterDue = Math.max(0, dailyQuestionGoal - dueForQueue.length);
   const newOrdered = orderItems(
     newCandidates,
-    data.settings.memoryReview.reviewOrder
+    data.settings.memoryReview.reviewOrder,
   ).slice(0, slotsAfterDue);
 
   const reinforcementSlots = Math.max(0, slotsAfterDue - newOrdered.length);
   const reinforcementOrdered = orderItems(
     reinforcementCandidates,
-    data.settings.memoryReview.reviewOrder
+    data.settings.memoryReview.reviewOrder,
   ).slice(0, reinforcementSlots);
 
   return {
