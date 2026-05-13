@@ -12,10 +12,10 @@ import {
   minutesToMs,
   parseGoalMinutes,
   resolveGoalTextDraft,
- SettingsUpdate } from "../model";
+} from "../model";
 
 export function TimingGoalsSection(props: {
-  onUpdateSettings: SettingsUpdate;
+  onUpdateSettings: (updater: (current: UserSettings) => UserSettings) => void;
   settingsDraft: UserSettings;
 }) {
   const draftEasyMs = props.settingsDraft.timing.difficultyGoalMs.Easy;

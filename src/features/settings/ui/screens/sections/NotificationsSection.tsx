@@ -2,10 +2,9 @@ import { UserSettings } from "@features/settings";
 import Stack from "@mui/material/Stack";
 
 import { SwitchSetting, TimeSetting } from "../components/SettingsInputs";
-import { SettingsUpdate } from "../model";
 
 export function NotificationsSection(props: {
-  onUpdateSettings: SettingsUpdate;
+  onUpdateSettings: (updater: (current: UserSettings) => UserSettings) => void;
   settingsDraft: UserSettings;
 }) {
   const disabled = !props.settingsDraft.notifications.enabled;

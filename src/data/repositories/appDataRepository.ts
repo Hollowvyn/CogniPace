@@ -2,9 +2,9 @@
 import {
   areUserSettingsEqual,
   createInitialUserSettings,
-  isPersistedUserSettings,
   mergeUserSettings,
   sanitizeStoredUserSettings,
+  UserSettings,
   UserSettingsPatch,
 } from "@features/settings/server";
 import { normalizeStudyState } from "@libs/fsrs/studyState";
@@ -63,14 +63,14 @@ export async function getAppData(): Promise<AppData> {
   const stored = result[STORAGE_KEY] as StoredAppData | undefined;
 
   const normalized = normalizeStoredAppData(stored);
-  const storedSettings = stored?.settings;
-  const settingsNeedsWriteBack =
-    !isPersistedUserSettings(storedSettings) ||
-    !areUserSettingsEqual(normalized.settings, storedSettings);
+  // Sanitize is idempotent, so structural equality between the raw
+  // stored blob and the normalized snapshot is the write-back signal:
+  // if anything was coerced (missing field, out-of-range value),
+  // they'll differ and we re-persist the canonical shape.
   const needsWriteBack =
     !stored ||
     stored.schemaVersion !== CURRENT_STORAGE_SCHEMA_VERSION ||
-    settingsNeedsWriteBack;
+    !areUserSettingsEqual(normalized.settings, stored.settings as UserSettings);
 
   if (needsWriteBack) {
     await saveAppData(normalized);

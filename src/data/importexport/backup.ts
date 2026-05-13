@@ -1,7 +1,4 @@
-import {
-  hasGroupedUserSettings,
-  sanitizeStoredUserSettings,
-} from "@features/settings/server";
+import { sanitizeStoredUserSettings } from "@features/settings/server";
 
 import {
   ExportPayload,
@@ -160,7 +157,15 @@ function sanitizeStudyStatesBySlug(value: unknown): Record<string, StudyState> {
 }
 
 function sanitizeSettings(value: unknown): UserSettings | undefined {
-  if (!hasGroupedUserSettings(value)) {
+  // Reject anything that doesn't even carry the grouped nested-object
+  // surface — backup payloads with no recognisable settings block
+  // should fail loud rather than silently reset to defaults.
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    Array.isArray(value) ||
+    typeof (value as { notifications?: unknown }).notifications !== "object"
+  ) {
     return undefined;
   }
   return sanitizeStoredUserSettings(value);

@@ -1,13 +1,5 @@
-/**
- * UI-side typed client for the settings feature. Wraps the runtime-rpc
- * `sendMessage` with feature-scoped method names so callers say
- * `settingsClient.update(patch)` instead of stringly-typed
- * `sendMessage("UPDATE_SETTINGS", ...)`.
- *
- * Curated usecases (`setActiveTrack`, `setDailyTarget`, `setStudyMode`)
- * sit on top of this client and compose the patch shape so feature
- * UI never assembles a UserSettings payload at the call site.
- */
+/** UI-side typed client for the settings feature. Wraps runtime-rpc
+ *  `sendMessage` with feature-scoped method names. */
 import { sendMessage } from "@libs/runtime-rpc/client";
 
 import type { UserSettings, UserSettingsPatch } from "../domain/model";

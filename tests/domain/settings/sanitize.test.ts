@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 
 
 import {
-  isPersistedUserSettings,
   sanitizeStoredUserSettings,
  createInitialUserSettings } from "@features/settings";
 import { describe, it } from "vitest";
@@ -10,8 +9,7 @@ import { describe, it } from "vitest";
 describe("settings sanitization", () => {
   const initial = createInitialUserSettings();
 
-  it("accepts a valid full settings object", () => {
-    assert.ok(isPersistedUserSettings(initial));
+  it("is idempotent on a canonical snapshot", () => {
     const sanitized = sanitizeStoredUserSettings(initial);
     assert.deepEqual(sanitized, initial);
   });

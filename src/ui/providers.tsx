@@ -5,19 +5,8 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { ReactNode, useMemo } from "react";
 
-/**
- * Shared app-level provider stack. Wraps a surface (popup / dashboard /
- * overlay) in the MUI theme appropriate to that surface, mounts the
- * DI surface (so `useDI()` works in every hook below), and routes
- * MUI's portal-bound primitives (Modal / Popover / Popper) into the
- * supplied `portalContainer` so they appear inside the shadow root
- * when the overlay surface needs them.
- *
- * `surface` defaults to "dashboard"; entrypoints pass it explicitly.
- * `services` defaults to the production wiring (one
- * `DefaultSettingsRepository` over the runtime client); tests pass a
- * mock-built `DIServices` to inject fakes.
- */
+/** App-level provider stack — MUI theme per surface + DI. Tests pass
+ *  `services` to inject mocks; production wiring is the default. */
 const DEFAULT_DI_SERVICES: DIServices = {
   settingsRepository,
 };

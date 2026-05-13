@@ -456,10 +456,10 @@ describe("architecture / Phase 6 boundaries", () => {
       /export class DefaultSettingsRepository implements SettingsRepository/,
     );
     // every action lives on the Repository (no separate usecase layer).
+    // Curated methods only exist when they earn their keep — speculative
+    // single-line patch builders stay deleted until a caller materializes.
     for (const method of [
       "update(",
-      "setActiveTrack(",
-      "setDailyTarget(",
       "setSkipPremium(",
       "setStudyMode(",
       "saveDraft(",
@@ -507,7 +507,7 @@ describe("architecture / Phase 6 boundaries", () => {
     }
   });
 
-  it("UserSettings.ts holds the aggregate + every function that operates on it", () => {
+  it("UserSettings.ts holds the type + identity operations (defaults, clone, merge, equality)", () => {
     const file = read(
       path.join(repoRoot, "src/features/settings/domain/model/UserSettings.ts"),
     );
@@ -519,23 +519,35 @@ describe("architecture / Phase 6 boundaries", () => {
       "cloneUserSettings",
       "mergeUserSettings",
       "areUserSettingsEqual",
-      "sanitizeStoredUserSettings",
-      "isPersistedUserSettings",
-      "hasGroupedUserSettings",
     ]) {
       expect(
         file.includes(symbol),
-        `UserSettings.ts is missing \`${symbol}\` — model-specific functions live next to the type`,
+        `UserSettings.ts is missing \`${symbol}\` — identity operations live next to the type`,
       ).toBe(true);
     }
+    // The boundary parser belongs in utils/, not in the model file.
+    expect(
+      file.includes("function sanitizeStoredUserSettings"),
+      "UserSettings.ts must not declare sanitizeStoredUserSettings — parser belongs under model/utils/",
+    ).toBe(false);
   });
 
-  it("ui/screens/model/ holds the view-level types", () => {
+  it("model/utils/sanitizeStoredUserSettings.ts holds the boundary parser", () => {
+    const file = read(
+      path.join(
+        repoRoot,
+        "src/features/settings/domain/model/utils/sanitizeStoredUserSettings.ts",
+      ),
+    );
+    expect(file).toMatch(/export function sanitizeStoredUserSettings/);
+  });
+
+  it("ui/screens/model/ holds the view-level helpers", () => {
     const dir = path.join(
       repoRoot,
       "src/features/settings/ui/screens/model",
     );
-    for (const name of ["SettingsUpdate.ts", "GoalTextDraft.ts", "index.ts"]) {
+    for (const name of ["GoalTextDraft.ts", "index.ts"]) {
       expect(
         fs.existsSync(path.join(dir, name)),
         `missing src/features/settings/ui/screens/model/${name}`,

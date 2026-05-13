@@ -1,16 +1,7 @@
-/**
- * Settings repository — SQLite source of truth for UserSettings.
- *
- * Stores the entire UserSettings object as a JSON-encoded string under
- * a single row of `settings_kv` keyed `user_settings`. The codec is
- * inline here per the data shape doc's recommendation #4 (extract a
- * separate codec file only if this grows past ~100 lines).
- *
- * Charter rule (lesson #6): the write path returns the round-tripped
- * value so the response always matches the next read. We achieve that
- * by reading back from the DB after every save instead of returning
- * the pre-write argument.
- */
+/** SW-side data source for UserSettings — JSON-encoded into a single
+ *  `settings_kv` row keyed `user_settings`. The write path reads back
+ *  from the DB so the response always matches the next read (charter
+ *  lesson #6). */
 import { type Db } from "@platform/db/client";
 import * as schema from "@platform/db/schema";
 import { eq } from "drizzle-orm";

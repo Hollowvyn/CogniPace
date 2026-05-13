@@ -1,28 +1,7 @@
-/**
- * `useSettingsScreen` — the settings feature's ViewModel hook.
- *
- * MVI invariant (plan §"MVI invariant"): the screen owns its own
- * state (draft) and intents (update, save, discard, reset). The View
- * is a function of this model. Callers from outside the feature
- * pass `currentSettings` (the persisted snapshot they want the draft
- * to start from) and react to the intent results — they never reach
- * into the draft.
- *
- * The full UDF chain (Android-style):
- *
- *   View intent
- *     → Hook (this file)
- *       → Usecase (saveSettings / resetSettings / curated single-field)
- *         → Repository (SettingsRepository — UI-side abstraction)
- *           → MessagingClient (settingsClient — typed sendMessage)
- *             → SW boundary
- *               → Handler (updateSettings)
- *                 → DataSource (SettingsDataSource — Drizzle calls)
- *                   → SQLite
- *
- * The hook never reaches past the Repository; the Repository is where
- * Phase 9's data-flow library decision slots in.
- */
+/** Settings ViewModel hook. The screen owns its draft + intents
+ *  (update, save, discard, reset); the View is a function of the
+ *  returned Model. Callers pass the persisted snapshot in via
+ *  `currentSettings` — they never reach into the draft. */
 import { useDI } from "@app/di";
 import { useCallback, useMemo, useState } from "react";
 

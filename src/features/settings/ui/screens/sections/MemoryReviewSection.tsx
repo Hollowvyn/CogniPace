@@ -7,7 +7,6 @@ import { ReactNode } from "react";
 
 
 import { SelectSetting } from "../components/SettingsInputs";
-import { SettingsUpdate } from "../model";
 
 import type { ReviewOrder, UserSettings } from "@features/settings";
 
@@ -90,7 +89,7 @@ function SliderSetting(props: {
 }
 
 export function MemoryReviewSection(props: {
-  onUpdateSettings: SettingsUpdate;
+  onUpdateSettings: (updater: (current: UserSettings) => UserSettings) => void;
   settingsDraft: UserSettings;
 }) {
   return (

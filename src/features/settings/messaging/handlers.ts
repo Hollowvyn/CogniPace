@@ -1,10 +1,5 @@
-/**
- * SW-side handlers for the settings feature. Imported by the central
- * router (`src/extension/background/router.ts`) — until Phase 8
- * introduces `app/background/router.ts` with per-feature
- * `registerHandlers(router)` wiring, the central switch still
- * dispatches to each named export here.
- */
+/** SW-side handlers for the settings feature. The central router
+ *  dispatches to each named export. */
 import { getDb } from "@platform/db/instance";
 
 import { mergeSettings } from "../../../data/repositories/appDataRepository";
