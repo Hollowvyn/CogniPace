@@ -1,6 +1,6 @@
-import { uniqueStrings } from "@libs/collections";
 import { createDefaultStudyState } from "@libs/fsrs/constants";
 import { nowIso } from "@platform/time";
+import { uniqueStrings } from "@shared/strings";
 
 import {
   CuratedProblemInput,

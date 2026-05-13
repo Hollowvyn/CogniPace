@@ -29,7 +29,6 @@ import {
   createTrack,
   listTracks,
 } from "@features/tracks/server";
-import { uniqueStrings } from "@libs/collections";
 import { normalizeStudyState } from "@libs/fsrs/studyState";
 import { getDb } from "@platform/db/instance";
 import { nowIso } from "@platform/time";
@@ -40,6 +39,7 @@ import {
   asTrackGroupId,
   asTrackId,
 } from "@shared/ids";
+import { uniqueStrings } from "@shared/strings";
 
 
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
