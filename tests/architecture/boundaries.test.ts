@@ -377,10 +377,12 @@ describe("architecture / Phase 7+ generic feature rules", () => {
     }
   });
 
-  it("every feature has at least data/ and domain/", () => {
+  it("every feature has at least domain/", () => {
+    // Universal rule: every feature owns at least types. data/, messaging/,
+    // and ui/ are present only when the feature needs them — pure-compute
+    // orchestrators (analytics) can ship with just domain/.
     for (const feature of featureRoots()) {
       const name = path.basename(feature);
-      expect(fs.existsSync(path.join(feature, "data")), `${name}/data/`).toBe(true);
       expect(fs.existsSync(path.join(feature, "domain")), `${name}/domain/`).toBe(true);
     }
   });

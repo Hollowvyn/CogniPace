@@ -1,4 +1,8 @@
 /** Background handlers for app-shell reads and extension page navigation. */
+import {
+  computeReviewStreakDays,
+  summarizeAnalytics,
+} from "@features/analytics/server";
 import { getUserSettings } from "@features/settings/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
@@ -10,10 +14,6 @@ import { listStudyStates } from "../../../data/studyStates/repository";
 import { listTopics } from "../../../data/topics/repository";
 import { listTracks } from "../../../data/tracks/repository";
 import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
-import {
-  computeReviewStreakDays,
-  summarizeAnalytics,
-} from "../../../domain/analytics/summarizeAnalytics";
 import { slugToTitle, slugToUrl } from "../../../domain/problem/slug";
 import { buildRecommendedCandidates } from "../../../domain/queue/buildRecommendedCandidates";
 import { buildTodayQueue } from "../../../domain/queue/buildTodayQueue";

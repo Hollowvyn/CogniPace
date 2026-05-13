@@ -1,4 +1,3 @@
-/** Dashboard analytics screen for retention, due forecast, and weakest-item signals. */
 import {
   InsetSurface,
   MetricCard,
@@ -16,7 +15,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
-import { AppShellPayload } from "../../../../../domain/views";
+import { AppShellPayload } from "../../../../domain/views";
 
 export interface AnalyticsViewProps {
   payload: AppShellPayload | null;

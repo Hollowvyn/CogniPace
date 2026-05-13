@@ -1,6 +1,27 @@
-import { getStudyStateSummary } from "./studyState";
-import { AppData, AnalyticsSummary, StudyState } from "./types";
-import { startOfDay, ymd } from "./utils";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
+
+import { startOfDay, ymd } from "../../../../domain/common/time";
+
+import type { AppData } from "../../../../domain/types/AppData";
+import type { StudyPhase } from "../../../../domain/types/StudyPhase";
+import type { StudyState } from "../../../../domain/types/StudyState";
+
+export interface AnalyticsSummary {
+  streakDays: number;
+  totalReviews: number;
+  phaseCounts: Record<StudyPhase, number>;
+  retentionProxy: number;
+  weakestProblems: Array<{
+    slug: string;
+    title: string;
+    lapses: number;
+    difficulty: number;
+  }>;
+  dueByDay: Array<{
+    date: string;
+    count: number;
+  }>;
+}
 
 function collectAllStates(data: AppData): Array<[string, StudyState]> {
   return Object.entries(data.studyStatesBySlug);
@@ -8,7 +29,7 @@ function collectAllStates(data: AppData): Array<[string, StudyState]> {
 
 export function computeReviewStreakDays(
   data: AppData,
-  now = new Date()
+  now = new Date(),
 ): number {
   const reviewDays = new Set<string>();
 
@@ -36,14 +57,9 @@ function computeRetentionProxy(data: AppData, now = new Date()): number {
 
   for (const [, state] of collectAllStates(data)) {
     for (const attempt of state.attemptHistory) {
-      if (new Date(attempt.reviewedAt).getTime() < cutoff) {
-        continue;
-      }
-      if (attempt.rating >= 2) {
-        positive += 1;
-      } else {
-        negative += 1;
-      }
+      if (new Date(attempt.reviewedAt).getTime() < cutoff) continue;
+      if (attempt.rating >= 2) positive += 1;
+      else negative += 1;
     }
   }
 
@@ -54,7 +70,7 @@ function computeRetentionProxy(data: AppData, now = new Date()): number {
 function dueByDay(
   data: AppData,
   days = 14,
-  now = new Date()
+  now = new Date(),
 ): Array<{ date: string; count: number }> {
   const map = new Map<string, number>();
   const start = startOfDay(now);
@@ -66,22 +82,19 @@ function dueByDay(
 
   for (const [, state] of collectAllStates(data)) {
     const summary = getStudyStateSummary(state, start);
-    if (!summary.nextReviewAt || summary.suspended) {
-      continue;
-    }
-
+    if (!summary.nextReviewAt || summary.suspended) continue;
     const key = ymd(new Date(summary.nextReviewAt));
-    if (!map.has(key)) {
-      continue;
-    }
-
+    if (!map.has(key)) continue;
     map.set(key, (map.get(key) ?? 0) + 1);
   }
 
   return Array.from(map.entries()).map(([date, count]) => ({ date, count }));
 }
 
-export function summarizeAnalytics(data: AppData, now = new Date()): AnalyticsSummary {
+export function summarizeAnalytics(
+  data: AppData,
+  now = new Date(),
+): AnalyticsSummary {
   const states = collectAllStates(data);
   const summaries = states.map(([slug, studyState]) => ({
     slug,
@@ -90,20 +103,14 @@ export function summarizeAnalytics(data: AppData, now = new Date()): AnalyticsSu
   }));
   const totalReviews = summaries.reduce(
     (sum, item) => sum + item.summary.reviewCount,
-    0
+    0,
   );
   const phaseCounts = summaries.reduce<AnalyticsSummary["phaseCounts"]>(
     (counts, item) => {
       counts[item.summary.phase] += 1;
       return counts;
     },
-    {
-      New: 0,
-      Learning: 0,
-      Review: 0,
-      Relearning: 0,
-      Suspended: 0,
-    }
+    { New: 0, Learning: 0, Review: 0, Relearning: 0, Suspended: 0 },
   );
 
   const weakestProblems = summaries
@@ -114,9 +121,7 @@ export function summarizeAnalytics(data: AppData, now = new Date()): AnalyticsSu
       difficulty: summary.difficulty ?? 0,
     }))
     .sort((a, b) => {
-      if (b.lapses !== a.lapses) {
-        return b.lapses - a.lapses;
-      }
+      if (b.lapses !== a.lapses) return b.lapses - a.lapses;
       return b.difficulty - a.difficulty;
     })
     .slice(0, 10);
