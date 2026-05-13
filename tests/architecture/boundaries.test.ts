@@ -279,7 +279,7 @@ describe("architecture / Phase 6 boundaries", () => {
     expect(fs.existsSync(path.join(dataDir, "datasource"))).toBe(true);
   });
 
-  it("SettingsRepository is shipped as an interface + class implementing it", () => {
+  it("SettingsRepository ships as an interface + a conforming singleton (DI seam)", () => {
     const file = read(
       path.join(
         repoRoot,
@@ -287,7 +287,9 @@ describe("architecture / Phase 6 boundaries", () => {
       ),
     );
     expect(/export interface SettingsRepository/.test(file)).toBe(true);
-    expect(/implements SettingsRepository/.test(file)).toBe(true);
+    expect(
+      /export const settingsRepository:\s*SettingsRepository/.test(file),
+    ).toBe(true);
   });
 
   it("features without cross-repo composition do not ship a domain/usecases/ folder", () => {

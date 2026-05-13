@@ -2,6 +2,7 @@
 import {
   createInitialUserSettings,
   getUserSettings,
+  mergeUserSettings,
   saveUserSettings,
 } from "@features/settings/server";
 import { getDb } from "@platform/db/instance";
@@ -12,9 +13,6 @@ import {
   importProblem,
   getProblem,
 } from "../../../data/problems/repository";
-import {
-  mergeSettings,
-} from "../../../data/repositories/appDataRepository";
 import { parseProblemInput } from "../../../data/repositories/problemRepository";
 import { ensureStudyState } from "../../../data/studyStates/repository";
 import { ok } from "../responses";
@@ -26,7 +24,7 @@ import type { Difficulty } from "../../../domain/types";
 async function enableSetInSqlite(setName: string): Promise<void> {
   const { db } = await getDb();
   const current = (await getUserSettings(db)) ?? createInitialUserSettings();
-  const next = mergeSettings(current, {
+  const next = mergeUserSettings(current, {
     setsEnabled: { ...current.setsEnabled, [setName]: true },
   });
   await saveUserSettings(db, next);

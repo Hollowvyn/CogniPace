@@ -2,10 +2,8 @@
 import {
   areUserSettingsEqual,
   createInitialUserSettings,
-  mergeUserSettings,
   sanitizeStoredUserSettings,
   UserSettings,
-  UserSettingsPatch,
 } from "@features/settings/server";
 import { normalizeStudyState } from "@libs/fsrs/studyState";
 import {
@@ -117,14 +115,6 @@ export async function mutateAppData(
   });
   mutationChain = next.catch(() => undefined);
   return next;
-}
-
-/** Merges a settings patch while preserving grouped persisted settings. */
-export function mergeSettings(
-  current: AppData["settings"],
-  patch: UserSettingsPatch
-): AppData["settings"] {
-  return mergeUserSettings(current, patch);
 }
 
 export { STORAGE_KEY };

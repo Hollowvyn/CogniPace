@@ -22,10 +22,7 @@ export {
 } from "./domain/model";
 
 export type { SettingsRepository } from "./data/repository/SettingsRepository";
-export {
-  DefaultSettingsRepository,
-  settingsRepository,
-} from "./data/repository/SettingsRepository";
+export { settingsRepository } from "./data/repository/SettingsRepository";
 
 export {
   useSettingsScreen,

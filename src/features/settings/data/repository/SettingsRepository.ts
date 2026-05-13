@@ -1,3 +1,5 @@
+import { sendMessage } from "@libs/runtime-rpc/client";
+
 import {
   cloneUserSettings,
   createInitialUserSettings,
@@ -6,7 +8,6 @@ import {
   type UserSettings,
   type UserSettingsPatch,
 } from "../../domain/model";
-import { settingsClient, type SettingsClient } from "../../messaging/client";
 
 export interface SettingsRepository {
   /** Round-trip is persisted-then-readback (charter lesson #6) — the
@@ -18,31 +19,22 @@ export interface SettingsRepository {
   resetToDefaults(): Promise<UserSettings>;
 }
 
-export class DefaultSettingsRepository implements SettingsRepository {
-  constructor(private readonly client: SettingsClient) {}
-
-  update(patch: UserSettingsPatch): Promise<UserSettings> {
-    return this.client.update(patch);
+async function dispatchUpdate(patch: UserSettingsPatch): Promise<UserSettings> {
+  const response = await sendMessage("UPDATE_SETTINGS", patch);
+  if (!response.ok || !response.data) {
+    throw new Error(
+      response.error ?? "settingsRepository.update: SW returned no data",
+    );
   }
-
-  setSkipPremium(skipPremium: boolean): Promise<UserSettings> {
-    return this.update({ questionFilters: { skipPremium } });
-  }
-
-  setStudyMode(mode: StudyMode): Promise<UserSettings> {
-    return this.update({ studyMode: mode });
-  }
-
-  saveDraft(draft: UserSettings): Promise<UserSettings> {
-    return this.update(sanitizeStoredUserSettings(cloneUserSettings(draft)));
-  }
-
-  resetToDefaults(): Promise<UserSettings> {
-    return this.update(createInitialUserSettings());
-  }
+  return response.data.settings;
 }
 
-/** Production singleton. React code goes through `useDI().settingsRepository`
- *  so tests can inject a fake; non-React callers (SW boot, scripts) use this. */
-export const settingsRepository: SettingsRepository =
-  new DefaultSettingsRepository(settingsClient);
+export const settingsRepository: SettingsRepository = {
+  update: dispatchUpdate,
+  setSkipPremium: (skipPremium) =>
+    dispatchUpdate({ questionFilters: { skipPremium } }),
+  setStudyMode: (mode) => dispatchUpdate({ studyMode: mode }),
+  saveDraft: (draft) =>
+    dispatchUpdate(sanitizeStoredUserSettings(cloneUserSettings(draft))),
+  resetToDefaults: () => dispatchUpdate(createInitialUserSettings()),
+};
