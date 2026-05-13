@@ -3,11 +3,11 @@ import type { ActiveFocus } from "../../../domain/active-focus/model";
 import type {
   CuratedProblemInput,
   Difficulty,
-  ExportPayload,
   Rating,
   ReviewLogFields,
   ReviewMode,
 } from "../../../domain/types";
+import type { ExportPayload } from "@features/backup/server";
 import type { UserSettingsPatch } from "@features/settings/server";
 
 export interface MessageRequestMap {

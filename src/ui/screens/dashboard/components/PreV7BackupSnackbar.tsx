@@ -10,10 +10,19 @@ import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
 import { useEffect, useRef, useState } from "react";
 
-import {
-  downloadJsonAs,
-} from "../../../../data/repositories/backupRepository";
 import { consumePreV7Backup } from "../../../../data/repositories/v7ActionRepository";
+
+function downloadJsonBlob(payload: unknown, filename: string): void {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export function PreV7BackupSnackbar() {
   const [backup, setBackup] = useState<unknown>(null);
@@ -42,7 +51,7 @@ export function PreV7BackupSnackbar() {
 
   const handleDownload = () => {
     if (backup === null) return;
-    downloadJsonAs(backup, "cognipace-backup-pre-v7.json");
+    downloadJsonBlob(backup, "cognipace-backup-pre-v7.json");
     setOpen(false);
   };
 

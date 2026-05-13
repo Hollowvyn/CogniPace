@@ -36,7 +36,6 @@ export type { ProblemMutationResponse } from "./ProblemMutationResponse";
 export type { ImportSummaryResponse } from "./ImportSummaryResponse";
 export type { SettingsUpdateResponse } from "./SettingsUpdateResponse";
 export type { OpenedResponse } from "./OpenedResponse";
-export type { ImportedResponse } from "./ImportedResponse";
 export type { StudyStateMutationResponse } from "./StudyStateMutationResponse";
 export type { StudyHistoryResetResponse } from "./StudyHistoryResetResponse";
 export type { PopupModeLabel } from "./PopupModeLabel";

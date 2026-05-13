@@ -1,8 +1,7 @@
 /** Runtime-message response contract — SW returns to UI. */
-import type { ExportPayload, TodayQueue } from "../../../domain/types";
+import type { TodayQueue } from "../../../domain/types";
 import type {
   AppShellPayload,
-  ImportedResponse,
   ImportSummaryResponse,
   OpenedResponse,
   PopupShellPayload,
@@ -13,6 +12,10 @@ import type {
   StudyHistoryResetResponse,
   StudyStateMutationResponse,
 } from "../../../domain/views";
+import type {
+  ExportPayload,
+  ImportedResponse,
+} from "@features/backup/server";
 
 export interface MessageResponseMap {
   UPSERT_PROBLEM_FROM_PAGE: ProblemMutationResponse;

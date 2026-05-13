@@ -26,7 +26,6 @@ export type { QueueItem } from "./QueueItem";
 export type { TodayQueue } from "./TodayQueue";
 export type { AnalyticsSummary } from "./AnalyticsSummary";
 export type { CuratedProblemInput } from "./CuratedProblemInput";
-export type { ExportPayload } from "./ExportPayload";
 export type { ProblemSnapshot } from "./ProblemSnapshot";
 
 // Cross-feature re-exports — same surface the grab-bag exposed. Phase

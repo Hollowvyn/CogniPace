@@ -1,11 +1,13 @@
 import { createContext, use } from "react";
 
+import type { BackupRepository } from "@features/backup";
 import type { SettingsRepository } from "@features/settings";
 import type { ReactNode } from "react";
 
 /** The DI surface every UI hook receives via `useDI()`. Phase 7 features
  *  add their Repositories here as they migrate. */
 export interface DIServices {
+  readonly backupRepository: BackupRepository;
   readonly settingsRepository: SettingsRepository;
 }
 

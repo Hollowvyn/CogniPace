@@ -47,11 +47,12 @@ import {
   slugToUrl,
   normalizeSlug,
 } from "../../../domain/problem/slug";
-import { ExportPayload, StudyState } from "../../../domain/types";
+import { StudyState } from "../../../domain/types";
 import { ok } from "../responses";
 
 import type { Company } from "../../../domain/companies/model";
 import type { Topic } from "../../../domain/topics/model";
+import type { ExportPayload } from "@features/backup/server";
 
 /** Cross-walks legacy topics labels into v7 topicIds via the curated seed. */
 function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {

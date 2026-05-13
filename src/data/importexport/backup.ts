@@ -1,7 +1,7 @@
+import { type ExportPayload } from "@features/backup/server";
 import { sanitizeStoredUserSettings } from "@features/settings/server";
 
 import {
-  ExportPayload,
   Problem,
   StudyState,
   UserSettings,

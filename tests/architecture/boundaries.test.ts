@@ -92,10 +92,12 @@ describe("architecture / Phase 1 boundaries", () => {
 });
 
 describe("architecture / Phase 2 boundaries", () => {
-  // Phase 6 transition: one libs/* file still imports a feature type.
-  // Phase 8's per-feature contracts split lifts this entry.
+  // Phase 6/7 transition: the runtime-rpc message contracts reference
+  // feature types because they ARE the cross-feature wire shape.
+  // Phase 8's per-feature contracts split lifts these entries.
   const LIBS_FEATURE_TYPE_LEAKS = new Set([
     "src/libs/runtime-rpc/contracts/MessageRequestMap.ts",
+    "src/libs/runtime-rpc/contracts/MessageResponseMap.ts",
   ]);
 
   it("libs/** does not import from features/, app/, or platform/", () => {
@@ -357,10 +359,70 @@ describe("architecture / Phase 6 boundaries", () => {
   });
 });
 
-describe.skip("architecture / Phase 7+ boundaries (placeholder)", () => {
-  it.todo("Phase 6+: features/<x>/ui does not import features/<x>/data");
-  it.todo("Phase 6+: features/<x>/domain does not import features/<x>/data impls");
-  it.todo("Phase 6+: cross-feature imports go through features/<x>/index.ts or server.ts");
-  it.todo("Phase 6+: tick() calls pass a TickScope literal with a known table name");
-  it.todo("Phase 8: app/entrypoints/background.ts graph excludes react, react-dom, @mui/*, design-system/*");
+describe("architecture / Phase 7+ generic feature rules", () => {
+  function featureRoots(): string[] {
+    const featuresDir = path.join(repoRoot, "src/features");
+    if (!fs.existsSync(featuresDir)) return [];
+    return fs
+      .readdirSync(featuresDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => path.join(featuresDir, e.name));
+  }
+
+  it("every feature exposes UI (index.ts) and SW (server.ts) barrels", () => {
+    for (const feature of featureRoots()) {
+      const name = path.basename(feature);
+      expect(fs.existsSync(path.join(feature, "index.ts")), `${name}/index.ts`).toBe(true);
+      expect(fs.existsSync(path.join(feature, "server.ts")), `${name}/server.ts`).toBe(true);
+    }
+  });
+
+  it("every feature has at least data/ and domain/", () => {
+    for (const feature of featureRoots()) {
+      const name = path.basename(feature);
+      expect(fs.existsSync(path.join(feature, "data")), `${name}/data/`).toBe(true);
+      expect(fs.existsSync(path.join(feature, "domain")), `${name}/domain/`).toBe(true);
+    }
+  });
+
+  it("no file outside a feature deep-imports its data/", () => {
+    for (const feature of featureRoots()) {
+      const name = path.basename(feature);
+      const featurePrefix = `src/features/${name}/`;
+      const importPattern = new RegExp(
+        `from\\s+['"]@features/${name}/data/`,
+      );
+      for (const file of srcFiles()) {
+        const relPath = rel(file);
+        if (relPath.startsWith(featurePrefix)) continue;
+        expect(importPattern.test(read(file)), `${relPath} → ${name}/data/*`).toBe(false);
+      }
+    }
+  });
+
+  it("files under every feature's domain/model/ export at most 1 named type", () => {
+    for (const feature of featureRoots()) {
+      const modelDir = path.join(feature, "domain", "model");
+      if (!fs.existsSync(modelDir)) continue;
+      const files = fs
+        .readdirSync(modelDir, { withFileTypes: true })
+        .filter(
+          (e) => e.isFile() && e.name.endsWith(".ts") && e.name !== "index.ts",
+        )
+        .map((e) => path.join(modelDir, e.name));
+      for (const file of files) {
+        const typeExports = (
+          read(file).match(/^export (interface|type|enum)\s+\w+/gm) ?? []
+        ).length;
+        expect(typeExports, `${rel(file)} :: ${typeExports} type exports`).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+});
+
+describe.skip("architecture / future placeholders", () => {
+  it.todo("features/<x>/ui does not import features/<x>/data");
+  it.todo("features/<x>/domain does not import features/<x>/data impls");
+  it.todo("tick() calls pass a TickScope literal with a known table name");
+  it.todo("app/entrypoints/background.ts graph excludes react, react-dom, @mui/*, design-system/*");
 });

@@ -15,11 +15,6 @@ import {
   useDeferredValue,
 } from "react";
 
-import {
-  downloadBackupJson,
-  exportData,
-  importData,
-} from "../../../data/repositories/backupRepository";
 import { openProblemPage } from "../../../data/repositories/problemSessionRepository";
 import { resetStudyHistory } from "../../../data/repositories/settingsRepository";
 import { setActiveFocus } from "../../../data/repositories/v7ActionRepository";
@@ -41,17 +36,16 @@ import {
 } from "../../state/useAppShellQuery";
 
 import type { ActiveFocus } from "../../../domain/active-focus/model";
+import type { ExportPayload } from "@features/backup";
 import type { UserSettings } from "@features/settings";
 
-function isImportPayloadCandidate(
-  value: unknown
-): value is Parameters<typeof importData>[0] {
+function isImportPayloadCandidate(value: unknown): value is ExportPayload {
   return Boolean(value) && typeof value === "object";
 }
 
 /** Coordinates dashboard screen state while keeping transport concerns in repositories. */
 export function useDashboardController() {
-  const { settingsRepository } = useDI();
+  const { backupRepository, settingsRepository } = useDI();
   const mockPayload = useMemo(() => createMockAppShellPayload(), []);
   const { load, payload, setPayload, setStatus, status } =
     useAppShellQuery(mockPayload);
@@ -203,28 +197,21 @@ export function useDashboardController() {
   }, [runMutation]);
 
   const onExportData = useCallback(async (): Promise<void> => {
-    const response = await exportData();
-    if (!response.ok || !response.data) {
+    try {
+      const payload = await backupRepository.exportData();
+      backupRepository.downloadJson(payload);
+      setStatus({ message: "Backup exported.", isError: false });
+    } catch (err) {
       setStatus({
-        message: response.error ?? "Failed to export data.",
+        message: err instanceof Error ? err.message : "Failed to export data.",
         isError: true,
       });
-      return;
     }
-
-    downloadBackupJson(response.data);
-    setStatus({
-      message: "Backup exported.",
-      isError: false,
-    });
-  }, [setStatus]);
+  }, [backupRepository, setStatus]);
 
   const onImportData = useCallback(async (): Promise<void> => {
     if (!importFile) {
-      setStatus({
-        message: "Choose a backup file first.",
-        isError: true,
-      });
+      setStatus({ message: "Choose a backup file first.", isError: true });
       return;
     }
 
@@ -233,23 +220,26 @@ export function useDashboardController() {
     try {
       parsed = JSON.parse(text);
     } catch {
-      setStatus({
-        message: "Invalid JSON backup file.",
-        isError: true,
-      });
+      setStatus({ message: "Invalid JSON backup file.", isError: true });
       return;
     }
 
     if (!isImportPayloadCandidate(parsed)) {
-      setStatus({
-        message: "Backup payload is malformed.",
-        isError: true,
-      });
+      setStatus({ message: "Backup payload is malformed.", isError: true });
       return;
     }
 
-    await runMutation(importData(parsed), "Backup imported.");
-  }, [importFile, runMutation, setStatus]);
+    try {
+      await backupRepository.importData(parsed);
+      setStatus({ message: "Backup imported.", isError: false });
+      await load({ clearStatusOnSuccess: false });
+    } catch (err) {
+      setStatus({
+        message: err instanceof Error ? err.message : "Failed to import data.",
+        isError: true,
+      });
+    }
+  }, [backupRepository, importFile, load, setStatus]);
 
   const onSetActiveFocus = useCallback(
     async (focus: ActiveFocus): Promise<void> => {
