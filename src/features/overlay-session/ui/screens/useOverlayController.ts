@@ -18,10 +18,10 @@ import {
   openExtensionPage,
   openProblemPage,
   upsertProblemFromPage,
-} from "../../../data/repositories/problemSessionRepository";
-import { formatClock } from "../../../domain/common/time";
-import { Rating, UserSettings } from "../../../domain/types";
-import { AppShellPayload } from "../../../domain/views";
+} from "../../../../data/repositories/problemSessionRepository";
+import { formatClock } from "../../../../domain/common/time";
+import { Rating, UserSettings } from "../../../../domain/types";
+import { AppShellPayload } from "../../../../domain/views";
 
 import { draftsEqual } from "./controller/draftFields";
 import {

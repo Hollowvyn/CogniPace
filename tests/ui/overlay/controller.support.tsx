@@ -1,5 +1,5 @@
 import { StudyState } from "../../../src/domain/types";
-import { OverlayRoot } from "../../../src/ui/screens/overlay/OverlayRoot";
+import { OverlayRoot } from "../../../src/features/overlay-session/ui/screens/OverlayRoot";
 import { act, render } from "../support/render";
 import { sendMessageMock } from "../support/setup";
 

@@ -6,7 +6,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 
-import {Rating} from "../../../../domain/types";
+import {Rating} from "../../../../../domain/types";
 import {OverlayAssessmentSectionViewModel, OverlayAssistViewModel} from "../overlayPanel.types";
 
 interface AssessmentOption {

@@ -3,7 +3,7 @@ import {
   DockedOverlayViewModel,
   ExpandedOverlayViewModel,
   OverlayRenderModel,
-} from "../../../src/ui/screens/overlay/overlayPanel.types";
+} from "../../../src/features/overlay-session/ui/screens/overlayPanel.types";
 
 export type ExpandedRenderModelOverrides = {
   actionAssist?: Partial<ExpandedOverlayViewModel["actionAssist"]>;

@@ -6,22 +6,22 @@ import { describe, expect, it } from "vitest";
 
 import { StudyState } from "../../../src/domain/types";
 import {
-  buildDashboardUrl,
-  readDashboardViewFromSearch,
-} from "../../../src/ui/navigation/dashboardRoutes";
-import { filterLibraryRows } from "../../../src/ui/presentation/library";
-import {
   cloneDraft,
   draftFromStudyState,
   draftsEqual,
   emptyDraft,
   reviewPayloadFromDraft,
-} from "../../../src/ui/screens/overlay/controller/draftFields";
+} from "../../../src/features/overlay-session/ui/screens/controller/draftFields";
 import {
   buildDueTone,
   buildHeaderStatus,
   formatSubmissionDateLabel,
-} from "../../../src/ui/screens/overlay/controller/headerStatus";
+} from "../../../src/features/overlay-session/ui/screens/controller/headerStatus";
+import {
+  buildDashboardUrl,
+  readDashboardViewFromSearch,
+} from "../../../src/ui/navigation/dashboardRoutes";
+import { filterLibraryRows } from "../../../src/ui/presentation/library";
 import { makePayload, makeStudyState } from "../support/appShellFixtures";
 
 describe("route and selector contracts", () => {

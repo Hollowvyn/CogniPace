@@ -5,8 +5,8 @@ import {
   overrideLastReviewResult,
   saveOverlayLogDraft,
   saveReviewResult,
-} from "../../../../data/repositories/problemSessionRepository";
-import {Difficulty, Rating, ReviewMode, StudyState} from "../../../../domain/types";
+} from "../../../../../data/repositories/problemSessionRepository";
+import {Difficulty, Rating, ReviewMode, StudyState} from "../../../../../domain/types";
 import {OverlayDraftLogFields} from "../overlayPanel.types";
 
 import {cloneDraft, draftFromStudyState, emptyDraft, reviewPayloadFromDraft,} from "./draftFields";

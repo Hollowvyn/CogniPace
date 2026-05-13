@@ -7,8 +7,8 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {Difficulty} from "../../../../domain/types";
-import {difficultyTone} from "../../../presentation/studyState";
+import {Difficulty} from "../../../../../domain/types";
+import {difficultyTone} from "../../../../../ui/presentation/studyState";
 import {OverlayHeaderSectionViewModel, OverlayHeaderStatusCard, OverlayHeaderStatusTone,} from "../overlayPanel.types";
 
 const difficultyBadgeStyles: Record<

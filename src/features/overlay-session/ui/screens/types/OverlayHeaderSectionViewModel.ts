@@ -1,5 +1,5 @@
 import type { OverlayHeaderStatus } from "./OverlayHeaderStatus";
-import type { Difficulty } from "../../../../domain/types/Difficulty";
+import type { Difficulty } from "../../../../../domain/types/Difficulty";
 
 
 export interface OverlayHeaderSectionViewModel {

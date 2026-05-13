@@ -43,7 +43,7 @@ describe("architecture layout", () => {
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(repoRoot, "src/ui/screens/overlay/OverlayRoot.tsx")
+        path.join(repoRoot, "src/features/overlay-session/ui/screens/OverlayRoot.tsx")
       )
     ).toBe(true);
 
@@ -108,12 +108,12 @@ describe("architecture layout", () => {
 
   it("uses explicit overlay variants instead of a shared boolean mode prop", () => {
     const overlayPanel = read(
-      path.join(repoRoot, "src/ui/screens/overlay/OverlayPanel.tsx")
+      path.join(repoRoot, "src/features/overlay-session/ui/screens/OverlayPanel.tsx")
     );
     const overlayRenderModel = read(
       path.join(
         repoRoot,
-        "src/ui/screens/overlay/types/OverlayRenderModel.ts",
+        "src/features/overlay-session/ui/screens/types/OverlayRenderModel.ts",
       ),
     );
 

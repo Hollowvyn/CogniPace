@@ -1,5 +1,5 @@
-import type { RecommendedProblemView } from "../../../../domain/views/RecommendedProblemView";
-import type { TrackQuestionView } from "../../../../domain/views/TrackQuestionView";
+import type { RecommendedProblemView } from "../../../../../domain/views/RecommendedProblemView";
+import type { TrackQuestionView } from "../../../../../domain/views/TrackQuestionView";
 
 export type OverlayPostSubmitNextViewModel =
   | {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { OverlayPanel } from "../../../src/ui/screens/overlay/OverlayPanel";
+import { OverlayPanel } from "../../../src/features/overlay-session/ui/screens/OverlayPanel";
 import { fireEvent, screen , render } from "../support/render";
 
 import { makeDockedRenderModel } from "./overlayPanel.fixtures";

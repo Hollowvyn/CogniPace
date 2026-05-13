@@ -4,8 +4,8 @@ import {CacheProvider} from "@emotion/react";
 import {createElement} from "react";
 import {createRoot, Root} from "react-dom/client";
 
+import {OverlayRoot} from "../features/overlay-session/ui/screens/OverlayRoot";
 import {AppProviders} from "../ui/providers";
-import {OverlayRoot} from "../ui/screens/overlay/OverlayRoot";
 
 const OVERLAY_ID = "lcsr-overlay-root";
 

@@ -1,7 +1,7 @@
 import {defaultReviewMode} from "@libs/fsrs/reviewPolicy";
 import {getStudyStateSummary} from "@libs/fsrs/studyState";
 
-import {ReviewMode, StudyState} from "../../../../domain/types";
+import {ReviewMode, StudyState} from "../../../../../domain/types";
 import {
   OverlayHeaderStatus,
   OverlayHeaderStatusCard,
