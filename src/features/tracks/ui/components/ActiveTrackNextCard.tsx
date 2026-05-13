@@ -5,8 +5,9 @@ import Button, {ButtonProps} from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {TrackQuestionView} from "../../../../domain/views";
 import {difficultyTone, labelForStatus,} from "../../../../ui/presentation/studyState";
+
+import type {TrackQuestionView} from "../../domain/model";
 
 export interface ActiveTrackNextCardProps {
   actionLabel?: string;

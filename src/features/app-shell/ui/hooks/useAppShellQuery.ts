@@ -27,14 +27,19 @@ type FetchPayload<TPayload> = () => Promise<{
   error?: string;
 }>;
 
+/** Default fetcher — defined at module scope so the function identity
+ *  is stable across renders (preventing the `[fetchPayload]` →
+ *  `[load]` → effect re-subscribe loop in the dashboard). */
+const defaultFetchPayload: FetchPayload<AppShellPayload> = () =>
+  appShellRepository.fetchAppShell();
+
 /** Loads and caches a shared extension UI payload. The fetcher can be
  *  overridden so the popup hook can swap in the narrower fetch. */
 export function useAppShellQuery<
   TPayload extends PopupShellPayload = AppShellPayload,
 >(
   mockData: TPayload,
-  fetchPayload: FetchPayload<TPayload> = (() =>
-    appShellRepository.fetchAppShell()) as FetchPayload<TPayload>,
+  fetchPayload: FetchPayload<TPayload> = defaultFetchPayload as unknown as FetchPayload<TPayload>,
 ) {
   const [payload, setPayload] = useState<TPayload | null>(null);
   const [status, setStatus] = useState<UiStatus>({

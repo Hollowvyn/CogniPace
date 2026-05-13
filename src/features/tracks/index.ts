@@ -8,6 +8,15 @@ export type {
   GroupCompletion,
   TrackProgress,
   ComputeTrackProgressInput,
+  TrackView,
+  TrackGroupView,
+  TrackChapterView,
+  TrackChapterStatusView,
+  TrackQuestionView,
+  TrackQuestionStatusView,
+  TrackCardView,
+  TrackMembership,
+  ActiveTrackView,
 } from "./domain/model";
 export { computeTrackProgress } from "./domain/model";
 

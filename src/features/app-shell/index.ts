@@ -3,6 +3,8 @@ export type {
   PopupShellPayload,
   PopupViewData,
   UiStatus,
+  OpenedResponse,
+  PopupModeLabel,
 } from "./domain/model";
 
 export type { AppShellRepository } from "./data/repository/AppShellRepository";

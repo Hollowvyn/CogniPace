@@ -50,8 +50,7 @@ import {
   getStudyState,
   upsertStudyState,
 } from "@features/study/server";
-import { buildTrackCatalogSeed } from "@features/tracks/data/seed";
-import {
+import { buildTrackCatalogSeed ,
   addGroup as addGroupRepo,
   addProblemToGroup as addProblemToGroupRepo,
   createTrack as createTrackRepo,

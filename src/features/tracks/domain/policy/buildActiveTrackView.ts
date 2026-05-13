@@ -15,16 +15,19 @@ import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import {
   findCurrentSlugInGroup,
   trackQuestionStatus,
-} from "../views/utils/questionStatus";
+} from "./questionStatus";
 
-import type { Problem, StudyState } from "../types";
+import type { ActiveFocus } from "../model/ActiveFocus";
+import type { TrackGroupWithProblems } from "../model/TrackGroupWithProblems";
+import type { TrackWithGroups } from "../model/TrackWithGroups";
 import type {
   ActiveTrackView,
   TrackChapterView,
   TrackQuestionView,
   TrackView,
-} from "../views";
-import type { ActiveFocus , TrackGroupWithProblems, TrackWithGroups } from "@features/tracks";
+} from "../model/views";
+import type { Problem } from "@features/problems";
+import type { StudyState } from "@features/study";
 
 export interface BuildActiveTrackViewInput {
   activeFocus: ActiveFocus;

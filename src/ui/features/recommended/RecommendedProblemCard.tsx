@@ -1,11 +1,11 @@
 /** Reusable recommendation card shared by popup and dashboard surfaces. */
 import {SurfaceCard, ToneChip} from "@design-system/atoms";
+import {RecommendedProblemView} from "@features/problems";
 import Button, {ButtonProps} from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {ReactNode} from "react";
 
-import {RecommendedProblemView} from "../../../domain/views";
 import {difficultyTone, formatDisplayDate, recommendedTone,} from "../../presentation/studyState";
 
 export interface RecommendedProblemCardProps {

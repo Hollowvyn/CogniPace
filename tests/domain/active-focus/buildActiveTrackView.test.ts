@@ -1,3 +1,4 @@
+import { buildActiveTrackView } from "@features/tracks/server";
 import {
   asProblemSlug,
   asTrackGroupId,
@@ -5,12 +6,12 @@ import {
 } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
-import { buildActiveTrackView } from "../../../src/domain/active-focus/buildActiveTrackView";
 
 import type { Problem, StudyState } from "../../../src/domain/types";
-import type { TrackView } from "../../../src/domain/views";
-import type { ActiveFocus ,
+import type {
+  ActiveFocus,
   TrackGroupWithProblems,
+  TrackView,
   TrackWithGroups,
 } from "@features/tracks";
 

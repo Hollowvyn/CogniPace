@@ -9,7 +9,7 @@ import {
   formatDisplayDate,
 } from "../../../../ui/presentation/studyState";
 
-import type { AppShellPayload } from "../../../../domain/views";
+import type { AppShellPayload } from "@features/app-shell";
 
 export interface QueuePreviewProps {
   items: AppShellPayload["queue"]["items"];

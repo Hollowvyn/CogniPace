@@ -1,13 +1,14 @@
+import { createDefaultFilters } from "@features/problems/ui/components/problemsTable/types";
+import { applyFiltersAndSort } from "@features/problems/ui/components/problemsTable/useProblemsTable";
 import {
   asProblemSlug,
 } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
-import { createDefaultFilters } from "../../../src/ui/components/problemsTable/types";
-import { applyFiltersAndSort } from "../../../src/ui/components/problemsTable/useProblemsTable";
 
-import type { Difficulty, StudyPhase } from "../../../src/domain/types";
-import type { ProblemRowData } from "../../../src/ui/components/problemsTable/types";
+import type { Difficulty } from "@features/problems";
+import type { ProblemRowData } from "@features/problems/ui/components/problemsTable/types";
+import type { StudyPhase } from "@features/study";
 
 
 

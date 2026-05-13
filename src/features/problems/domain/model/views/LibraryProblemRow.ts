@@ -1,8 +1,7 @@
-
 import type { ProblemView } from "./ProblemView";
-import type { StudyStateView } from "./StudyStateView";
-import type { TrackMembership } from "./TrackMembership";
-import type { Problem } from "@features/problems";
+import type { Problem } from "../Problem";
+import type { StudyStateView } from "@features/study";
+import type { TrackMembership } from "@features/tracks";
 
 export interface LibraryProblemRow {
   /** Legacy v6 entity — kept until Phase F.3 cleanup; UI uses `view`. */

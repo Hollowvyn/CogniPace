@@ -1,4 +1,7 @@
-import type { AttemptHistoryEntry , Rating , ReviewLogFields , StudyStateSummary } from "@features/study";
+import type { AttemptHistoryEntry } from "../AttemptHistoryEntry";
+import type { Rating } from "../Rating";
+import type { ReviewLogFields } from "../ReviewLogFields";
+import type { StudyStateSummary } from "../StudyStateSummary";
 
 /**
  * Consolidated UI-ready view of a StudyState. Composes the FSRS-derived
@@ -6,7 +9,7 @@ import type { AttemptHistoryEntry , Rating , ReviewLogFields , StudyStateSummary
  * log fields (notes, pattern, complexities) and a pre-sliced
  * recent-attempts list. Mirrors `ProblemView`'s role for Problem — the
  * single shape every UI surface needs from a StudyState. Built via
- * `buildStudyStateView` in `domain/views/utils/hydrate.ts`.
+ * `buildStudyStateView` in the app-shell hydrate policy.
  */
 export interface StudyStateView extends StudyStateSummary, ReviewLogFields {
   /** Last N attempt history entries (newest last). Empty for fresh problems. */

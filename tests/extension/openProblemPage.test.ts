@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 
+import { openProblemPage } from "@features/problems/server";
 import { describe, it } from "vitest";
 
-import { openProblemPage } from "../../src/extension/background/handlers/problemHandlers";
 
 interface ChromeTabsMock {
   createdTabs: chrome.tabs.CreateProperties[];

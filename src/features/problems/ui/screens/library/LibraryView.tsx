@@ -19,10 +19,6 @@ import {
   resetProblemSchedule,
   suspendProblem,
 } from "../../../../../data/repositories/v7ActionRepository";
-import {
-  AppShellPayload,
-  LibraryProblemRow,
-} from "../../../../../domain/views";
 import { LibraryFilters } from "../../../../../ui/presentation/library";
 import {
   ProblemsTable,
@@ -32,6 +28,8 @@ import {
 
 import { EditProblemModal } from "./EditProblemModal";
 
+import type { LibraryProblemRow } from "../../../domain/model";
+import type { AppShellPayload } from "@features/app-shell";
 import type { ProblemSlug } from "@shared/ids";
 
 export interface LibraryViewProps {

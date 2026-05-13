@@ -1,6 +1,7 @@
 import type { CompanyLabel } from "./CompanyLabel";
 import type { TopicLabel } from "./TopicLabel";
-import type { EditableProblemField , Difficulty } from "@features/problems";
+import type { Difficulty } from "../Difficulty";
+import type { EditableProblemField } from "../EditableProblemField";
 
 
 /**

@@ -1,4 +1,8 @@
-export type { UserSettings, UserSettingsPatch } from "./domain/model";
+export type {
+  UserSettings,
+  UserSettingsPatch,
+  SettingsUpdateResponse,
+} from "./domain/model";
 
 export { updateSettings } from "./messaging/handlers";
 

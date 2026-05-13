@@ -1,30 +1,7 @@
 import type { Difficulty } from "./Difficulty";
-
-/** Fields the UI is allowed to edit on a Problem. */
-export type EditableProblemField =
-  | "title"
-  | "difficulty"
-  | "url"
-  | "topicIds"
-  | "companyIds"
-  | "isPremium"
-  | "leetcodeId";
-
-/** Sticky-edit flags. When a flag is `true`, the corresponding field
- *  survives subsequent imports (LeetCode never gets to overwrite it). */
-export type ProblemEditFlags = {
-  readonly [K in EditableProblemField]?: true;
-};
-
-export type ProblemEditPatch = Partial<{
-  title: string;
-  difficulty: Difficulty;
-  url: string;
-  topicIds: string[];
-  companyIds: string[];
-  isPremium: boolean;
-  leetcodeId: string;
-}>;
+import type { EditableProblemField } from "./EditableProblemField";
+import type { ProblemEditFlags } from "./ProblemEditFlags";
+import type { ProblemEditPatch } from "./ProblemEditPatch";
 
 /** v7 Problem — the actively-used shape. Keeps the v6 fields (`id`,
  *  `leetcodeSlug`, `topics`, `sourceSet`, `userEdits`) for legacy import

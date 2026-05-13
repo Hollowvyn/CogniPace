@@ -34,7 +34,7 @@ import type {
   CompanyLabel,
   ProblemView,
   TopicLabel,
-} from "../../../../../domain/views";
+} from "../../../domain/model";
 
 export interface EditProblemModalProps {
   open: boolean;

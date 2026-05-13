@@ -1,4 +1,4 @@
-import type { UserSettings } from "@features/settings";
+import type { UserSettings } from "../UserSettings";
 
 export interface SettingsUpdateResponse {
   settings: UserSettings;

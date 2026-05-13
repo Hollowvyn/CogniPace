@@ -1,5 +1,5 @@
 /** Overlay controller that composes page bootstrap, timer state, session state, and render-model shaping. */
-import { appShellRepository } from "@features/app-shell";
+import { appShellRepository, AppShellPayload } from "@features/app-shell";
 import {
   getProblemContext,
   openExtensionPage,
@@ -8,20 +8,20 @@ import {
 } from "@features/problems";
 import { createInitialUserSettings } from "@features/settings";
 import {
-  defaultReviewMode,
-  deriveQuickRating,
-  goalForDifficulty,
-} from "@libs/fsrs/reviewPolicy";
-import {
   getProblemSlugFromUrl,
   isStaleOverlayRequest,
   readProblemPageSnapshot,
 } from "@libs/screen-parsing/dom/leetcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+
 import { formatClock } from "../../../../domain/common/time";
 import { Rating, UserSettings } from "../../../../domain/types";
-import { AppShellPayload } from "../../../../domain/views";
+import {
+  defaultReviewMode,
+  deriveQuickRating,
+  goalForDifficulty,
+} from "../../domain/policy/reviewPolicy";
 
 import { draftsEqual } from "./controller/draftFields";
 import {

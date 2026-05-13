@@ -19,7 +19,7 @@ import { SurfaceCard } from "@design-system/atoms";
 import {
   ProblemsTable,
   type ProblemRowData,
-} from "@features/problems";
+ ProblemView } from "@features/problems";
 import { EditProblemModal } from "@features/problems/ui/screens/library/EditProblemModal";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -47,12 +47,8 @@ import {
   suspendProblem,
 } from "../../../../data/repositories/v7ActionRepository";
 
-import type {
-  AppShellPayload,
-  ProblemView,
-  TrackView,
-} from "../../../../domain/views";
-import type { ActiveFocus } from "../../domain/model";
+import type { ActiveFocus, TrackView } from "../../domain/model";
+import type { AppShellPayload } from "@features/app-shell";
 
 interface TracksViewProps {
   payload: AppShellPayload | null;

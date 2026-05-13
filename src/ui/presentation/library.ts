@@ -1,5 +1,5 @@
 /** Pure selectors and filter models for the dashboard library screen. */
-import { LibraryProblemRow } from "../../domain/views";
+import { LibraryProblemRow } from "@features/problems";
 
 export interface LibraryFilters {
   /** Active track filter — "all" or a TrackId. */

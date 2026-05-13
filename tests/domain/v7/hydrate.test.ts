@@ -1,3 +1,7 @@
+import {
+  buildProblemView,
+  buildTrackView,
+} from "@features/app-shell/server";
 import { applyEdit } from "@features/problems";
 import {
   asCompanyId,
@@ -8,10 +12,6 @@ import {
 } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
-import {
-  buildProblemView,
-  buildTrackView,
-} from "../../../src/domain/views/utils/hydrate";
 import {
   makeCompanyV7,
   makeProblemV7,

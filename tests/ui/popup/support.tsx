@@ -1,4 +1,5 @@
-import { PopupShellPayload } from "../../../src/domain/views";
+import { PopupShellPayload } from "@features/app-shell";
+
 import { PopupApp } from "../../../src/ui/screens/popup/PopupApp";
 import { makePayload } from "../support/appShellFixtures";
 import { render } from "../support/render";

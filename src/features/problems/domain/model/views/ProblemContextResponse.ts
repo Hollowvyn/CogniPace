@@ -1,4 +1,4 @@
-import type { Problem } from "@features/problems";
+import type { Problem } from "../Problem";
 import type { StudyState } from "@features/study";
 
 export interface ProblemContextResponse {

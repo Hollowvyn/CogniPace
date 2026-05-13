@@ -9,6 +9,14 @@ export type {
   EditableProblemField,
   ProblemEditFlags,
   ProblemEditPatch,
+  ProblemView,
+  RecommendedProblemView,
+  RecommendedReason,
+  LibraryProblemRow,
+  TopicLabel,
+  CompanyLabel,
+  ProblemContextResponse,
+  ProblemMutationResponse,
 } from "./domain/model";
 export {
   applyEdit,
@@ -56,4 +64,8 @@ export {
 
 export * from "./messaging/handlers";
 
-export { parseProblemInput } from "./data/repository/ProblemRepository";
+export {
+  parseProblemInput,
+  ensureProblem,
+  importProblemsIntoSet,
+} from "./data/repository/ProblemRepository";

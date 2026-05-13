@@ -9,6 +9,14 @@ export type {
   EditableProblemField,
   ProblemEditFlags,
   ProblemEditPatch,
+  ProblemView,
+  RecommendedProblemView,
+  RecommendedReason,
+  LibraryProblemRow,
+  TopicLabel,
+  CompanyLabel,
+  ProblemContextResponse,
+  ProblemMutationResponse,
 } from "./domain/model";
 export {
   applyEdit,

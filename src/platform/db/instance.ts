@@ -26,8 +26,10 @@
 
 import { listCatalogCompanySeeds , listCatalogPlans , buildProblemSeed , listCatalogTopicSeeds , seedCatalogCompanies , seedCatalogProblems , seedCatalogTopics } from "@features/problems/server";
 import { seedInitialSettings } from "@features/settings/server";
-import { buildTrackCatalogSeed } from "@features/tracks/data/seed";
-import { seedCatalogTracks } from "@features/tracks/server";
+import {
+  buildTrackCatalogSeed,
+  seedCatalogTracks,
+} from "@features/tracks/server";
 import { tick } from "@libs/event-bus";
 
 import { nowIso } from "../../domain/common/time";

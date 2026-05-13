@@ -1,7 +1,6 @@
+import type { ComputeTrackProgressInput } from "./ComputeTrackProgressInput";
 import type { GroupCompletion } from "./GroupCompletion";
-import type { StudyState } from "@features/study";
 import type { ProblemSlug, TrackGroupId, TrackId } from "@shared/ids";
-
 
 export interface TrackProgress {
   trackId: TrackId;
@@ -10,17 +9,6 @@ export interface TrackProgress {
   lastInteractedAt: string | null;
   /** Per-group completion counts. Used for `Topic · 5/10` tab labels. */
   groupCompletion: Record<TrackGroupId, GroupCompletion>;
-}
-
-export interface ComputeTrackProgressInput {
-  trackId: TrackId;
-  groups: ReadonlyArray<{
-    id: TrackGroupId;
-    problemSlugs: ReadonlyArray<ProblemSlug>;
-  }>;
-  /** Study states keyed by slug; only the slugs in this track need to be
-   * present — extras are ignored. */
-  studyStatesBySlug: Record<string, StudyState>;
 }
 
 /** Derived view; recomputed each read from study_states + attempt_history.

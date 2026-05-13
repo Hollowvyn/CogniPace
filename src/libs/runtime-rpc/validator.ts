@@ -3,7 +3,7 @@ import {
   isProblemPage,
   normalizeSlug,
   slugToUrl,
-} from "@features/problems";
+} from "@libs/leetcode";
 
 import { assertImportPayloadShape } from "../../data/importexport/backup";
 

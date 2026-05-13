@@ -11,16 +11,20 @@ import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
 
 import type {
+  Company,
   CompanyLabel,
+  EditableProblemField,
+  Problem,
   ProblemView,
-  StudyStateView,
+  Topic,
   TopicLabel,
+} from "@features/problems";
+import type { StudyState, StudyStateView } from "@features/study";
+import type {
   TrackGroupView,
   TrackView,
-} from "../../views";
-import type { Company , Problem, EditableProblemField , Topic } from "@features/problems";
-import type { StudyState } from "@features/study";
-import type { TrackWithGroups } from "@features/tracks";
+  TrackWithGroups,
+} from "@features/tracks";
 
 const EDITABLE_FIELDS_ORDER: readonly EditableProblemField[] = [
   "title",
@@ -205,4 +209,3 @@ function deriveEditedFields(problem: Problem): EditableProblemField[] {
   // Preserve declared order so UI badges are stable.
   return EDITABLE_FIELDS_ORDER.filter((field) => edited.includes(field));
 }
-

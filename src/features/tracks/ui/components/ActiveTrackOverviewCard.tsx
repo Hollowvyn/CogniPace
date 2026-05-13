@@ -16,11 +16,12 @@ import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { ActiveTrackView, TrackQuestionView } from "../../../../domain/views";
 import {
   difficultyTone,
   labelForStatus,
 } from "../../../../ui/presentation/studyState";
+
+import type { ActiveTrackView, TrackQuestionView } from "../../domain/model";
 
 export interface ActiveTrackOverviewCardProps {
   course: ActiveTrackView | null;

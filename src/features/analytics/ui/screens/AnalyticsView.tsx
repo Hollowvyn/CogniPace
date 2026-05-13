@@ -4,6 +4,7 @@ import {
   SurfaceCard,
   SurfaceTableContainer,
 } from "@design-system/atoms";
+import { AppShellPayload } from "@features/app-shell";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -15,7 +16,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
-import { AppShellPayload } from "../../../../domain/views";
 
 export interface AnalyticsViewProps {
   payload: AppShellPayload | null;

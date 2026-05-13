@@ -4,7 +4,8 @@
  * without pulling React/MUI in.
  */
 import type { Difficulty, StudyPhase } from "../../../../../domain/types";
-import type { ProblemView, StudyStateView } from "../../../../../domain/views";
+import type { ProblemView } from "../../../domain/model";
+import type { StudyStateView } from "@features/study";
 import type {
   CompanyId,
   ProblemSlug,

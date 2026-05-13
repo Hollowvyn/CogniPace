@@ -1,5 +1,5 @@
 import type { RecommendedReason } from "./RecommendedReason";
-import type { Difficulty } from "@features/problems";
+import type { Difficulty } from "../Difficulty";
 
 
 export interface RecommendedProblemView {

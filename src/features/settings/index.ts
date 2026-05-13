@@ -9,6 +9,7 @@ export type {
   TimingSettings,
   UserSettings,
   UserSettingsPatch,
+  SettingsUpdateResponse,
 } from "./domain/model";
 
 export {

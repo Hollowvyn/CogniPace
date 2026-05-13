@@ -11,14 +11,12 @@ import {
 } from "@design-system/atoms";
 import { cognipaceControlScale } from "@design-system/theme";
 import { UiStatus } from "@features/app-shell";
+import { ActiveTrackView, TrackQuestionView } from "@features/tracks";
 import CallMadeRounded from "@mui/icons-material/CallMadeRounded";
 import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-
-import { ActiveTrackView, TrackQuestionView } from "../../../../domain/views";
-
 
 import { popupSmallButtonSx } from "./popupStyles";
 

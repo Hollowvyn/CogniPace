@@ -1,6 +1,6 @@
 import type { PopupViewData } from "./PopupViewData";
-import type { ActiveTrackView } from "../../../../domain/views/ActiveTrackView";
 import type { UserSettings } from "@features/settings";
+import type { ActiveTrackView } from "@features/tracks";
 
 export interface PopupShellPayload {
   settings: UserSettings;

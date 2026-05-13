@@ -1,21 +1,25 @@
 /** Runtime-message response contract — SW returns to UI. */
 import type {
   AppShellPayload,
-  ImportSummaryResponse,
   OpenedResponse,
   PopupShellPayload,
-  ProblemContextResponse,
-  ProblemMutationResponse,
-  SaveReviewResultResponse,
-  SettingsUpdateResponse,
-  StudyHistoryResetResponse,
-  StudyStateMutationResponse,
-} from "../../../domain/views";
+} from "@features/app-shell";
 import type {
   ExportPayload,
   ImportedResponse,
+  ImportSummaryResponse,
 } from "@features/backup/server";
+import type {
+  ProblemContextResponse,
+  ProblemMutationResponse,
+} from "@features/problems";
 import type { TodayQueue } from "@features/queue/server";
+import type { SettingsUpdateResponse } from "@features/settings";
+import type {
+  SaveReviewResultResponse,
+  StudyHistoryResetResponse,
+  StudyStateMutationResponse,
+} from "@features/study";
 
 export interface MessageResponseMap {
   UPSERT_PROBLEM_FROM_PAGE: ProblemMutationResponse;

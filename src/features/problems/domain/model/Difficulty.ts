@@ -1,16 +1,10 @@
+/** Difficulty value type + `parseDifficulty` re-exported from
+ *  `@libs/leetcode`. Settings-aware `difficultyGoalMs` stays in the
+ *  features layer (it depends on a settings-feature type). */
 import type { DifficultyGoalSettings } from "@features/settings";
+import type { Difficulty } from "@libs/leetcode";
 
-export type Difficulty = "Easy" | "Medium" | "Hard" | "Unknown";
-
-/** Parses a raw difficulty label into the supported domain union. */
-export function parseDifficulty(input?: string): Difficulty {
-  if (!input) return "Unknown";
-  const normalized = input.trim().toLowerCase();
-  if (normalized.includes("easy")) return "Easy";
-  if (normalized.includes("medium")) return "Medium";
-  if (normalized.includes("hard")) return "Hard";
-  return "Unknown";
-}
+export { parseDifficulty, type Difficulty } from "@libs/leetcode";
 
 /** Baseline solve-time goal used by the overlay quick-rating heuristics. */
 export function difficultyGoalMs(

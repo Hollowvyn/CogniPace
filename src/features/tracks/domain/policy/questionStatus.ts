@@ -6,8 +6,12 @@
  */
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
-import type { Problem, StudyState } from "../../types";
-import type { TrackChapterStatusView, TrackQuestionStatusView } from "../../views";
+import type {
+  TrackChapterStatusView,
+  TrackQuestionStatusView,
+} from "../model/views";
+import type { Problem } from "@features/problems";
+import type { StudyState } from "@features/study";
 
 export interface TrackQuestionStatusInput {
   slug: string;
@@ -47,4 +51,3 @@ export function findCurrentSlugInGroup(
   );
   return current ?? null;
 }
-

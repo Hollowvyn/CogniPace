@@ -1,5 +1,5 @@
 import type { TodayQueue } from "./TodayQueue";
-import type { RecommendedProblemView } from "../../../../domain/views/RecommendedProblemView";
+import type { RecommendedProblemView } from "@features/problems";
 
 export function buildRecommendedCandidates(
   queue: TodayQueue,

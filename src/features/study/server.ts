@@ -8,6 +8,10 @@ export type {
   ReviewLogFields,
   FsrsCardState,
   FsrsCardSnapshot,
+  StudyStateView,
+  SaveReviewResultResponse,
+  StudyStateMutationResponse,
+  StudyHistoryResetResponse,
 } from "./domain/model";
 export { createDefaultStudyState } from "./domain/model";
 

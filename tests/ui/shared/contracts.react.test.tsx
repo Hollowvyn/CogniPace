@@ -1,7 +1,7 @@
 import {
   defaultReviewMode,
   deriveQuickRating,
-} from "@libs/fsrs/reviewPolicy";
+} from "@features/overlay-session/domain/policy/reviewPolicy";
 import { describe, expect, it } from "vitest";
 
 import { StudyState } from "../../../src/domain/types";

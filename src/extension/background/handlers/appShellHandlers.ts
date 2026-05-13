@@ -3,6 +3,11 @@ import {
   computeReviewStreakDays,
   summarizeAnalytics,
 } from "@features/analytics/server";
+import {
+  buildProblemView,
+  buildStudyStateView,
+  buildTrackView,
+} from "@features/app-shell/server";
 import { slugToTitle, slugToUrl } from "@features/problems";
 import { listCompanies , listProblems , listTopics } from "@features/problems/server";
 import {
@@ -12,32 +17,28 @@ import {
 } from "@features/queue/server";
 import { getUserSettings } from "@features/settings/server";
 import { listStudyStates } from "@features/study/server";
-import { listTracks } from "@features/tracks/server";
+import { buildActiveTrackView, listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
 
 
 import { getAppData } from "../../../data/repositories/appDataRepository";
-import { buildActiveTrackView } from "../../../domain/active-focus/buildActiveTrackView";
-import {
-  ActiveTrackView,
-  AppShellPayload,
-  TrackCardView,
-  LibraryProblemRow,
-  PopupShellPayload,
-  TrackMembership,
-  TrackView,
-} from "../../../domain/views";
-import {
-  buildProblemView,
-  buildStudyStateView,
-  buildTrackView,
-} from "../../../domain/views/utils/hydrate";
 import { ok } from "../responses";
 
 import type { AppData, Problem } from "../../../domain/types";
-import type { Company , Topic } from "@features/problems";
-import type { TrackWithGroups } from "@features/tracks";
+import type { AppShellPayload, PopupShellPayload } from "@features/app-shell";
+import type {
+  Company,
+  LibraryProblemRow,
+  Topic,
+} from "@features/problems";
+import type {
+  ActiveTrackView,
+  TrackCardView,
+  TrackMembership,
+  TrackView,
+  TrackWithGroups,
+} from "@features/tracks";
 
 /**
  * Loads topics + companies + settings + problems + studyStates from

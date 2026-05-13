@@ -8,3 +8,10 @@ export type { ReviewMode } from "./ReviewMode";
 export type { ReviewLogFields } from "./ReviewLogFields";
 export type { FsrsCardState } from "./FsrsCardState";
 export type { FsrsCardSnapshot } from "./FsrsCardSnapshot";
+
+export type {
+  StudyStateView,
+  SaveReviewResultResponse,
+  StudyStateMutationResponse,
+  StudyHistoryResetResponse,
+} from "./views";

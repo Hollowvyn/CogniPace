@@ -1,4 +1,4 @@
-import type { ProblemView } from "./ProblemView";
+import type { ProblemView } from "@features/problems";
 
 export interface TrackGroupView {
   id: string;

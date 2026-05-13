@@ -18,3 +18,5 @@ export type { MemoryReviewSettings } from "./MemoryReviewSettings";
 export type { QuestionFilterSettings } from "./QuestionFilterSettings";
 export type { TimingSettings } from "./TimingSettings";
 export type { ExperimentalSettings } from "./ExperimentalSettings";
+
+export type { SettingsUpdateResponse } from "./views";

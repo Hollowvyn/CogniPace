@@ -1,7 +1,7 @@
 /** Popup-local state and actions for the recommendation-first surface. */
 import { useDI } from "@app/di";
 import { appShellRepository, useAppShellQuery } from "@features/app-shell";
-import { openProblemPage } from "@features/problems";
+import { openProblemPage, RecommendedProblemView } from "@features/problems";
 import { startTransition, useMemo, useRef, useState } from "react";
 
 import {
@@ -9,7 +9,6 @@ import {
   openSettingsPage,
 } from "../../../data/repositories/extensionNavigationRepository";
 import { StudyMode } from "../../../domain/types";
-import { RecommendedProblemView } from "../../../domain/views";
 import { createMockPopupShellPayload } from "../../mockData";
 
 function currentRecommended(
@@ -23,6 +22,15 @@ function currentRecommended(
 
   return candidates[recommendedIndex % candidates.length] ?? candidates[0];
 }
+
+/** Module-level fetcher so its identity is stable across renders.
+ *  Inlining `() => appShellRepository.fetchPopupShell()` as the
+ *  `useAppShellQuery` argument made the function new each render,
+ *  which made `load` new each render, which made the tick-subscription
+ *  effect re-subscribe and re-fetch on every render — an infinite
+ *  re-render loop the test "rolls back mode changes when runtime
+ *  messaging rejects" surfaces. */
+const fetchPopupShell = () => appShellRepository.fetchPopupShell();
 
 function popupErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
@@ -42,7 +50,7 @@ export function usePopupController() {
   const mockPayload = useMemo(() => createMockPopupShellPayload(), []);
   const { load, payload, setPayload, setStatus, status } = useAppShellQuery(
     mockPayload,
-    () => appShellRepository.fetchPopupShell(),
+    fetchPopupShell,
   );
   const [recommendedIndex, setRecommendedIndex] = useState(0);
   const [pendingStudyMode, setPendingStudyMode] = useState<StudyMode | null>(
