@@ -10,7 +10,6 @@ export type DashboardView =
 export interface DashboardRoute {
   copy: string;
   label: string;
-  title: string;
   view: DashboardView;
 }
 
@@ -19,31 +18,26 @@ export const dashboardRoutes: DashboardRoute[] = [
   {
     view: "dashboard",
     label: "Dashboard",
-    title: "Dashboard",
     copy: "The best next move for retention and the live state of your active path.",
   },
   {
     view: "tracks",
     label: "Tracks",
-    title: "Tracks",
     copy: "Active track at the top, group-by-group progression, and intake for curated paths.",
   },
   {
     view: "library",
     label: "Library",
-    title: "Library",
     copy: "Inspect every tracked problem, its review state, and course membership.",
   },
   {
     view: "analytics",
     label: "Analytics",
-    title: "Analytics",
     copy: "Retention, due load, weakest items, and course completion signals.",
   },
   {
     view: "settings",
     label: "Settings",
-    title: "Control Center",
     copy: "Global configuration for review cadence, automation behavior, and alerts.",
   },
 ];

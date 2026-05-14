@@ -54,3 +54,5 @@ export {
   ProblemsTable,
   type ProblemRowData,
 } from "./ui/components/problemsTable";
+export { RecommendedProblemCard } from "./ui/components/RecommendedProblemCard";
+export type { RecommendedProblemCardProps } from "./ui/components/RecommendedProblemCard";

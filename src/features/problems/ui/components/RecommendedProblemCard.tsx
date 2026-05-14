@@ -1,12 +1,12 @@
-/** Reusable recommendation card shared by popup and dashboard surfaces. */
-import {SurfaceCard, ToneChip} from "@design-system/atoms";
-import {RecommendedProblemView} from "@features/problems";
-import Button, {ButtonProps} from "@mui/material/Button";
+/** Recommendation card shared by popup, dashboard overview, and overlay post-submit. */
+import { SurfaceCard, ToneChip } from "@design-system/atoms";
+import { RecommendedProblemView } from "@features/problems";
+import Button, { ButtonProps } from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import {ReactNode} from "react";
+import { ReactNode } from "react";
 
-import {difficultyTone, formatDisplayDate, recommendedTone,} from "../../presentation/studyState";
+import { difficultyTone, formatDisplayDate, recommendedTone } from "../../../../ui/presentation/studyState";
 
 export interface RecommendedProblemCardProps {
   buttonFullWidth?: boolean;
@@ -17,9 +17,7 @@ export interface RecommendedProblemCardProps {
   emptyTitle?: string;
   headerAction?: ReactNode;
   helper?: ReactNode;
-  onOpenProblem: (
-    target: Pick<RecommendedProblemView, "slug">
-  ) => Promise<void> | void;
+  onOpenProblem: (target: Pick<RecommendedProblemView, "slug">) => Promise<void> | void;
   recommended: RecommendedProblemView | null;
   showNextReviewDate?: boolean;
 }
@@ -73,7 +71,7 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
             tone={recommendedTone(recommended.reason)}
           />
           {recommended.alsoCourseNext ? (
-            <ToneChip label="Also next in course" tone="success"/>
+            <ToneChip label="Also next in course" tone="success" />
           ) : null}
         </Stack>
         {showNextReviewDate ? (
@@ -86,7 +84,7 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
         <Button
           fullWidth={buttonFullWidth}
           onClick={() => {
-            void onOpenProblem({slug: recommended.slug});
+            void onOpenProblem({ slug: recommended.slug });
           }}
           size={compact ? "small" : "medium"}
           variant={buttonVariant}

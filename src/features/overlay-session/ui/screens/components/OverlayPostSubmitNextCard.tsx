@@ -1,11 +1,11 @@
 import {FieldAssistRow, SurfaceCard} from "@design-system/atoms";
+import { RecommendedProblemCard } from "@features/problems";
 import {ActiveTrackNextCard} from "@features/tracks";
 import Collapse from "@mui/material/Collapse";
 import Fade from "@mui/material/Fade";
 import Stack from "@mui/material/Stack";
 import {useEffect, useRef} from "react";
 
-import {RecommendedProblemCard} from "../../../../../ui/features/recommended/RecommendedProblemCard";
 import {OverlayPostSubmitNextViewModel} from "../overlayPanel.types";
 
 export function OverlayPostSubmitNextCard(

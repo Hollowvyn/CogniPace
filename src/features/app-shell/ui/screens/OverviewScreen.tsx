@@ -1,8 +1,7 @@
-/** Dashboard overview screen — recommendation, metrics, queue, and a
- * consolidated active-track card (track progress + next-up problem in
- * a single card so the page doesn't repeat track context twice). */
+/** Dashboard overview — recommendation, metrics, queue, and active-track card.
+ *  Driven by `useOverviewVM` per the canonical Screen+VM pattern. */
 import { MetricCard, SurfaceCard, ToneChip } from "@design-system/atoms";
-import { AppShellPayload } from "@features/app-shell";
+import { RecommendedProblemCard } from "@features/problems";
 import { QueuePreview } from "@features/queue";
 import { ActiveTrackOverviewCard } from "@features/tracks";
 import Button from "@mui/material/Button";
@@ -10,77 +9,61 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { useOverviewVM, UseOverviewVMInput } from "../hooks/useOverviewVM";
 
-import { RecommendedProblemCard } from "../../../ui/features/recommended/RecommendedProblemCard";
-import { DashboardView } from "../navigation/routes";
+export type OverviewScreenProps = UseOverviewVMInput;
 
-export interface OverviewViewProps {
-  onOpenProblem: (target: {
-    chapterId?: string;
-    courseId?: string;
-    slug: string;
-  }) => Promise<void>;
-  onSetView: (view: DashboardView) => void;
-  onToggleMode: () => Promise<void>;
-  payload: AppShellPayload | null;
-}
-
-export function OverviewView(props: OverviewViewProps) {
-  const course = props.payload?.activeTrack ?? null;
-  const recommended = props.payload?.popup.recommended ?? null;
+export function OverviewScreen(props: OverviewScreenProps) {
+  const model = useOverviewVM(props);
 
   return (
     <Grid container spacing={2}>
       <Grid size={{ lg: 8, xs: 12 }}>
         <Stack spacing={2}>
           <RecommendedProblemCard
-            onOpenProblem={props.onOpenProblem}
-            recommended={recommended}
+            onOpenProblem={model.onOpenProblem}
+            recommended={model.recommended}
           />
           <Grid container spacing={2}>
             <Grid size={{ md: 4, xs: 12 }}>
               <MetricCard
                 caption="Live pressure on the queue."
                 label="Due Today"
-                value={props.payload?.queue.dueCount ?? 0}
+                value={model.dueCount}
               />
             </Grid>
             <Grid size={{ md: 4, xs: 12 }}>
               <MetricCard
                 caption="Consecutive review days."
                 label="Day Streak"
-                value={props.payload?.analytics.streakDays ?? 0}
+                value={model.streakDays}
               />
             </Grid>
             <Grid size={{ md: 4, xs: 12 }}>
               <MetricCard
                 caption="Cards currently scheduled in FSRS review state."
                 label="Review Cards"
-                value={props.payload?.analytics.phaseCounts.Review ?? 0}
+                value={model.reviewCardCount}
               />
             </Grid>
           </Grid>
           <ActiveTrackOverviewCard
-            course={course}
-            studyMode={props.payload?.settings.studyMode ?? "studyPlan"}
-            onOpenProblem={props.onOpenProblem}
-            onOpenTracks={() => props.onSetView("tracks")}
+            course={model.activeTrack}
+            studyMode={model.studyMode}
+            onOpenProblem={model.onOpenProblem}
+            onOpenTracks={model.onGoToTracks}
             onToggleStudyMode={() => {
-              void props.onToggleMode();
+              void model.onToggleMode();
             }}
           />
           <SurfaceCard
-            action={
-              <ToneChip
-                label={`${props.payload?.queue.items.length ?? 0} items`}
-              />
-            }
+            action={<ToneChip label={`${model.queueItems.length} items`} />}
             label="Today Queue"
             title="Live Intake"
           >
             <QueuePreview
-              items={props.payload?.queue.items ?? []}
-              onOpenProblem={props.onOpenProblem}
+              items={model.queueItems}
+              onOpenProblem={model.onOpenProblem}
             />
           </SurfaceCard>
         </Stack>
@@ -91,26 +74,19 @@ export function OverviewView(props: OverviewViewProps) {
           <SurfaceCard label="Protocol" title="Review Surface">
             <Stack spacing={2}>
               <Typography color="text.secondary" variant="body2">
-                Study mode: {props.payload?.settings.studyMode ?? "studyPlan"} ·
-                Order:{" "}
-                {props.payload?.settings.memoryReview.reviewOrder ?? "dueFirst"}{" "}
-                · Timer + submit is fully manual.
+                Study mode: {model.studyMode} · Order: {model.reviewOrder} ·
+                Timer + submit is fully manual.
               </Typography>
               <Stack direction={{ md: "row", xs: "column" }} spacing={1}>
                 <Button
                   onClick={() => {
-                    void props.onToggleMode();
+                    void model.onToggleMode();
                   }}
                   variant="outlined"
                 >
                   Toggle Study Mode
                 </Button>
-                <Button
-                  onClick={() => {
-                    props.onSetView("settings");
-                  }}
-                  variant="text"
-                >
+                <Button onClick={model.onGoToSettings} variant="text">
                   Open Settings
                 </Button>
               </Stack>

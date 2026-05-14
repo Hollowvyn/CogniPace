@@ -1,14 +1,14 @@
-/** Overlay surface shell — binds the panel's VM to the panel itself.
- *  Driven by `useOverlayPanelVM` per the canonical Screen+VM pattern.
- *  The shadow-root host and emotion cache are owned by
- *  `createOverlayHost` and the entrypoint; the shell stays React-only. */
+/** Overlay surface shell — driven by `useOverlayShellVM` per the canonical
+ *  Screen+VM pattern. Shadow-root host and emotion cache live in
+ *  `createOverlayHost` and the entrypoint; this shell is React-only. */
+import { OverlayPanel } from "@features/overlay-session";
+
 import {
-  OverlayPanel,
-  OverlayPanelEnvironment,
-  useOverlayPanelVM,
-} from "@features/overlay-session";
+  useOverlayShellVM,
+  type OverlayPanelEnvironment,
+} from "./useOverlayShellVM";
 
 export function OverlayShell(environment: OverlayPanelEnvironment) {
-  const { renderModel } = useOverlayPanelVM(environment);
+  const { renderModel } = useOverlayShellVM(environment);
   return renderModel ? <OverlayPanel renderModel={renderModel} /> : null;
 }

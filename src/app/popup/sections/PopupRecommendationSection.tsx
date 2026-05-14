@@ -6,11 +6,10 @@ import {
   ToneChip,
 } from "@design-system/atoms";
 import { UiStatus } from "@features/app-shell";
-import { RecommendedProblemView } from "@features/problems";
+import { RecommendedProblemView , RecommendedProblemCard } from "@features/problems";
 import ShuffleRounded from "@mui/icons-material/ShuffleRounded";
 import Stack from "@mui/material/Stack";
 
-import { RecommendedProblemCard } from "../../../ui/features/recommended/RecommendedProblemCard";
 import { difficultyTone } from "../../../ui/presentation/studyState";
 
 function RecommendationHeaderAction(props: {

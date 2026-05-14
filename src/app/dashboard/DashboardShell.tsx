@@ -1,6 +1,7 @@
 /** Dashboard surface shell — composes feature screens. Driven by
  *  `useDashboardShellVM` per the canonical Screen+VM pattern. */
 import { AnalyticsScreen } from "@features/analytics";
+import { OverviewScreen } from "@features/app-shell";
 import { LibraryScreen } from "@features/problems";
 import { SettingsScreen as SettingsView } from "@features/settings";
 import { TracksScreen as TracksView } from "@features/tracks";
@@ -10,7 +11,6 @@ import Stack from "@mui/material/Stack";
 import { DashboardHeader } from "./sections/DashboardHeader";
 import { DashboardRail } from "./sections/DashboardRail";
 import { DashboardFrame } from "./sections/DashboardSurface";
-import { OverviewView } from "./sections/OverviewView";
 import { PreV7BackupSnackbar } from "./sections/PreV7BackupSnackbar";
 import { useDashboardShellVM } from "./useDashboardShellVM";
 
@@ -43,9 +43,10 @@ export function DashboardShell() {
             />
 
             {controller.view === "dashboard" ? (
-              <OverviewView
+              <OverviewScreen
+                onGoToSettings={() => controller.navigateToView("settings")}
+                onGoToTracks={() => controller.navigateToView("tracks")}
                 onOpenProblem={controller.onOpenProblem}
-                onSetView={controller.navigateToView}
                 onToggleMode={controller.onToggleMode}
                 payload={controller.payload}
               />

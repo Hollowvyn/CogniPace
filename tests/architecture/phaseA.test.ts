@@ -67,22 +67,19 @@ describe("architecture / Phase A — surface shells + Screen+VM pattern", () => 
     }
   });
 
-  it("each surface shell ships a sibling use*ShellVM.ts (or panel VM)", () => {
-    // Popup and Dashboard own ShellVMs. Overlay's React-shell is thin
-    // (no host-level state today) and delegates to the panel's VM, which
-    // lives in features/overlay-session/ui/hooks/useOverlayPanelVM.ts.
+  it("each surface shell ships a sibling use*ShellVM.ts", () => {
     const popupVm = path.join(repoRoot, "src/app/popup/usePopupShellVM.ts");
     const dashboardVm = path.join(
       repoRoot,
       "src/app/dashboard/useDashboardShellVM.ts",
     );
-    const overlayPanelVm = path.join(
+    const overlayVm = path.join(
       repoRoot,
-      "src/features/overlay-session/ui/hooks/useOverlayPanelVM.ts",
+      "src/app/overlay/useOverlayShellVM.ts",
     );
     expect(fs.existsSync(popupVm), rel(popupVm)).toBe(true);
     expect(fs.existsSync(dashboardVm), rel(dashboardVm)).toBe(true);
-    expect(fs.existsSync(overlayPanelVm), rel(overlayPanelVm)).toBe(true);
+    expect(fs.existsSync(overlayVm), rel(overlayVm)).toBe(true);
   });
 
   it("src/app/<surface>/ never imports @platform/db, drizzle-orm, or a feature's data/datasource/", () => {

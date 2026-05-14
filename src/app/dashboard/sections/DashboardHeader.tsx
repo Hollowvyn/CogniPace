@@ -36,7 +36,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
             <Typography color="text.secondary" variant="overline">
               {props.route.label.toUpperCase()}
             </Typography>
-            <Typography variant="h4">{props.route.title}</Typography>
+            <Typography variant="h4">{props.route.label}</Typography>
             <Typography
               color="text.secondary"
               sx={{
