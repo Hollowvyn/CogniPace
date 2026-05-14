@@ -47,7 +47,9 @@ export {
 // UI-side catalog actions (parse input, etc.) the dashboard library uses.
 export { parseProblemInput } from "./data/repository/ProblemRepository";
 
-export { LibraryView as LibraryScreen } from "./ui/screens/library/LibraryView";
+export { LibraryScreen } from "./ui/screens/library/LibraryScreen";
+export { useLibraryVM } from "./ui/hooks/useLibraryVM";
+export type { LibraryScreenModel } from "./ui/hooks/useLibraryVM";
 export {
   ProblemsTable,
   type ProblemRowData,

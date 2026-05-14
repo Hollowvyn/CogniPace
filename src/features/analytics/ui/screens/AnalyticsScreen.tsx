@@ -1,3 +1,6 @@
+/** Analytics screen — read-only summary of FSRS signals, weak items,
+ *  and due forecast. Driven by `useAnalyticsVM` per the canonical
+ *  Screen+VM pattern. */
 import {
   InsetSurface,
   MetricCard,
@@ -16,16 +19,14 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
+import { useAnalyticsVM } from "../hooks/useAnalyticsVM";
 
-export interface AnalyticsViewProps {
+export interface AnalyticsScreenProps {
   payload: AppShellPayload | null;
 }
 
-export function AnalyticsView(props: AnalyticsViewProps) {
-  const payload = props.payload;
-  const weakest = payload?.analytics.weakestProblems ?? [];
-  const dueByDay = payload?.analytics.dueByDay ?? [];
-  const maxDue = Math.max(1, ...dueByDay.map((point) => point.count));
+export function AnalyticsScreen(props: AnalyticsScreenProps) {
+  const model = useAnalyticsVM(props.payload);
 
   return (
     <Stack spacing={2}>
@@ -34,21 +35,21 @@ export function AnalyticsView(props: AnalyticsViewProps) {
           <MetricCard
             caption="Consecutive active review days."
             label="Streak"
-            value={payload?.analytics.streakDays ?? 0}
+            value={model.streakDays}
           />
         </Grid>
         <Grid size={{ md: 4, xs: 12 }}>
           <MetricCard
             caption="Scheduler events logged across the library."
             label="Total Reviews"
-            value={payload?.analytics.totalReviews ?? 0}
+            value={model.totalReviews}
           />
         </Grid>
         <Grid size={{ md: 4, xs: 12 }}>
           <MetricCard
             caption="Recent ratings at Good or Easy."
             label="Retention Proxy"
-            value={`${Math.round((payload?.analytics.retentionProxy ?? 0) * 100)}%`}
+            value={`${model.retentionProxyPct}%`}
           />
         </Grid>
       </Grid>
@@ -65,8 +66,7 @@ export function AnalyticsView(props: AnalyticsViewProps) {
                 </Typography>
                 <Box>
                   <Typography variant="h3">
-                    {Math.round((payload?.analytics.retentionProxy ?? 0) * 100)}
-                    %
+                    {model.retentionProxyPct}%
                   </Typography>
                 </Box>
               </Stack>
@@ -80,7 +80,7 @@ export function AnalyticsView(props: AnalyticsViewProps) {
                   Higher FSRS difficulty means a problem is harder to retain.
                 </Typography>
                 <Stack spacing={1}>
-                  {weakest.slice(0, 5).map((problem) => (
+                  {model.weakest.slice(0, 5).map((problem) => (
                     <Box key={problem.slug}>
                       <Stack
                         alignItems="center"
@@ -102,7 +102,7 @@ export function AnalyticsView(props: AnalyticsViewProps) {
                       />
                     </Box>
                   ))}
-                  {weakest.length === 0 ? (
+                  {model.weakest.length === 0 ? (
                     <Typography color="text.secondary" variant="body2">
                       No problem data yet.
                     </Typography>
@@ -116,7 +116,7 @@ export function AnalyticsView(props: AnalyticsViewProps) {
 
       <SurfaceCard label="Due Forecast" title="Next 14 Days">
         <Grid container spacing={2}>
-          {dueByDay.map((point) => (
+          {model.dueByDay.map((point) => (
             <Grid key={point.date} size={{ md: 6, xl: 4, xs: 12 }}>
               <InsetSurface sx={{ p: 2 }}>
                 <Stack spacing={1.25}>
@@ -132,7 +132,7 @@ export function AnalyticsView(props: AnalyticsViewProps) {
                     <Typography variant="h6">{point.count}</Typography>
                   </Stack>
                   <LinearProgress
-                    value={(point.count / maxDue) * 100}
+                    value={(point.count / model.maxDuePerDay) * 100}
                     variant="determinate"
                   />
                 </Stack>
@@ -153,14 +153,14 @@ export function AnalyticsView(props: AnalyticsViewProps) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {weakest.map((problem) => (
+              {model.weakest.map((problem) => (
                 <TableRow key={problem.slug}>
                   <TableCell>{problem.title}</TableCell>
                   <TableCell>{problem.lapses}</TableCell>
                   <TableCell>{problem.difficulty.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
-              {weakest.length === 0 ? (
+              {model.weakest.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3}>
                     <Typography color="text.secondary" variant="body2">

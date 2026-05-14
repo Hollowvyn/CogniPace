@@ -1,7 +1,7 @@
 /** Dashboard surface shell — composes feature screens. Driven by
  *  `useDashboardShellVM` per the canonical Screen+VM pattern. */
-import { AnalyticsScreen as AnalyticsView } from "@features/analytics";
-import { LibraryScreen as LibraryView } from "@features/problems";
+import { AnalyticsScreen } from "@features/analytics";
+import { LibraryScreen } from "@features/problems";
 import { SettingsScreen as SettingsView } from "@features/settings";
 import { TracksScreen as TracksView } from "@features/tracks";
 import Box from "@mui/material/Box";
@@ -61,7 +61,7 @@ export function DashboardShell() {
             ) : null}
 
             {controller.view === "analytics" ? (
-              <AnalyticsView payload={controller.payload} />
+              <AnalyticsScreen payload={controller.payload} />
             ) : null}
 
             {controller.view === "settings" ? (
@@ -80,11 +80,10 @@ export function DashboardShell() {
             ) : null}
 
             {controller.view === "library" ? (
-              <LibraryView
+              <LibraryScreen
                 filters={controller.filters}
                 onEnablePremium={controller.onEnablePremium}
                 onFilterChange={controller.setFilters}
-                onOpenProblem={controller.onOpenProblem}
                 onRefresh={controller.refresh}
                 payload={controller.payload}
                 rows={controller.rows}
