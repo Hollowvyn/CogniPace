@@ -17,9 +17,9 @@ import {
 import { getUserSettings } from "@features/settings/server";
 import { listStudyStates } from "@features/study/server";
 import { buildActiveTrackView, listTracks } from "@features/tracks/server";
-import { ResultAsync , toErrMsg } from "@libs/result";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
+import { ResultAsync } from "neverthrow";
 
 import { getAppData } from "../../../data/repositories/appDataRepository";
 import {
@@ -43,6 +43,8 @@ import type {
   TrackView,
   TrackWithGroups,
 } from "@features/tracks";
+
+const toErrMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   const { db } = await getDb();

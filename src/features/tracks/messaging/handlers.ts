@@ -1,8 +1,8 @@
 /** Service-worker handlers for Track CRUD operations. */
 import { getUserSettings, saveUserSettings } from "@features/settings/server";
-import { ResultAsync , toErrMsg } from "@libs/result";
 import { getDb } from "@platform/db/instance";
 import { asTrackId } from "@shared/ids";
+import { ResultAsync } from "neverthrow";
 
 import {
   createTrack,
@@ -10,6 +10,8 @@ import {
   getTrackHeader,
   updateTrack,
 } from "../data/datasource/TrackDataSource";
+
+const toErrMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 export interface CreateTrackPayload {
   name: string;

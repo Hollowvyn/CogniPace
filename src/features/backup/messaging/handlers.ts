@@ -31,7 +31,6 @@ import {
   listTracks,
 } from "@features/tracks/server";
 import { normalizeStudyState } from "@libs/fsrs/studyState";
-import { ResultAsync , toErrMsg } from "@libs/result";
 import {
   readLocalStorage,
   removeLocalStorage,
@@ -46,6 +45,7 @@ import {
   asTrackId,
 } from "@shared/ids";
 import { uniqueStrings } from "@shared/strings";
+import { ResultAsync } from "neverthrow";
 
 import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import {
@@ -56,6 +56,8 @@ import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../data/repositories/v7/co
 
 import type { ExportPayload } from "../domain/model";
 import type { Company, Topic } from "@features/problems";
+
+const toErrMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 function topicIdsFromLabels(labels: readonly string[]): string[] {
   const out: string[] = [];

@@ -22,7 +22,6 @@ import {
   getStudyStateSummary,
   normalizeReviewLogFields,
 } from "@libs/fsrs/studyState";
-import { ResultAsync , toErrMsg } from "@libs/result";
 import { canonicalProblemUrlForOpen } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
 import { nowIso } from "@platform/time";
@@ -34,6 +33,7 @@ import {
   type CompanyId,
   type TopicId,
 } from "@shared/ids";
+import { ResultAsync } from "neverthrow";
 
 import { upsertCompany } from "../data/datasource/CompanyDataSource";
 import {
@@ -48,6 +48,7 @@ import { isProblemPage, normalizeSlug } from "../domain/model";
 
 import type { ProblemEditPatch } from "../domain/model";
 
+const toErrMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 // ---------- Helpers ----------
 

@@ -1,6 +1,6 @@
 /** Shared runtime response helpers for background handlers. */
-import { ResultAsync } from "@libs/result";
 import { RuntimeResponse } from "@libs/runtime-rpc/client";
+import { ResultAsync } from "neverthrow";
 
 /** Converts a feature handler's ResultAsync into the wire envelope. */
 export async function toEnvelope<T>(

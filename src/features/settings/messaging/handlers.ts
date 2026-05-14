@@ -1,5 +1,6 @@
-import { ResultAsync , toErrMsg } from "@libs/result";
 import { getDb } from "@platform/db/instance";
+import { ResultAsync } from "neverthrow";
+
 
 import { getUserSettings, saveUserSettings } from "../data/datasource/SettingsDataSource";
 import {
@@ -7,6 +8,8 @@ import {
   mergeUserSettings,
   type UserSettingsPatch,
 } from "../domain/model";
+
+const toErrMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 export function updateSettings(
   payload: Record<string, unknown>,
