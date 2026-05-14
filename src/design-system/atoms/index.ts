@@ -8,7 +8,6 @@ export { ProgressTrack } from "./chip/ProgressTrack";
 export { ToneChip } from "./chip/ToneChip";
 export { FieldAssistRow } from "./feedback/FieldAssistRow";
 export { InlineStatusRegion } from "./feedback/InlineStatusRegion";
-export { StatusBanner } from "./feedback/StatusBanner";
 export { StatusSurface } from "./feedback/StatusSurface";
 export { SurfaceSectionLabel } from "./labels/SurfaceSectionLabel";
 export { InsetSurface } from "./layout/InsetSurface";

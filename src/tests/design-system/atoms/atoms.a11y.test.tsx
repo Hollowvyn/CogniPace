@@ -20,7 +20,6 @@ import {
   MetricCard,
   NumericDisplay,
   ProgressTrack,
-  StatusBanner,
   StatusSurface,
   SurfaceCard,
   SurfaceDivider,

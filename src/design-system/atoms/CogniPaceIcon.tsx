@@ -2,10 +2,10 @@ import Box from "@mui/material/Box";
 
 // Path data is mirrored in public/icons/icon.svg (the asset shipped to the
 // Chrome manifest, favicon, and notifications). Update both together.
-export const COGNIPACE_ICON_PATH_D =
+const COGNIPACE_ICON_PATH_D =
   "M38 20A18 18 0 1 0 38 44M19 32L55 32M47 24L55 32L47 40";
 
-export const COGNIPACE_ICON_VIEWBOX = "0 0 64 64";
+const COGNIPACE_ICON_VIEWBOX = "0 0 64 64";
 
 export interface CogniPaceIconProps {
   /** Render size in px. Defaults to 18 to match the in-chip mark. */

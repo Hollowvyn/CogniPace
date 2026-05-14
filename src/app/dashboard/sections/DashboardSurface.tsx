@@ -66,32 +66,4 @@ export function DashboardHeaderPanel(props: { children: ReactNode }) {
   );
 }
 
-export function DashboardSettingsGroup(props: {
-  children: ReactNode;
-  copy?: string;
-  label: string;
-  title: string;
-}) {
-  return (
-    <InsetSurface
-      sx={{
-        p: { md: 2, xs: 2 },
-      }}
-    >
-      <Stack spacing={1.5}>
-        <Box>
-          <SurfaceSectionLabel>{props.label}</SurfaceSectionLabel>
-          <Typography component="h3" variant="h6">
-            {props.title}
-          </Typography>
-          {props.copy ? (
-            <Typography color="text.secondary" variant="body2">
-              {props.copy}
-            </Typography>
-          ) : null}
-        </Box>
-        {props.children}
-      </Stack>
-    </InsetSurface>
-  );
-}
+

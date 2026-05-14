@@ -13,16 +13,6 @@ export const popupShellSx = {
   overflow: "hidden",
 };
 
-export const popupActionButtonSx = {
-  minHeight: cognipaceControlScale.compactButtonMinHeight,
-  paddingInline: 10,
-  touchAction: "manipulation",
-  "&:focus-visible": {
-    outline: `2px solid ${alpha(cognipaceTokens.info, 0.72)}`,
-    outlineOffset: 2,
-  },
-};
-
 export const popupSmallButtonSx = {
   borderRadius: 999,
   minHeight: cognipaceControlScale.compactPillMinHeight,
