@@ -6,8 +6,8 @@ export interface UseOverviewVMInput {
   payload: AppShellPayload | null;
   onOpenProblem: (target: {
     slug: string;
-    chapterId?: string;
-    courseId?: string;
+    groupId?: string;
+    trackId?: string;
   }) => Promise<void>;
   onGoToTracks: () => void;
   onGoToSettings: () => void;

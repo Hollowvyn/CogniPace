@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 
+import { resetStudyHistory } from "@features/backup/server";
 import { clearAllStudyHistory } from "@features/study/server";
 import { beforeEach, describe, it, vi } from "vitest";
 
@@ -7,7 +8,6 @@ import {
   getAppData,
   STORAGE_KEY,
 } from "../../../../src/data/repositories/appDataRepository";
-import { resetStudyHistory } from "../../../../src/extension/background/handlers/settingsHandlers";
 import { makeProblem, makeScheduledState } from "../../../support/domainFixtures";
 
 const storageMocks = vi.hoisted(() => ({

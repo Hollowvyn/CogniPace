@@ -23,6 +23,15 @@ export {
   buildActiveTrackView,
   nextSlugForActiveTrack,
 } from "./domain/policy/buildActiveTrackView";
+
+export {
+  createTrackHandler,
+  updateTrackHandler,
+  deleteTrackHandler,
+  type CreateTrackPayload,
+  type UpdateTrackPayload,
+  type DeleteTrackPayload,
+} from "./messaging/handlers";
 export {
   trackQuestionStatus,
   findCurrentSlugInGroup,

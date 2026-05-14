@@ -70,6 +70,7 @@
     "@mui/material": "^7.3.10",
     "@sqlite.org/sqlite-wasm": "^3.53.0-build1",
     "drizzle-orm": "^0.45.2",
+    "neverthrow": "^8.2.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "ts-fsrs": "^5.3.1"

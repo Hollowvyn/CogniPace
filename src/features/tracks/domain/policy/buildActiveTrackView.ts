@@ -113,7 +113,7 @@ export function buildActiveTrackView(
         title: fallbackTitle,
         url: fallbackUrl,
         difficulty,
-        chapterId: group.id,
+        groupId: group.id,
         chapterTitle: groupName,
         status: questionStatus,
         reviewPhase: summary.phase,

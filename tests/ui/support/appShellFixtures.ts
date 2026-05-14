@@ -62,7 +62,7 @@ export function makePayload() {
     title: "Contains Duplicate",
     url: "https://leetcode.com/problems/contains-duplicate/",
     difficulty: "Easy",
-    chapterId: "arrays-1",
+    groupId: "arrays-1",
     chapterTitle: "Arrays",
     status: "READY",
     reviewPhase: "Review",

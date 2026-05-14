@@ -17,8 +17,8 @@ export type OverlayPostSubmitNextViewModel =
       kind: "track";
       onOpenProblem: (target: {
         slug: string;
-        courseId?: string;
-        chapterId?: string;
+        trackId?: string;
+        groupId?: string;
       }) => Promise<void> | void;
       view: TrackQuestionView;
     }

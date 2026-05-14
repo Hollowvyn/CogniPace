@@ -346,8 +346,8 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
           "spaceComplexity",
           "languages",
           "notes",
-          "courseId",
-          "chapterId",
+          "trackId",
+          "groupId",
           "source",
         ],
         `Payload for ${type}`
@@ -361,8 +361,8 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireOptionalString(payload.spaceComplexity, "spaceComplexity");
       requireOptionalString(payload.languages, "languages");
       requireOptionalString(payload.notes, "notes");
-      requireOptionalString(payload.courseId, "courseId");
-      requireOptionalString(payload.chapterId, "chapterId");
+      requireOptionalString(payload.trackId, "trackId");
+      requireOptionalString(payload.groupId, "groupId");
       if (
         payload.source !== undefined &&
         payload.source !== "overlay" &&
@@ -400,12 +400,12 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
     case "OPEN_PROBLEM_PAGE":
       hasExactKeys(
         payload,
-        ["slug", "courseId", "chapterId"],
+        ["slug", "trackId", "groupId"],
         `Payload for ${type}`
       );
       requireString(payload.slug, "slug");
-      requireOptionalString(payload.courseId, "courseId");
-      requireOptionalString(payload.chapterId, "chapterId");
+      requireOptionalString(payload.trackId, "trackId");
+      requireOptionalString(payload.groupId, "groupId");
       return;
     case "UPDATE_NOTES":
       hasExactKeys(payload, ["slug", "notes"], `Payload for ${type}`);

@@ -9,7 +9,7 @@ export interface TrackQuestionView {
   url: string;
   difficulty: Difficulty;
   /** ID of the Track chapter (group) containing this question. */
-  chapterId: string;
+  groupId: string;
   chapterTitle: string;
   status: TrackQuestionStatusView;
   reviewPhase?: StudyPhase;

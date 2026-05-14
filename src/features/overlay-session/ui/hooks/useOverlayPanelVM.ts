@@ -101,7 +101,7 @@ export function useOverlayPanelVM(
   }, []);
 
   const openOverlayProblem = useCallback(
-    async (target: { slug: string; courseId?: string; chapterId?: string }) => {
+    async (target: { slug: string; trackId?: string; groupId?: string }) => {
       const response = await openProblemPage(target);
       if (!response.ok) {
         setFeedback(response.error ?? "Failed to open problem.", true);

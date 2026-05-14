@@ -89,15 +89,15 @@ export function usePopupShellVM() {
 
   async function onOpenProblem(target: {
     slug: string;
-    courseId?: string;
-    chapterId?: string;
+    trackId?: string;
+    groupId?: string;
   }): Promise<void> {
     const response = await openProblemPage(target);
     if (!response.ok) {
       setStatus({
         message: response.error ?? "Failed to open problem.",
         isError: true,
-        scope: target.courseId ? "course" : "recommendation",
+        scope: target.trackId ? "track" : "recommendation",
       });
     }
   }
@@ -112,7 +112,7 @@ export function usePopupShellVM() {
     setStatus({
       message: "",
       isError: false,
-      scope: "course",
+      scope: "track",
     });
 
     // Hook → Repository → Client → SW → DataSource → DB.
@@ -125,7 +125,7 @@ export function usePopupShellVM() {
       setStatus({
         message: popupErrorMessage(error),
         isError: true,
-        scope: "course",
+        scope: "track",
       });
       return;
     }
@@ -148,7 +148,7 @@ export function usePopupShellVM() {
           ? "Freestyle active. The course card stays available so you can jump back into the guided path."
           : "Study mode active. Your next guided question is ready below.",
       isError: false,
-      scope: "course",
+      scope: "track",
     });
   }
 

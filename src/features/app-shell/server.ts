@@ -13,3 +13,11 @@ export {
   type BuildStudyStateViewInput,
   type BuildTrackViewInput,
 } from "./domain/policy/hydrate";
+
+export {
+  buildPopupShellPayload,
+  getAppShellData,
+  getPopupShellData,
+  getQueue,
+  openExtensionPage,
+} from "./messaging/handlers";

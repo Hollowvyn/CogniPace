@@ -1,15 +1,14 @@
-/** Background handlers for app-shell reads and extension page navigation. */
+/** Service-worker handlers for app-shell reads and extension page navigation. */
 import {
   computeReviewStreakDays,
   summarizeAnalytics,
 } from "@features/analytics/server";
-import {
-  buildProblemView,
-  buildStudyStateView,
-  buildTrackView,
-} from "@features/app-shell/server";
 import { slugToTitle, slugToUrl } from "@features/problems";
-import { listCompanies , listProblems , listTopics } from "@features/problems/server";
+import {
+  listCompanies,
+  listProblems,
+  listTopics,
+} from "@features/problems/server";
 import {
   buildRecommendedCandidates,
   buildTodayQueue,
@@ -18,18 +17,23 @@ import {
 import { getUserSettings } from "@features/settings/server";
 import { listStudyStates } from "@features/study/server";
 import { buildActiveTrackView, listTracks } from "@features/tracks/server";
+import { ResultAsync , toErrMsg } from "@libs/result";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
 
-
 import { getAppData } from "../../../data/repositories/appDataRepository";
-import { ok } from "../responses";
+import {
+  buildProblemView,
+  buildStudyStateView,
+  buildTrackView,
+} from "../domain/policy/hydrate";
 
 import type { AppData } from "../../../domain/types/AppData";
-import type { AppShellPayload, PopupShellPayload } from "@features/app-shell";
-import type { Problem ,
+import type { AppShellPayload, PopupShellPayload } from "../domain/model";
+import type {
   Company,
   LibraryProblemRow,
+  Problem,
   Topic,
 } from "@features/problems";
 import type {
@@ -40,14 +44,6 @@ import type {
   TrackWithGroups,
 } from "@features/tracks";
 
-/**
- * Loads topics + companies + settings + problems + studyStates from
- * SQLite (Phase 4+5 SSoT) and mutates the legacy fields on `AppData` in
- * place so non-tracks helpers (libraryRows, queue builders) read the
- * same shape they always have. Tracks are NOT mirrored back into the
- * blob — every consumer now gets `TrackWithGroups[]` directly via
- * `loadTracks()` and view-builder calls take that explicit handle.
- */
 async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   const { db } = await getDb();
   const topics = await listTopics(db);
@@ -62,32 +58,17 @@ async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   for (const c of companies) companyMap[c.id] = c;
   data.companiesById = companyMap;
   if (settings) data.settings = settings;
-  // Phase 5 problems: SQLite is the SSoT. Replace data.problemsBySlug
-  // wholesale so downstream library/track-view code reads the same
-  // shape it always has — just sourced from the DB now.
   const problemMap: Record<string, Problem> = {};
   for (const p of problems) problemMap[p.slug] = p;
   data.problemsBySlug = problemMap;
-  // Phase 5 studyStates: SQLite SSoT. listStudyStates returns the full
-  // map keyed by slug with attempts joined; the libraryRows/queue
-  // builders consume `data.studyStatesBySlug` unchanged.
   data.studyStatesBySlug = studyStates;
 }
 
-/**
- * Loads every track (with groups + group-problem memberships) once
- * via the SQLite tracks repo. Single round trip per shell render —
- * the result is reused for both the dashboard's track list, the
- * "active track" hero, and the library's `trackMemberships` column.
- */
 async function loadTracks(): Promise<TrackWithGroups[]> {
   const { db } = await getDb();
   return listTracks(db);
 }
 
-/** Walks the loaded tracks to answer "which tracks contain this slug?"
- * for the library row. Cheap because the slug set is small; if it ever
- * grows, replace with `listMembershipsForSlug` keyed per row. */
 function trackMembershipsForSlug(
   tracks: readonly TrackWithGroups[],
   slug: string,
@@ -110,7 +91,6 @@ function trackMembershipsForSlug(
   return out;
 }
 
-/** Hydrates every track for dashboard consumption. */
 function buildTrackViews(
   data: AppData,
   tracks: readonly TrackWithGroups[],
@@ -132,7 +112,6 @@ function buildTrackViews(
   );
 }
 
-/** Returns the hydrated view for the currently focused track, or `null`. */
 function activeTrackViewOf(
   data: AppData,
   trackViews: readonly TrackView[],
@@ -142,9 +121,6 @@ function activeTrackViewOf(
   return trackViews.find((view) => view.id === focusedId) ?? null;
 }
 
-/** Returns the raw `TrackWithGroups` for the currently focused track,
- * or `null`. Drives the active-track view builder which needs slug
- * order + membership rows beyond what `TrackView` carries. */
 function activeTrackEntityOf(
   data: AppData,
   tracks: readonly TrackWithGroups[],
@@ -157,12 +133,9 @@ function activeTrackEntityOf(
 function libraryRows(
   payload: Awaited<ReturnType<typeof getAppData>>,
   tracks: readonly TrackWithGroups[],
-  now = new Date()
+  now = new Date(),
 ): LibraryProblemRow[] {
   const targetRetention = payload.settings.memoryReview.targetRetention;
-  // Union of every slug the user could care about: persisted problems
-  // (anything they've ever opened or imported) + every curated track
-  // slug (so the library is non-empty even pre-seed / post-wipe).
   const slugs = new Set<string>(Object.keys(payload.problemsBySlug));
   for (const track of tracks) {
     for (const group of track.groups) {
@@ -202,9 +175,6 @@ function libraryRows(
     .sort((a, b) => a.problem.title.localeCompare(b.problem.title));
 }
 
-/** Minimal Problem placeholder when the user hasn't opened the page yet
- * but the slug shows up in a curated track. Replaced by the real entity
- * the moment the user visits LeetCode. */
 function synthesizeProblem(slug: string): Problem {
   return {
     id: slug,
@@ -223,13 +193,8 @@ function synthesizeProblem(slug: string): Problem {
   };
 }
 
-function activeTrackCard(
-  activeTrack: ActiveTrackView | null
-): TrackCardView | null {
-  if (!activeTrack) {
-    return null;
-  }
-
+function activeTrackCard(activeTrack: ActiveTrackView | null): TrackCardView | null {
+  if (!activeTrack) return null;
   return {
     id: activeTrack.id,
     name: activeTrack.name,
@@ -247,11 +212,10 @@ function activeTrackCard(
   };
 }
 
-/** Builds the narrow popup payload without dashboard-only library or analytics data. */
 export function buildPopupShellPayload(
   data: Awaited<ReturnType<typeof getAppData>>,
   tracks: readonly TrackWithGroups[],
-  now = new Date()
+  now = new Date(),
 ): PopupShellPayload {
   const queue = buildTodayQueue(data, now);
   const trackViews = buildTrackViews(data, tracks, now);
@@ -271,7 +235,7 @@ export function buildPopupShellPayload(
   });
   const candidates = buildRecommendedCandidates(
     queue,
-    activeTrack?.nextQuestion?.slug
+    activeTrack?.nextQuestion?.slug,
   );
 
   return {
@@ -288,53 +252,71 @@ export function buildPopupShellPayload(
   };
 }
 
-/** Builds the popup-only app shell payload from the current persisted state. */
-export async function getPopupShellData() {
-  const data = await getAppData();
-  await hydrateRegistriesFromDb(data);
-  const tracks = await loadTracks();
-  return ok(buildPopupShellPayload(data, tracks));
+export function getPopupShellData(): ResultAsync<PopupShellPayload, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const data = await getAppData();
+      await hydrateRegistriesFromDb(data);
+      const tracks = await loadTracks();
+      return buildPopupShellPayload(data, tracks);
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Builds the popup/dashboard app shell payload from the current persisted state. */
-export async function getAppShellData() {
-  const data = await getAppData();
-  await hydrateRegistriesFromDb(data);
-  const tracks = await loadTracks();
-  const now = new Date();
-  const popupShell = buildPopupShellPayload(data, tracks, now);
-  const queue = buildTodayQueue(data, now);
-  const analytics = summarizeAnalytics(data, now);
-  const trackViews = buildTrackViews(data, tracks, now);
+export function getAppShellData(): ResultAsync<AppShellPayload, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const data = await getAppData();
+      await hydrateRegistriesFromDb(data);
+      const tracks = await loadTracks();
+      const now = new Date();
+      const popupShell = buildPopupShellPayload(data, tracks, now);
+      const queue = buildTodayQueue(data, now);
+      const analytics = summarizeAnalytics(data, now);
+      const trackViews = buildTrackViews(data, tracks, now);
 
-  const topicChoices = Object.values(data.topicsById)
-    .map((topic) => ({ id: topic.id, name: topic.name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const companyChoices = Object.values(data.companiesById)
-    .map((company) => ({ id: company.id, name: company.name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+      const topicChoices = Object.values(data.topicsById)
+        .map((topic) => ({ id: topic.id, name: topic.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      const companyChoices = Object.values(data.companiesById)
+        .map((company) => ({ id: company.id, name: company.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-  return ok<AppShellPayload>({
-    ...popupShell,
-    queue,
-    analytics,
-    recommendedCandidates: popupShell.popup.recommendedCandidates,
-    library: libraryRows(data, tracks, now),
-    tracks: trackViews,
-    topicChoices,
-    companyChoices,
-  });
+      return {
+        ...popupShell,
+        queue,
+        analytics,
+        recommendedCandidates: popupShell.popup.recommendedCandidates,
+        library: libraryRows(data, tracks, now),
+        tracks: trackViews,
+        topicChoices,
+        companyChoices,
+      } as AppShellPayload;
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Returns the live due/new/reinforcement queue projection. */
-export async function getQueue() {
-  const data = await getAppData();
-  return ok(buildTodayQueue(data));
+export function getQueue(): ResultAsync<ReturnType<typeof buildTodayQueue>, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const data = await getAppData();
+      return buildTodayQueue(data);
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Opens an internal extension page after validating the requested path. */
-export async function openExtensionPage(payload: { path: string }) {
-  const path = validateExtensionPagePath(payload.path);
-  await chrome.tabs.create({ url: chrome.runtime.getURL(path) });
-  return ok({ opened: true });
+export function openExtensionPage(
+  payload: { path: string },
+): ResultAsync<{ opened: true }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const path = validateExtensionPagePath(payload.path);
+      await chrome.tabs.create({ url: chrome.runtime.getURL(path) });
+      return { opened: true as const };
+    })(),
+    toErrMsg,
+  );
 }

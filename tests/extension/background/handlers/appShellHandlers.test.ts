@@ -1,3 +1,4 @@
+import { buildPopupShellPayload } from "@features/app-shell/server";
 import {
   asProblemSlug,
   asTrackGroupId,
@@ -6,7 +7,6 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { normalizeStoredAppData } from "../../../../src/data/repositories/appDataRepository";
-import { buildPopupShellPayload } from "../../../../src/extension/background/handlers/appShellHandlers";
 import {
   makeProblem,
   makeScheduledState,

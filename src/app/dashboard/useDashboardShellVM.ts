@@ -126,8 +126,8 @@ export function useDashboardShellVM() {
   const onOpenProblem = useCallback(
     async (target: {
       slug: string;
-      chapterId?: string;
-      courseId?: string;
+      groupId?: string;
+      trackId?: string;
     }): Promise<void> => {
       const response = await openProblemPage(target);
       if (!response.ok) {

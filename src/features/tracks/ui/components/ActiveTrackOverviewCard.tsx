@@ -28,8 +28,8 @@ export interface ActiveTrackOverviewCardProps {
   studyMode: "studyPlan" | "freestyle";
   onOpenProblem: (target: {
     slug: string;
-    courseId?: string;
-    chapterId?: string;
+    trackId?: string;
+    groupId?: string;
   }) => Promise<void> | void;
   onOpenTracks: () => void;
   onToggleStudyMode: () => void;
@@ -193,8 +193,8 @@ function NextUpRow({
           onClick={() => {
             void onOpenProblem({
               slug: view.slug,
-              courseId: activeTrackId,
-              chapterId: view.chapterId,
+              trackId: activeTrackId,
+              groupId: view.groupId,
             });
           }}
           variant="contained"

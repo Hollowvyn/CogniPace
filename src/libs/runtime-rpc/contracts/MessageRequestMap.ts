@@ -34,8 +34,8 @@ export interface MessageRequestMap {
     spaceComplexity?: ReviewLogFields["spaceComplexity"];
     languages?: ReviewLogFields["languages"];
     notes?: ReviewLogFields["notes"];
-    courseId?: string;
-    chapterId?: string;
+    trackId?: string;
+    groupId?: string;
     source?: "overlay" | "dashboard";
   };
   SAVE_OVERLAY_LOG_DRAFT: {
@@ -56,8 +56,8 @@ export interface MessageRequestMap {
     spaceComplexity?: ReviewLogFields["spaceComplexity"];
     languages?: ReviewLogFields["languages"];
     notes?: ReviewLogFields["notes"];
-    courseId?: string;
-    chapterId?: string;
+    trackId?: string;
+    groupId?: string;
     source?: "overlay" | "dashboard";
   };
   OPEN_EXTENSION_PAGE: {
@@ -65,8 +65,8 @@ export interface MessageRequestMap {
   };
   OPEN_PROBLEM_PAGE: {
     slug: string;
-    courseId?: string;
-    chapterId?: string;
+    trackId?: string;
+    groupId?: string;
   };
   UPDATE_NOTES: {
     slug: string;

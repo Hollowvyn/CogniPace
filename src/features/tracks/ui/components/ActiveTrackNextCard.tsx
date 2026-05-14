@@ -18,8 +18,8 @@ export interface ActiveTrackNextCardProps {
   label?: string;
   onOpenProblem: (target: {
     slug: string;
-    courseId?: string;
-    chapterId?: string;
+    trackId?: string;
+    groupId?: string;
   }) => Promise<void> | void;
   view: TrackQuestionView;
 }
@@ -56,8 +56,8 @@ export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
           onClick={() => {
             void onOpenProblem({
               slug: view.slug,
-              courseId: activeTrackId,
-              chapterId: view.chapterId,
+              trackId: activeTrackId,
+              groupId: view.groupId,
             });
           }}
           size={compact ? "small" : "medium"}

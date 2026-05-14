@@ -32,8 +32,8 @@ describe("Popup Recommendations", () => {
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith("OPEN_PROBLEM_PAGE", {
         slug: "two-sum",
-        courseId: undefined,
-        chapterId: undefined,
+        trackId: undefined,
+        groupId: undefined,
       });
     });
   });
@@ -76,8 +76,8 @@ describe("Popup Recommendations", () => {
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith("OPEN_PROBLEM_PAGE", {
         slug: "contains-duplicate",
-        courseId: "Blind75",
-        chapterId: "arrays-1",
+        trackId: "Blind75",
+        groupId: "arrays-1",
       });
     });
   });

@@ -99,7 +99,7 @@ describe("OverlayPanel Expanded", () => {
               title: "Contains Duplicate",
               url: "https://leetcode.com/problems/contains-duplicate/",
               difficulty: "Easy",
-              chapterId: "arrays-1",
+              groupId: "arrays-1",
               chapterTitle: "Arrays",
               status: "READY",
               reviewPhase: "Review",
@@ -116,8 +116,8 @@ describe("OverlayPanel Expanded", () => {
     await user.click(screen.getByRole("button", { name: "Open next" }));
     expect(onOpenProblem).toHaveBeenCalledWith({
       slug: "contains-duplicate",
-      courseId: "Blind75",
-      chapterId: "arrays-1",
+      trackId: "Blind75",
+      groupId: "arrays-1",
     });
   });
 });

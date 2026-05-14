@@ -33,7 +33,7 @@ export function PopupShell() {
       ? controller.status
       : undefined;
   const trackStatus =
-    controller.status.scope === "course" ? controller.status : undefined;
+    controller.status.scope === "track" ? controller.status : undefined;
   const surfaceStatus =
     controller.status.scope === "surface" ? controller.status : undefined;
 

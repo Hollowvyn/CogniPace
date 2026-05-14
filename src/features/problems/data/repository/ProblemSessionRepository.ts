@@ -32,8 +32,8 @@ export async function saveReviewResult(input: {
   spaceComplexity?: ReviewLogFields["spaceComplexity"];
   languages?: ReviewLogFields["languages"];
   notes?: ReviewLogFields["notes"];
-  courseId?: string;
-  chapterId?: string;
+  trackId?: string;
+  groupId?: string;
   source?: "overlay" | "dashboard";
 }) {
   return sendMessage("SAVE_REVIEW_RESULT", input);
@@ -62,8 +62,8 @@ export async function overrideLastReviewResult(input: {
   spaceComplexity?: ReviewLogFields["spaceComplexity"];
   languages?: ReviewLogFields["languages"];
   notes?: ReviewLogFields["notes"];
-  courseId?: string;
-  chapterId?: string;
+  trackId?: string;
+  groupId?: string;
   source?: "overlay" | "dashboard";
 }) {
   return sendMessage("OVERRIDE_LAST_REVIEW_RESULT", input);
@@ -72,8 +72,8 @@ export async function overrideLastReviewResult(input: {
 /** Asks the background worker to open a LeetCode problem page. */
 export async function openProblemPage(target: {
   slug: string;
-  courseId?: string;
-  chapterId?: string;
+  trackId?: string;
+  groupId?: string;
 }) {
   return sendMessage("OPEN_PROBLEM_PAGE", target);
 }

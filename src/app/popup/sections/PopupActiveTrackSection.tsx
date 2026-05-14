@@ -97,12 +97,12 @@ function TrackStateCard(props: {
 }
 
 function TrackNextInset(props: {
-  courseId: string;
+  trackId: string;
   nextQuestion: TrackQuestionView;
   onOpenProblem: (target: {
     slug: string;
-    courseId?: string;
-    chapterId?: string;
+    trackId?: string;
+    groupId?: string;
   }) => Promise<void> | void;
 }) {
   return (
@@ -132,8 +132,8 @@ function TrackNextInset(props: {
               aria-label="Continue path"
               onClick={() => {
                 void props.onOpenProblem({
-                  chapterId: props.nextQuestion.chapterId,
-                  courseId: props.courseId,
+                  groupId: props.nextQuestion.groupId,
+                  trackId: props.trackId,
                   slug: props.nextQuestion.slug,
                 });
               }}
@@ -258,8 +258,8 @@ export function TrackPanelStudyPlan(props: {
     onOpenDashboard: () => void;
     onOpenProblem: (target: {
       slug: string;
-      courseId?: string;
-      chapterId?: string;
+      trackId?: string;
+      groupId?: string;
     }) => Promise<void> | void;
   };
   track: ActiveTrackView;
@@ -293,7 +293,7 @@ export function TrackPanelStudyPlan(props: {
           questions traversed
         </Typography>
         <TrackNextInset
-          courseId={props.track.id}
+          trackId={props.track.id}
           nextQuestion={props.nextQuestion}
           onOpenProblem={props.actions.onOpenProblem}
         />

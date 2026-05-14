@@ -1,10 +1,10 @@
-/** Background handlers for problem-context, review-session, and page actions. */
+/** Service-worker handlers for problem-context, review, page actions, and catalog management. */
 import {
   createInitialUserSettings,
   getUserSettings,
   saveUserSettings,
 } from "@features/settings/server";
-import {ReviewLogFields} from "@features/study";
+import { ReviewLogFields } from "@features/study";
 import {
   appendAttempt,
   clearAttempts,
@@ -13,136 +13,58 @@ import {
   replaceLastAttempt,
   upsertStudyState,
 } from "@features/study/server";
-import {applyReview, overrideLastReview, resetSchedule,} from "@libs/fsrs/scheduler";
-import {getStudyStateSummary, normalizeReviewLogFields,} from "@libs/fsrs/studyState";
-import {canonicalProblemUrlForOpen,} from "@libs/runtime-rpc/validator";
+import {
+  applyReview,
+  overrideLastReview,
+  resetSchedule,
+} from "@libs/fsrs/scheduler";
+import {
+  getStudyStateSummary,
+  normalizeReviewLogFields,
+} from "@libs/fsrs/studyState";
+import { ResultAsync , toErrMsg } from "@libs/result";
+import { canonicalProblemUrlForOpen } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
-import {nowIso} from "@platform/time";
-import { asProblemSlug, asTrackId } from "@shared/ids";
+import { nowIso } from "@platform/time";
+import {
+  asCompanyId,
+  asProblemSlug,
+  asTopicId,
+  asTrackId,
+  type CompanyId,
+  type TopicId,
+} from "@shared/ids";
 
-import {ok} from "../../../extension/background/responses";
-import { getProblem, importProblem } from "../data/datasource/ProblemDataSource";
-import { normalizeDifficulty } from "../data/repository/ProblemRepository";
-import {isProblemPage, normalizeSlug} from "../domain/model";
+import { upsertCompany } from "../data/datasource/CompanyDataSource";
+import {
+  editProblem,
+  getProblem,
+  importProblem,
+} from "../data/datasource/ProblemDataSource";
+import { upsertTopic } from "../data/datasource/TopicDataSource";
+import { normalizeDifficulty , parseProblemInput } from "../data/repository/ProblemRepository";
+import { getCuratedSet } from "../data/seed/curatedSets";
+import { isProblemPage, normalizeSlug } from "../domain/model";
+
+import type { ProblemEditPatch } from "../domain/model";
+
+
+// ---------- Helpers ----------
 
 function readSenderUrl(
-  sender?: chrome.runtime.MessageSender
+  sender?: chrome.runtime.MessageSender,
 ): string | undefined {
-  if (typeof sender?.url === "string") {
-    return sender.url;
-  }
-
-  if (typeof sender?.tab?.url === "string") {
-    return sender.tab.url;
-  }
-
+  if (typeof sender?.url === "string") return sender.url;
+  if (typeof sender?.tab?.url === "string") return sender.tab.url;
   return undefined;
-}
-
-/** Opens a LeetCode problem page and optionally records course launch context. */
-export async function openProblemPage(
-  payload: {
-    slug: string;
-    courseId?: string;
-    chapterId?: string;
-  },
-  sender?: chrome.runtime.MessageSender
-) {
-  const slug = normalizeSlug(payload.slug);
-  if (!slug) {
-    throw new Error("Invalid slug.");
-  }
-
-  // Launched from a track context: update the user's "where am I"
-  // pointer (settings.activeTrackId) so the next dashboard render
-  // lands on this track. Group selection is derived (first incomplete)
-  // — not persisted. Settings has one outlet (saveUserSettings); we
-  // call it directly inside the SW rather than round-tripping through
-  // a SET_ACTIVE_FOCUS message.
-  if (payload.courseId) {
-    const { db } = await getDb();
-    const current = (await getUserSettings(db)) ?? createInitialUserSettings();
-    await saveUserSettings(db, {
-      ...current,
-      activeTrackId: asTrackId(payload.courseId),
-    });
-  }
-
-  const url = canonicalProblemUrlForOpen(slug);
-  const senderUrl = readSenderUrl(sender);
-  const senderTabId = sender?.tab?.id;
-  const shouldReuseSenderTab =
-    typeof senderTabId === "number" &&
-    !!senderUrl &&
-    isProblemPage(senderUrl);
-
-  if (shouldReuseSenderTab) {
-    await chrome.tabs.update(senderTabId, {url});
-  } else {
-    await chrome.tabs.create({url});
-  }
-
-  return ok({opened: true});
-}
-
-/** Upserts the current problem page into storage from detected page metadata. */
-export async function upsertFromPage(payload: {
-  slug: string;
-  title?: string;
-  difficulty?: string;
-  isPremium?: boolean;
-  url?: string;
-  topics?: string[];
-}) {
-  const slug = normalizeSlug(payload.slug);
-  if (!slug) {
-    throw new Error("Invalid slug.");
-  }
-  // Phase 5: SQLite owns problem + studyState writes. importProblem
-  // preserves sticky user-edits while accepting page-detect updates;
-  // ensureStudyState materialises a default state row if this is the
-  // user's first encounter with the problem.
-  const { db } = await getDb();
-  const branded = asProblemSlug(slug);
-  const difficulty = normalizeDifficulty(payload.difficulty);
-  const problem = await importProblem(db, {
-    slug,
-    ...(payload.title !== undefined ? { title: payload.title } : {}),
-    ...(difficulty !== undefined ? { difficulty } : {}),
-    ...(payload.isPremium !== undefined ? { isPremium: payload.isPremium } : {}),
-    ...(payload.url !== undefined ? { url: payload.url } : {}),
-  });
-  const studyState = await ensureStudyState(db, branded);
-  return ok({ problem, studyState });
-}
-
-/** Fetches the persisted problem and study-state context for a slug. */
-export async function getProblemContext(payload: { slug: string }) {
-  const slug = normalizeSlug(payload.slug);
-  if (!slug) {
-    return ok({problem: null, studyState: null});
-  }
-  // Phase 5: SQLite is the SSoT for problem + study state. Reading
-  // from data.problemsBySlug / data.studyStatesBySlug would return
-  // null (those fields are dormant in the v7 blob), so the overlay
-  // would render "NO SUBMISSIONS YET" even when attempts exist.
-  const { db } = await getDb();
-  const branded = asProblemSlug(slug);
-  const problem = await getProblem(db, branded);
-  const studyState = await getStudyState(db, branded);
-  return ok({
-    problem: problem ?? null,
-    studyState: studyState ?? null,
-  });
 }
 
 function buildReviewLogFields(
   payload: Partial<ReviewLogFields>,
-  current: ReviewLogFields
+  current: ReviewLogFields,
 ): ReviewLogFields {
   return normalizeReviewLogFields({
-    interviewPattern:
-      payload.interviewPattern ?? current.interviewPattern,
+    interviewPattern: payload.interviewPattern ?? current.interviewPattern,
     timeComplexity: payload.timeComplexity ?? current.timeComplexity,
     spaceComplexity: payload.spaceComplexity ?? current.spaceComplexity,
     languages: payload.languages ?? current.languages,
@@ -150,8 +72,98 @@ function buildReviewLogFields(
   });
 }
 
-/** Persists a completed review result and returns the next scheduling summary. */
-export async function saveReviewResult(payload: {
+// ---------- Page / context handlers ----------
+
+export function openProblemPage(
+  payload: { slug: string; trackId?: string; groupId?: string },
+  sender?: chrome.runtime.MessageSender,
+): ResultAsync<{ opened: true }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const slug = normalizeSlug(payload.slug);
+      if (!slug) throw new Error("Invalid slug.");
+
+      if (payload.trackId) {
+        const { db } = await getDb();
+        const current =
+          (await getUserSettings(db)) ?? createInitialUserSettings();
+        await saveUserSettings(db, {
+          ...current,
+          activeTrackId: asTrackId(payload.trackId),
+        });
+      }
+
+      const url = canonicalProblemUrlForOpen(slug);
+      const senderUrl = readSenderUrl(sender);
+      const senderTabId = sender?.tab?.id;
+      const shouldReuseSenderTab =
+        typeof senderTabId === "number" &&
+        !!senderUrl &&
+        isProblemPage(senderUrl);
+
+      if (shouldReuseSenderTab) {
+        await chrome.tabs.update(senderTabId, { url });
+      } else {
+        await chrome.tabs.create({ url });
+      }
+
+      return { opened: true as const };
+    })(),
+    toErrMsg,
+  );
+}
+
+export function upsertFromPage(payload: {
+  slug: string;
+  title?: string;
+  difficulty?: string;
+  isPremium?: boolean;
+  url?: string;
+  topics?: string[];
+}): ResultAsync<{ problem: unknown; studyState: unknown }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const slug = normalizeSlug(payload.slug);
+      if (!slug) throw new Error("Invalid slug.");
+      const { db } = await getDb();
+      const branded = asProblemSlug(slug);
+      const difficulty = normalizeDifficulty(payload.difficulty);
+      const problem = await importProblem(db, {
+        slug,
+        ...(payload.title !== undefined ? { title: payload.title } : {}),
+        ...(difficulty !== undefined ? { difficulty } : {}),
+        ...(payload.isPremium !== undefined
+          ? { isPremium: payload.isPremium }
+          : {}),
+        ...(payload.url !== undefined ? { url: payload.url } : {}),
+      });
+      const studyState = await ensureStudyState(db, branded);
+      return { problem, studyState };
+    })(),
+    toErrMsg,
+  );
+}
+
+export function getProblemContext(payload: {
+  slug: string;
+}): ResultAsync<{ problem: unknown; studyState: unknown }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const slug = normalizeSlug(payload.slug);
+      if (!slug) return { problem: null, studyState: null };
+      const { db } = await getDb();
+      const branded = asProblemSlug(slug);
+      const problem = await getProblem(db, branded);
+      const studyState = await getStudyState(db, branded);
+      return { problem: problem ?? null, studyState: studyState ?? null };
+    })(),
+    toErrMsg,
+  );
+}
+
+// ---------- Review handlers ----------
+
+export function saveReviewResult(payload: {
   slug: string;
   rating: 0 | 1 | 2 | 3;
   solveTimeMs?: number;
@@ -161,82 +173,81 @@ export async function saveReviewResult(payload: {
   spaceComplexity?: string;
   languages?: string;
   notes?: string;
-  courseId?: string;
-  chapterId?: string;
+  trackId?: string;
+  groupId?: string;
 }) {
-  const normalized = normalizeSlug(payload.slug);
-  if (!normalized) {
-    throw new Error("Invalid slug.");
-  }
-
-  const now = nowIso();
-  const { db } = await getDb();
-  const branded = asProblemSlug(normalized);
-  const problem = await importProblem(db, { slug: normalized });
-  const current = await ensureStudyState(db, branded);
-  const logSnapshot = buildReviewLogFields(payload, current);
-  const settings = (await getUserSettings(db)) ?? createInitialUserSettings();
-  const nextState = applyReview({
-    state: current,
-    difficulty: problem.difficulty,
-    rating: payload.rating,
-    solveTimeMs: payload.solveTimeMs,
-    mode: payload.mode,
-    logSnapshot,
-    settings,
-    now,
-  });
-  await upsertStudyState(db, branded, nextState);
-  // applyReview appended one new entry at the tail of attemptHistory;
-  // persist that to attempt_history.
-  const newAttempt = nextState.attemptHistory[nextState.attemptHistory.length - 1];
-  if (newAttempt) {
-    await appendAttempt(db, branded, newAttempt);
-  }
-  // The user reviewed from a track context — pin activeTrackId so
-  // the next dashboard render lands on this track. Group selection
-  // is derived (first incomplete); not persisted.
-  if (payload.courseId) {
-    await saveUserSettings(db, {
-      ...settings,
-      activeTrackId: asTrackId(payload.courseId),
-    });
-  }
-  const studyStateSummary = getStudyStateSummary(nextState);
-  return ok({
-    studyState: nextState,
-    nextReviewAt: studyStateSummary.nextReviewAt,
-    phase: studyStateSummary.phase,
-    lastRating: nextState.lastRating,
-  });
+  return ResultAsync.fromPromise(
+    (async () => {
+      const normalized = normalizeSlug(payload.slug);
+      if (!normalized) throw new Error("Invalid slug.");
+      const now = nowIso();
+      const { db } = await getDb();
+      const branded = asProblemSlug(normalized);
+      const problem = await importProblem(db, { slug: normalized });
+      const current = await ensureStudyState(db, branded);
+      const logSnapshot = buildReviewLogFields(payload, current);
+      const settings =
+        (await getUserSettings(db)) ?? createInitialUserSettings();
+      const nextState = applyReview({
+        state: current,
+        difficulty: problem.difficulty,
+        rating: payload.rating,
+        solveTimeMs: payload.solveTimeMs,
+        mode: payload.mode,
+        logSnapshot,
+        settings,
+        now,
+      });
+      await upsertStudyState(db, branded, nextState);
+      const newAttempt =
+        nextState.attemptHistory[nextState.attemptHistory.length - 1];
+      if (newAttempt) await appendAttempt(db, branded, newAttempt);
+      if (payload.trackId) {
+        await saveUserSettings(db, {
+          ...settings,
+          activeTrackId: asTrackId(payload.trackId),
+        });
+      }
+      const studyStateSummary = getStudyStateSummary(nextState);
+      return {
+        studyState: nextState,
+        nextReviewAt: studyStateSummary.nextReviewAt,
+        phase: studyStateSummary.phase,
+        lastRating: nextState.lastRating,
+      };
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Persists the overlay's structured log draft without mutating review history. */
-export async function saveOverlayLogDraft(payload: {
+export function saveOverlayLogDraft(payload: {
   slug: string;
   interviewPattern?: string;
   timeComplexity?: string;
   spaceComplexity?: string;
   languages?: string;
   notes?: string;
-}) {
-  const normalized = normalizeSlug(payload.slug);
-  if (!normalized) {
-    throw new Error("Invalid slug.");
-  }
-
-  const { db } = await getDb();
-  const branded = asProblemSlug(normalized);
-  await importProblem(db, { slug: normalized });
-  const current = await ensureStudyState(db, branded);
-  const nextLogFields = buildReviewLogFields(payload, current);
-  const next = { ...current, ...nextLogFields };
-  const saved = await upsertStudyState(db, branded, next);
-  return ok({ studyState: saved });
+}): ResultAsync<{ studyState: unknown }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const normalized = normalizeSlug(payload.slug);
+      if (!normalized) throw new Error("Invalid slug.");
+      const { db } = await getDb();
+      const branded = asProblemSlug(normalized);
+      await importProblem(db, { slug: normalized });
+      const current = await ensureStudyState(db, branded);
+      const nextLogFields = buildReviewLogFields(payload, current);
+      const saved = await upsertStudyState(db, branded, {
+        ...current,
+        ...nextLogFields,
+      });
+      return { studyState: saved };
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Replaces the latest review result and rebuilds the schedule from history. */
-export async function overrideLastReviewResult(payload: {
+export function overrideLastReviewResult(payload: {
   slug: string;
   rating: 0 | 1 | 2 | 3;
   solveTimeMs?: number;
@@ -246,55 +257,54 @@ export async function overrideLastReviewResult(payload: {
   spaceComplexity?: string;
   languages?: string;
   notes?: string;
-  courseId?: string;
-  chapterId?: string;
+  trackId?: string;
+  groupId?: string;
 }) {
-  const normalized = normalizeSlug(payload.slug);
-  if (!normalized) {
-    throw new Error("Invalid slug.");
-  }
-
-  const now = nowIso();
-  const { db } = await getDb();
-  const branded = asProblemSlug(normalized);
-  await importProblem(db, { slug: normalized });
-  const current = await ensureStudyState(db, branded);
-  const logSnapshot = buildReviewLogFields(payload, current);
-  const settings = (await getUserSettings(db)) ?? createInitialUserSettings();
-  const nextState = overrideLastReview({
-    state: current,
-    rating: payload.rating,
-    solveTimeMs: payload.solveTimeMs,
-    mode: payload.mode,
-    logSnapshot,
-    settings,
-    now,
-  });
-  await upsertStudyState(db, branded, nextState);
-  // overrideLastReview replaced the tail entry rather than appending —
-  // mirror that in attempt_history.
-  const replacedAttempt =
-    nextState.attemptHistory[nextState.attemptHistory.length - 1];
-  if (replacedAttempt) {
-    await replaceLastAttempt(db, branded, replacedAttempt);
-  }
-  if (payload.courseId) {
-    await saveUserSettings(db, {
-      ...settings,
-      activeTrackId: asTrackId(payload.courseId),
-    });
-  }
-  const studyStateSummary = getStudyStateSummary(nextState);
-  return ok({
-    studyState: nextState,
-    nextReviewAt: studyStateSummary.nextReviewAt,
-    phase: studyStateSummary.phase,
-    lastRating: nextState.lastRating,
-  });
+  return ResultAsync.fromPromise(
+    (async () => {
+      const normalized = normalizeSlug(payload.slug);
+      if (!normalized) throw new Error("Invalid slug.");
+      const now = nowIso();
+      const { db } = await getDb();
+      const branded = asProblemSlug(normalized);
+      await importProblem(db, { slug: normalized });
+      const current = await ensureStudyState(db, branded);
+      const logSnapshot = buildReviewLogFields(payload, current);
+      const settings =
+        (await getUserSettings(db)) ?? createInitialUserSettings();
+      const nextState = overrideLastReview({
+        state: current,
+        rating: payload.rating,
+        solveTimeMs: payload.solveTimeMs,
+        mode: payload.mode,
+        logSnapshot,
+        settings,
+        now,
+      });
+      await upsertStudyState(db, branded, nextState);
+      const replacedAttempt =
+        nextState.attemptHistory[nextState.attemptHistory.length - 1];
+      if (replacedAttempt)
+        await replaceLastAttempt(db, branded, replacedAttempt);
+      if (payload.trackId) {
+        await saveUserSettings(db, {
+          ...settings,
+          activeTrackId: asTrackId(payload.trackId),
+        });
+      }
+      const studyStateSummary = getStudyStateSummary(nextState);
+      return {
+        studyState: nextState,
+        nextReviewAt: studyStateSummary.nextReviewAt,
+        phase: studyStateSummary.phase,
+        lastRating: nextState.lastRating,
+      };
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Handles the deprecated rating message by forwarding to the canonical save-review flow. */
-export async function rateProblem(payload: {
+export function rateProblem(payload: {
   slug: string;
   rating: 0 | 1 | 2 | 3;
   solveTimeMs?: number;
@@ -310,77 +320,360 @@ export async function rateProblem(payload: {
   });
 }
 
-/** Updates the saved notes for a specific problem. */
-export async function updateNotes(payload: { slug: string; notes: string }) {
-  const normalized = normalizeSlug(payload.slug);
-  if (!normalized) {
-    throw new Error("Invalid slug.");
-  }
-  const { db } = await getDb();
-  const branded = asProblemSlug(normalized);
-  await importProblem(db, { slug: normalized });
-  const current = await ensureStudyState(db, branded);
-  const saved = await upsertStudyState(db, branded, {
-    ...current,
-    notes: payload.notes,
-  });
-  return ok({ studyState: saved });
+// ---------- Study-state mutation handlers ----------
+
+export function updateNotes(payload: {
+  slug: string;
+  notes: string;
+}): ResultAsync<{ studyState: unknown }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const normalized = normalizeSlug(payload.slug);
+      if (!normalized) throw new Error("Invalid slug.");
+      const { db } = await getDb();
+      const branded = asProblemSlug(normalized);
+      await importProblem(db, { slug: normalized });
+      const current = await ensureStudyState(db, branded);
+      const saved = await upsertStudyState(db, branded, {
+        ...current,
+        notes: payload.notes,
+      });
+      return { studyState: saved };
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Updates the saved tags for a specific problem. */
-export async function updateTags(payload: { slug: string; tags: string[] }) {
-  const normalized = normalizeSlug(payload.slug);
-  if (!normalized) {
-    throw new Error("Invalid slug.");
-  }
-  const { db } = await getDb();
-  const branded = asProblemSlug(normalized);
-  await importProblem(db, { slug: normalized });
-  const current = await ensureStudyState(db, branded);
-  const saved = await upsertStudyState(db, branded, {
-    ...current,
-    tags: payload.tags.map((tag) => tag.trim()).filter(Boolean),
-  });
-  return ok({ studyState: saved });
+export function updateTags(payload: {
+  slug: string;
+  tags: string[];
+}): ResultAsync<{ studyState: unknown }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const normalized = normalizeSlug(payload.slug);
+      if (!normalized) throw new Error("Invalid slug.");
+      const { db } = await getDb();
+      const branded = asProblemSlug(normalized);
+      await importProblem(db, { slug: normalized });
+      const current = await ensureStudyState(db, branded);
+      const saved = await upsertStudyState(db, branded, {
+        ...current,
+        tags: payload.tags.map((tag) => tag.trim()).filter(Boolean),
+      });
+      return { studyState: saved };
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Suspends or unsuspends a problem in the scheduler. */
-export async function suspendProblem(payload: {
+export function suspendProblem(payload: {
   slug: string;
   suspend: boolean;
-}) {
-  const normalized = normalizeSlug(payload.slug);
-  if (!normalized) {
-    throw new Error("Invalid slug.");
-  }
-  const { db } = await getDb();
-  const branded = asProblemSlug(normalized);
-  await importProblem(db, { slug: normalized });
-  const current = await ensureStudyState(db, branded);
-  const saved = await upsertStudyState(db, branded, {
-    ...current,
-    suspended: payload.suspend,
-  });
-  return ok({ studyState: saved });
+}): ResultAsync<{ studyState: unknown }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const normalized = normalizeSlug(payload.slug);
+      if (!normalized) throw new Error("Invalid slug.");
+      const { db } = await getDb();
+      const branded = asProblemSlug(normalized);
+      await importProblem(db, { slug: normalized });
+      const current = await ensureStudyState(db, branded);
+      const saved = await upsertStudyState(db, branded, {
+        ...current,
+        suspended: payload.suspend,
+      });
+      return { studyState: saved };
+    })(),
+    toErrMsg,
+  );
 }
 
-/** Resets the schedule for a specific problem while optionally preserving notes. */
-export async function resetProblem(payload: {
+export function resetProblem(payload: {
   slug: string;
   keepNotes?: boolean;
-}) {
-  const normalized = normalizeSlug(payload.slug);
-  if (!normalized) {
-    throw new Error("Invalid slug.");
-  }
+}): ResultAsync<{ studyState: unknown }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const normalized = normalizeSlug(payload.slug);
+      if (!normalized) throw new Error("Invalid slug.");
+      const { db } = await getDb();
+      const branded = asProblemSlug(normalized);
+      await importProblem(db, { slug: normalized });
+      const existing = await getStudyState(db, branded);
+      const reset = resetSchedule(existing, payload.keepNotes ?? true);
+      await clearAttempts(db, branded);
+      const saved = await upsertStudyState(db, branded, reset);
+      return { studyState: saved };
+    })(),
+    toErrMsg,
+  );
+}
+
+// ---------- Problem edit / classification handlers (from v7) ----------
+
+export interface EditProblemPayload {
+  slug: string;
+  patch: ProblemEditPatch & { topicIds?: string[]; companyIds?: string[] };
+  markUserEdit?: boolean;
+}
+
+export function editProblemHandler(
+  payload: EditProblemPayload,
+): ResultAsync<{ slug: string }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const slug = asProblemSlug(payload.slug);
+      const patch: ProblemEditPatch = {
+        ...payload.patch,
+        topicIds: payload.patch.topicIds?.map((id) => asTopicId(id)) as
+          | TopicId[]
+          | undefined,
+        companyIds: payload.patch.companyIds?.map((id) =>
+          asCompanyId(id),
+        ) as CompanyId[] | undefined,
+      };
+      const { db } = await getDb();
+      const existing = await getProblem(db, slug);
+      if (!existing) {
+        throw new Error(
+          "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to edit. Visit the page and then come back.",
+        );
+      }
+      await editProblem(db, {
+        slug,
+        patch,
+        markUserEdit: payload.markUserEdit ?? true,
+      });
+      return { slug };
+    })(),
+    toErrMsg,
+  );
+}
+
+export interface CreateCustomTopicPayload {
+  name: string;
+  description?: string;
+}
+
+export function createCustomTopicHandler(
+  payload: CreateCustomTopicPayload,
+): ResultAsync<{ id: string }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const { db } = await getDb();
+      const topic = await upsertTopic(db, {
+        name: payload.name,
+        description: payload.description,
+        isCustom: true,
+      });
+      return { id: topic.id };
+    })(),
+    toErrMsg,
+  );
+}
+
+export interface CreateCustomCompanyPayload {
+  name: string;
+  description?: string;
+}
+
+export function createCustomCompanyHandler(
+  payload: CreateCustomCompanyPayload,
+): ResultAsync<{ id: string }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const { db } = await getDb();
+      const company = await upsertCompany(db, {
+        name: payload.name,
+        description: payload.description,
+        isCustom: true,
+      });
+      return { id: company.id };
+    })(),
+    toErrMsg,
+  );
+}
+
+export interface AssignTopicPayload {
+  slug: string;
+  topicId: string;
+  assigned?: boolean;
+}
+
+export function assignTopicHandler(
+  payload: AssignTopicPayload,
+): ResultAsync<{ slug: string }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const slug = asProblemSlug(payload.slug);
+      const topicId = asTopicId(payload.topicId);
+      const assigned = payload.assigned ?? true;
+      const { db } = await getDb();
+      const existing = await getProblem(db, slug);
+      if (!existing) {
+        throw new Error(
+          "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a topic to.",
+        );
+      }
+      const current = existing.topicIds as TopicId[];
+      const has = current.includes(topicId);
+      if (assigned && has) return { slug };
+      if (!assigned && !has) return { slug };
+      const nextIds = assigned
+        ? [...current, topicId]
+        : current.filter((id) => id !== topicId);
+      await editProblem(db, {
+        slug,
+        patch: { topicIds: nextIds },
+        markUserEdit: true,
+      });
+      return { slug };
+    })(),
+    toErrMsg,
+  );
+}
+
+export interface AssignCompanyPayload {
+  slug: string;
+  companyId: string;
+  assigned?: boolean;
+}
+
+export function assignCompanyHandler(
+  payload: AssignCompanyPayload,
+): ResultAsync<{ slug: string }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const slug = asProblemSlug(payload.slug);
+      const companyId = asCompanyId(payload.companyId);
+      const assigned = payload.assigned ?? true;
+      const { db } = await getDb();
+      const existing = await getProblem(db, slug);
+      if (!existing) {
+        throw new Error(
+          "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a company to.",
+        );
+      }
+      const current = existing.companyIds as CompanyId[];
+      const has = current.includes(companyId);
+      if (assigned && has) return { slug };
+      if (!assigned && !has) return { slug };
+      const nextIds = assigned
+        ? [...current, companyId]
+        : current.filter((id) => id !== companyId);
+      await editProblem(db, {
+        slug,
+        patch: { companyIds: nextIds },
+        markUserEdit: true,
+      });
+      return { slug };
+    })(),
+    toErrMsg,
+  );
+}
+
+// ---------- Catalog import handlers (from courseHandlers) ----------
+
+interface CatalogItem {
+  slug: string;
+  title?: string;
+  difficulty?: "Easy" | "Medium" | "Hard" | "Unknown";
+  isPremium?: boolean;
+  url?: string;
+  topics?: string[];
+}
+
+async function importSetIntoDb(
+  items: readonly CatalogItem[],
+): Promise<{ added: number; updated: number }> {
   const { db } = await getDb();
-  const branded = asProblemSlug(normalized);
-  await importProblem(db, { slug: normalized });
-  const existing = await getStudyState(db, branded);
-  const reset = resetSchedule(existing, payload.keepNotes ?? true);
-  // Wipe attempt_history first — a reset means "start over"; the
-  // matching v7 semantics drop the prior log entries.
-  await clearAttempts(db, branded);
-  const saved = await upsertStudyState(db, branded, reset);
-  return ok({ studyState: saved });
+  let added = 0;
+  let updated = 0;
+  for (const item of items) {
+    const slug = asProblemSlug(item.slug);
+    if (!slug) continue;
+    const wasPresent = (await getProblem(db, slug)) !== undefined;
+    await importProblem(db, {
+      slug,
+      ...(item.title !== undefined ? { title: item.title } : {}),
+      ...(item.difficulty !== undefined ? { difficulty: item.difficulty } : {}),
+      ...(item.isPremium !== undefined ? { isPremium: item.isPremium } : {}),
+      ...(item.url !== undefined ? { url: item.url } : {}),
+    });
+    if (wasPresent) updated += 1;
+    else added += 1;
+  }
+  return { added, updated };
+}
+
+export function importCuratedTrackHandler(payload: {
+  trackName: string;
+}): ResultAsync<
+  { trackName: string; count: number; added: number; updated: number },
+  string
+> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const setProblems = getCuratedSet(payload.trackName);
+      if (setProblems.length === 0) {
+        throw new Error(`Unknown curated track: ${payload.trackName}`);
+      }
+      const importResult = await importSetIntoDb(setProblems);
+      return {
+        trackName: payload.trackName,
+        count: setProblems.length,
+        added: importResult.added,
+        updated: importResult.updated,
+      };
+    })(),
+    toErrMsg,
+  );
+}
+
+export function importCustomTrackHandler(payload: {
+  trackName?: string;
+  items: CatalogItem[];
+}): ResultAsync<
+  { trackName: string; count: number; added: number; updated: number },
+  string
+> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      if (!Array.isArray(payload.items) || payload.items.length === 0) {
+        throw new Error("Custom track import requires at least one item.");
+      }
+      const normalizedName = payload.trackName?.trim() || "Custom";
+      const importResult = await importSetIntoDb(payload.items);
+      return {
+        trackName: normalizedName,
+        count: payload.items.length,
+        added: importResult.added,
+        updated: importResult.updated,
+      };
+    })(),
+    toErrMsg,
+  );
+}
+
+export function addProblemByInputHandler(payload: {
+  input: string;
+  sourceSet?: string;
+  topics?: string[];
+  markAsStarted?: boolean;
+}): ResultAsync<{ slug: string; problem: unknown; studyState: unknown }, string> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      const parsed = parseProblemInput(payload.input);
+      const { db } = await getDb();
+      const branded = asProblemSlug(parsed.slug);
+      const problem = await importProblem(db, {
+        slug: parsed.slug,
+        url: parsed.url,
+        topicIds: payload.topics,
+      });
+      const studyState = await ensureStudyState(db, branded);
+      return { slug: parsed.slug, problem, studyState };
+    })(),
+    toErrMsg,
+  );
 }
