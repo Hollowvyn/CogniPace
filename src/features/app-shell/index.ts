@@ -7,6 +7,8 @@ export type {
   PopupModeLabel,
 } from "./domain/model";
 
+export type { AppData } from "./domain/model/AppData";
+
 export type { AppShellRepository } from "./data/repository/AppShellRepository";
 export { appShellRepository } from "./data/repository/AppShellRepository";
 

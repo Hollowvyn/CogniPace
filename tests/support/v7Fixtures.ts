@@ -12,9 +12,9 @@ import {
   asTopicId,
 } from "@shared/ids";
 
-import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/domain/data/appDataV7";
+import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/features/backup/data/appDataV7";
 
-import type { AppDataV7 } from "../../src/domain/data/appDataV7";
+import type { AppDataV7 } from "../../src/features/backup/data/appDataV7";
 import type { Company , Problem , Topic } from "@features/problems";
 import type { StudyState } from "@features/study/server";
 

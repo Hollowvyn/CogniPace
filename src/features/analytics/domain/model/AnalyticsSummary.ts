@@ -1,7 +1,7 @@
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import { startOfDay, ymd } from "@platform/time";
 
-import type { AppData } from "../../../../domain/types/AppData";
+import type { AppData } from "@features/app-shell";
 import type { StudyPhase , StudyState } from "@features/study";
 
 export interface AnalyticsSummary {

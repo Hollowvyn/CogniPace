@@ -13,9 +13,7 @@ import {
 } from "@platform/chrome/storage";
 import { getDb } from "@platform/db/instance";
 
-import { STORAGE_SCHEMA_VERSION } from "../../domain/types/STORAGE_SCHEMA_VERSION";
-
-import type { AppData } from "../../domain/types/AppData";
+import type { AppData } from "@features/app-shell";
 import type { Problem } from "@features/problems";
 
 
@@ -101,7 +99,6 @@ async function loadQueueContext(): Promise<AppData> {
   const problemsBySlug: Record<string, Problem> = {};
   for (const problem of problems) problemsBySlug[problem.slug] = problem;
   return {
-    schemaVersion: STORAGE_SCHEMA_VERSION,
     problemsBySlug,
     studyStatesBySlug: studyStates,
     topicsById: {},

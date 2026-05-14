@@ -6,3 +6,5 @@ export type {
 
 export type { BackupRepository } from "./data/repository/BackupRepository";
 export { backupRepository } from "./data/repository/BackupRepository";
+
+export { STORAGE_SCHEMA_VERSION } from "./data/storageSchemaVersion";

@@ -9,7 +9,6 @@ import type { StudyState } from "@features/study";
  * deliberately slim now; new aggregates do NOT get added here.
  */
 export interface AppData {
-  schemaVersion: number;
   /** Problem aggregate, hydrated from SQLite at read time. */
   problemsBySlug: Record<string, Problem>;
   /** StudyState aggregate, hydrated from SQLite at read time. */

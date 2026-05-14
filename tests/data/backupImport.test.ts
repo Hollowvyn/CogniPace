@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 
+import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "@features/backup";
 import { Problem } from "@features/problems";
 import { createInitialUserSettings } from "@features/settings";
 import { createDefaultStudyState } from "@libs/fsrs/constants";
 import { describe, it } from "vitest";
 
-import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "../../src/domain/types/STORAGE_SCHEMA_VERSION";
 import { sanitizeImportPayload } from "../../src/features/backup/data/sanitize";
 import { makeProblem } from "../support/domainFixtures";
 

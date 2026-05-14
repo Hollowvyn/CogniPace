@@ -8,7 +8,7 @@
  * Tracks and settings live outside the registry — backups sanitise
  * those at handler time.
  */
-import type { AppDataAggregateKey, AppDataV7 } from "../../../domain/data/appDataV7";
+import type { AppDataAggregateKey, AppDataV7 } from "./appDataV7";
 
 export interface AggregateDescriptor {
   /** ExportPayload field key. */

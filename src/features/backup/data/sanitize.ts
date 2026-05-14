@@ -9,13 +9,13 @@ import { sanitizeStoredUserSettings } from "@features/settings/server";
 import { nowIso } from "@platform/time";
 import { uniqueStrings } from "@shared/strings";
 
-import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/types/STORAGE_SCHEMA_VERSION";
 import { type ExportPayload } from "../domain/model";
 
 import {
   aggregates as legacyAggregateDescriptors,
   EXPORTABLE_AGGREGATE_KEYS,
 } from "./aggregateRegistry";
+import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "./storageSchemaVersion";
 
 import type { Problem } from "@features/problems";
 import type { UserSettings } from "@features/settings";

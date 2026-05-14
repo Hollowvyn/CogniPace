@@ -21,15 +21,14 @@ import { validateExtensionPagePath } from "@libs/runtime-rpc/url";
 import { extensionUrl, openTab } from "@platform/chrome/tabs";
 import { getDb } from "@platform/db/instance";
 
-import { STORAGE_SCHEMA_VERSION } from "../../../domain/types/STORAGE_SCHEMA_VERSION";
 import {
   buildProblemView,
   buildStudyStateView,
   buildTrackView,
 } from "../domain/policy/hydrate";
 
-import type { AppData } from "../../../domain/types/AppData";
 import type { AppShellPayload, PopupShellPayload } from "../domain/model";
+import type { AppData } from "../domain/model/AppData";
 import type {
   Company,
   LibraryProblemRow,
@@ -67,7 +66,6 @@ async function loadAppShellData(): Promise<AppData> {
   const problemsBySlug: Record<string, Problem> = {};
   for (const problem of problems) problemsBySlug[problem.slug] = problem;
   return {
-    schemaVersion: STORAGE_SCHEMA_VERSION,
     problemsBySlug,
     studyStatesBySlug: studyStates,
     topicsById,

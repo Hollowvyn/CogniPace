@@ -46,8 +46,8 @@ import {
 } from "@shared/ids";
 import { uniqueStrings } from "@shared/strings";
 
-import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/types/STORAGE_SCHEMA_VERSION";
 import { sanitizeImportPayload } from "../data/sanitize";
+import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "../data/storageSchemaVersion";
 
 import type { ExportPayload } from "../domain/model";
 import type { Company, Topic } from "@features/problems";

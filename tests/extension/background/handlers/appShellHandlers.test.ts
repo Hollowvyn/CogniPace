@@ -7,13 +7,12 @@ import {
 } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
-import { STORAGE_SCHEMA_VERSION } from "../../../../src/domain/types/STORAGE_SCHEMA_VERSION";
 import {
   makeProblem,
   makeScheduledState,
 } from "../../../support/domainFixtures";
 
-import type { AppData } from "../../../../src/domain/types/AppData";
+import type { AppData } from "@features/app-shell";
 import type { Problem } from "@features/problems";
 import type { StudyState } from "@features/study";
 import type { TrackWithGroups } from "@features/tracks";
@@ -26,7 +25,6 @@ interface AppDataInput {
 
 function buildAppData(input: AppDataInput): AppData {
   return {
-    schemaVersion: STORAGE_SCHEMA_VERSION,
     problemsBySlug: input.problemsBySlug ?? {},
     studyStatesBySlug: input.studyStatesBySlug ?? {},
     topicsById: {},
