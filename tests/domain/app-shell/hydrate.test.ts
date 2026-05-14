@@ -13,24 +13,24 @@ import {
 import { describe, expect, it } from "vitest";
 
 import {
-  makeCompanyV7,
-  makeProblemV7,
-  makeTopicV7,
-} from "../../support/v7Fixtures";
+  makeCompany,
+  makeProblem,
+  makeTopic,
+} from "../../support/fixtures";
 
-import type { Company , Problem , Topic } from "@features/problems";
+import type { Company, Problem, Topic } from "@features/problems";
 import type { TrackWithGroups } from "@features/tracks";
 
 
-describe("v7 view hydration", () => {
+describe("view hydration", () => {
   it("hydrates Topic and Company FKs into display labels", () => {
     const topics: Record<string, Topic> = {
-      [asTopicId("array")]: makeTopicV7("array", "Array"),
+      [asTopicId("array")]: makeTopic("array", "Array"),
     };
     const companies: Record<string, Company> = {
-      [asCompanyId("google")]: makeCompanyV7("google", "Google"),
+      [asCompanyId("google")]: makeCompany("google", "Google"),
     };
-    const problem: Problem = makeProblemV7("two-sum", {
+    const problem: Problem = makeProblem("two-sum", {
       title: "Two Sum",
       topicIds: [asTopicId("array")],
       companyIds: [asCompanyId("google")],
@@ -48,7 +48,7 @@ describe("v7 view hydration", () => {
   });
 
   it("flattens userEdits into editedFields preserving declaration order", () => {
-    const problem = makeProblemV7("abc");
+    const problem = makeProblem("abc");
     const edited = applyEdit(
       problem,
       { difficulty: "Hard", isPremium: true },
@@ -60,7 +60,7 @@ describe("v7 view hydration", () => {
   });
 
   it("drops references to missing topics and companies (defensive)", () => {
-    const problem = makeProblemV7("two-sum", {
+    const problem = makeProblem("two-sum", {
       topicIds: [asTopicId("missing")],
       companyIds: [asCompanyId("ghost")],
     });
@@ -108,8 +108,8 @@ describe("v7 view hydration", () => {
       ],
     };
     const problemsBySlug: Record<string, Problem> = {
-      [asProblemSlug("two-sum")]: makeProblemV7("two-sum"),
-      [asProblemSlug("three-sum")]: makeProblemV7("three-sum"),
+      [asProblemSlug("two-sum")]: makeProblem("two-sum"),
+      [asProblemSlug("three-sum")]: makeProblem("three-sum"),
     };
     const view = buildTrackView({
       track,
@@ -152,7 +152,7 @@ describe("v7 view hydration", () => {
     const view = buildTrackView({
       track,
       problemsBySlug: {
-        [asProblemSlug("two-sum")]: makeProblemV7("two-sum"),
+        [asProblemSlug("two-sum")]: makeProblem("two-sum"),
       },
       topicsById: {},
       companiesById: {},

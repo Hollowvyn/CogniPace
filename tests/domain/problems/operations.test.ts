@@ -6,11 +6,11 @@ import {
 } from "@features/problems";
 import { describe, expect, it } from "vitest";
 
-import { makeProblemV7 } from "../../support/v7Fixtures";
+import { makeProblem } from "../../support/fixtures";
 
 describe("Problem operations", () => {
   it("applies a patch and flags userEdits when markUserEdit is true", () => {
-    const problem = makeProblemV7("two-sum", {
+    const problem = makeProblem("two-sum", {
       title: "Two Sum",
       difficulty: "Easy",
     });
@@ -22,7 +22,7 @@ describe("Problem operations", () => {
   });
 
   it("does not flag userEdits when markUserEdit is false", () => {
-    const problem = makeProblemV7("abc");
+    const problem = makeProblem("abc");
     const next = applyEdit(
       problem,
       { title: "Renamed" },
@@ -34,7 +34,7 @@ describe("Problem operations", () => {
   });
 
   it("preserves user-edited fields during mergeImported", () => {
-    let problem = makeProblemV7("two-sum", {
+    let problem = makeProblem("two-sum", {
       difficulty: "Easy",
       title: "Two Sum",
     });
@@ -54,7 +54,7 @@ describe("Problem operations", () => {
   });
 
   it("listEditedFields returns the flagged fields in declaration order", () => {
-    const problem = makeProblemV7("abc");
+    const problem = makeProblem("abc");
     const next = applyEdit(
       problem,
       { difficulty: "Hard", isPremium: true },
@@ -65,7 +65,7 @@ describe("Problem operations", () => {
   });
 
   it("ignores undefined values in the patch", () => {
-    const problem = makeProblemV7("abc", { title: "Original" });
+    const problem = makeProblem("abc", { title: "Original" });
     const next = applyEdit(
       problem,
       { title: undefined, difficulty: "Hard" },
