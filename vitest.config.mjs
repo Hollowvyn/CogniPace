@@ -39,7 +39,7 @@ export default defineConfig({
       "src/features/**/__tests__/**/*.react.test.tsx",
       "src/design-system/**/__tests__/**/*.{react.test,a11y.test}.tsx",
     ],
-    setupFiles: ["tests/ui/support/setup.tsx"],
+    setupFiles: ["tests/support/setup.tsx"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],

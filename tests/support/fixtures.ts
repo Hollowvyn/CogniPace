@@ -9,10 +9,13 @@ import {
   asCompanyId,
   asProblemSlug,
   asTopicId,
+  asTrackGroupId,
+  asTrackId,
 } from "@shared/ids";
 
 import type { Company, Problem, Topic } from "@features/problems";
 import type { StudyState } from "@features/study/server";
+import type { TrackWithGroups } from "@features/tracks";
 
 export const FIXTURE_NOW = "2026-03-01T00:00:00.000Z";
 
@@ -63,6 +66,32 @@ export function makeCompany(
     isCustom,
     createdAt: FIXTURE_NOW,
     updatedAt: FIXTURE_NOW,
+  };
+}
+
+export function makeTrack(
+  id: string,
+  groupSlugs: ReadonlyArray<{ groupId: string; name?: string; slugs: string[] }> = [],
+): TrackWithGroups {
+  const trackId = asTrackId(id);
+  return {
+    id: trackId,
+    name: id,
+    enabled: true,
+    isCurated: false,
+    createdAt: FIXTURE_NOW,
+    updatedAt: FIXTURE_NOW,
+    groups: groupSlugs.map((g, idx) => ({
+      id: asTrackGroupId(g.groupId),
+      trackId,
+      name: g.name,
+      orderIndex: idx,
+      problems: g.slugs.map((slug, slugIdx) => ({
+        groupId: asTrackGroupId(g.groupId),
+        problemSlug: asProblemSlug(slug),
+        orderIndex: slugIdx,
+      })),
+    })),
   };
 }
 
