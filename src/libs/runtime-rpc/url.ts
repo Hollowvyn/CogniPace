@@ -78,12 +78,5 @@ export function validateExtensionPagePath(pathInput: string): string {
     return view ? `dashboard.html?view=${view}` : "dashboard.html";
   }
 
-  if (fileName === "database.html") {
-    if (parsed.searchParams.size > 0) {
-      throw new Error("Invalid database path.");
-    }
-    return "database.html";
-  }
-
   throw new Error("Unknown extension path.");
 }

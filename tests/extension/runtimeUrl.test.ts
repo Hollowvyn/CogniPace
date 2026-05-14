@@ -13,7 +13,6 @@ describe("runtime-rpc URL safety guards", () => {
         input: "dashboard.html?view=settings",
         expected: "dashboard.html?view=settings",
       },
-      { input: "database.html", expected: "database.html" },
     ])("accepts valid path $input", ({ input, expected }) => {
       assert.equal(validateExtensionPagePath(input), expected);
     });
@@ -28,6 +27,7 @@ describe("runtime-rpc URL safety guards", () => {
       },
       { input: "../dashboard.html", error: /invalid extension path/i },
       { input: "settings.html", error: /unknown extension path/i },
+      { input: "database.html", error: /unknown extension path/i },
     ])("rejects invalid path $input", ({ input, error }) => {
       assert.throws(() => validateExtensionPagePath(input), error);
     });

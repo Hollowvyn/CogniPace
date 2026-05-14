@@ -15,7 +15,6 @@ async function build() {
       content: "src/entrypoints/overlay.tsx",
       popup: "src/entrypoints/popup.tsx",
       dashboard: "src/entrypoints/dashboard.tsx",
-      database: "src/entrypoints/libraryRedirect.ts",
       // Developer-only DB inspection page (dbDebug.html). Loads an
       // in-memory wasm DB with the migration applied so you can run
       // SQL ad-hoc, run smoke checks, and verify schema changes.
