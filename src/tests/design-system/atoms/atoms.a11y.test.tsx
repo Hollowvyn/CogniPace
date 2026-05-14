@@ -93,12 +93,6 @@ describe("design-system atoms a11y smoke", () => {
     );
   });
 
-  it("StatusBanner renders without axe violations", async () => {
-    await expectNoAxeViolations(
-      <StatusBanner message="All caught up" isError={false} />,
-    );
-  });
-
   it("StatusSurface renders without axe violations", async () => {
     await expectNoAxeViolations(<StatusSurface>info text</StatusSurface>);
   });

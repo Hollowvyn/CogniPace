@@ -1,14 +1,10 @@
 /** Dashboard-specific surface primitives composed from the shared CogniPace theme. */
 import {
-  InsetSurface,
   SurfacePanel,
-  SurfaceSectionLabel,
 } from "@design-system/atoms";
 import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
 import { alpha } from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
 
@@ -65,5 +61,4 @@ export function DashboardHeaderPanel(props: { children: ReactNode }) {
     <SurfacePanel sx={{ p: { md: 2, xs: 2 } }}>{props.children}</SurfacePanel>
   );
 }
-
 
