@@ -97,7 +97,6 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
   }
 
   return {
-    id: typeof problem.id === "string" && problem.id.trim() ? problem.id : slug,
     leetcodeSlug: slug,
     slug,
     leetcodeId:

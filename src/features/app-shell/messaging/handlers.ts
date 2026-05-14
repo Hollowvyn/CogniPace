@@ -187,7 +187,6 @@ function libraryRows(
 
 function synthesizeProblem(slug: string): Problem {
   return {
-    id: slug,
     leetcodeSlug: slug,
     slug,
     title: slugToTitle(slug),

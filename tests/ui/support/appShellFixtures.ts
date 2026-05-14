@@ -119,7 +119,6 @@ export function makePayload() {
     {
       slug: "two-sum",
       problem: {
-        id: "1",
         leetcodeSlug: "two-sum",
         slug: "two-sum",
         title: "Two Sum",

@@ -135,7 +135,6 @@ export async function importData(
         ? importedTopicIds
         : topicIdsFromLabels(labels);
     await upsertProblem(db, {
-      id: problem.id || slug,
       leetcodeSlug: slug,
       slug,
       leetcodeId: problem.leetcodeId,

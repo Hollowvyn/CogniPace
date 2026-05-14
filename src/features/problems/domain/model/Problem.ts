@@ -3,13 +3,11 @@ import type { EditableProblemField } from "./EditableProblemField";
 import type { ProblemEditFlags } from "./ProblemEditFlags";
 import type { ProblemEditPatch } from "./ProblemEditPatch";
 
-/** Problem aggregate. Keeps the legacy aliases (`id`, `leetcodeSlug`,
- *  `topics`) only until their dedicated cuts land; `slug` is the
- *  canonical identifier. Track memberships live in `track_group_problems`
- *  and are read via the tracks repo. */
+/** Problem aggregate. Keeps the legacy aliases (`leetcodeSlug`, `topics`)
+ *  only until their dedicated cuts land; `slug` is the canonical
+ *  identifier. Track memberships live in `track_group_problems` and are
+ *  read via the tracks repo. */
 export interface Problem {
-  /** @deprecated Use `slug`. Retained equal to `slug` for legacy callers. */
-  id: string;
   /** @deprecated Use `slug`. Retained equal to `slug` for legacy callers. */
   leetcodeSlug: string;
   slug: string;

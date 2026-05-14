@@ -86,7 +86,6 @@ function makeView(): TrackView {
 
 function makeProblem(slug: string, title: string): Problem {
   return {
-    id: slug,
     leetcodeSlug: slug,
     slug,
     title,
