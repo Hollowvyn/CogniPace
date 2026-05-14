@@ -3,13 +3,14 @@
 ## Project Structure & Module Organization
 
 CogniPace is a React 19 + TypeScript Chrome MV3 extension. Source lives under `src/`.
-Use `src/entrypoints/` only for thin extension entry files, `src/app/` for popup,
-dashboard, and overlay shells, and `src/extension/background/` for service-worker
-registration and dispatch. Feature code belongs in `src/features/<name>/` using
-`data`, `domain`, `ui`, and `messaging` sublayers where relevant. Shared pure
-utilities belong in `src/libs/` or `src/shared/`; platform adapters belong in
-`src/platform/`. Tests live in `src/tests/`. Public HTML, manifest, CSS, and icons
-live in `public/`; generated build output goes to `dist/`.
+Use `src/entrypoints/` only for thin extension entry files and runtime bootstrap,
+`src/app/bootstrap/` for shared provider/DI composition, `src/app/` surface folders
+for popup, dashboard, and overlay shells, and `src/extension/background/` for
+service-worker registration and dispatch. Feature code belongs in
+`src/features/<name>/` using `data`, `domain`, `ui`, and `messaging` sublayers where
+relevant. Shared pure utilities belong in `src/libs/` or `src/shared/`; platform
+adapters belong in `src/platform/`. Tests live in `src/tests/`. Public HTML,
+manifest, CSS, and icons live in `public/`; generated build output goes to `dist/`.
 
 ## Build, Test, and Development Commands
 

@@ -1,4 +1,4 @@
-import { useDI } from "@app/di";
+import { useDI } from "@app/bootstrap";
 import { useCallback, useMemo, useState } from "react";
 
 import {

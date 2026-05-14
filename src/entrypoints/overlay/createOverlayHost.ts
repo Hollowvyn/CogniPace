@@ -1,7 +1,3 @@
-/** Imperative host setup for the overlay surface. Creates (or reuses)
- *  the shadow-root host, the emotion style container, and the React
- *  mount node. Lives at the surface layer so the entrypoint stays a
- *  thin mount file. */
 import createCache from "@emotion/cache";
 import { createRoot, Root } from "react-dom/client";
 
@@ -14,6 +10,9 @@ export interface OverlayHost {
   root: Root;
 }
 
+/** Entry runtime setup for the overlay surface. Creates or reuses the
+ * shadow host, emotion style container, and React mount node before the
+ * React tree is rendered. */
 export function createOverlayHost(): OverlayHost {
   const existingHost = document.getElementById(OVERLAY_ID);
   if (existingHost?.shadowRoot) {

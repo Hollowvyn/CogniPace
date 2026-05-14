@@ -4,15 +4,16 @@
 
 ```
 src/
-├── app/                   # React surfaces and DI wiring
-│   ├── di/               # DIContext (settingsRepository, backupRepository)
+├── app/                   # Shared surface composition + React surface shells
+│   ├── bootstrap/        # AppProviders + DIContext for surface composition
 │   ├── popup/            # Popup shell + sections
 │   ├── dashboard/        # Dashboard shell, rail, navigation, sections
-│   └── overlay/          # Overlay shell and host creation
+│   └── overlay/          # Overlay shell only (React composition)
 ├── design-system/        # MUI-based atomic components and per-surface themes
 │   ├── atoms/            # card, chip, feedback, labels, layout, nav, table, tooltip
 │   └── theme/            # Per-surface MUI themes + design tokens
-├── entrypoints/          # Thin React bootstraps (popup, dashboard, overlay, dbDebug)
+├── entrypoints/          # Thin runtime bootstraps (popup, dashboard, overlay, dbDebug)
+│   └── overlay/          # Overlay-only host/shadow-root bootstrap helpers
 ├── extension/
 │   └── background/
 │       ├── index.ts      # SW lifecycle: onInstalled, onStartup, onSuspend, alarms, onMessage
@@ -43,6 +44,13 @@ src/
 
 ## Runtime Surfaces
 
+Entry contract:
+- `src/entrypoints/*` owns runtime bootstrap only: locate/create mount targets, create the
+  React root, install shared providers, and render exactly one surface shell.
+- `src/app/<surface>/` owns React composition only: shells, view-model hooks, and navigation
+  that orchestrate feature UI and repositories through the typed app boundary.
+- Entrypoints do not call `src/features/*` directly.
+
 ### Popup
 
 Entrypoint: `src/entrypoints/popup.tsx`
@@ -63,6 +71,7 @@ Routes: `src/app/dashboard/navigation/routes.ts`.
 
 Entrypoint: `src/entrypoints/overlay.tsx`
 Shell: `src/app/overlay/`
+Host bootstrap: `src/entrypoints/overlay/createOverlayHost.ts`
 
 Shadow-root-backed React overlay on LeetCode problem pages. Manages timer, structured log
 fields, FSRS assessment, and review-session actions. Emotion cache injected into shadow root.
@@ -89,7 +98,7 @@ Rules:
 ### Design System (`src/design-system/`)
 
 MUI-based atomic components and per-surface MUI theme factories. Shared across surfaces
-via `AppProviders`.
+via `src/app/bootstrap/AppProviders.tsx`.
 
 ### Platform (`src/platform/`)
 
@@ -141,8 +150,9 @@ Mutations write to datasources; the tick system drives UI refresh.
 - Popup UI: `src/app/popup/`
 - Dashboard UI: `src/app/dashboard/` (routes: `navigation/routes.ts`)
 - Overlay UI: `src/app/overlay/` + `src/features/overlay-session/`
-- Shared providers and theme: `src/app/providers.tsx`, `src/design-system/theme/`
-- DI bindings: `src/app/di/index.tsx`
+- Surface bootstrap wiring: `src/app/bootstrap/`
+- Shared theme factories: `src/design-system/theme/`
+- Overlay runtime host bootstrap: `src/entrypoints/overlay/createOverlayHost.ts`
 - New feature: slice under `src/features/<name>/` following `data/domain/ui/messaging`
   layout; register handlers in `src/extension/background/swApi.ts`
 - New SW handler: add to `features/*/messaging/handlers.ts`, export from `server.ts`,

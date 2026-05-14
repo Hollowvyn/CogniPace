@@ -5,7 +5,7 @@
  *  `features/settings/ui/hooks/useSettingsScreen`; the shell just passes
  *  the persisted snapshot through and surfaces status. */
 import { api } from "@app/api";
-import { useDI } from "@app/di";
+import { useDI } from "@app/bootstrap";
 import { createMockAppShellPayload, useAppShellQuery } from "@features/app-shell";
 import { openProblemPage } from "@features/problems";
 import {

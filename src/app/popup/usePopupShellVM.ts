@@ -1,7 +1,7 @@
 /** PopupShell's ViewModel — owns popup data fetching, recommendation
  *  rotation, and user-action intents per the canonical Screen+VM
  *  pattern (one Model object per render; intents are methods). */
-import { useDI } from "@app/di";
+import { useDI } from "@app/bootstrap";
 import { appShellRepository, createMockPopupShellPayload, useAppShellQuery } from "@features/app-shell";
 import { openProblemPage, RecommendedProblemView } from "@features/problems";
 import { StudyMode } from "@features/settings";

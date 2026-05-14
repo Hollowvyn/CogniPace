@@ -11,7 +11,7 @@
  * Failing this file = a violation was introduced. Fix the atom (or
  * its consumer pattern) — do not relax the axe rules.
  */
-import { AppProviders } from "@app/providers";
+import { AppProviders } from "@app/bootstrap";
 import {
   BrandMark,
   CogniPaceIcon,
