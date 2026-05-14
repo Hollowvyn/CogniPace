@@ -45,6 +45,7 @@ import {
   serializeDb,
   writeSnapshotToStorage,
 } from "./snapshot";
+import { tableFromSql } from "./tableFromSql";
 
 import type { Problem } from "@features/problems";
 
@@ -164,12 +165,15 @@ async function bootDb(): Promise<DbHandle> {
   // lite) + debounced snapshot persistence (Phase 6). Both run on the
   // same `run` proxy event; the broadcast is fire-and-forget so it
   // doesn't slow the mutation's response path.
-  setOnMutationHook(() => {
-    // Wildcard scope: until per-feature scoped writers land in Phase 6+,
-    // every SQLite mutation wakes all subscribers (today's behavior).
-    // The scope filtering plumbing is in place so features can opt
-    // into narrow scopes without touching the proxy.
-    tick({ table: "*" });
+  setOnMutationHook((sql) => {
+    // Per-table tick. `tableFromSql` returns null for DDL / pragmas /
+    // transaction control — those don't represent user-visible
+    // mutations, so we skip the broadcast for them. Unparseable
+    // (e.g. raw deserialize-path SQL) also returns null and is
+    // silently skipped, which is the correct behaviour: snapshot
+    // restore at boot shouldn't wake subscribers.
+    const table = tableFromSql(sql);
+    if (table) tick({ table });
     scheduleSnapshotSave();
   });
 

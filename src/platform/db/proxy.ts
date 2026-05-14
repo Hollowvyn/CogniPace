@@ -72,19 +72,22 @@ export function execProxy(
 
 /**
  * Module-scoped mutation hook. Set by `instance.ts` after boot so the
- * SW can schedule a debounced snapshot whenever a mutation runs through
- * the proxy. Null in test/debug contexts where no persistence is wired.
+ * SW can schedule a debounced snapshot AND broadcast a scoped tick
+ * whenever a mutation runs through the proxy. The hook receives the
+ * raw SQL so the consumer can parse out the table being mutated.
  *
  * Stored as a single function rather than per-DB to keep the proxy
  * callback factory ergonomic; in practice only one production DB is
  * live at a time inside a given runtime (SW or extension page).
  */
-let onMutationHook: (() => void) | null = null;
+let onMutationHook: ((sql: string) => void) | null = null;
 
 /** Wires (or clears) the mutation observer. Tests / dbDebug never call
  * this, so the hook stays null and their in-memory DBs are not
  * persisted to chrome.storage. */
-export function setOnMutationHook(hook: (() => void) | null): void {
+export function setOnMutationHook(
+  hook: ((sql: string) => void) | null,
+): void {
   onMutationHook = hook;
 }
 
@@ -112,7 +115,7 @@ export function createProxyCallback(
   return (sql, params, method) => {
     const result = execProxy(rawDb, sql, params, method);
     if (method === "run" && onMutationHook) {
-      onMutationHook();
+      onMutationHook(sql);
     }
     return Promise.resolve(result);
   };
