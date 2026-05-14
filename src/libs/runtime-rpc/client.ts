@@ -1,5 +1,5 @@
 /** Typed runtime client used by repositories and entrypoints inside the extension. */
-import {MessageRequestMap, MessageResponseMap, MessageType, RuntimeMessage,} from "./contracts";
+import {MessageRequestMap, MessageResponseMap, MessageType,} from "./contracts";
 
 export interface RuntimeResponse<T = unknown> {
   ok: boolean;
@@ -27,10 +27,7 @@ export async function sendMessage<
   type: T,
   payload: MessageRequestMap[T]
 ): Promise<RuntimeResponse<R>> {
-  const message: RuntimeMessage<T> = {
-    type,
-    payload,
-  };
+  const message = { type, payload };
 
   try {
     const response = (await chrome.runtime.sendMessage(message)) as

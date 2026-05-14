@@ -21,7 +21,6 @@ const MESSAGE_TYPES = {
   UPDATE_NOTES: true,
   UPDATE_TAGS: true,
   GET_TODAY_QUEUE: true,
-  GET_DASHBOARD_DATA: true,
   GET_APP_SHELL_DATA: true,
   GET_POPUP_SHELL_DATA: true,
   IMPORT_CURATED_SET: true,
@@ -418,7 +417,6 @@ function validatePayload(type: MessageType, payload: UnknownRecord): void {
       requireStringArray(payload.tags, "tags");
       return;
     case "GET_TODAY_QUEUE":
-    case "GET_DASHBOARD_DATA":
     case "GET_APP_SHELL_DATA":
     case "GET_POPUP_SHELL_DATA":
     case "EXPORT_DATA":

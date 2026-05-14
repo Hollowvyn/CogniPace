@@ -77,7 +77,6 @@ export interface MessageRequestMap {
     tags: string[];
   };
   GET_TODAY_QUEUE: Record<string, never>;
-  GET_DASHBOARD_DATA: Record<string, never>;
   GET_APP_SHELL_DATA: Record<string, never>;
   GET_POPUP_SHELL_DATA: Record<string, never>;
   IMPORT_CURATED_SET: {

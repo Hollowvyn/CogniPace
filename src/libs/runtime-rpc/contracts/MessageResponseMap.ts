@@ -33,7 +33,6 @@ export interface MessageResponseMap {
   UPDATE_NOTES: StudyStateMutationResponse;
   UPDATE_TAGS: StudyStateMutationResponse;
   GET_TODAY_QUEUE: TodayQueue;
-  GET_DASHBOARD_DATA: AppShellPayload;
   GET_APP_SHELL_DATA: AppShellPayload;
   GET_POPUP_SHELL_DATA: PopupShellPayload;
   IMPORT_CURATED_SET: ImportSummaryResponse;
