@@ -7,7 +7,7 @@ import { openProblemPage, RecommendedProblemView } from "@features/problems";
 import { StudyMode } from "@features/settings";
 import { startTransition, useMemo, useRef, useState } from "react";
 
-import { openDashboardPage } from "../dashboard/openDashboardPage";
+import { openDashboardPage } from "../dashboard/navigation/openDashboardPage";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],

@@ -1,21 +1,17 @@
 /** Opens the dashboard in a new tab, preserving the existing `?view=`
- *  contract. Used by the popup's "Open dashboard / settings" intents.
+ * contract. Used by popup intents that jump into a specific dashboard
+ * surface from outside the dashboard shell itself.
  *
- *  In an extension context, uses `chrome.tabs.create` with the extension
- *  URL. In dev/jsdom (no extension runtime), falls back to
- *  `windowRef.open` against an origin-relative path so the function
- *  remains testable without stubbing chrome. */
+ * In an extension context, uses `chrome.tabs.create` with the extension
+ * URL. In dev/jsdom (no extension runtime), falls back to
+ * `windowRef.open` against an origin-relative path so the function
+ * remains testable without stubbing chrome. */
 import { extensionUrl, isExtensionContext, openTab } from "@platform/chrome/tabs";
 
-export type ExtensionDashboardView =
-  | "dashboard"
-  | "tracks"
-  | "library"
-  | "analytics"
-  | "settings";
+import { type DashboardView } from "./routes";
 
 export function openDashboardPage(
-  view?: ExtensionDashboardView,
+  view?: DashboardView,
   windowRef: Window = window,
 ): void {
   const baseUrl = isExtensionContext()
@@ -33,4 +29,3 @@ export function openDashboardPage(
 
   windowRef.open(url.toString(), "_blank", "noopener,noreferrer");
 }
-
