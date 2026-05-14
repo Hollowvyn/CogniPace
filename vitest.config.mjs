@@ -23,6 +23,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app": path.resolve(here, "src/app"),
+      "@extension": path.resolve(here, "src/extension"),
       "@features": path.resolve(here, "src/features"),
       "@libs": path.resolve(here, "src/libs"),
       "@platform": path.resolve(here, "src/platform"),

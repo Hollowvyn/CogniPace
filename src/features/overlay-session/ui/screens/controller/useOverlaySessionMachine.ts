@@ -213,17 +213,20 @@ export function useOverlaySessionMachine(
       solveTimeMs: number | undefined,
       draft: OverlayDraftLogFields
     ): Promise<boolean> => {
-      const response = await saveReviewResult({
-        slug,
-        rating,
-        mode,
-        solveTimeMs,
-        ...reviewPayloadFromDraft(draft),
-        source: "overlay",
-      });
-
-      if (!response.ok) {
-        setFeedback(response.error ?? "Failed to save review.", true);
+      try {
+        await saveReviewResult({
+          slug,
+          rating,
+          mode,
+          solveTimeMs,
+          ...reviewPayloadFromDraft(draft),
+          source: "overlay",
+        });
+      } catch (err) {
+        setFeedback(
+          (err as Error).message || "Failed to save review.",
+          true
+        );
         return false;
       }
 
@@ -240,17 +243,20 @@ export function useOverlaySessionMachine(
       solveTimeMs: number | undefined,
       draft: OverlayDraftLogFields
     ): Promise<boolean> => {
-      const response = await overrideLastReviewResult({
-        slug,
-        rating,
-        mode,
-        solveTimeMs,
-        ...reviewPayloadFromDraft(draft),
-        source: "overlay",
-      });
-
-      if (!response.ok) {
-        setFeedback(response.error ?? "Failed to save override.", true);
+      try {
+        await overrideLastReviewResult({
+          slug,
+          rating,
+          mode,
+          solveTimeMs,
+          ...reviewPayloadFromDraft(draft),
+          source: "overlay",
+        });
+      } catch (err) {
+        setFeedback(
+          (err as Error).message || "Failed to save override.",
+          true
+        );
         return false;
       }
 
@@ -264,13 +270,16 @@ export function useOverlaySessionMachine(
       slug: string,
       draft: OverlayDraftLogFields
     ): Promise<boolean> => {
-      const response = await saveOverlayLogDraft({
-        slug,
-        ...reviewPayloadFromDraft(draft),
-      });
-
-      if (!response.ok) {
-        setFeedback(response.error ?? "Failed to save log draft.", true);
+      try {
+        await saveOverlayLogDraft({
+          slug,
+          ...reviewPayloadFromDraft(draft),
+        });
+      } catch (err) {
+        setFeedback(
+          (err as Error).message || "Failed to save log draft.",
+          true
+        );
         return false;
       }
 

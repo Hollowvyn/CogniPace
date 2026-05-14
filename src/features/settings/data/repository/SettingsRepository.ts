@@ -1,4 +1,4 @@
-import { sendMessage } from "@libs/runtime-rpc/client";
+import { api } from "@app/api";
 
 import {
   cloneUserSettings,
@@ -11,11 +11,10 @@ import {
 
 import type { TrackId } from "@shared/ids";
 
-
 export interface SettingsRepository {
   /** The canonical settings update. Every typed helper on this
    *  interface delegates here; every settings field flows through one
-   *  message type (`UPDATE_SETTINGS`), one handler, one validator.
+   *  message type (`updateSettings`), one handler.
    *
    *  Round-trip is persisted-then-readback (charter lesson #6) — the
    *  returned snapshot is the next read, not the caller's argument. */
@@ -29,13 +28,8 @@ export interface SettingsRepository {
 }
 
 async function dispatchUpdate(patch: UserSettingsPatch): Promise<UserSettings> {
-  const response = await sendMessage("UPDATE_SETTINGS", patch);
-  if (!response.ok || !response.data) {
-    throw new Error(
-      response.error ?? "settingsRepository.update: SW returned no data",
-    );
-  }
-  return response.data.settings;
+  const result = await api.updateSettings(patch);
+  return result.settings as UserSettings;
 }
 
 export const settingsRepository: SettingsRepository = {

@@ -3,13 +3,14 @@
  *  pattern. */
 import { appShellRepository, AppShellPayload } from "@features/app-shell";
 import {
+  Difficulty,
   getProblemContext,
   openExtensionPage,
   openProblemPage,
   upsertProblemFromPage,
 } from "@features/problems";
 import { createInitialUserSettings , UserSettings } from "@features/settings";
-import { Rating } from "@features/study";
+import { Rating, StudyState } from "@features/study";
 import {
   getProblemSlugFromUrl,
   isStaleOverlayRequest,
@@ -102,9 +103,10 @@ export function useOverlayPanelVM(
 
   const openOverlayProblem = useCallback(
     async (target: { slug: string; trackId?: string; groupId?: string }) => {
-      const response = await openProblemPage(target);
-      if (!response.ok) {
-        setFeedback(response.error ?? "Failed to open problem.", true);
+      try {
+        await openProblemPage(target);
+      } catch (err) {
+        setFeedback((err as Error).message || "Failed to open problem.", true);
       }
     },
     [setFeedback]
@@ -153,29 +155,24 @@ export function useOverlayPanelVM(
   const refreshPostSubmitNext = useCallback(
     async (currentSlug: string) => {
       const requestToken = ++postSubmitRequestTokenRef.current;
-      const response = await appShellRepository.fetchAppShell();
-      if (requestToken !== postSubmitRequestTokenRef.current) {
-        return;
-      }
-
-      if (
-        !response.ok ||
-        !response.data ||
-        !("settings" in response.data) ||
-        !("popup" in response.data)
-      ) {
+      let shell: AppShellPayload;
+      try {
+        shell = await appShellRepository.fetchAppShell();
+      } catch (err) {
+        if (requestToken !== postSubmitRequestTokenRef.current) return;
         setPostSubmitNext({
           kind: "empty",
           title: "Next question unavailable",
           message:
-            response.error ??
+            (err as Error).message ||
             "Review saved, but the overlay could not load the latest recommendation.",
         });
         return;
       }
+      if (requestToken !== postSubmitRequestTokenRef.current) return;
 
       setPostSubmitNext(
-        derivePostSubmitNext(response.data, currentSlug) ?? {
+        derivePostSubmitNext(shell, currentSlug) ?? {
           kind: "empty",
           title: "No next question ready",
           message:
@@ -197,13 +194,31 @@ export function useOverlayPanelVM(
       const requestToken = ++requestTokenRef.current;
       const pageSnapshot = readProblemPageSnapshot(documentRef, slug);
 
-      const upsert = await upsertProblemFromPage({
-        slug,
-        title: pageSnapshot.title,
-        difficulty: pageSnapshot.difficulty,
-        isPremium: pageSnapshot.isPremium,
-        url: `https://leetcode.com/problems/${slug}/`,
-      });
+      try {
+        await upsertProblemFromPage({
+          slug,
+          title: pageSnapshot.title,
+          difficulty: pageSnapshot.difficulty,
+          isPremium: pageSnapshot.isPremium,
+          url: `https://leetcode.com/problems/${slug}/`,
+        });
+      } catch (err) {
+        if (
+          isStaleOverlayRequest(
+            requestToken,
+            requestTokenRef.current,
+            activeSlugRef.current,
+            slug
+          )
+        ) {
+          return;
+        }
+        setFeedback(
+          (err as Error).message || "Failed to sync problem.",
+          true
+        );
+        return;
+      }
 
       if (
         isStaleOverlayRequest(
@@ -216,15 +231,33 @@ export function useOverlayPanelVM(
         return;
       }
 
-      if (!upsert.ok) {
-        setFeedback(upsert.error ?? "Failed to sync problem.", true);
+      let problemContext: { problem: unknown; studyState: unknown };
+      let shell: AppShellPayload | null = null;
+      try {
+        const [contextResult, shellResult] = await Promise.all([
+          getProblemContext(slug),
+          appShellRepository.fetchAppShell(),
+        ]);
+        problemContext = contextResult;
+        shell = shellResult;
+      } catch (err) {
+        if (
+          isStaleOverlayRequest(
+            requestToken,
+            requestTokenRef.current,
+            activeSlugRef.current,
+            slug
+          )
+        ) {
+          return;
+        }
+        setFeedback(
+          (err as Error).message || "Failed to fetch context.",
+          true
+        );
         return;
       }
 
-      const [context, shell] = await Promise.all([
-        getProblemContext(slug),
-        appShellRepository.fetchAppShell(),
-      ]);
       if (
         isStaleOverlayRequest(
           requestToken,
@@ -236,25 +269,23 @@ export function useOverlayPanelVM(
         return;
       }
 
-      if (!context.ok) {
-        setFeedback(context.error ?? "Failed to fetch context.", true);
-        return;
+      if (shell?.settings) {
+        setSettings(shell.settings);
       }
 
-      if (shell.ok && shell.data?.settings) {
-        setSettings(shell.data.settings);
-      }
-
-      const problemContext = context.data ?? {
+      const context = (problemContext ?? {
         problem: null,
         studyState: null,
+      }) as {
+        problem: { difficulty?: Difficulty; title?: string } | null;
+        studyState: StudyState | null;
       };
       applyProblemContext({
         difficulty:
-          problemContext.problem?.difficulty ?? pageSnapshot.difficulty,
+          context.problem?.difficulty ?? pageSnapshot.difficulty,
         slug,
-        studyState: problemContext.studyState ?? null,
-        title: problemContext.problem?.title ?? pageSnapshot.title,
+        studyState: context.studyState ?? null,
+        title: context.problem?.title ?? pageSnapshot.title,
       });
     },
     [applyProblemContext, documentRef, setFeedback, windowRef]

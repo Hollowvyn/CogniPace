@@ -17,7 +17,7 @@ import {
 import { getUserSettings } from "@features/settings/server";
 import { listStudyStates } from "@features/study/server";
 import { buildActiveTrackView, listTracks } from "@features/tracks/server";
-import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
+import { validateExtensionPagePath } from "@libs/runtime-rpc/url";
 import { getDb } from "@platform/db/instance";
 
 import { getAppData } from "../../../data/repositories/appDataRepository";

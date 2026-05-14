@@ -109,10 +109,10 @@ async function resolveCompanySelection(
 
     if (!candidateName) continue;
     try {
-      const response = await createCustomCompany({ name: candidateName });
-      if (response && "ok" in response && response.ok && response.data?.id) {
+      const result = await createCustomCompany({ name: candidateName });
+      if (result?.id) {
         const created: CompanyLabel = {
-          id: response.data.id,
+          id: result.id,
           name: candidateName,
         };
         if (!seenIds.has(created.id)) {
@@ -176,19 +176,11 @@ export function EditProblemModal(props: EditProblemModalProps) {
     setError(null);
     try {
       const patch = buildPatch(draft, problem);
-      const response = await editProblem({
+      await editProblem({
         slug: problem.slug,
         patch,
         markUserEdit: true,
       });
-      if (response && "ok" in response && response.ok === false) {
-        setError(
-          ("error" in response && typeof response.error === "string"
-            ? response.error
-            : null) ?? "Could not save the changes.",
-        );
-        return;
-      }
       await onSaved?.();
       onClose();
     } catch (err) {

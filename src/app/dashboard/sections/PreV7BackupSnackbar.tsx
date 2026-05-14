@@ -33,17 +33,19 @@ export function PreV7BackupSnackbar() {
     if (requestedRef.current) return;
     requestedRef.current = true;
     let cancelled = false;
-    void consumePreV7Backup().then((response) => {
-      if (cancelled) return;
-      const blob =
-        response && "ok" in response && response.ok
-          ? (response.data as { backup: unknown }).backup
-          : null;
-      if (blob) {
-        setBackup(blob);
-        setOpen(true);
-      }
-    });
+    void consumePreV7Backup()
+      .then((result) => {
+        if (cancelled) return;
+        const blob = result?.backup ?? null;
+        if (blob) {
+          setBackup(blob);
+          setOpen(true);
+        }
+      })
+      .catch(() => {
+        // Swallow — the sidecar may not exist, which is the expected path
+        // for users who never had a v6 install.
+      });
     return () => {
       cancelled = true;
     };

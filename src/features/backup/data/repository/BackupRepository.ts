@@ -1,32 +1,24 @@
-import { sendMessage } from "@libs/runtime-rpc/client";
+import { api } from "@app/api";
 
 import type { ExportPayload, ImportedResponse } from "../../domain/model";
 
 export interface BackupRepository {
-  /** Pulls the full persisted snapshot from the SW. */
+  /** Pulls the full persisted snapshot from the SW. Throws on failure. */
   exportData(): Promise<ExportPayload>;
-  /** Sends an already-validated payload to the SW for import. */
+  /** Sends an already-validated payload to the SW for import. Throws on failure. */
   importData(payload: ExportPayload): Promise<ImportedResponse>;
   /** Triggers a browser download of the payload as canonical JSON. */
   downloadJson(payload: ExportPayload, documentRef?: Document): void;
 }
 
 async function dispatchExport(): Promise<ExportPayload> {
-  const response = await sendMessage("EXPORT_DATA", {});
-  if (!response.ok || !response.data) {
-    throw new Error(response.error ?? "backupRepository.exportData failed");
-  }
-  return response.data;
+  return (await api.exportData({})) as ExportPayload;
 }
 
 async function dispatchImport(
   payload: ExportPayload,
 ): Promise<ImportedResponse> {
-  const response = await sendMessage("IMPORT_DATA", payload);
-  if (!response.ok || !response.data) {
-    throw new Error(response.error ?? "backupRepository.importData failed");
-  }
-  return response.data;
+  return (await api.importData(payload)) as ImportedResponse;
 }
 
 function downloadJson(

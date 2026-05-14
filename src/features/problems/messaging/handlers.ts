@@ -22,7 +22,7 @@ import {
   getStudyStateSummary,
   normalizeReviewLogFields,
 } from "@libs/fsrs/studyState";
-import { canonicalProblemUrlForOpen } from "@libs/runtime-rpc/validator";
+import { canonicalProblemUrlForOpen } from "@libs/runtime-rpc/url";
 import { getDb } from "@platform/db/instance";
 import { nowIso } from "@platform/time";
 import {

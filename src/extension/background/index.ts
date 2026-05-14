@@ -1,8 +1,4 @@
 /** Service-worker bootstrap for background lifecycle, alarms, and runtime routing. */
-import {
-  assertAuthorizedRuntimeMessage,
-  validateRuntimeMessage,
-} from "@libs/runtime-rpc/validator";
 import { flushSnapshot, getDb } from "@platform/db/instance";
 
 import {
@@ -10,13 +6,12 @@ import {
   STORAGE_KEY,
 } from "../../data/repositories/appDataRepository";
 
+import { dispatch } from "./dispatcher";
 import {
   handleStartupDueCheck,
   maybeNotifyDueQueue,
   scheduleNextDueAlarm,
 } from "./notifications";
-import { fail } from "./responses";
-import { handleMessage } from "./router";
 
 chrome.runtime.onInstalled.addListener((details) => {
   // Defer all async work so a single failure doesn't crash the
@@ -76,21 +71,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-chrome.runtime.onMessage.addListener(
-  (message: unknown, sender, sendResponse) => {
-    void Promise.resolve()
-      .then(() => {
-        const validatedMessage = validateRuntimeMessage(message);
-        assertAuthorizedRuntimeMessage(
-          validatedMessage,
-          sender,
-          chrome.runtime.id,
-          chrome.runtime.getURL("")
-        );
-        return handleMessage(validatedMessage, sender);
-      })
-      .then((response) => sendResponse(response))
-      .catch((error) => sendResponse(fail(error)));
-    return true;
-  }
-);
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+  void dispatch(message, sender, chrome.runtime.id, chrome.runtime.getURL("")).then(
+    sendResponse,
+  );
+  return true; // keep the channel open for the async response
+});

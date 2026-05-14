@@ -21,11 +21,7 @@ export function isExtensionContext(): boolean {
   return typeof chrome !== "undefined" && Boolean(chrome.runtime?.id);
 }
 
-type FetchPayload<TPayload> = () => Promise<{
-  ok: boolean;
-  data?: TPayload;
-  error?: string;
-}>;
+type FetchPayload<TPayload> = () => Promise<TPayload>;
 
 /** Default fetcher — defined at module scope so the function identity
  *  is stable across renders (preventing the `[fetchPayload]` →
@@ -63,11 +59,13 @@ export function useAppShellQuery<
         return true;
       }
 
-      const response = await fetchPayload();
-      if (!response.ok || !response.data) {
+      let nextPayload: TPayload;
+      try {
+        nextPayload = await fetchPayload();
+      } catch (err) {
         startTransition(() => {
           setStatus({
-            message: response.error ?? "Failed to load app shell.",
+            message: (err as Error).message || "Failed to load app shell.",
             isError: true,
             scope: "surface",
           });
@@ -75,7 +73,6 @@ export function useAppShellQuery<
         return false;
       }
 
-      const nextPayload = response.data;
       startTransition(() => {
         setPayload(nextPayload);
         if (clearStatusOnSuccess) {

@@ -1,9 +1,10 @@
 /**
  * UI-side action repository for the v7 message surface. Each function is
- * a thin sendMessage wrapper — UI components import these rather than
- * constructing payload objects inline.
+ * a thin proxy wrapper — UI components import these rather than
+ * constructing payload objects inline. Methods throw on failure and
+ * return resolved data on success.
  */
-import { sendMessage } from "@libs/runtime-rpc/client";
+import { api } from "@app/api";
 
 import type { Difficulty } from "@features/problems";
 
@@ -27,7 +28,7 @@ export async function editProblem(input: {
   patch: EditProblemPatch;
   markUserEdit?: boolean;
 }) {
-  return sendMessage("EDIT_PROBLEM", input);
+  return api.editProblem(input);
 }
 
 /** Create (or upsert) a custom Topic; returns its canonical id. */
@@ -35,7 +36,7 @@ export async function createCustomTopic(input: {
   name: string;
   description?: string;
 }) {
-  return sendMessage("CREATE_CUSTOM_TOPIC", input);
+  return api.createCustomTopic(input);
 }
 
 /** Create (or upsert) a custom Company; returns its canonical id. */
@@ -43,7 +44,7 @@ export async function createCustomCompany(input: {
   name: string;
   description?: string;
 }) {
-  return sendMessage("CREATE_CUSTOM_COMPANY", input);
+  return api.createCustomCompany(input);
 }
 
 /** Toggle a Topic assignment on a Problem. */
@@ -53,7 +54,7 @@ export async function assignTopicToProblem(input: {
   /** Default true. Pass false to remove the assignment. */
   assigned?: boolean;
 }) {
-  return sendMessage("ASSIGN_TOPIC_TO_PROBLEM", input);
+  return api.assignTopicToProblem(input);
 }
 
 /** Toggle a Company assignment on a Problem. */
@@ -62,7 +63,7 @@ export async function assignCompanyToProblem(input: {
   companyId: string;
   assigned?: boolean;
 }) {
-  return sendMessage("ASSIGN_COMPANY_TO_PROBLEM", input);
+  return api.assignCompanyToProblem(input);
 }
 
 /** Create a user-defined Track (slim — no kind, no filter). */
@@ -70,7 +71,7 @@ export async function createTrack(input: {
   name: string;
   description?: string;
 }) {
-  return sendMessage("CREATE_TRACK", input);
+  return api.createTrack(input);
 }
 
 /** Update a Track's metadata. */
@@ -80,12 +81,12 @@ export async function updateTrack(input: {
   description?: string;
   enabled?: boolean;
 }) {
-  return sendMessage("UPDATE_TRACK", input);
+  return api.updateTrack(input);
 }
 
 /** Delete a non-curated Track. FK CASCADE wipes its groups + memberships. */
 export async function deleteTrack(id: string) {
-  return sendMessage("DELETE_TRACK", { id });
+  return api.deleteTrack({ id });
 }
 
 // setActiveFocus moved to settingsRepository.setActiveTrack — there's
@@ -97,7 +98,7 @@ export async function deleteTrack(id: string) {
  * blob immediately.
  */
 export async function consumePreV7Backup() {
-  return sendMessage("CONSUME_PRE_V7_BACKUP", {});
+  return api.consumePreV7Backup({});
 }
 
 /**
@@ -105,7 +106,7 @@ export async function consumePreV7Backup() {
  * expanded row's Suspend / Resume button.
  */
 export async function suspendProblem(input: { slug: string; suspend: boolean }) {
-  return sendMessage("SUSPEND_PROBLEM", input);
+  return api.suspendProblem(input);
 }
 
 /**
@@ -116,5 +117,5 @@ export async function resetProblemSchedule(input: {
   slug: string;
   keepNotes?: boolean;
 }) {
-  return sendMessage("RESET_PROBLEM_SCHEDULE", input);
+  return api.resetProblemSchedule(input);
 }

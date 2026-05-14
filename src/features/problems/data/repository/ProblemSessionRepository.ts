@@ -1,7 +1,11 @@
-/** Repository for problem-session runtime actions triggered by UI surfaces. */
+/** Repository for problem-session runtime actions triggered by UI surfaces.
+ *
+ *  Each function is a thin wrapper around the typed RPC proxy. They throw
+ *  on failure (the proxy unwraps the envelope and rethrows the handler's
+ *  error message) and return the resolved data on success — callers use
+ *  try/catch instead of envelope checking. */
+import { api } from "@app/api";
 import { Rating, ReviewLogFields, ReviewMode } from "@features/study";
-import {sendMessage} from "@libs/runtime-rpc/client";
-
 
 import { Difficulty } from "../../domain/model";
 
@@ -13,12 +17,12 @@ export async function upsertProblemFromPage(input: {
   isPremium?: boolean;
   url?: string;
 }) {
-  return sendMessage("UPSERT_PROBLEM_FROM_PAGE", input);
+  return api.upsertProblemFromPage(input);
 }
 
 /** Fetches the persisted problem and study-state context for a slug. */
 export async function getProblemContext(slug: string) {
-  return sendMessage("GET_PROBLEM_CONTEXT", {slug});
+  return api.getProblemContext({ slug });
 }
 
 /** Persists a completed review result for the active problem. */
@@ -36,7 +40,7 @@ export async function saveReviewResult(input: {
   groupId?: string;
   source?: "overlay" | "dashboard";
 }) {
-  return sendMessage("SAVE_REVIEW_RESULT", input);
+  return api.saveReviewResult(input);
 }
 
 /** Persists the overlay's structured log draft without appending review history. */
@@ -48,7 +52,7 @@ export async function saveOverlayLogDraft(input: {
   languages?: ReviewLogFields["languages"];
   notes?: ReviewLogFields["notes"];
 }) {
-  return sendMessage("SAVE_OVERLAY_LOG_DRAFT", input);
+  return api.saveOverlayLogDraft(input);
 }
 
 /** Replaces the latest saved review result for the active problem. */
@@ -66,7 +70,7 @@ export async function overrideLastReviewResult(input: {
   groupId?: string;
   source?: "overlay" | "dashboard";
 }) {
-  return sendMessage("OVERRIDE_LAST_REVIEW_RESULT", input);
+  return api.overrideLastReviewResult(input);
 }
 
 /** Asks the background worker to open a LeetCode problem page. */
@@ -75,10 +79,10 @@ export async function openProblemPage(target: {
   trackId?: string;
   groupId?: string;
 }) {
-  return sendMessage("OPEN_PROBLEM_PAGE", target);
+  return api.openProblemPage(target);
 }
 
 /** Asks the background worker to open an internal extension page. */
 export async function openExtensionPage(path: string) {
-  return sendMessage("OPEN_EXTENSION_PAGE", {path});
+  return api.openExtensionPage({ path });
 }

@@ -11,6 +11,7 @@
     "types": ["chrome"],
     "paths": {
       "@app/*": ["./src/app/*"],
+      "@extension/*": ["./src/extension/*"],
       "@features/*": ["./src/features/*"],
       "@libs/*": ["./src/libs/*"],
       "@platform/*": ["./src/platform/*"],

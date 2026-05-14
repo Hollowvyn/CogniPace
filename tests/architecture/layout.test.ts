@@ -130,9 +130,9 @@ describe("architecture layout", () => {
 
     expect(appDataRepository).toContain("@platform/chrome/storage");
     expect(storageDatasource).toContain("chrome.storage.local");
-    expect(appShellRepository).toMatch(
-      /(extension\/runtime|@libs\/runtime-rpc)\/client/,
-    );
+    // Repositories now reach the SW via the typed proxy exposed by @app/api,
+    // not the legacy @libs/runtime-rpc/client `sendMessage` wrapper.
+    expect(appShellRepository).toContain("@app/api");
   });
 
   it("uses explicit overlay variants instead of a shared boolean mode prop", () => {

@@ -98,14 +98,15 @@ export function useDashboardShellVM() {
   }, []);
 
   const runMutation = useCallback(
-    async <T extends { ok: boolean; error?: string }>(
+    async <T>(
       action: Promise<T>,
       successMessage?: string
     ): Promise<boolean> => {
-      const response = await action;
-      if (!response.ok) {
+      try {
+        await action;
+      } catch (err) {
         setStatus({
-          message: response.error ?? "Action failed.",
+          message: (err as Error).message || "Action failed.",
           isError: true,
         });
         return false;
@@ -129,10 +130,11 @@ export function useDashboardShellVM() {
       groupId?: string;
       trackId?: string;
     }): Promise<void> => {
-      const response = await openProblemPage(target);
-      if (!response.ok) {
+      try {
+        await openProblemPage(target);
+      } catch (err) {
         setStatus({
-          message: response.error ?? "Failed to open problem.",
+          message: (err as Error).message || "Failed to open problem.",
           isError: true,
         });
       }

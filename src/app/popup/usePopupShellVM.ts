@@ -84,10 +84,11 @@ export function usePopupShellVM() {
     trackId?: string;
     groupId?: string;
   }): Promise<void> {
-    const response = await openProblemPage(target);
-    if (!response.ok) {
+    try {
+      await openProblemPage(target);
+    } catch (err) {
       setStatus({
-        message: response.error ?? "Failed to open problem.",
+        message: (err as Error).message || "Failed to open problem.",
         isError: true,
         scope: target.trackId ? "track" : "recommendation",
       });

@@ -92,12 +92,10 @@ describe("architecture / Phase 1 boundaries", () => {
 });
 
 describe("architecture / Phase 2 boundaries", () => {
-  // Phase 6/7 transition: the runtime-rpc message contracts reference
-  // feature types because they ARE the cross-feature wire shape.
-  // Phase 8's per-feature contracts split lifts these entries.
+  // Phase 6/7 transition: a handful of libs/ files reference feature
+  // types because they cross feature boundaries by design.
+  // Phase 8+ removes most of these — see per-entry rationale.
   const LIBS_FEATURE_TYPE_LEAKS = new Set([
-    "src/libs/runtime-rpc/contracts/MessageRequestMap.ts",
-    "src/libs/runtime-rpc/contracts/MessageResponseMap.ts",
     // The v6-shape baseline StudyState the FSRS scheduler builds when
     // a problem has no prior history. Type-only import; the canonical
     // StudyState lives in features/study. Phase B+ may invert this so
@@ -248,15 +246,13 @@ describe("architecture / Phase 5 boundaries", () => {
     }
   });
 
-  it("runtime-rpc contracts is split per concern, not a single contracts.ts", () => {
+  it("runtime-rpc has no contracts directory or god-file — handler signatures ARE the wire contract", () => {
     expect(
       fs.existsSync(path.join(repoRoot, "src/libs/runtime-rpc/contracts.ts")),
     ).toBe(false);
     expect(
-      fs.existsSync(
-        path.join(repoRoot, "src/libs/runtime-rpc/contracts/index.ts"),
-      ),
-    ).toBe(true);
+      fs.existsSync(path.join(repoRoot, "src/libs/runtime-rpc/contracts")),
+    ).toBe(false);
   });
 
   it("files under domain/types/ and domain/views/ export at most 1 named symbol", () => {
