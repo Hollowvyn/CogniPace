@@ -21,12 +21,10 @@ export function isExtensionContext(): boolean {
   return typeof chrome !== "undefined" && Boolean(chrome.runtime?.id);
 }
 
-type FetchPayload<TPayload> = () => Promise<TPayload>;
-
 /** Default fetcher — defined at module scope so the function identity
  *  is stable across renders (preventing the `[fetchPayload]` →
  *  `[load]` → effect re-subscribe loop in the dashboard). */
-const defaultFetchPayload: FetchPayload<AppShellPayload> = () =>
+const defaultFetchPayload = (): Promise<AppShellPayload> =>
   appShellRepository.fetchAppShell();
 
 /** Loads and caches a shared extension UI payload. The fetcher can be
@@ -35,7 +33,9 @@ export function useAppShellQuery<
   TPayload extends PopupShellPayload = AppShellPayload,
 >(
   mockData: TPayload,
-  fetchPayload: FetchPayload<TPayload> = defaultFetchPayload as unknown as FetchPayload<TPayload>,
+  // Callers that pass a narrower TPayload (e.g. PopupShellPayload) must
+  // provide their own fetcher; the default returns the widest payload.
+  fetchPayload: () => Promise<TPayload> = defaultFetchPayload as unknown as () => Promise<TPayload>,
 ) {
   const [payload, setPayload] = useState<TPayload | null>(null);
   const [status, setStatus] = useState<UiStatus>({
