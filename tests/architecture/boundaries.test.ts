@@ -100,25 +100,17 @@ describe("architecture / Phase 1 boundaries", () => {
 });
 
 describe("architecture / Phase 2 boundaries", () => {
-  // Phase 6/7 transition: a handful of libs/ files reference feature
-  // types because they cross feature boundaries by design.
-  // Phase 8+ removes most of these — see per-entry rationale.
+  // A handful of libs/ files cross the libs→features boundary by
+  // design (per-entry rationale below). The long-term fix is to invert
+  // ownership so StudyState/UserSettings/Difficulty live in libs and
+  // features re-export.
   const LIBS_FEATURE_TYPE_LEAKS = new Set([
-    // The v6-shape baseline StudyState the FSRS scheduler builds when
-    // a problem has no prior history. Type-only import; the canonical
-    // StudyState lives in features/study. Phase B+ may invert this so
-    // StudyState lives in libs and features/study re-exports.
-    "src/libs/fsrs/constants.ts",
     // Re-exports `nowIso` from @platform/time so the FSRS scheduler can
-    // fall back to system time when callers don't pass `now`. The
-    // optionality is the leak; Phase E (P7 — side effects through
-    // ports) flips this to a required `now` parameter and removes the
-    // platform import entirely.
+    // fall back to system time when callers don't pass `now`.
     "src/libs/fsrs/utils.ts",
-    // Internal types barrel for FSRS lib consumers; re-exports
-    // StudyState / Difficulty / UserSettings from their owning
-    // features. Same inversion as fsrs/constants — Phase E flips the
-    // ownership.
+    // Internal barrel for FSRS lib consumers; re-exports StudyState /
+    // Difficulty / UserSettings and the createDefaultStudyState factory
+    // from their owning features.
     "src/libs/fsrs/types.ts",
   ]);
 

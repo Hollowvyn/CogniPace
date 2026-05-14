@@ -1,4 +1,3 @@
-import { createDefaultStudyState } from "./constants";
 import {
   getFsrsCard,
   hasReviewLogFields,
@@ -8,6 +7,7 @@ import {
   serializeFsrsCard,
   toFsrsRating,
 } from "./studyState";
+import { createDefaultStudyState } from "./types";
 import {
   AttemptHistoryEntry,
   Difficulty,
@@ -32,7 +32,7 @@ export interface ApplyReviewInput {
 
 export function applyReview(input: ApplyReviewInput): StudyState {
   const now = input.now ?? nowIso();
-  const state = input.state ? { ...input.state } : createDefaultStudyState();
+  const state = input.state ? { ...input.state } : createDefaultStudyState(now);
 
   if (
     input.settings.timing.requireSolveTime &&
@@ -87,7 +87,7 @@ export interface OverrideLastReviewInput {
 
 export function overrideLastReview(input: OverrideLastReviewInput): StudyState {
   const now = input.now ?? nowIso();
-  const state = input.state ? { ...input.state } : createDefaultStudyState();
+  const state = input.state ? { ...input.state } : createDefaultStudyState(now);
   const previousEntry = state.attemptHistory[state.attemptHistory.length - 1];
 
   if (!previousEntry) {
@@ -156,7 +156,7 @@ export function resetSchedule(
   state?: StudyState,
   keepNotes = true
 ): StudyState {
-  const baseline = createDefaultStudyState();
+  const baseline = createDefaultStudyState(nowIso());
 
   if (!state || !keepNotes) {
     return baseline;

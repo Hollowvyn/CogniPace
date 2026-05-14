@@ -1,4 +1,3 @@
-import { createDefaultStudyState } from "@libs/fsrs/constants";
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
 
@@ -7,10 +6,10 @@ import { isEffectivelySuspended } from "./effectivelySuspended";
 import type { QueueItem } from "./QueueItem";
 import type { TodayQueue } from "./TodayQueue";
 import type { AppData } from "@features/app-shell";
-import type { StudyState } from "@features/study";
+import { createDefaultStudyState, type StudyState } from "@features/study";
 
-function cloneStateOrDefault(state?: StudyState): StudyState {
-  return state ? { ...state } : createDefaultStudyState();
+function cloneStateOrDefault(state: StudyState | undefined, now: string): StudyState {
+  return state ? { ...state } : createDefaultStudyState(now);
 }
 
 function sortByDueDateAsc(items: QueueItem[]): QueueItem[] {
@@ -115,9 +114,11 @@ export function buildTodayQueue(
   const newCandidates: QueueItem[] = [];
   const reinforcementCandidates: QueueItem[] = [];
 
+  const nowIso = now.toISOString();
   for (const problem of problems) {
     const state = cloneStateOrDefault(
       data.studyStatesBySlug[problem.leetcodeSlug],
+      nowIso,
     );
     if (isEffectivelySuspended(problem, state, data.settings)) {
       continue;

@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "@features/backup";
 import { Problem } from "@features/problems";
 import { createInitialUserSettings } from "@features/settings";
-import { createDefaultStudyState } from "@libs/fsrs/constants";
+import { createDefaultStudyState } from "@features/study/server";
 import { describe, it } from "vitest";
 
 import { sanitizeImportPayload } from "../../src/features/backup/data/sanitize";
-import { makeProblem } from "../support/fixtures";
+import { FIXTURE_NOW, makeProblem } from "../support/fixtures";
 
 describe("backup import sanitization", () => {
   it("ignores incoming problem urls", () => {
@@ -40,8 +40,8 @@ describe("backup import sanitization", () => {
         } as Problem,
       ],
       studyStatesBySlug: {
-        "Two-Sum": createDefaultStudyState(),
-        "%%%": createDefaultStudyState(),
+        "Two-Sum": createDefaultStudyState(FIXTURE_NOW),
+        "%%%": createDefaultStudyState(FIXTURE_NOW),
       },
     });
 
