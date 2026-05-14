@@ -10,8 +10,8 @@ import { RecommendedProblemView } from "@features/problems";
 import ShuffleRounded from "@mui/icons-material/ShuffleRounded";
 import Stack from "@mui/material/Stack";
 
-import { RecommendedProblemCard } from "../../../features/recommended/RecommendedProblemCard";
-import { difficultyTone } from "../../../presentation/studyState";
+import { RecommendedProblemCard } from "../../../ui/features/recommended/RecommendedProblemCard";
+import { difficultyTone } from "../../../ui/presentation/studyState";
 
 function RecommendationHeaderAction(props: {
   canShuffle: boolean;

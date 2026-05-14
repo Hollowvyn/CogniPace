@@ -2,8 +2,8 @@
 import { StrictMode, createElement } from "react";
 import { createRoot } from "react-dom/client";
 
+import { PopupShell } from "../app/popup/PopupShell";
 import { AppProviders } from "../ui/providers";
-import { PopupApp } from "../ui/screens/popup/PopupApp";
 
 const mountNode = document.getElementById("popup-root");
 if (!mountNode) {
@@ -14,6 +14,6 @@ createRoot(mountNode).render(
   createElement(
     StrictMode,
     null,
-    createElement(AppProviders, { surface: "popup" }, createElement(PopupApp))
+    createElement(AppProviders, { surface: "popup" }, createElement(PopupShell))
   )
 );

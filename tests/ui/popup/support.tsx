@@ -1,6 +1,6 @@
 import { PopupShellPayload } from "@features/app-shell";
 
-import { PopupApp } from "../../../src/ui/screens/popup/PopupApp";
+import { PopupShell } from "../../../src/app/popup/PopupShell";
 import { makePayload } from "../support/appShellFixtures";
 import { render } from "../support/render";
 import { sendMessageMock } from "../support/setup";
@@ -42,7 +42,7 @@ export function renderPopupWithPayload(
     return okResponse();
   });
 
-  const renderResult = render(<PopupApp />);
+  const renderResult = render(<PopupShell />);
 
   return { ...renderResult, payload };
 }

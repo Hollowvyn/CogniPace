@@ -1,4 +1,6 @@
-/** Popup screen composition for the compact extension surface. */
+/** Popup surface shell — composes the compact extension surface from
+ *  feature-owned components. Driven by `usePopupShellVM` per the
+ *  canonical Screen+VM pattern. */
 import { InlineStatusRegion } from "@design-system/atoms";
 import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
@@ -13,19 +15,19 @@ import {
   TrackPanelFreestyle,
   TrackPanelLoading,
   TrackPanelStudyPlan,
-} from "./components/PopupActiveTrackSection";
-import { PopupHeader } from "./components/PopupHeader";
-import { PopupMetricTile } from "./components/PopupMetricTile";
+} from "./sections/PopupActiveTrackSection";
+import { PopupHeader } from "./sections/PopupHeader";
+import { PopupMetricTile } from "./sections/PopupMetricTile";
 import {
   RecommendationActive,
   RecommendationEmpty,
   RecommendationLoading,
-} from "./components/PopupRecommendationSection";
-import { popupShellSx } from "./components/popupStyles";
-import { usePopupController } from "./usePopupController";
+} from "./sections/PopupRecommendationSection";
+import { popupShellSx } from "./sections/popupStyles";
+import { usePopupShellVM } from "./usePopupShellVM";
 
-export function PopupApp() {
-  const controller = usePopupController();
+export function PopupShell() {
+  const controller = usePopupShellVM();
   const recommendationStatus =
     controller.status.scope === "recommendation"
       ? controller.status

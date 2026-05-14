@@ -34,19 +34,19 @@ describe("architecture layout", () => {
       fs.existsSync(path.join(repoRoot, "src/entrypoints/overlay.tsx"))
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(repoRoot, "src/ui/screens/popup/PopupApp.tsx"))
+      fs.existsSync(path.join(repoRoot, "src/app/popup/PopupShell.tsx"))
     ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(repoRoot, "src/ui/screens/dashboard/DashboardApp.tsx")
-      )
-    ).toBe(true);
+    // Dashboard + overlay surface shells are added in Phase A Steps 9-10.
     expect(
       fs.existsSync(
         path.join(repoRoot, "src/features/overlay-session/ui/screens/OverlayRoot.tsx")
       )
     ).toBe(true);
 
+    // Old locations from the v6 layout are gone.
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/ui/screens/popup/PopupApp.tsx"))
+    ).toBe(false);
     expect(
       fs.existsSync(path.join(repoRoot, "src/ui/popup/PopupApp.tsx"))
     ).toBe(false);

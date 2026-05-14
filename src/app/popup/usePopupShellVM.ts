@@ -1,4 +1,6 @@
-/** Popup-local state and actions for the recommendation-first surface. */
+/** PopupShell's ViewModel — owns popup data fetching, recommendation
+ *  rotation, and user-action intents per the canonical Screen+VM
+ *  pattern (one Model object per render; intents are methods). */
 import { useDI } from "@app/di";
 import { appShellRepository, useAppShellQuery } from "@features/app-shell";
 import { openProblemPage, RecommendedProblemView } from "@features/problems";
@@ -8,8 +10,8 @@ import { startTransition, useMemo, useRef, useState } from "react";
 import {
   openDashboardPage,
   openSettingsPage,
-} from "../../../data/repositories/extensionNavigationRepository";
-import { createMockPopupShellPayload } from "../../mockData";
+} from "../../data/repositories/extensionNavigationRepository";
+import { createMockPopupShellPayload } from "../../ui/mockData";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],
@@ -45,7 +47,7 @@ function popupErrorMessage(error: unknown): string {
 }
 
 /** Coordinates popup data loading, recommendation rotation, and user actions. */
-export function usePopupController() {
+export function usePopupShellVM() {
   const { settingsRepository } = useDI();
   const mockPayload = useMemo(() => createMockPopupShellPayload(), []);
   const { load, payload, setPayload, setStatus, status } = useAppShellQuery(
