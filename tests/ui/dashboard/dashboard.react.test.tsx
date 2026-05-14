@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { DashboardShell } from "../../../src/app/dashboard/DashboardShell";
 import { STORAGE_KEY } from "../../../src/data/repositories/v7/constants";
-import { DashboardApp } from "../../../src/ui/screens/dashboard/DashboardApp";
 import { makePayload } from "../support/appShellFixtures";
 import { render, screen, waitFor, fireEvent } from "../support/render";
 import { emitLocalStorageChange, sendMessageMock } from "../support/setup";
@@ -26,10 +26,10 @@ function renderDashboardWithPayload(
     return Promise.resolve({ ok: true, data: {} });
   });
 
-  return render(<DashboardApp />);
+  return render(<DashboardShell />);
 }
 
-describe("DashboardApp", () => {
+describe("DashboardShell", () => {
   it("switches views and filters library rows", async () => {
     const payload = makePayload();
     const { user } = renderDashboardWithPayload(payload);

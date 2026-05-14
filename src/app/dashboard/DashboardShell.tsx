@@ -1,4 +1,5 @@
-/** Dashboard screen composition that delegates all state to the dashboard controller. */
+/** Dashboard surface shell — composes feature screens. Driven by
+ *  `useDashboardShellVM` per the canonical Screen+VM pattern. */
 import { AnalyticsScreen as AnalyticsView } from "@features/analytics";
 import { LibraryScreen as LibraryView } from "@features/problems";
 import { SettingsScreen as SettingsView } from "@features/settings";
@@ -6,15 +7,15 @@ import { TracksScreen as TracksView } from "@features/tracks";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 
-import { DashboardHeader } from "./components/DashboardHeader";
-import { DashboardRail } from "./components/DashboardRail";
-import { DashboardFrame } from "./components/DashboardSurface";
-import { PreV7BackupSnackbar } from "./components/PreV7BackupSnackbar";
-import { OverviewView } from "./tabs/overview/OverviewView";
-import { useDashboardController } from "./useDashboardController";
+import { DashboardHeader } from "./sections/DashboardHeader";
+import { DashboardRail } from "./sections/DashboardRail";
+import { DashboardFrame } from "./sections/DashboardSurface";
+import { OverviewView } from "./sections/OverviewView";
+import { PreV7BackupSnackbar } from "./sections/PreV7BackupSnackbar";
+import { useDashboardShellVM } from "./useDashboardShellVM";
 
-export function DashboardApp() {
-  const controller = useDashboardController();
+export function DashboardShell() {
+  const controller = useDashboardShellVM();
 
   return (
     <DashboardFrame>

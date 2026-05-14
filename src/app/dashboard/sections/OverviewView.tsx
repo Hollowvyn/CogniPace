@@ -11,8 +11,8 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 
-import { RecommendedProblemCard } from "../../../../features/recommended/RecommendedProblemCard";
-import { DashboardView } from "../../../../navigation/dashboardRoutes";
+import { RecommendedProblemCard } from "../../../ui/features/recommended/RecommendedProblemCard";
+import { DashboardView } from "../navigation/routes";
 
 export interface OverviewViewProps {
   onOpenProblem: (target: {

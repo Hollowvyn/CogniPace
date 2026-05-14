@@ -36,7 +36,15 @@ describe("architecture layout", () => {
     expect(
       fs.existsSync(path.join(repoRoot, "src/app/popup/PopupShell.tsx"))
     ).toBe(true);
-    // Dashboard + overlay surface shells are added in Phase A Steps 9-10.
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/app/dashboard/DashboardShell.tsx"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(repoRoot, "src/app/dashboard/navigation/routes.ts")
+      )
+    ).toBe(true);
+    // Overlay surface shell is added in Phase A Step 10.
     expect(
       fs.existsSync(
         path.join(repoRoot, "src/features/overlay-session/ui/screens/OverlayRoot.tsx")
@@ -51,7 +59,13 @@ describe("architecture layout", () => {
       fs.existsSync(path.join(repoRoot, "src/ui/popup/PopupApp.tsx"))
     ).toBe(false);
     expect(
+      fs.existsSync(path.join(repoRoot, "src/ui/screens/dashboard/DashboardApp.tsx"))
+    ).toBe(false);
+    expect(
       fs.existsSync(path.join(repoRoot, "src/ui/dashboard/DashboardApp.tsx"))
+    ).toBe(false);
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/ui/navigation/dashboardRoutes.ts"))
     ).toBe(false);
     expect(fs.existsSync(path.join(repoRoot, "src/content.ts"))).toBe(false);
     expect(fs.existsSync(path.join(repoRoot, "src/background.ts"))).toBe(false);

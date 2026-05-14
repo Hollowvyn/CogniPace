@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DashboardRail } from "../../../src/ui/screens/dashboard/components/DashboardRail";
+import { DashboardRail } from "../../../src/app/dashboard/sections/DashboardRail";
 import { render, screen } from "../support/render";
 
 describe("DashboardRail", () => {

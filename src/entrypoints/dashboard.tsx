@@ -2,8 +2,8 @@
 import { StrictMode, createElement } from "react";
 import { createRoot } from "react-dom/client";
 
+import { DashboardShell } from "../app/dashboard/DashboardShell";
 import { AppProviders } from "../ui/providers";
-import { DashboardApp } from "../ui/screens/dashboard/DashboardApp";
 
 const mountNode = document.getElementById("app-shell");
 if (!mountNode) {
@@ -14,6 +14,6 @@ createRoot(mountNode).render(
   createElement(
     StrictMode,
     null,
-    createElement(AppProviders, { surface: "dashboard" }, createElement(DashboardApp))
+    createElement(AppProviders, { surface: "dashboard" }, createElement(DashboardShell))
   )
 );

@@ -11,7 +11,7 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { DashboardRoute } from "../../../navigation/dashboardRoutes";
+import { DashboardRoute } from "../navigation/routes";
 
 import { DashboardHeaderPanel } from "./DashboardSurface";
 

@@ -6,6 +6,10 @@ import { StudyState } from "@features/study";
 import { describe, expect, it } from "vitest";
 
 import {
+  buildDashboardUrl,
+  readDashboardViewFromSearch,
+} from "../../../src/app/dashboard/navigation/routes";
+import {
   cloneDraft,
   draftFromStudyState,
   draftsEqual,
@@ -17,10 +21,6 @@ import {
   buildHeaderStatus,
   formatSubmissionDateLabel,
 } from "../../../src/features/overlay-session/ui/screens/controller/headerStatus";
-import {
-  buildDashboardUrl,
-  readDashboardViewFromSearch,
-} from "../../../src/ui/navigation/dashboardRoutes";
 import { filterLibraryRows } from "../../../src/ui/presentation/library";
 import { makePayload, makeStudyState } from "../support/appShellFixtures";
 

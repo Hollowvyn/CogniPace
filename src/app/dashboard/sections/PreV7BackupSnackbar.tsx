@@ -10,7 +10,7 @@ import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
 import { useEffect, useRef, useState } from "react";
 
-import { consumePreV7Backup } from "../../../../data/repositories/v7ActionRepository";
+import { consumePreV7Backup } from "../../../data/repositories/v7ActionRepository";
 
 function downloadJsonBlob(payload: unknown, filename: string): void {
   const blob = new Blob([JSON.stringify(payload, null, 2)], {

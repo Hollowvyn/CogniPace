@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 import {
   dashboardRoutes,
   DashboardView,
-} from "../../../navigation/dashboardRoutes";
+} from "../navigation/routes";
 
 import { DashboardRailPanel } from "./DashboardSurface";
 

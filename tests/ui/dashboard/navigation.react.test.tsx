@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DashboardApp } from "../../../src/ui/screens/dashboard/DashboardApp";
+import { DashboardShell } from "../../../src/app/dashboard/DashboardShell";
 import { makePayload } from "../support/appShellFixtures";
 import { act, render, screen, waitFor } from "../support/render";
 import { sendMessageMock } from "../support/setup";
@@ -13,7 +13,7 @@ function renderDashboardWithPayload(payload = makePayload()) {
     return { ok: true, data: {} };
   });
 
-  return render(<DashboardApp />);
+  return render(<DashboardShell />);
 }
 
 describe("dashboard navigation", () => {

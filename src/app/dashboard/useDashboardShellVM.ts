@@ -1,10 +1,9 @@
-/** Dashboard-local controller for route state, filters, and runtime
- * mutations that haven't migrated to a feature yet. Settings-screen
- * state (draft, save, discard, reset) now lives inside
- * `features/settings/ui/hooks/useSettingsScreen` — the dashboard just
- * passes the persisted snapshot through and surfaces status. Other
- * cross-feature concerns (backup export/import, study-history reset)
- * stay here until Phase 7. */
+/** DashboardShell's ViewModel — owns route state, filters, and the
+ *  cross-feature concerns (backup export/import, study-history reset)
+ *  that don't have a dedicated feature owner yet. Settings-screen state
+ *  (draft, save, discard, reset) lives inside
+ *  `features/settings/ui/hooks/useSettingsScreen`; the shell just passes
+ *  the persisted snapshot through and surfaces status. */
 import { useDI } from "@app/di";
 import { isExtensionContext, useAppShellQuery } from "@features/app-shell";
 import { openProblemPage } from "@features/problems";
@@ -17,19 +16,20 @@ import {
   useDeferredValue,
 } from "react";
 
-import { resetStudyHistory } from "../../../data/repositories/settingsRepository";
-import { createMockAppShellPayload } from "../../mockData";
+import { resetStudyHistory } from "../../data/repositories/settingsRepository";
+import { createMockAppShellPayload } from "../../ui/mockData";
+import {
+  createDefaultLibraryFilters,
+  filterLibraryRows,
+  LibraryFilters,
+} from "../../ui/presentation/library";
+
 import {
   buildDashboardUrl,
   getDashboardRoute,
   readDashboardViewFromSearch,
   DashboardView,
-} from "../../navigation/dashboardRoutes";
-import {
-  createDefaultLibraryFilters,
-  filterLibraryRows,
-  LibraryFilters,
-} from "../../presentation/library";
+} from "./navigation/routes";
 
 import type { ExportPayload } from "@features/backup";
 import type { UserSettings } from "@features/settings";
@@ -40,7 +40,7 @@ function isImportPayloadCandidate(value: unknown): value is ExportPayload {
 }
 
 /** Coordinates dashboard screen state while keeping transport concerns in repositories. */
-export function useDashboardController() {
+export function useDashboardShellVM() {
   const { backupRepository, settingsRepository } = useDI();
   const mockPayload = useMemo(() => createMockAppShellPayload(), []);
   const { load, payload, setPayload, setStatus, status } =
