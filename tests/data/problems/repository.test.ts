@@ -55,7 +55,6 @@ function freshDb(): Db {
 function makeProblem(slug: string, overrides: Partial<Problem> = {}): Problem {
   const now = "2026-05-11T12:00:00.000Z";
   return {
-    leetcodeSlug: slug,
     slug,
     title: slug,
     difficulty: "Unknown",

@@ -22,7 +22,6 @@ export function makeProblem(
 ): Problem {
   const branded = asProblemSlug(slug);
   return {
-    leetcodeSlug: branded,
     slug: branded,
     title: overrides.title ?? "Sample Problem",
     difficulty: overrides.difficulty ?? "Medium",

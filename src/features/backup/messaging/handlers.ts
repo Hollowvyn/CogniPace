@@ -115,11 +115,10 @@ export async function importData(
     }
   }
   for (const problem of sanitized.problems) {
-    const slug = normalizeSlug(problem.leetcodeSlug);
+    const slug = problem.slug;
     if (!slug) continue;
     const now = nowIso();
     await upsertProblem(db, {
-      leetcodeSlug: slug,
       slug,
       leetcodeId: problem.leetcodeId,
       title: problem.title?.trim() || slugToTitle(slug),

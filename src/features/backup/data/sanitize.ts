@@ -89,15 +89,20 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
     return null;
   }
 
-  const slug = normalizeSlug(
-    typeof problem.leetcodeSlug === "string" ? problem.leetcodeSlug : ""
-  );
+  // Raw JSON: modern exports carry `slug`; legacy v6 exports carry
+  // `leetcodeSlug`. Accept either, normalise, fall back to nothing.
+  const raw =
+    typeof problem.slug === "string"
+      ? problem.slug
+      : typeof problem.leetcodeSlug === "string"
+        ? problem.leetcodeSlug
+        : "";
+  const slug = normalizeSlug(raw);
   if (!slug) {
     return null;
   }
 
   return {
-    leetcodeSlug: slug,
     slug,
     leetcodeId:
       typeof problem.leetcodeId === "string" && problem.leetcodeId.trim()

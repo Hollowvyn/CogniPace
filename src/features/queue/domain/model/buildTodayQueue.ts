@@ -1,12 +1,11 @@
+import { createDefaultStudyState, type StudyState } from "@features/study";
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
-
 
 import { isEffectivelySuspended } from "./effectivelySuspended";
 
 import type { QueueItem } from "./QueueItem";
 import type { TodayQueue } from "./TodayQueue";
 import type { AppData } from "@features/app-shell";
-import { createDefaultStudyState, type StudyState } from "@features/study";
 
 function cloneStateOrDefault(state: StudyState | undefined, now: string): StudyState {
   return state ? { ...state } : createDefaultStudyState(now);
@@ -117,7 +116,7 @@ export function buildTodayQueue(
   const nowIso = now.toISOString();
   for (const problem of problems) {
     const state = cloneStateOrDefault(
-      data.studyStatesBySlug[problem.leetcodeSlug],
+      data.studyStatesBySlug[problem.slug],
       nowIso,
     );
     if (isEffectivelySuspended(problem, state, data.settings)) {
@@ -131,7 +130,7 @@ export function buildTodayQueue(
 
     if (studyStateSummary.isDue) {
       due.push({
-        slug: problem.leetcodeSlug,
+        slug: problem.slug,
         problem,
         studyState: state,
         studyStateSummary,
@@ -143,7 +142,7 @@ export function buildTodayQueue(
 
     if (!studyStateSummary.isStarted) {
       newCandidates.push({
-        slug: problem.leetcodeSlug,
+        slug: problem.slug,
         problem,
         studyState: state,
         studyStateSummary,
@@ -154,7 +153,7 @@ export function buildTodayQueue(
     }
 
     reinforcementCandidates.push({
-      slug: problem.leetcodeSlug,
+      slug: problem.slug,
       problem,
       studyState: state,
       studyStateSummary,

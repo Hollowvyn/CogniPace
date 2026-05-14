@@ -29,7 +29,7 @@ export function filterLibraryRows(
   return rows.filter((row) => {
     if (query) {
       const haystack =
-        `${row.problem.title} ${row.problem.leetcodeSlug}`.toLowerCase();
+        `${row.problem.title} ${row.problem.slug}`.toLowerCase();
       if (!haystack.includes(query)) {
         return false;
       }

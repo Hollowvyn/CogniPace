@@ -3,12 +3,10 @@ import type { EditableProblemField } from "./EditableProblemField";
 import type { ProblemEditFlags } from "./ProblemEditFlags";
 import type { ProblemEditPatch } from "./ProblemEditPatch";
 
-/** Problem aggregate. `slug` is the canonical identifier; `leetcodeSlug`
- *  is a legacy alias awaiting its own cut. Track memberships live in
- *  `track_group_problems` and are read via the tracks repo. */
+/** Problem aggregate. `slug` is the canonical identifier. Track
+ *  memberships live in `track_group_problems` and are read via the
+ *  tracks repo. */
 export interface Problem {
-  /** @deprecated Use `slug`. Retained equal to `slug` for legacy callers. */
-  leetcodeSlug: string;
   slug: string;
   leetcodeId?: string;
   title: string;

@@ -7,9 +7,9 @@ import {
   serializeFsrsCard,
   toFsrsRating,
 } from "./studyState";
-import { createDefaultStudyState } from "./types";
 import {
   AttemptHistoryEntry,
+  createDefaultStudyState,
   Difficulty,
   Rating,
   ReviewLogFields,

@@ -45,7 +45,7 @@ export function problemForPage(
   timestamp = "2026-03-01T00:00:00.000Z"
 ) {
   return {
-    leetcodeSlug: page.slug,
+    slug: page.slug,
     title: page.title,
     difficulty: page.difficulty,
     url: leetcodeProblemUrl(page.slug),

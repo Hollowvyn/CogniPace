@@ -59,8 +59,6 @@ export function buildProblemSeed(
   for (const [slug, data] of acc) {
     const problemSlug: ProblemSlug = asProblemSlug(slug);
     out[slug] = {
-      // Legacy alias retired progressively; equals `slug` for now.
-      leetcodeSlug: slug,
       slug: problemSlug,
       title: data.title ?? slugToTitle(slug),
       difficulty: data.difficulty ?? "Unknown",

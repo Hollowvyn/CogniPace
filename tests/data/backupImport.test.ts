@@ -36,7 +36,7 @@ describe("backup import sanitization", () => {
         makeProblem("two-sum", { title: "Two Sum", difficulty: "Easy" }),
         {
           ...makeProblem("bad", { title: "Bad" }),
-          leetcodeSlug: "!!!",
+          slug: "!!!",
         } as Problem,
       ],
       studyStatesBySlug: {

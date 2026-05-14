@@ -53,17 +53,13 @@ import type { Db } from "@platform/db/client";
 
 type ProblemRow = typeof schema.problems.$inferSelect;
 
-/**
- * Schema row → domain Problem. `leetcodeSlug` is derived from slug
- * until its dedicated cut lands.
- */
+/** Schema row → domain Problem. */
 function toProblem(row: ProblemRow): Problem {
   const userEdits =
     row.userEdits && Object.keys(row.userEdits).length > 0
       ? (row.userEdits as ProblemEditFlags)
       : undefined;
   const transitional: Problem = {
-    leetcodeSlug: row.slug,
     slug: row.slug,
     title: row.title,
     difficulty: row.difficulty as Difficulty,
@@ -173,7 +169,6 @@ export async function importProblem(
     next = mergeImported(existing, patch, now);
   } else {
     next = {
-      leetcodeSlug: slug,
       slug,
       title: args.title ?? slugToTitle(slug),
       difficulty: args.difficulty ?? "Unknown",

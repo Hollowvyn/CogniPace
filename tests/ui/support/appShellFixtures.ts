@@ -119,7 +119,6 @@ export function makePayload() {
     {
       slug: "two-sum",
       problem: {
-        leetcodeSlug: "two-sum",
         slug: "two-sum",
         title: "Two Sum",
         difficulty: "Easy",
@@ -153,8 +152,6 @@ export function makePayload() {
   const blind75Problem = payload.queue.items[0].problem;
   const mergeIntervalsProblem = {
     ...payload.queue.items[0].problem,
-    id: "2",
-    leetcodeSlug: "merge-intervals",
     slug: "merge-intervals",
     title: "Merge Intervals",
     difficulty: "Medium" as const,
