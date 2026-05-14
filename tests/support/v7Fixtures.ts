@@ -1,10 +1,8 @@
 /**
- * Factories for the v7 schema. Mirrors the existing `domainFixtures.ts`
- * but builds branded entities for the new aggregate set. Track fixtures
- * live alongside the tracks repo tests (they need the SQLite shape, not
- * a v7-blob shape).
+ * Branded-entity factories for tests that build problem/study-state/topic/
+ * company fixtures. Track fixtures live alongside the tracks repo tests
+ * (they need the SQLite shape).
  */
-import { createInitialUserSettings } from "@features/settings";
 import { createDefaultStudyState } from "@features/study/server";
 import {
   asCompanyId,
@@ -12,9 +10,6 @@ import {
   asTopicId,
 } from "@shared/ids";
 
-import { STORAGE_SCHEMA_VERSION_V7 } from "../../src/features/backup/data/appDataV7";
-
-import type { AppDataV7 } from "../../src/features/backup/data/appDataV7";
 import type { Company , Problem , Topic } from "@features/problems";
 import type { StudyState } from "@features/study/server";
 
@@ -69,18 +64,6 @@ export function makeCompanyV7(
     isCustom,
     createdAt: NOW,
     updatedAt: NOW,
-  };
-}
-
-/** Empty AppDataV7 with seeded settings — useful for repo unit tests. */
-export function emptyAppDataV7(): AppDataV7 {
-  return {
-    schemaVersion: STORAGE_SCHEMA_VERSION_V7,
-    problemsBySlug: {},
-    studyStatesBySlug: {},
-    topicsById: {},
-    companiesById: {},
-    settings: createInitialUserSettings(),
   };
 }
 

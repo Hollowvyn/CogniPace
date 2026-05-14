@@ -11,29 +11,33 @@ import { uniqueStrings } from "@shared/strings";
 
 import { type ExportPayload } from "../domain/model";
 
-import {
-  aggregates as legacyAggregateDescriptors,
-  EXPORTABLE_AGGREGATE_KEYS,
-} from "./aggregateRegistry";
 import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "./storageSchemaVersion";
 
 import type { Problem } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
 
+/** Aggregate-root fields that an import payload may carry. The sanitizer
+ *  defensively coerces each entry to a `Record<string, object>`; per-entity
+ *  validation lives in the handler that consumes the sanitized payload. */
+const AGGREGATE_KEYS = [
+  "problemsBySlug",
+  "studyStatesBySlug",
+  "topicsById",
+  "companiesById",
+] as const;
 
-/**
- * v7 import allowlist. Aggregate keys are derived from the registry so
- * adding a new aggregate later is a single registry edit. The non-data
- * top-level fields ("version", "problems", "settings") plus the v6
- * legacy ones are listed explicitly.
- */
+const ALLOWED_IMPORT_KEYS = new Set<string>([
+  "version",
+  // Legacy v6 wire — `problems: Problem[]` array; modern exports also
+  // carry it (alongside problemsBySlug) for back-compat with older imports.
+  "problems",
+  "settings",
+  ...AGGREGATE_KEYS,
+]);
 
-/**
- * Cross-walks legacy `topics: string[]` into v7 `topicIds: TopicId[]`.
- * Unknown topic strings are dropped — custom topics enter the registry
- * via the v7 topicRepository, not implicit imports.
- */
+/** Cross-walks legacy `topics: string[]` into v7 `topicIds: TopicId[]`.
+ *  Unknown labels are dropped — custom topics enter via the topic repo. */
 function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
   const out: string[] = [];
   for (const label of labels) {
@@ -43,16 +47,18 @@ function deriveTopicIdsFromLabels(labels: readonly string[]): string[] {
   return out;
 }
 
-const ALLOWED_IMPORT_KEYS = new Set<string>([
-  "version",
-  // Legacy v6 wire shape — `problems: Problem[]` array (now also exported
-  // as `problemsBySlug` via the registry; the array form is preserved for
-  // backwards-compat imports of older backup files).
-  "problems",
-  "settings",
-  // v7 aggregates — derived from the registry.
-  ...EXPORTABLE_AGGREGATE_KEYS,
-]);
+/** Defensive Record<string, object> coercion for aggregate-root fields.
+ *  Drops non-object inputs and non-object entries. */
+function sanitizeRecord(input: unknown): Record<string, unknown> {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (!key) continue;
+    if (value === null || typeof value !== "object") continue;
+    out[key] = value;
+  }
+  return out;
+}
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -258,10 +264,10 @@ function sanitizeAggregatesFromPayload(
 ): Partial<ExportPayload> {
   const out: Record<string, unknown> = {};
   const indexed = payload as unknown as Record<string, unknown>;
-  for (const descriptor of legacyAggregateDescriptors) {
-    const raw = indexed[descriptor.key];
+  for (const key of AGGREGATE_KEYS) {
+    const raw = indexed[key];
     if (raw === undefined) continue;
-    out[descriptor.key] = descriptor.sanitize(raw);
+    out[key] = sanitizeRecord(raw);
   }
   return out as Partial<ExportPayload>;
 }
