@@ -34,7 +34,3 @@ export function openDashboardPage(
   windowRef.open(url.toString(), "_blank", "noopener,noreferrer");
 }
 
-/** Opens the dashboard directly on the settings screen. */
-export function openSettingsPage(windowRef: Window = window): void {
-  openDashboardPage("settings", windowRef);
-}

@@ -7,10 +7,7 @@ import { openProblemPage, RecommendedProblemView } from "@features/problems";
 import { StudyMode } from "@features/settings";
 import { startTransition, useMemo, useRef, useState } from "react";
 
-import {
-  openDashboardPage,
-  openSettingsPage,
-} from "../dashboard/openDashboardPage";
+import { openDashboardPage } from "../dashboard/openDashboardPage";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],
@@ -159,7 +156,7 @@ export function usePopupShellVM() {
       openDashboardPage("tracks");
     },
     onOpenProblem,
-    onOpenSettings: openSettingsPage,
+    onOpenSettings: () => openDashboardPage("settings"),
     payload,
     recommended,
     refresh,
