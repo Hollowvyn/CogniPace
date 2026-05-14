@@ -39,16 +39,15 @@ import {
 import { eq, inArray, sql } from "drizzle-orm";
 
 import {
-  leetcodeProblemUrl,
-  slugToTitle,
-} from "../../domain/model";
-import {
   applyEdit,
+  leetcodeProblemUrl,
   mergeImported,
+  slugToTitle,
+  type Difficulty,
+  type Problem,
+  type ProblemEditFlags,
   type ProblemEditPatch,
-
-  Problem as StrictProblem,
-  ProblemEditFlags, Difficulty, Problem } from "../../domain/model";
+} from "../../domain/model";
 
 import type { Db } from "@platform/db/client";
 
@@ -80,10 +79,7 @@ function toProblem(row: ProblemRow): Problem {
     updatedAt: row.updatedAt,
   };
   if (row.leetcodeId) transitional.leetcodeId = row.leetcodeId;
-  if (userEdits) {
-    (transitional as Problem & { userEdits?: ProblemEditFlags }).userEdits =
-      userEdits;
-  }
+  if (userEdits) transitional.userEdits = userEdits;
   return transitional;
 }
 
@@ -91,8 +87,7 @@ function toProblem(row: ProblemRow): Problem {
 function toRow(
   problem: Problem,
 ): typeof schema.problems.$inferInsert {
-  const userEdits =
-    (problem as Problem & { userEdits?: ProblemEditFlags }).userEdits ?? {};
+  const userEdits = problem.userEdits ?? {};
   return {
     slug: problem.slug,
     leetcodeId: problem.leetcodeId ?? null,
@@ -179,12 +174,7 @@ export async function importProblem(
 
   let next: Problem;
   if (existing) {
-    const merged = mergeImported(
-      existing as unknown as StrictProblem,
-      patch,
-      now,
-    );
-    next = { ...existing, ...(merged as unknown as Problem) };
+    next = mergeImported(existing, patch, now);
   } else {
     next = {
       id: slug,
@@ -230,15 +220,7 @@ export async function editProblem(
     throw new Error(`editProblem: no problem with slug "${slug}"`);
   }
   const markUserEdit = args.markUserEdit ?? true;
-  const edited = applyEdit(
-    existing as unknown as StrictProblem,
-    args.patch,
-    nowIso(),
-    markUserEdit,
-  );
-  // Stitch the v6 transitional fields back from `existing` since
-  // applyEdit returns the slim v7 shape.
-  const next: Problem = { ...existing, ...(edited as unknown as Problem) };
+  const next = applyEdit(existing, args.patch, nowIso(), markUserEdit);
   await upsertRow(db, toRow(next));
   return next;
 }
