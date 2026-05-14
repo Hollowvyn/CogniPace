@@ -1,6 +1,6 @@
 import { StudyState } from "@features/study";
 
-import { OverlayShell } from "../../../../src/app/overlay/OverlayShell";
+import { OverlayShell } from "../../../../app/overlay/OverlayShell";
 import { act, render } from "../../../support/render";
 import { sendMessageMock } from "../../../support/setup";
 

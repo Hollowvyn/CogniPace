@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { OverlayPanel } from "../../../src/features/overlay-session/ui/screens/OverlayPanel";
-import { screen , render } from "../../support/render";
+import { OverlayPanel } from "../../../features/overlay-session/ui/screens/OverlayPanel";
+import { screen, render } from "../../support/render";
 
 import { makeCollapsedRenderModel } from "./support/overlayPanel.fixtures";
 

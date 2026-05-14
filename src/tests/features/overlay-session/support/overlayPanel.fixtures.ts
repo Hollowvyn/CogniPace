@@ -3,7 +3,7 @@ import {
   DockedOverlayViewModel,
   ExpandedOverlayViewModel,
   OverlayRenderModel,
-} from "../../../../src/features/overlay-session/ui/screens/overlayPanel.types";
+} from "../../../../features/overlay-session/ui/screens/overlayPanel.types";
 import { fireEvent } from "../../../support/render";
 
 export function firePointerEvent(
@@ -53,10 +53,10 @@ export function makeExpandedRenderModel(
     overrides.feedback === null
       ? null
       : {
-          isError: false,
-          message: "Last reviewed today.",
-          ...(overrides.feedback ?? {}),
-        };
+        isError: false,
+        message: "Last reviewed today.",
+        ...(overrides.feedback ?? {}),
+      };
 
   return {
     model: {
@@ -154,10 +154,10 @@ export function makeCollapsedRenderModel(
     overrides.feedback === null
       ? null
       : {
-          isError: false,
-          message: "",
-          ...(overrides.feedback ?? {}),
-        };
+        isError: false,
+        message: "",
+        ...(overrides.feedback ?? {}),
+      };
 
   return {
     model: {

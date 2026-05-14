@@ -6,7 +6,7 @@ import { createInitialUserSettings } from "@features/settings";
 import { createDefaultStudyState } from "@features/study/server";
 import { describe, it } from "vitest";
 
-import { sanitizeImportPayload } from "../../../src/features/backup/data/sanitize";
+import { sanitizeImportPayload } from "../../../features/backup/data/sanitize";
 import { FIXTURE_NOW, makeProblem } from "../../support/fixtures";
 
 describe("backup import sanitization", () => {

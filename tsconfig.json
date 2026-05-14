@@ -42,7 +42,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "tests/**/*.react.test.tsx",
-    "tests/design-system/atoms/atoms.a11y.test.tsx"
+    "src/tests/**/*.react.test.tsx",
+    "src/tests/design-system/atoms/atoms.a11y.test.tsx"
   ]
 }

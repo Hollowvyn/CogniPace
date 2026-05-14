@@ -7,7 +7,7 @@ import {
   handleStartupDueCheck,
   maybeNotifyDueQueue,
   scheduleNextDueAlarm,
-} from "../../src/extension/background/notifications";
+} from "../../extension/background/notifications";
 import { makeProblem, makeScheduledState } from "../support/fixtures";
 
 import type { Problem } from "@features/problems";

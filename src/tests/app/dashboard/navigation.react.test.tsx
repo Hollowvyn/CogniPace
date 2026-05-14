@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DashboardShell } from "../../../src/app/dashboard/DashboardShell";
+import { DashboardShell } from "../../../app/dashboard/DashboardShell";
 import { makePayload } from "../../support/appShellFixtures";
 import { act, render, screen, waitFor } from "../../support/render";
 import { sendMessageMock } from "../../support/setup";

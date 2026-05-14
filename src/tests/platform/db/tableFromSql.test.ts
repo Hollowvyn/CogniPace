@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { tableFromSql } from "../../../src/platform/db/tableFromSql";
+import { tableFromSql } from "../../../platform/db/tableFromSql";
 
 describe("tableFromSql", () => {
   it("extracts the target of an INSERT INTO", () => {

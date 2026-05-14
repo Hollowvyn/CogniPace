@@ -1,6 +1,6 @@
 import { PopupShellPayload } from "@features/app-shell";
 
-import { PopupShell } from "../../../src/app/popup/PopupShell";
+import { PopupShell } from "../../../app/popup/PopupShell";
 import { makePayload } from "../../support/appShellFixtures";
 import { render } from "../../support/render";
 import { sendMessageMock } from "../../support/setup";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { DashboardShell } from "../../../src/app/dashboard/DashboardShell";
-import { DB_TICK_KEY } from "../../../src/libs/event-bus/utils/DB_TICK_KEY";
+import { DashboardShell } from "../../../app/dashboard/DashboardShell";
+import { DB_TICK_KEY } from "../../../libs/event-bus/utils/DB_TICK_KEY";
 import { makePayload } from "../../support/appShellFixtures";
 import { render, screen, waitFor, fireEvent } from "../../support/render";
 import { emitLocalStorageChange, sendMessageMock } from "../../support/setup";
@@ -144,13 +144,13 @@ describe("DashboardShell", () => {
       const { user } = renderDashboardWithPayload(makePayload(), (type, payload) =>
         type === "UPDATE_SETTINGS"
           ? Promise.resolve({
-              ok: true,
-              data: {
-                // The real SW handler always returns the round-tripped
-                // settings; mock the same shape (charter lesson #6).
-                settings: { ...initial, ...(payload as object) },
-              },
-            })
+            ok: true,
+            data: {
+              // The real SW handler always returns the round-tripped
+              // settings; mock the same shape (charter lesson #6).
+              settings: { ...initial, ...(payload as object) },
+            },
+          })
           : undefined
       );
 
