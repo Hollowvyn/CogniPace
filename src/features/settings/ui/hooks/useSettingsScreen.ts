@@ -78,7 +78,7 @@ export function useSettingsScreen(
     } catch (err) {
       return {
         ok: false,
-        error: err instanceof Error ? err.message : "Failed to save settings.",
+        error: (err as Error).message || "Failed to save settings.",
       };
     }
   }, [currentSettings, draftSettings, hasChanges, settingsRepository]);
@@ -96,8 +96,7 @@ export function useSettingsScreen(
       } catch (err) {
         return {
           ok: false,
-          error:
-            err instanceof Error ? err.message : "Failed to reset settings.",
+          error: (err as Error).message || "Failed to reset settings.",
         };
       }
     }, [settingsRepository]);

@@ -153,7 +153,7 @@ export function useDashboardShellVM() {
       }
     } catch (err) {
       setStatus({
-        message: err instanceof Error ? err.message : "Action failed.",
+        message: (err as Error).message || "Action failed.",
         isError: true,
       });
     }
@@ -176,7 +176,7 @@ export function useDashboardShellVM() {
       }
     } catch (err) {
       setStatus({
-        message: err instanceof Error ? err.message : "Action failed.",
+        message: (err as Error).message || "Action failed.",
         isError: true,
       });
     }
@@ -199,7 +199,7 @@ export function useDashboardShellVM() {
       setStatus({ message: "Backup exported.", isError: false });
     } catch (err) {
       setStatus({
-        message: err instanceof Error ? err.message : "Failed to export data.",
+        message: (err as Error).message || "Failed to export data.",
         isError: true,
       });
     }
@@ -231,7 +231,7 @@ export function useDashboardShellVM() {
       await load({ clearStatusOnSuccess: false });
     } catch (err) {
       setStatus({
-        message: err instanceof Error ? err.message : "Failed to import data.",
+        message: (err as Error).message || "Failed to import data.",
         isError: true,
       });
     }
@@ -244,10 +244,7 @@ export function useDashboardShellVM() {
         savedSettings = await settingsRepository.setActiveTrack(trackId);
       } catch (err) {
         setStatus({
-          message:
-            err instanceof Error && err.message
-              ? err.message
-              : "Failed to update active track.",
+            message: (err as Error).message || "Failed to update active track.",
           isError: true,
         });
         return;

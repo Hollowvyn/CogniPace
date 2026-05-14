@@ -35,15 +35,7 @@ function currentRecommended(
 const fetchPopupShell = () => appShellRepository.fetchPopupShell();
 
 function popupErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (typeof error === "string" && error.trim()) {
-    return error;
-  }
-
-  return "Failed to update study mode.";
+  return (error as Error).message || "Failed to update study mode.";
 }
 
 /** Coordinates popup data loading, recommendation rotation, and user actions. */

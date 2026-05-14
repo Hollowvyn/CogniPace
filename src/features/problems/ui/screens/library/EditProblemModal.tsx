@@ -192,7 +192,7 @@ export function EditProblemModal(props: EditProblemModalProps) {
       await onSaved?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save the changes.");
+      setError((err as Error).message || "Could not save the changes.");
     } finally {
       setSaving(false);
     }
