@@ -72,6 +72,14 @@ function buildReviewLogFields(
 
 // ---------- Page / context handlers ----------
 
+// TODO(issue: leetcode-slug-rename-orphan): when LeetCode renames a problem,
+// its old slug redirects to a new URL. The overlay reads the post-redirect
+// URL and submits reviews under the new slug, leaving the old-slug record
+// orphaned in the library (status NEW, never reviewed). Fix: append
+// `?_cpFrom=<slug>` to the opened URL here; the overlay reads it on mount,
+// compares to the URL slug, and dispatches `mergeProblemRecords(old, new)`
+// (a two-query transaction that moves track memberships and CASCADE-deletes
+// the orphan).
 export async function openProblemPage(
   payload: { slug: string; trackId?: string; groupId?: string },
   sender?: chrome.runtime.MessageSender,
