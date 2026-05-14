@@ -56,8 +56,8 @@ export function problemForPage(
 
 export function mockOverlayRuntime(handler: RuntimeHandler) {
   sendMessageMock.mockImplementation(
-    (type: string, payload: RuntimePayload = {}) => {
-      return handler(type, payload) ?? runtimeOk();
+    (type: string, payload: unknown = {}) => {
+      return handler(type, payload as RuntimePayload) ?? runtimeOk();
     }
   );
 }
@@ -112,6 +112,7 @@ export function createOverlayHarness(initialPage: OverlayPageFixture): OverlayHa
   };
 
   const setPage = (page: OverlayPageFixture) => {
+    // eslint-disable-next-line no-unsanitized/property
     overlayDocument.body.innerHTML = `
       <h1>${page.title}</h1>
       <span>${page.difficulty}</span>

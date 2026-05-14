@@ -53,8 +53,8 @@ const MESSAGE_TYPE_FROM_METHOD: Record<string, string> = Object.fromEntries(
 /** Mock target: tests still call `sendMessageMock("MESSAGE_TYPE", payload)`
  *  semantics. Internally we adapt new-API method names back to the legacy
  *  type when the proxy dispatches. */
-export const sendMessageMock = vi.fn<(...args: unknown[]) => unknown>();
-export const tabsCreateMock = vi.fn<(...args: unknown[]) => unknown>();
+export const sendMessageMock = vi.fn<(type: string, payload?: unknown) => unknown>();
+export const tabsCreateMock = vi.fn<(properties: unknown) => unknown>();
 const storageChangeListeners = new Set<
   (
     changes: Record<string, chrome.storage.StorageChange>,
