@@ -8,13 +8,12 @@ export async function toEnvelope<T>(
   try {
     return { ok: true, data: await result };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    return { ok: false, error: (error as Error).message };
   }
 }
 
 /** Wraps a thrown lifecycle error in the canonical runtime envelope.
  *  Used only in the SW onMessage catch block. */
 export function fail(error: unknown): RuntimeResponse<never> {
-  const message = error instanceof Error ? error.message : "Unknown error";
-  return { ok: false, error: message };
+  return { ok: false, error: (error as Error).message };
 }
