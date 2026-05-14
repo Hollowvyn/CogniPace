@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(testsDir, "../..");
+const repoRoot = path.resolve(testsDir, "../../..");
 
 function read(filePath: string): string {
   return fs.readFileSync(filePath, "utf8");

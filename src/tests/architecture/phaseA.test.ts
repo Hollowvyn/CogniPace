@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(testsDir, "../..");
+const repoRoot = path.resolve(testsDir, "../../..");
 
 function listFiles(root: string): string[] {
   if (!fs.existsSync(root)) return [];
@@ -26,7 +26,7 @@ function listFiles(root: string): string[] {
 }
 
 function isSource(file: string): boolean {
-  return /\.(ts|tsx)$/.test(file) && !/\.d\.ts$/.test(file);
+  return /\.(ts|tsx)$/.test(file) && !/\.d\.ts$/.test(file) && !/\/tests\//.test(file) && !/\.test\.(ts|tsx)$/.test(file);
 }
 
 function read(file: string): string {

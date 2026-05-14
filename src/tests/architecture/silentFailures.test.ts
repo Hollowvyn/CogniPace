@@ -32,7 +32,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(testsDir, "../..");
+const repoRoot = path.resolve(testsDir, "../../..");
 
 function walk(root: string): string[] {
   if (!fs.existsSync(root)) return [];

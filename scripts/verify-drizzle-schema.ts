@@ -29,7 +29,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import * as schema from "../src/data/db/schema";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = path.resolve(__dirname, "../src/data/db/migrations");
+const migrationsFolder = path.resolve(__dirname, "../src/platform/db/migrations");
 
 const sqlite = new Database(":memory:");
 sqlite.pragma("foreign_keys = ON");

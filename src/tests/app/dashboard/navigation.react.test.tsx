@@ -6,7 +6,7 @@ import { act, render, screen, waitFor } from "../../support/render";
 import { sendMessageMock } from "../../support/setup";
 
 function renderDashboardWithPayload(payload = makePayload()) {
-  sendMessageMock.mockImplementation(async (type: string) => {
+  sendMessageMock.mockImplementation((type: string) => {
     if (type === "GET_APP_SHELL_DATA") {
       return { ok: true, data: payload };
     }

@@ -35,11 +35,9 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     include: [
-      "tests/**/*.react.test.tsx",
-      "src/features/**/__tests__/**/*.react.test.tsx",
-      "src/design-system/**/__tests__/**/*.{react.test,a11y.test}.tsx",
+      "src/tests/**/*.react.test.tsx",
     ],
-    setupFiles: ["tests/support/setup.tsx"],
+    setupFiles: ["src/tests/support/setup.tsx"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],

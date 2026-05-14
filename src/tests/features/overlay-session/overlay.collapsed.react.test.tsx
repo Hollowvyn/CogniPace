@@ -37,7 +37,7 @@ describe("OverlayPanel Collapsed", () => {
     expect(onCompactSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it("disables actions when specified", async () => {
+  it("disables actions when specified", () => {
     render(
       <OverlayPanel
         renderModel={makeCollapsedRenderModel({

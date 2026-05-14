@@ -17,8 +17,8 @@ const readLocalStorageMock = vi.fn();
 const writeLocalStorageMock = vi.fn();
 
 vi.mock("@platform/chrome/storage", () => ({
-  readLocalStorage: (...args: unknown[]) => readLocalStorageMock(...args),
-  writeLocalStorage: (...args: unknown[]) => writeLocalStorageMock(...args),
+  readLocalStorage: (...args: unknown[]) => readLocalStorageMock(...args) as unknown,
+  writeLocalStorage: (...args: unknown[]) => writeLocalStorageMock(...args) as unknown,
 }));
 
 // SQLite-backed reads are mocked at the @features/<x>/server boundary —
@@ -29,7 +29,7 @@ const listProblemsMock = vi.fn<() => Promise<readonly Problem[]>>();
 const listStudyStatesMock = vi.fn<() => Promise<Record<string, StudyState>>>();
 
 vi.mock("@platform/db/instance", () => ({
-  getDb: vi.fn(async () => ({
+  getDb: vi.fn(() => Promise.resolve({
     db: {} as never,
     rawDb: {} as never,
     sqlite3: {} as never,
@@ -129,19 +129,20 @@ describe("background notifications", () => {
       | { lastDueNotificationDate?: string }
       | undefined;
 
-    readLocalStorageMock.mockImplementation(async (keys: string[]) => {
+    readLocalStorageMock.mockImplementation((keys: string[]) => {
       if (keys.includes("cognipace_due_notification_state")) {
-        return dueNotificationState
+        return Promise.resolve(dueNotificationState
           ? { cognipace_due_notification_state: dueNotificationState }
-          : {};
+          : {});
       }
-      return {};
+      return Promise.resolve({});
     });
-    writeLocalStorageMock.mockImplementation(async (payload: unknown) => {
+    writeLocalStorageMock.mockImplementation((payload: unknown) => {
       const candidate = payload as {
         cognipace_due_notification_state?: { lastDueNotificationDate?: string };
       };
       dueNotificationState = candidate.cognipace_due_notification_state;
+      return Promise.resolve();
     });
 
     const now = new Date(2026, 4, 2, 15, 30);

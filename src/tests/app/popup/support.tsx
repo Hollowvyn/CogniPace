@@ -8,7 +8,7 @@ import { sendMessageMock } from "../../support/setup";
 export type PopupRuntimeOverride = (
   type: string,
   request: unknown
-) => Promise<unknown> | unknown | undefined;
+) => unknown;
 
 export function okResponse(data: unknown = {}) {
   return Promise.resolve({ ok: true, data });

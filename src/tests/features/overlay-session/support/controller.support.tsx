@@ -30,7 +30,7 @@ export type RuntimePayload = Record<string, unknown> & { slug?: string };
 export type RuntimeHandler = (
   type: string,
   payload: RuntimePayload
-) => Promise<unknown> | unknown | undefined;
+) => unknown;
 
 export function leetcodeProblemUrl(slug: string) {
   return `https://leetcode.com/problems/${slug}/`;

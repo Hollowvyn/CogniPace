@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(testsDir, "../..");
+const repoRoot = path.resolve(testsDir, "../../..");
 
 function walk(root: string): string[] {
   if (!fs.existsSync(root)) return [];
@@ -38,7 +38,7 @@ describe("tick scope discipline", () => {
     const violations: string[] = [];
 
     const srcFiles = walk(path.join(repoRoot, "src")).filter(
-      (file) => file.endsWith(".ts") || file.endsWith(".tsx"),
+      (file) => (file.endsWith(".ts") || file.endsWith(".tsx")) && !/\/tests\//.test(file) && !/\.test\.(ts|tsx)$/.test(file),
     );
 
     for (const file of srcFiles) {

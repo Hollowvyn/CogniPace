@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(testsDir, "../..");
+const repoRoot = path.resolve(testsDir, "../../..");
 
 describe("legacy directories retired", () => {
   for (const dir of ["src/data", "src/ui", "src/domain"] as const) {

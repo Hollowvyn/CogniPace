@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(testsDir, "../..");
+const repoRoot = path.resolve(testsDir, "../../..");
 
 /** Aggregate-root tables in scope for the `updated_at` rule. */
 const AGGREGATE_ROOT_TABLES = [

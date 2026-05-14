@@ -53,8 +53,8 @@ const MESSAGE_TYPE_FROM_METHOD: Record<string, string> = Object.fromEntries(
 /** Mock target: tests still call `sendMessageMock("MESSAGE_TYPE", payload)`
  *  semantics. Internally we adapt new-API method names back to the legacy
  *  type when the proxy dispatches. */
-export const sendMessageMock = vi.fn();
-export const tabsCreateMock = vi.fn();
+export const sendMessageMock = vi.fn<(...args: unknown[]) => unknown>();
+export const tabsCreateMock = vi.fn<(...args: unknown[]) => unknown>();
 const storageChangeListeners = new Set<
   (
     changes: Record<string, chrome.storage.StorageChange>,
@@ -86,8 +86,8 @@ async function chromeSendMessageAdapter(envelope: unknown): Promise<unknown> {
   }
   const { method, payload } = envelope as { method: string; payload: unknown };
   const legacyType = MESSAGE_TYPE_FROM_METHOD[method] ?? method;
-  const raw = sendMessageMock(legacyType, payload ?? {});
-  const result = raw instanceof Promise ? await raw : raw;
+  const raw: unknown = sendMessageMock(legacyType, payload ?? {});
+  const result: unknown = raw instanceof Promise ? await raw : raw;
   // Tests may return either an envelope `{ ok, data, error }` or a bare
   // value. Normalize: if it looks like an envelope keep it; otherwise
   // wrap as a success envelope so the proxy resolves with the value.

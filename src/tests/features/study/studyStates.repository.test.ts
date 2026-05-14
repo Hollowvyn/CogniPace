@@ -28,7 +28,7 @@ import type { Db } from "@platform/db/client";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = path.resolve(
   __dirname,
-  "../../../src/platform/db/migrations",
+  "../../../platform/db/migrations",
 );
 
 function freshDb(): Db {

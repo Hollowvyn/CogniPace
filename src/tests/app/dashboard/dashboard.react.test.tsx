@@ -9,7 +9,7 @@ import { emitLocalStorageChange, sendMessageMock } from "../../support/setup";
 type DashboardRuntimeOverride = (
   type: string,
   request: unknown
-) => Promise<unknown> | unknown | undefined;
+) => unknown;
 
 function renderDashboardWithPayload(
   payload = makePayload(),

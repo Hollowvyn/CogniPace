@@ -22,16 +22,16 @@ function installChromeTabsMock(): ChromeTabsMock {
     configurable: true,
     value: {
       tabs: {
-        create: async (properties: chrome.tabs.CreateProperties) => {
+        create: (properties: chrome.tabs.CreateProperties) => {
           createdTabs.push(properties);
-          return {} as chrome.tabs.Tab;
+          return Promise.resolve({} as chrome.tabs.Tab);
         },
-        update: async (
+        update: (
           id: number,
           properties: chrome.tabs.UpdateProperties
         ) => {
           updatedTabs.push({ id, properties });
-          return { id, ...properties } as chrome.tabs.Tab;
+          return Promise.resolve({ id, ...properties } as chrome.tabs.Tab);
         },
       },
     } as Partial<typeof chrome>,

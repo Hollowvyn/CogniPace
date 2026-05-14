@@ -16,7 +16,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 const MIGRATION_PATH = path.resolve(
   __dirname,
-  "../../../src/platform/db/migrations/0000_initial.sql",
+  "../../../platform/db/migrations/0000_initial.sql",
 );
 
 let migrationSql = "";

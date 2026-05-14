@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(testsDir, "../..");
+const repoRoot = path.resolve(testsDir, "../../..");
 
 function listFiles(root: string): string[] {
   if (!fs.existsSync(root)) return [];
@@ -32,11 +32,10 @@ function isSource(file: string): boolean {
   if (!/\.(ts|tsx)$/.test(file)) return false;
   if (/\.d\.ts$/.test(file)) return false;
   // Architecture rules govern runtime-code boundaries. Test files
-  // inside production directories (e.g. `__tests__/`) frequently need
   // to import providers, mocks, or fixtures across layers — that's
   // legitimate test setup, not a boundary violation.
   if (/\.test\.(ts|tsx)$/.test(file)) return false;
-  if (/\/__tests__\//.test(file)) return false;
+  if (/\/tests\//.test(file)) return false;
   return true;
 }
 
@@ -206,9 +205,9 @@ describe("architecture / Phase 3 boundaries", () => {
 
 describe("architecture / Phase 4 boundaries", () => {
   it("design-system/atoms ships at least one a11y test", () => {
-    const atomsRoot = path.join(repoRoot, "src/design-system/atoms");
-    if (!fs.existsSync(atomsRoot)) return;
-    const a11yTests = listFiles(atomsRoot).filter((f) =>
+    const a11yTestsRoot = path.join(repoRoot, "src/tests/design-system/atoms");
+    if (!fs.existsSync(a11yTestsRoot)) return;
+    const a11yTests = listFiles(a11yTestsRoot).filter((f) =>
       /\.a11y\.test\.tsx$/.test(f),
     );
     expect(a11yTests.length).toBeGreaterThan(0);
@@ -440,3 +439,4 @@ describe.skip("architecture / future placeholders", () => {
   it.todo("tick() calls pass a TickScope literal with a known table name");
   it.todo("app/entrypoints/background.ts graph excludes react, react-dom, @mui/*, design-system/*");
 });
+

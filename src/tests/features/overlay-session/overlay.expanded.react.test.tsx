@@ -42,7 +42,7 @@ describe("OverlayPanel Expanded", () => {
     expect(onChangeDraft).toHaveBeenCalledWith("interviewPattern", "Sliding window");
   });
 
-  it("locks the assessment rail to Again after a failed session", async () => {
+  it("locks the assessment rail to Again after a failed session", () => {
     const onSelectRating = vi.fn();
     render(
       <OverlayPanel

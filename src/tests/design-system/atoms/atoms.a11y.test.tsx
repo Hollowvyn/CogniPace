@@ -11,7 +11,8 @@
  * Failing this file = a violation was introduced. Fix the atom (or
  * its consumer pattern) — do not relax the axe rules.
  */
-import { AppProviders } from "@app/providers";
+import { render } from "@testing-library/react";
+import { AppProviders } from "src/app/providers";
 import {
   BrandMark,
   CogniPaceIcon,
@@ -29,8 +30,7 @@ import {
   SurfaceSectionLabel,
   SurfaceTableContainer,
   ToneChip,
-} from "@design-system/atoms";
-import { render } from "@testing-library/react";
+} from "src/design-system/atoms";
 import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 

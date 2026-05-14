@@ -200,7 +200,7 @@ export default [
   },
   ...tseslint.configs.recommended.map((config) => ({
     ...config,
-    files: ["tests/**/*.ts", "tests/**/*.tsx"],
+    files: ["src/tests/**/*.ts", "src/tests/**/*.tsx"],
     plugins: {
       ...(config.plugins ?? {}),
       import: importPlugin,

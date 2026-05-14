@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(testsDir, "../..");
+const repoRoot = path.resolve(testsDir, "../../..");
 const srcDir = path.join(repoRoot, "src");
 const sharedDir = path.join(srcDir, "shared");
 
@@ -30,7 +30,7 @@ function listFiles(root: string): string[] {
 }
 
 function isSource(file: string): boolean {
-  return /\.(ts|tsx)$/.test(file) && !/\.d\.ts$/.test(file);
+  return /\.(ts|tsx)$/.test(file) && !/\.d\.ts$/.test(file) && !/\/tests\//.test(file) && !/\.test\.(ts|tsx)$/.test(file);
 }
 
 describe("architecture / shared kernel", () => {
