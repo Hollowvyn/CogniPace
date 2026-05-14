@@ -8,7 +8,7 @@ import {
   maybeNotifyDueQueue,
   scheduleNextDueAlarm,
 } from "../../src/extension/background/notifications";
-import { makeProblem, makeScheduledState } from "../support/domainFixtures";
+import { makeProblem, makeScheduledState } from "../support/fixtures";
 
 import type { Problem } from "@features/problems";
 import type { StudyState } from "@features/study";
@@ -74,7 +74,7 @@ function makeQueueSettings(): UserSettings {
 }
 
 const queueProblems: readonly Problem[] = [
-  makeProblem("two-sum", "Two Sum", "Easy"),
+  makeProblem("two-sum", { title: "Two Sum", difficulty: "Easy" }),
 ];
 const queueStudyStates: Record<string, StudyState> = {
   "two-sum": makeScheduledState("2026-05-01T09:00:00.000Z"),

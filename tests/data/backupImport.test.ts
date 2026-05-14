@@ -7,7 +7,7 @@ import { createDefaultStudyState } from "@libs/fsrs/constants";
 import { describe, it } from "vitest";
 
 import { sanitizeImportPayload } from "../../src/features/backup/data/sanitize";
-import { makeProblem } from "../support/domainFixtures";
+import { makeProblem } from "../support/fixtures";
 
 describe("backup import sanitization", () => {
   it("ignores incoming problem urls", () => {
@@ -15,7 +15,7 @@ describe("backup import sanitization", () => {
       version: CURRENT_STORAGE_SCHEMA_VERSION,
       problems: [
         {
-          ...makeProblem("two-sum", "Two Sum", "Easy"),
+          ...makeProblem("two-sum", { title: "Two Sum", difficulty: "Easy" }),
           isPremium: true,
           url: "https://evil.example.com/not-allowed",
         },
@@ -33,9 +33,9 @@ describe("backup import sanitization", () => {
   it("drops malformed entries and normalizes keys", () => {
     const sanitized = sanitizeImportPayload({
       problems: [
-        makeProblem("two-sum", "Two Sum", "Easy"),
+        makeProblem("two-sum", { title: "Two Sum", difficulty: "Easy" }),
         {
-          ...makeProblem("bad", "Bad"),
+          ...makeProblem("bad", { title: "Bad" }),
           leetcodeSlug: "!!!",
         } as Problem,
       ],

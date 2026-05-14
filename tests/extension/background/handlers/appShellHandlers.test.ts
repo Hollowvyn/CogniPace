@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   makeProblem,
   makeScheduledState,
-} from "../../../support/domainFixtures";
+} from "../../../support/fixtures";
 
 import type { AppData } from "@features/app-shell";
 import type { Problem } from "@features/problems";
@@ -62,7 +62,7 @@ describe("Popup Shell Handler", () => {
   it("builds only the popup read model", () => {
     const data = buildAppData({
       problemsBySlug: {
-        "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
+        "two-sum": makeProblem("two-sum", { title: "Two Sum", difficulty: "Easy" }),
       },
       settings: {
         activeCourseId: "Blind75",
@@ -93,7 +93,7 @@ describe("Popup Shell Handler", () => {
   it("derives activeTrack from settings.activeFocus", () => {
     const data = buildAppData({
       problemsBySlug: {
-        "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
+        "two-sum": makeProblem("two-sum", { title: "Two Sum", difficulty: "Easy" }),
       },
       settings: {
         activeFocus: { kind: "track", id: "Grind75" },
