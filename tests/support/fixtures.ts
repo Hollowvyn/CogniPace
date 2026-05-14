@@ -28,7 +28,6 @@ export function makeProblem(
     difficulty: overrides.difficulty ?? "Medium",
     isPremium: overrides.isPremium ?? false,
     url: overrides.url ?? `https://leetcode.com/problems/${branded}/`,
-    topics: overrides.topics ?? [],
     topicIds: overrides.topicIds ?? [],
     companyIds: overrides.companyIds ?? [],
     leetcodeId: overrides.leetcodeId,

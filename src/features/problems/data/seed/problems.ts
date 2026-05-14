@@ -66,7 +66,6 @@ export function buildProblemSeed(
       difficulty: data.difficulty ?? "Unknown",
       isPremium: false,
       url: slugToUrl(slug),
-      topics: [],
       topicIds: Array.from(data.topicIds),
       companyIds: [],
       createdAt: now,

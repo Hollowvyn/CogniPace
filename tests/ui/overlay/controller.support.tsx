@@ -49,7 +49,6 @@ export function problemForPage(
     title: page.title,
     difficulty: page.difficulty,
     url: leetcodeProblemUrl(page.slug),
-    topics: [],
     createdAt: timestamp,
     updatedAt: timestamp,
   };

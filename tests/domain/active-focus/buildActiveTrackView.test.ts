@@ -92,7 +92,6 @@ function makeProblem(slug: string, title: string): Problem {
     difficulty: "Easy",
     isPremium: false,
     url: `https://leetcode.com/problems/${slug}/`,
-    topics: [],
     topicIds: [],
     companyIds: [],
     createdAt: "",

@@ -193,7 +193,6 @@ function synthesizeProblem(slug: string): Problem {
     difficulty: "Unknown",
     isPremium: false,
     url: slugToUrl(slug),
-    topics: [],
     topicIds: [],
     companyIds: [],
     createdAt: "",

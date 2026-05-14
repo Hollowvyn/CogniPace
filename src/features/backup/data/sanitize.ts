@@ -112,19 +112,19 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
     ),
     isPremium: safeBoolean(problem.isPremium),
     url: slugToUrl(slug),
-    topics: uniqueStrings(isStringArray(problem.topics) ? problem.topics : []),
     topicIds: (() => {
-      const labels = uniqueStrings(
-        isStringArray(problem.topics) ? problem.topics : []
-      );
       const explicit = uniqueStrings(
         isStringArray((problem as { topicIds?: unknown }).topicIds)
           ? (problem as { topicIds: string[] }).topicIds
           : []
       );
-      // If the import already carries v7 topicIds, trust them; otherwise
-      // derive from the legacy `topics` labels via the curated seed.
-      return explicit.length > 0 ? explicit : deriveTopicIdsFromLabels(labels);
+      if (explicit.length > 0) return explicit;
+      // Older exports carried a flat string[] under `topics`; resolve
+      // each label against the curated seed.
+      const labels = uniqueStrings(
+        isStringArray(problem.topics) ? problem.topics : []
+      );
+      return deriveTopicIdsFromLabels(labels);
     })(),
     companyIds: uniqueStrings(
       isStringArray((problem as { companyIds?: unknown }).companyIds)

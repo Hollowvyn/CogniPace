@@ -61,7 +61,6 @@ function makeProblem(slug: string, overrides: Partial<Problem> = {}): Problem {
     difficulty: "Unknown",
     isPremium: false,
     url: `https://leetcode.com/problems/${slug}/`,
-    topics: [],
     topicIds: [],
     companyIds: [],
     createdAt: now,

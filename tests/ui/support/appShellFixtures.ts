@@ -124,7 +124,6 @@ export function makePayload() {
         title: "Two Sum",
         difficulty: "Easy",
         url: "https://leetcode.com/problems/two-sum/",
-        topics: [],
         topicIds: [],
         companyIds: [],
         createdAt: "2026-03-01T00:00:00.000Z",

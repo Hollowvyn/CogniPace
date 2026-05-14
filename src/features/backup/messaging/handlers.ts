@@ -4,7 +4,6 @@ import {
   listProblems,
   listTopics,
   normalizeSlug,
-  resolveSeedTopicId,
   slugToTitle,
   slugToUrl,
   upsertCompany,
@@ -59,15 +58,6 @@ import type { Company, Topic } from "@features/problems";
  * download then clear it.
  */
 const PRE_V7_BACKUP_KEY = "leetcode_spaced_repetition_data_v2_pre_v7_backup";
-
-function topicIdsFromLabels(labels: readonly string[]): string[] {
-  const out: string[] = [];
-  for (const label of labels) {
-    const resolved = resolveSeedTopicId(label);
-    if (resolved && !out.includes(resolved)) out.push(resolved);
-  }
-  return out;
-}
 
 export async function exportData(): Promise<ExportPayload> {
   const { db } = await getDb();
@@ -128,12 +118,6 @@ export async function importData(
     const slug = normalizeSlug(problem.leetcodeSlug);
     if (!slug) continue;
     const now = nowIso();
-    const labels = uniqueStrings(problem.topics ?? []);
-    const importedTopicIds = uniqueStrings(problem.topicIds ?? []);
-    const finalTopicIds =
-      importedTopicIds.length > 0
-        ? importedTopicIds
-        : topicIdsFromLabels(labels);
     await upsertProblem(db, {
       leetcodeSlug: slug,
       slug,
@@ -142,8 +126,7 @@ export async function importData(
       difficulty: problem.difficulty ?? "Unknown",
       isPremium: problem.isPremium,
       url: slugToUrl(slug),
-      topics: labels,
-      topicIds: finalTopicIds,
+      topicIds: uniqueStrings(problem.topicIds ?? []),
       companyIds: uniqueStrings(problem.companyIds ?? []),
       createdAt: problem.createdAt || now,
       updatedAt: problem.updatedAt || now,

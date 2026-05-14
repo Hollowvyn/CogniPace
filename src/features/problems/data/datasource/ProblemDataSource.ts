@@ -54,8 +54,8 @@ import type { Db } from "@platform/db/client";
 type ProblemRow = typeof schema.problems.$inferSelect;
 
 /**
- * Schema row → domain Problem. Legacy aliases (leetcodeSlug, topics) are
- * derived from slug or set to empty until their dedicated cuts land.
+ * Schema row → domain Problem. `leetcodeSlug` is derived from slug
+ * until its dedicated cut lands.
  */
 function toProblem(row: ProblemRow): Problem {
   const userEdits =
@@ -69,7 +69,6 @@ function toProblem(row: ProblemRow): Problem {
     difficulty: row.difficulty as Difficulty,
     isPremium: row.isPremium,
     url: row.url,
-    topics: [],
     topicIds: row.topicIds,
     companyIds: row.companyIds,
     createdAt: row.createdAt,
@@ -180,7 +179,6 @@ export async function importProblem(
       difficulty: args.difficulty ?? "Unknown",
       isPremium: args.isPremium ?? false,
       url: args.url ?? leetcodeProblemUrl(slug),
-      topics: [],
       topicIds: brandTopicIds(args.topicIds),
       companyIds: brandCompanyIds(args.companyIds),
       createdAt: now,
