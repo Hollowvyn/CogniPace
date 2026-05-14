@@ -46,7 +46,7 @@ describe("route and selector contracts", () => {
     });
 
     expect(rows).toHaveLength(1);
-    expect(rows[0]?.problem.slug).toBe("two-sum");
+    expect(rows[0]?.view.slug).toBe("two-sum");
   });
 
   it.each([

@@ -29,7 +29,7 @@ export function filterLibraryRows(
   return rows.filter((row) => {
     if (query) {
       const haystack =
-        `${row.problem.title} ${row.problem.slug}`.toLowerCase();
+        `${row.view.title} ${row.view.slug}`.toLowerCase();
       if (!haystack.includes(query)) {
         return false;
       }
@@ -46,7 +46,7 @@ export function filterLibraryRows(
 
     if (
       filters.difficulty !== "all" &&
-      row.problem.difficulty !== filters.difficulty
+      row.view.difficulty !== filters.difficulty
     ) {
       return false;
     }

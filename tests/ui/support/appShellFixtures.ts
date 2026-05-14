@@ -160,7 +160,6 @@ export function makePayload() {
 
   payload.library = [
     {
-      problem: blind75Problem,
       studyState: viewFromSummary(payload.queue.items[0].studyStateSummary),
       view: {
         slug: blind75Problem.slug,
@@ -175,7 +174,6 @@ export function makePayload() {
       trackMemberships: [],
     },
     {
-      problem: mergeIntervalsProblem,
       studyState: viewFromSummary({
         phase: "Learning",
         nextReviewAt: "2026-04-02T00:00:00.000Z",

@@ -165,7 +165,6 @@ function libraryRows(
         payload.settings,
       );
       return {
-        problem,
         view: buildProblemView(
           problem as unknown as Parameters<typeof buildProblemView>[0],
           payload.topicsById,
@@ -182,7 +181,7 @@ function libraryRows(
         ...(suspendFlag.suspended ? { suspended: suspendFlag.reason } : {}),
       };
     })
-    .sort((a, b) => a.problem.title.localeCompare(b.problem.title));
+    .sort((a, b) => a.view.title.localeCompare(b.view.title));
 }
 
 function synthesizeProblem(slug: string): Problem {
