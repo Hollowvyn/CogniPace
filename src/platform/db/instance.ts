@@ -193,19 +193,3 @@ export function getDb(): Promise<DbHandle> {
   return bootPromise;
 }
 
-/**
- * Test/debug hook: drops the cached handle so the next `getDb()` boots
- * a fresh DB. Also unhooks the mutation observer so the dropped DB
- * doesn't accidentally write a stale snapshot. Production code should
- * not call this.
- */
-export function resetDbForTesting(): void {
-  bootPromise = undefined;
-  liveHandle = undefined;
-  liveFingerprint = undefined;
-  setOnMutationHook(null);
-  if (pendingSaveTimer !== undefined) {
-    clearTimeout(pendingSaveTimer);
-    pendingSaveTimer = undefined;
-  }
-}

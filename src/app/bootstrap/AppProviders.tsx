@@ -1,4 +1,3 @@
-import { DIProvider, type DIServices } from "@app/di";
 import { createCogniTheme, type SurfaceName } from "@design-system/theme";
 import { backupRepository } from "@features/backup";
 import { settingsRepository } from "@features/settings";
@@ -6,8 +5,10 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { ReactNode, useMemo } from "react";
 
-/** App-level provider stack — MUI theme per surface + DI. Tests pass
- *  `services` to inject mocks; production wiring is the default. */
+import { DIProvider, type DIServices } from "./DIContext";
+
+/** Shared surface composition stack: MUI theme per surface + DI.
+ * Tests pass `services` to inject mocks; production wiring is the default. */
 const DEFAULT_DI_SERVICES: DIServices = {
   backupRepository,
   settingsRepository,

@@ -11,7 +11,7 @@
  * Failing this file = a violation was introduced. Fix the atom (or
  * its consumer pattern) — do not relax the axe rules.
  */
-import { AppProviders } from "@app/providers";
+import { AppProviders } from "@app/bootstrap";
 import {
   BrandMark,
   CogniPaceIcon,
@@ -20,7 +20,6 @@ import {
   MetricCard,
   NumericDisplay,
   ProgressTrack,
-  StatusBanner,
   StatusSurface,
   SurfaceCard,
   SurfaceDivider,
@@ -91,12 +90,6 @@ describe("design-system atoms a11y smoke", () => {
   it("InlineStatusRegion renders without axe violations", async () => {
     await expectNoAxeViolations(
       <InlineStatusRegion message="" isError={false} />,
-    );
-  });
-
-  it("StatusBanner renders without axe violations", async () => {
-    await expectNoAxeViolations(
-      <StatusBanner message="All caught up" isError={false} />,
     );
   });
 

@@ -4,15 +4,16 @@ import type { BackupRepository } from "@features/backup";
 import type { SettingsRepository } from "@features/settings";
 import type { ReactNode } from "react";
 
-/** The DI surface every UI hook receives via `useDI()`. Phase 7 features
- *  add their Repositories here as they migrate. */
+/** The DI surface every UI hook receives via `useDI()`. Surface
+ * composition owns the container so features depend only on the
+ * interface, not on a global singleton. */
 export interface DIServices {
   readonly backupRepository: BackupRepository;
   readonly settingsRepository: SettingsRepository;
 }
 
 /** Null when no provider is in the tree; `useDI()` throws in that case
- *  so misconfigured trees fail loudly rather than fall back to a global. */
+ * so misconfigured trees fail loudly rather than fall back to a global. */
 const DIContext = createContext<DIServices | null>(null);
 
 export function DIProvider(props: {

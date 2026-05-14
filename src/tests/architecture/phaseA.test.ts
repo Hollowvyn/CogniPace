@@ -85,11 +85,12 @@ describe("architecture / Phase A — surface shells + Screen+VM pattern", () => 
   it("src/app/<surface>/ never imports @platform/db, drizzle-orm, or a feature's data/datasource/", () => {
     const surfacesRoot = path.join(repoRoot, "src/app");
     if (!fs.existsSync(surfacesRoot)) return;
-    // app/di is the DI container; it legitimately references repositories.
-    // Surface folders are popup/, dashboard/, overlay/, env/.
+    // app/bootstrap is shared composition; it legitimately references
+    // repositories for DI wiring. Surface folders are popup/,
+    // dashboard/, overlay/, env/.
     const surfaceDirs = fs
       .readdirSync(surfacesRoot, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory() && entry.name !== "di")
+      .filter((entry) => entry.isDirectory() && entry.name !== "bootstrap")
       .map((entry) => path.join(surfacesRoot, entry.name));
 
     for (const dir of surfaceDirs) {
@@ -110,8 +111,8 @@ describe("architecture / Phase A — surface shells + Screen+VM pattern", () => 
 
   it("src/features/<x>/ui/ never imports src/app/<surface>/ files", () => {
     // Capability features know nothing about which surface mounts them.
-    // app/di is the DI container barrel and *is* allowed (features call
-    // useDI() from there).
+    // app/bootstrap is the shared composition barrel and *is* allowed
+    // (features call useDI() from there).
     const featuresRoot = path.join(repoRoot, "src/features");
     if (!fs.existsSync(featuresRoot)) return;
     for (const file of listFiles(featuresRoot).filter(isSource)) {
@@ -130,14 +131,14 @@ describe("architecture / Phase A — surface shells + Screen+VM pattern", () => 
     // Components and screens read intents off the Model, not the DI
     // container. Surface VMs in src/app/<surface>/use*ShellVM.ts and
     // feature VMs in src/features/<x>/ui/hooks/use*.ts are the allowed
-    // callers (plus src/app/di itself, which defines useDI).
+    // callers (plus src/app/bootstrap itself, which defines useDI).
     const candidates = listFiles(path.join(repoRoot, "src")).filter(isSource);
     for (const file of candidates) {
       const relPath = rel(file);
       const callsUseDI = /\buseDI\s*\(/.test(read(file));
       if (!callsUseDI) continue;
       const isAllowed =
-        relPath.startsWith("src/app/di/") ||
+        relPath.startsWith("src/app/bootstrap/") ||
         /\/ui\/hooks\/use[^/]+\.ts$/.test(relPath) ||
         /\/app\/[^/]+\/use[^/]+VM\.ts$/.test(relPath);
       expect(isAllowed, `${relPath} :: useDI() called outside a VM hook`).toBe(
@@ -166,6 +167,27 @@ describe("architecture / Phase A — surface shells + Screen+VM pattern", () => 
       expect(pattern.test(text), `${entrypoint} :: imports ${shellHint}`).toBe(
         true,
       );
+    }
+  });
+
+  it("product entrypoints do not import features, api proxies, or repositories directly", () => {
+    const productEntrypoints = [
+      "src/entrypoints/popup.tsx",
+      "src/entrypoints/dashboard.tsx",
+      "src/entrypoints/overlay.tsx",
+    ];
+    for (const relPath of productEntrypoints) {
+      const file = path.join(repoRoot, relPath);
+      expect(fs.existsSync(file), relPath).toBe(true);
+      const text = read(file);
+      for (const re of [
+        /from\s+['"]@features\//,
+        /from\s+['"]@app\/api['"]/,
+        /from\s+['"][^'"]*\/data\/repository\//,
+        /from\s+['"][^'"]*\/messaging\/handlers['"]/,
+      ]) {
+        expect(re.test(text), `${relPath} :: ${re}`).toBe(false);
+      }
     }
   });
 

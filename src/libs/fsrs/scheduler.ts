@@ -129,28 +129,6 @@ export function overrideLastReview(input: OverrideLastReviewInput): StudyState {
   );
 }
 
-/** Returns the earliest scheduled due date across all non-suspended study states, or null if none exist.
- *  Pass `after` to exclude dates on or before that cutoff — useful for scheduling alarms without re-triggering already-due cards. */
-export function findEarliestDueDate(
-  studyStatesBySlug: Record<string, StudyState>,
-  after?: Date
-): Date | null {
-  let earliest: Date | null = null;
-
-  for (const state of Object.values(studyStatesBySlug)) {
-    if (state.suspended || !state.fsrsCard?.due) continue;
-
-    const due = new Date(state.fsrsCard.due);
-    if (Number.isNaN(due.getTime())) continue;
-    if (after && due <= after) continue;
-
-    if (!earliest || due < earliest) {
-      earliest = due;
-    }
-  }
-
-  return earliest;
-}
 
 export function resetSchedule(
   state?: StudyState,

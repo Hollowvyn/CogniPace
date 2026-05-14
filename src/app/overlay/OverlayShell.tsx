@@ -1,6 +1,6 @@
 /** Overlay surface shell — driven by `useOverlayShellVM` per the canonical
- *  Screen+VM pattern. Shadow-root host and emotion cache live in
- *  `createOverlayHost` and the entrypoint; this shell is React-only. */
+ * Screen+VM pattern. Runtime host setup stays in the entrypoint so this
+ * module remains React-only. */
 import { OverlayPanel } from "@features/overlay-session";
 
 import {

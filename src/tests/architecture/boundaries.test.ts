@@ -358,13 +358,11 @@ describe("architecture / Phase 6 boundaries", () => {
     }
   });
 
-  it("app/di barrel exposes DIProvider, useDI, and DIServices", () => {
-    const tsBarrel = path.join(repoRoot, "src/app/di/index.ts");
-    const tsxBarrel = path.join(repoRoot, "src/app/di/index.tsx");
-    const barrel = fs.existsSync(tsBarrel) ? tsBarrel : tsxBarrel;
-    expect(fs.existsSync(barrel), "src/app/di/index.{ts,tsx}").toBe(true);
+  it("app/bootstrap barrel exposes AppProviders, DIProvider, useDI, and DIServices", () => {
+    const barrel = path.join(repoRoot, "src/app/bootstrap/index.ts");
+    expect(fs.existsSync(barrel), "src/app/bootstrap/index.ts").toBe(true);
     const text = read(barrel);
-    for (const name of ["DIProvider", "useDI", "DIServices"]) {
+    for (const name of ["AppProviders", "DIProvider", "useDI", "DIServices"]) {
       expect(text.includes(name), name).toBe(true);
     }
   });
@@ -439,4 +437,3 @@ describe.skip("architecture / future placeholders", () => {
   it.todo("tick() calls pass a TickScope literal with a known table name");
   it.todo("app/entrypoints/background.ts graph excludes react, react-dom, @mui/*, design-system/*");
 });
-

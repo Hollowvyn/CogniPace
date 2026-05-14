@@ -23,6 +23,12 @@ describe("architecture layout", () => {
       fs.existsSync(path.join(repoRoot, "src/entrypoints/overlay.tsx"))
     ).toBe(true);
     expect(
+      fs.existsSync(path.join(repoRoot, "src/app/bootstrap/AppProviders.tsx"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/app/bootstrap/DIContext.tsx"))
+    ).toBe(true);
+    expect(
       fs.existsSync(path.join(repoRoot, "src/app/popup/PopupShell.tsx"))
     ).toBe(true);
     expect(
@@ -37,8 +43,13 @@ describe("architecture layout", () => {
       fs.existsSync(path.join(repoRoot, "src/app/overlay/OverlayShell.tsx"))
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(repoRoot, "src/app/overlay/createOverlayHost.ts"))
+      fs.existsSync(
+        path.join(repoRoot, "src/entrypoints/overlay/createOverlayHost.ts")
+      )
     ).toBe(true);
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/app/overlay/createOverlayHost.ts"))
+    ).toBe(false);
     expect(
       fs.existsSync(
         path.join(
@@ -73,6 +84,8 @@ describe("architecture layout", () => {
     ).toBe(false);
     expect(fs.existsSync(path.join(repoRoot, "src/content.ts"))).toBe(false);
     expect(fs.existsSync(path.join(repoRoot, "src/background.ts"))).toBe(false);
+    expect(fs.existsSync(path.join(repoRoot, "src/app/providers.tsx"))).toBe(false);
+    expect(fs.existsSync(path.join(repoRoot, "src/app/di/index.tsx"))).toBe(false);
   });
 
   // The old "ui layer free of runtime transport" and "domain layer free

@@ -1,5 +1,5 @@
 /** Popup entrypoint that mounts the popup screen into the extension document. */
-import { AppProviders } from "@app/providers";
+import { AppProviders } from "@app/bootstrap";
 import { StrictMode, createElement } from "react";
 import { createRoot } from "react-dom/client";
 

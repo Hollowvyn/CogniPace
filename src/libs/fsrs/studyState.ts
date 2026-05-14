@@ -467,16 +467,6 @@ export function getFsrsCard(
   );
 }
 
-export function getLastReviewedAt(
-  state?: StudyState | null
-): string | undefined {
-  if (!state) {
-    return undefined;
-  }
-
-  return latestReviewedAt(state.attemptHistory, state.fsrsCard?.lastReview);
-}
-
 /** Default target retention if not specified */
 const DEFAULT_TARGET_RETENTION = 0.85;
 
