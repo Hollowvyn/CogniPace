@@ -69,25 +69,24 @@ describe("backup import sanitization", () => {
 
     assert.equal(sanitized.settings?.dailyQuestionGoal, 22);
     assert.equal(
-      sanitized.settings?.timing.difficultyGoalMs.Easy,
+      sanitized.settings?.timing?.difficultyGoalMs?.Easy,
       25 * 60 * 1000
     );
-    assert.equal(sanitized.settings?.notifications.dailyTime, "09:30");
-    assert.equal(sanitized.settings?.questionFilters.skipPremium, true);
+    assert.equal(sanitized.settings?.notifications?.dailyTime, "09:30");
+    assert.equal(sanitized.settings?.questionFilters?.skipPremium, true);
   });
 
   it("ignores removed legacy settings fields on import", () => {
     const sanitized = sanitizeImportPayload({
       problems: [],
+      // Legacy flat-field shape the sanitizer must reject. Cast bypasses
+      // the typed surface because the test exercises the runtime guard.
       settings: {
         dailyNewLimit: 6,
         dailyReviewLimit: 14,
         notificationTime: "09:30",
-        quietHours: {
-          startHour: 21,
-          endHour: 7,
-        },
-      },
+        quietHours: { startHour: 21, endHour: 7 },
+      } as unknown as Parameters<typeof sanitizeImportPayload>[0]["settings"],
       studyStatesBySlug: {},
     });
 

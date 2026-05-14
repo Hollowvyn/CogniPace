@@ -109,9 +109,8 @@ function startedState(): StudyState {
     attemptHistory: [
       {
         rating: 2,
-        ratingLabel: "Good",
-        ratedAt: "2026-05-01T00:00:00Z",
-        phase: "Learning",
+        reviewedAt: "2026-05-01T00:00:00Z",
+        mode: "FULL_SOLVE",
       },
     ],
     fsrsCard: {

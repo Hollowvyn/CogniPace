@@ -11,7 +11,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "test": "vitest run --coverage",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
     "test:logic": "vitest run --config vitest.logic.config.mjs",
     "test:ui": "vitest run",
     "test:a11y": "vitest run --passWithNoTests --config vitest.config.mjs '**/*.a11y.test.tsx'",
