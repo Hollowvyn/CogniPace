@@ -23,7 +23,6 @@ export {
   mergeImported,
   listEditedFields,
   normalizeSlug,
-  normalizeProblemSlug,
   slugToTitle,
   slugToUrl,
   leetcodeProblemUrl,

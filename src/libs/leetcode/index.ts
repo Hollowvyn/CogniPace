@@ -11,7 +11,6 @@
  */
 export {
   normalizeSlug,
-  normalizeProblemSlug,
   slugToTitle,
   slugToUrl,
   leetcodeProblemUrl,

@@ -7,6 +7,5 @@ export {
   slugToTitle,
   slugToUrl,
   leetcodeProblemUrl,
-  normalizeProblemSlug,
   isProblemPage,
 } from "@libs/leetcode";

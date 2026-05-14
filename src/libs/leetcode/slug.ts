@@ -38,9 +38,6 @@ export function slugToUrl(slug: string): string {
 /** Alias for slugToUrl — preserved for legacy callers. */
 export const leetcodeProblemUrl = slugToUrl;
 
-/** Alias for normalizeSlug — preserved for legacy callers. */
-export const normalizeProblemSlug = normalizeSlug;
-
 export function isProblemPage(url: string): boolean {
   try {
     const parsed = new URL(url);

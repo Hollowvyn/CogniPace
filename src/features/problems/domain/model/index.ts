@@ -14,7 +14,6 @@ export { applyEdit, mergeImported, listEditedFields } from "./Problem";
 
 export {
   normalizeSlug,
-  normalizeProblemSlug,
   slugToTitle,
   slugToUrl,
   leetcodeProblemUrl,
