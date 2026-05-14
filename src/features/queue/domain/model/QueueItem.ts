@@ -1,9 +1,11 @@
-import type { Problem } from "@features/problems";
-import type { StudyState , StudyStateSummary } from "@features/study";
+import type { Difficulty } from "@features/problems";
+import type { StudyState, StudyStateSummary } from "@features/study";
 
 export interface QueueItem {
   slug: string;
-  problem: Problem;
+  title: string;
+  url: string;
+  difficulty: Difficulty;
   studyState: StudyState;
   studyStateSummary: StudyStateSummary;
   due: boolean;

@@ -56,7 +56,7 @@ function interleaveByDifficulty(items: QueueItem[]): QueueItem[] {
   };
 
   for (const item of sortByDueDateAsc(items)) {
-    buckets[item.problem.difficulty].push(item);
+    buckets[item.difficulty].push(item);
   }
 
   const order: Array<keyof typeof buckets> = [
@@ -128,35 +128,27 @@ export function buildTodayQueue(
       data.settings.memoryReview.targetRetention,
     );
 
+    const base = {
+      slug: problem.slug,
+      title: problem.title,
+      url: problem.url,
+      difficulty: problem.difficulty,
+      studyState: state,
+      studyStateSummary,
+    } as const;
+
     if (studyStateSummary.isDue) {
-      due.push({
-        slug: problem.slug,
-        problem,
-        studyState: state,
-        studyStateSummary,
-        due: true,
-        category: "due",
-      });
+      due.push({ ...base, due: true, category: "due" });
       continue;
     }
 
     if (!studyStateSummary.isStarted) {
-      newCandidates.push({
-        slug: problem.slug,
-        problem,
-        studyState: state,
-        studyStateSummary,
-        due: false,
-        category: "new",
-      });
+      newCandidates.push({ ...base, due: false, category: "new" });
       continue;
     }
 
     reinforcementCandidates.push({
-      slug: problem.slug,
-      problem,
-      studyState: state,
-      studyStateSummary,
+      ...base,
       due: false,
       category: "reinforcement",
     });

@@ -26,9 +26,9 @@ export function buildRecommendedCandidates(
 
       return {
         slug: item.slug,
-        title: item.problem.title || item.slug,
-        url: item.problem.url,
-        difficulty: item.problem.difficulty,
+        title: item.title || item.slug,
+        url: item.url,
+        difficulty: item.difficulty,
         reason,
         nextReviewAt: item.studyStateSummary.nextReviewAt,
         daysOverdue: overdueDays > 0 ? overdueDays : undefined,

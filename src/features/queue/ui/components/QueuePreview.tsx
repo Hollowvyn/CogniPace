@@ -35,7 +35,7 @@ export function QueuePreview(props: QueuePreviewProps) {
           >
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="subtitle2">
-                {item.problem.title || item.slug}
+                {item.title || item.slug}
               </Typography>
               <Typography color="text.secondary" variant="body2">
                 {item.category.toUpperCase()} ·{" "}
@@ -44,8 +44,8 @@ export function QueuePreview(props: QueuePreviewProps) {
             </Box>
             <Stack direction="row" spacing={1}>
               <ToneChip
-                label={item.problem.difficulty}
-                tone={difficultyTone(item.problem.difficulty)}
+                label={item.difficulty}
+                tone={difficultyTone(item.difficulty)}
               />
               <Button
                 onClick={() => {

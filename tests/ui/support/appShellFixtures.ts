@@ -115,19 +115,31 @@ export function makePayload() {
     ],
   };
 
+  const blind75Problem = {
+    slug: "two-sum",
+    title: "Two Sum",
+    difficulty: "Easy" as const,
+    url: "https://leetcode.com/problems/two-sum/",
+    isPremium: false,
+    topicIds: [],
+    companyIds: [],
+    createdAt: "2026-03-01T00:00:00.000Z",
+    updatedAt: "2026-03-01T00:00:00.000Z",
+  };
+  const mergeIntervalsProblem = {
+    ...blind75Problem,
+    slug: "merge-intervals",
+    title: "Merge Intervals",
+    difficulty: "Medium" as const,
+    url: "https://leetcode.com/problems/merge-intervals/",
+  };
+
   payload.queue.items = [
     {
-      slug: "two-sum",
-      problem: {
-        slug: "two-sum",
-        title: "Two Sum",
-        difficulty: "Easy",
-        url: "https://leetcode.com/problems/two-sum/",
-        topicIds: [],
-        companyIds: [],
-        createdAt: "2026-03-01T00:00:00.000Z",
-        updatedAt: "2026-03-01T00:00:00.000Z",
-      },
+      slug: blind75Problem.slug,
+      title: blind75Problem.title,
+      url: blind75Problem.url,
+      difficulty: blind75Problem.difficulty,
       studyState: makeStudyState("2026-03-30T00:00:00.000Z"),
       studyStateSummary: {
         phase: "Review",
@@ -148,15 +160,6 @@ export function makePayload() {
       category: "due",
     },
   ];
-
-  const blind75Problem = payload.queue.items[0].problem;
-  const mergeIntervalsProblem = {
-    ...payload.queue.items[0].problem,
-    slug: "merge-intervals",
-    title: "Merge Intervals",
-    difficulty: "Medium" as const,
-    url: "https://leetcode.com/problems/merge-intervals/",
-  };
 
   payload.library = [
     {
