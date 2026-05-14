@@ -24,6 +24,7 @@ import {
 } from "@libs/fsrs/studyState";
 import { parseProblemInput } from "@libs/leetcode";
 import { canonicalProblemUrlForOpen } from "@libs/runtime-rpc/url";
+import { openTab, updateTabUrl } from "@platform/chrome/tabs";
 import { getDb } from "@platform/db/instance";
 import { nowIso } from "@platform/time";
 import {
@@ -110,9 +111,9 @@ export async function openProblemPage(
     isProblemPage(senderUrl);
 
   if (shouldReuseSenderTab) {
-    await chrome.tabs.update(senderTabId, { url });
+    await updateTabUrl(senderTabId, url);
   } else {
-    await chrome.tabs.create({ url });
+    await openTab(url);
   }
 
   return { opened: true as const };

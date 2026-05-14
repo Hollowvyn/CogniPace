@@ -18,6 +18,7 @@ import { getUserSettings } from "@features/settings/server";
 import { listStudyStates } from "@features/study/server";
 import { buildActiveTrackView, listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/url";
+import { extensionUrl, openTab } from "@platform/chrome/tabs";
 import { getDb } from "@platform/db/instance";
 
 import { getAppData } from "../../../data/repositories/appDataRepository";
@@ -296,6 +297,6 @@ export async function openExtensionPage(
   payload: { path: string },
 ): Promise<{ opened: true }> {
   const path = validateExtensionPagePath(payload.path);
-  await chrome.tabs.create({ url: chrome.runtime.getURL(path) });
+  await openTab(extensionUrl(path));
   return { opened: true as const };
 }

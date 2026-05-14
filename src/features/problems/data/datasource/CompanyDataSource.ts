@@ -11,6 +11,7 @@
  */
 import { type Db } from "@platform/db/client";
 import * as schema from "@platform/db/schema";
+import { nowIso } from "@platform/time";
 import { asCompanyId, type CompanyId } from "@shared/ids";
 import { eq } from "drizzle-orm";
 
@@ -80,7 +81,7 @@ export async function upsertCompany(
   if (!id) {
     throw new Error("upsertCompany: name does not produce a valid id");
   }
-  const now = new Date().toISOString();
+  const now = nowIso();
   await db
     .insert(schema.companies)
     .values({
@@ -137,7 +138,7 @@ export async function seedCatalogCompanies(
   seeds: ReadonlyArray<{ id: CompanyId; name: string; description?: string }>,
 ): Promise<void> {
   if (seeds.length === 0) return;
-  const now = new Date().toISOString();
+  const now = nowIso();
   await db
     .insert(schema.companies)
     .values(

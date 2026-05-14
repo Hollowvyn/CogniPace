@@ -1,5 +1,6 @@
 import { type Db } from "@platform/db/client";
 import * as schema from "@platform/db/schema";
+import { nowIso } from "@platform/time";
 import { eq } from "drizzle-orm";
 
 import {
@@ -27,7 +28,7 @@ export async function saveUserSettings(
   settings: UserSettings,
 ): Promise<UserSettings> {
   const sanitised = sanitizeStoredUserSettings(settings);
-  const now = new Date().toISOString();
+  const now = nowIso();
   await db
     .insert(schema.settingsKv)
     .values({

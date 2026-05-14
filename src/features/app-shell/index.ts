@@ -10,10 +10,7 @@ export type {
 export type { AppShellRepository } from "./data/repository/AppShellRepository";
 export { appShellRepository } from "./data/repository/AppShellRepository";
 
-export {
-  isExtensionContext,
-  useAppShellQuery,
-} from "./ui/hooks/useAppShellQuery";
+export { useAppShellQuery } from "./ui/hooks/useAppShellQuery";
 
 export { OverviewScreen } from "./ui/screens/OverviewScreen";
 export type { OverviewScreenProps } from "./ui/screens/OverviewScreen";

@@ -88,6 +88,74 @@ const archImportRules = {
 
 const reactHookRules = reactHooks.configs.flat.recommended.rules;
 
+/**
+ * Side-effect discipline (Phase E). Forbid direct calls to host-environment
+ * APIs from inside features and app code — they must go through the
+ * `@platform/*` wrappers so the side-effect surface is one folder away from
+ * domain code and trivially fake-able in tests.
+ *
+ * Why:
+ *   - `Date.now()` calls deep in business logic bind tests to real time.
+ *     Use `systemClock.nowMs()` or `nowIso()` from `@platform/time`.
+ *     Note: `now = new Date()` as a default-parameter value is deliberately
+ *     NOT banned — that pattern IS the testable form (callers inject).
+ *   - `Math.random()` makes order non-deterministic. Route through a
+ *     `@platform/rand` wrapper when a feature actually needs randomness.
+ *   - `chrome.tabs.*` / `chrome.runtime.getURL` go through
+ *     `@platform/chrome/tabs` (`openTab`, `updateTabUrl`, `extensionUrl`,
+ *     `isExtensionContext`).
+ *   - `chrome.storage.*` goes through `@platform/chrome/storage`.
+ *   - `fetch` / `localStorage` / `crypto` would each grow their own
+ *     `@platform/*` wrapper the day a feature actually needs them.
+ *
+ * Allowed:
+ *   - `new Date(value)` for parsing — there's no "what time is it" here.
+ *   - `new Date()` (no args) as a default-parameter value — that's the
+ *     testable form; callers inject the time when needed.
+ *   - `chrome.runtime.MessageSender` type annotations — types are erased
+ *     and the AST sees them as TSQualifiedName, not MemberExpression.
+ */
+const sideEffectRules = {
+  "no-restricted-syntax": [
+    "error",
+    {
+      selector:
+        "CallExpression[callee.object.name='Date'][callee.property.name='now']",
+      message: "Date.now() is forbidden in features/app. Use systemClock.nowMs() from @platform/time.",
+    },
+    {
+      selector:
+        "CallExpression[callee.object.name='Math'][callee.property.name='random']",
+      message: "Math.random() is forbidden in features/app. Route through a @platform/rand wrapper when actually needed.",
+    },
+    {
+      selector: "MemberExpression[object.name='chrome'][property.name='tabs']",
+      message: "chrome.tabs.* is forbidden in features/app. Use @platform/chrome/tabs (openTab, updateTabUrl).",
+    },
+    {
+      selector:
+        "MemberExpression[object.object.name='chrome'][object.property.name='runtime'][property.name='getURL']",
+      message: "chrome.runtime.getURL is forbidden in features/app. Use extensionUrl from @platform/chrome/tabs.",
+    },
+    {
+      selector: "MemberExpression[object.name='chrome'][property.name='storage']",
+      message: "chrome.storage.* is forbidden in features/app. Use @platform/chrome/storage.",
+    },
+    {
+      selector: "CallExpression[callee.name='fetch']",
+      message: "fetch is forbidden in features/app. Add a @platform/* wrapper when a feature needs HTTP.",
+    },
+    {
+      selector: "MemberExpression[object.name='localStorage']",
+      message: "localStorage is forbidden in features/app. Use @platform/chrome/storage (chrome.storage.local-backed).",
+    },
+    {
+      selector: "MemberExpression[object.name='crypto']",
+      message: "crypto.* is forbidden in features/app. Add a @platform/crypto wrapper when actually needed.",
+    },
+  ],
+};
+
 export default [
   {
     ignores: [
@@ -176,5 +244,11 @@ export default [
       "no-unsanitized/property": "warn",
     },
   })),
+  // Side-effect discipline: features and app code may only touch the host
+  // environment through @platform/* wrappers.
+  {
+    files: ["src/features/**/*.ts", "src/features/**/*.tsx", "src/app/**/*.ts", "src/app/**/*.tsx"],
+    rules: sideEffectRules,
+  },
   eslintConfigPrettier,
 ];

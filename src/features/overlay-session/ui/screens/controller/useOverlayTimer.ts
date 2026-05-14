@@ -1,3 +1,4 @@
+import { systemClock } from "@platform/time";
 import {useCallback, useEffect, useRef, useState} from "react";
 
 const TIMER_TICK_MS = 250;
@@ -25,7 +26,7 @@ export function useOverlayTimer(windowRef: Window): OverlayTimerController {
     }
   }, [windowRef]);
 
-  const readElapsedMs = useCallback((nowMs = Date.now()): number => {
+  const readElapsedMs = useCallback((nowMs = systemClock.nowMs()): number => {
     return (
       pausedElapsedMsRef.current +
       (timerStartedAtMsRef.current ? nowMs - timerStartedAtMsRef.current : 0)
@@ -58,7 +59,7 @@ export function useOverlayTimer(windowRef: Window): OverlayTimerController {
       return;
     }
 
-    timerStartedAtMsRef.current = Date.now();
+    timerStartedAtMsRef.current = systemClock.nowMs();
     tickHandleRef.current = windowRef.setInterval(() => {
       setElapsedMs(readElapsedMs());
     }, TIMER_TICK_MS);

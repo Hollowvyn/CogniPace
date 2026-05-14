@@ -1,4 +1,5 @@
 import { subscribeToTick } from "@libs/event-bus";
+import { isExtensionContext } from "@platform/chrome/tabs";
 import {
   startTransition,
   useCallback,
@@ -14,12 +15,6 @@ import type {
   PopupShellPayload,
   UiStatus,
 } from "../../domain/model";
-
-/** True when the current thread is running inside the extension's
- *  chrome.runtime context (vs a vite dev server or jsdom test). */
-export function isExtensionContext(): boolean {
-  return typeof chrome !== "undefined" && Boolean(chrome.runtime?.id);
-}
 
 /** Default fetcher — defined at module scope so the function identity
  *  is stable across renders (preventing the `[fetchPayload]` →

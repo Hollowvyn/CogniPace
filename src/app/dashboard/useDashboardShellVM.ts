@@ -5,8 +5,9 @@
  *  `features/settings/ui/hooks/useSettingsScreen`; the shell just passes
  *  the persisted snapshot through and surfaces status. */
 import { useDI } from "@app/di";
-import { isExtensionContext, useAppShellQuery } from "@features/app-shell";
+import { useAppShellQuery } from "@features/app-shell";
 import { openProblemPage } from "@features/problems";
+import { isExtensionContext } from "@platform/chrome/tabs";
 import {
   startTransition,
   useCallback,
