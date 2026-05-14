@@ -165,8 +165,6 @@ export interface ImportProblemArgs {
  * LeetCode page detect, manual add). Existing user-edited fields are
  * preserved (sticky). Missing fields fall back to derived defaults
  * (slug → title, slug → URL).
- *
- * Equivalent to v7Repo.importProblem + appDataRepository.ensureProblem.
  */
 export async function importProblem(
   db: Db,

@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
 
-import { createInitialUserSettings } from "@features/settings";
+import { createInitialUserSettings, type UserSettings } from "@features/settings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../src/data/repositories/v7/constants";
 import {
   handleStartupDueCheck,
   maybeNotifyDueQueue,
@@ -11,27 +10,24 @@ import {
 } from "../../src/extension/background/notifications";
 import { makeProblem, makeScheduledState } from "../support/domainFixtures";
 
-import type { AppData } from "../../src/domain/types/AppData";
+import type { Problem } from "@features/problems";
+import type { StudyState } from "@features/study";
 
 const readLocalStorageMock = vi.fn();
 const writeLocalStorageMock = vi.fn();
-const getAppDataMock = vi.fn();
 
 vi.mock("@platform/chrome/storage", () => ({
   readLocalStorage: (...args: unknown[]) => readLocalStorageMock(...args),
   writeLocalStorage: (...args: unknown[]) => writeLocalStorageMock(...args),
 }));
 
-vi.mock("../../src/data/repositories/appDataRepository", () => ({
-  STORAGE_KEY: "leetcode_spaced_repetition_data_v2",
-  getAppData: (...args: unknown[]) => getAppDataMock(...args),
-}));
+// SQLite-backed reads are mocked at the @features/<x>/server boundary —
+// the notifications module reads settings, problems, and studyStates
+// directly from these modules now that the v7 blob path is retired.
+const getUserSettingsMock = vi.fn<() => Promise<UserSettings | undefined>>();
+const listProblemsMock = vi.fn<() => Promise<readonly Problem[]>>();
+const listStudyStatesMock = vi.fn<() => Promise<Record<string, StudyState>>>();
 
-// Phase 5: notifications.ts now also reads settings from SQLite. We
-// don't want the test to spin up wasm + a real DB; the AppData returned
-// by getAppDataMock already carries the test's intended settings, so
-// stub the SQLite read to "no row present" and let the in-memory
-// data.settings fallback win.
 vi.mock("@platform/db/instance", () => ({
   getDb: vi.fn(async () => ({
     db: {} as never,
@@ -39,29 +35,50 @@ vi.mock("@platform/db/instance", () => ({
     sqlite3: {} as never,
   })),
 }));
-vi.mock("@features/settings/server", () => ({
-  getUserSettings: vi.fn(async () => undefined),
-  INITIAL_USER_SETTINGS: {} as never,
-}));
+vi.mock("@features/settings/server", async () => {
+  const actual =
+    await vi.importActual<typeof import("@features/settings/server")>(
+      "@features/settings/server",
+    );
+  return {
+    ...actual,
+    getUserSettings: () => getUserSettingsMock(),
+  };
+});
+vi.mock("@features/problems/server", async () => {
+  const actual =
+    await vi.importActual<typeof import("@features/problems/server")>(
+      "@features/problems/server",
+    );
+  return {
+    ...actual,
+    listProblems: () => listProblemsMock(),
+  };
+});
+vi.mock("@features/study/server", async () => {
+  const actual =
+    await vi.importActual<typeof import("@features/study/server")>(
+      "@features/study/server",
+    );
+  return {
+    ...actual,
+    listStudyStates: () => listStudyStatesMock(),
+  };
+});
 
-function makeAppData(): AppData {
+function makeQueueSettings(): UserSettings {
   const settings = createInitialUserSettings();
   settings.notifications.enabled = true;
   settings.notifications.dailyTime = "09:00";
-
-  return {
-    schemaVersion: CURRENT_STORAGE_SCHEMA_VERSION,
-    problemsBySlug: {
-      "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
-    },
-    studyStatesBySlug: {
-      "two-sum": makeScheduledState("2026-05-01T09:00:00.000Z"),
-    },
-    topicsById: {},
-    companiesById: {},
-    settings,
-  };
+  return settings;
 }
+
+const queueProblems: readonly Problem[] = [
+  makeProblem("two-sum", "Two Sum", "Easy"),
+];
+const queueStudyStates: Record<string, StudyState> = {
+  "two-sum": makeScheduledState("2026-05-01T09:00:00.000Z"),
+};
 
 describe("background notifications", () => {
   const alarmsClearMock = vi.fn();
@@ -74,11 +91,17 @@ describe("background notifications", () => {
   beforeEach(() => {
     readLocalStorageMock.mockReset();
     writeLocalStorageMock.mockReset();
-    getAppDataMock.mockReset();
+    getUserSettingsMock.mockReset();
+    listProblemsMock.mockReset();
+    listStudyStatesMock.mockReset();
     alarmsClearMock.mockReset();
     alarmsCreateMock.mockReset();
     notificationsCreateMock.mockReset();
     runtimeGetURLMock.mockClear();
+
+    listProblemsMock.mockResolvedValue(queueProblems);
+    listStudyStatesMock.mockResolvedValue(queueStudyStates);
+    getUserSettingsMock.mockResolvedValue(makeQueueSettings());
 
     Object.defineProperty(globalThis, "chrome", {
       configurable: true,
@@ -106,24 +129,13 @@ describe("background notifications", () => {
       | { lastDueNotificationDate?: string }
       | undefined;
 
-    getAppDataMock.mockResolvedValue(makeAppData());
     readLocalStorageMock.mockImplementation(async (keys: string[]) => {
       if (keys.includes("cognipace_due_notification_state")) {
         return dueNotificationState
           ? { cognipace_due_notification_state: dueNotificationState }
           : {};
       }
-
-      return {
-        leetcode_spaced_repetition_data_v2: {
-          settings: {
-            notifications: {
-              enabled: true,
-              dailyTime: "09:00",
-            },
-          },
-        },
-      };
+      return {};
     });
     writeLocalStorageMock.mockImplementation(async (payload: unknown) => {
       const candidate = payload as {
@@ -149,17 +161,7 @@ describe("background notifications", () => {
   });
 
   it("does not send reminders before today's configured reminder time", async () => {
-    getAppDataMock.mockResolvedValue(makeAppData());
-    readLocalStorageMock.mockImplementation(async () => ({
-      leetcode_spaced_repetition_data_v2: {
-        settings: {
-          notifications: {
-            enabled: true,
-            dailyTime: "09:00",
-          },
-        },
-      },
-    }));
+    readLocalStorageMock.mockResolvedValue({});
 
     const now = new Date(2026, 4, 2, 8, 30);
     await handleStartupDueCheck(now);
@@ -172,7 +174,6 @@ describe("background notifications", () => {
   });
 
   it("skips duplicate notifications for the same local day", async () => {
-    getAppDataMock.mockResolvedValue(makeAppData());
     readLocalStorageMock.mockResolvedValue({
       cognipace_due_notification_state: {
         lastDueNotificationDate: "2026-05-02",
@@ -188,16 +189,7 @@ describe("background notifications", () => {
   });
 
   it("schedules the next due-check alarm from notification time", async () => {
-    readLocalStorageMock.mockResolvedValue({
-      leetcode_spaced_repetition_data_v2: {
-        settings: {
-          notifications: {
-            enabled: true,
-            dailyTime: "09:00",
-          },
-        },
-      },
-    });
+    readLocalStorageMock.mockResolvedValue({});
 
     await scheduleNextDueAlarm(new Date(2026, 4, 2, 15, 30));
 

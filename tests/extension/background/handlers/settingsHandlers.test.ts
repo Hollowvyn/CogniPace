@@ -4,12 +4,6 @@ import { resetStudyHistory } from "@features/backup/server";
 import { clearAllStudyHistory } from "@features/study/server";
 import { beforeEach, describe, it, vi } from "vitest";
 
-import {
-  getAppData,
-  STORAGE_KEY,
-} from "../../../../src/data/repositories/appDataRepository";
-import { makeProblem, makeScheduledState } from "../../../support/domainFixtures";
-
 const storageMocks = vi.hoisted(() => ({
   readLocalStorage: vi.fn(),
   writeLocalStorage: vi.fn(),
@@ -51,31 +45,9 @@ describe("Reset Study History", () => {
     storageMocks.writeLocalStorage.mockReset();
   });
 
-  it("clears study history but preserves problems and settings", async () => {
-    const initialData = {
-      problemsBySlug: {
-        "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
-      },
-      studyStatesBySlug: {
-        "two-sum": makeScheduledState("2026-03-01T00:00:00.000Z"),
-      },
-      settings: {
-        dailyQuestionGoal: 42,
-      },
-    };
-
-    storageMocks.readLocalStorage.mockResolvedValue({
-      [STORAGE_KEY]: initialData,
-    });
-
-    // Verify initial state
-    const before = await getAppData();
-    assert.equal(Object.keys(before.studyStatesBySlug).length, 1);
-    assert.equal(before.settings.dailyQuestionGoal, 42);
-
+  it("clears study history without touching chrome.storage", async () => {
     const writesBeforeReset = storageMocks.writeLocalStorage.mock.calls.length;
 
-    // Execute reset
     await resetStudyHistory();
 
     // Single contract: clearAllStudyHistory fires once. Wiping

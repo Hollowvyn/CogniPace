@@ -46,15 +46,19 @@ import {
 } from "@shared/ids";
 import { uniqueStrings } from "@shared/strings";
 
-import {
-  getAppData,
-  PRE_V7_BACKUP_KEY,
-} from "../../../data/repositories/appDataRepository";
-import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../data/repositories/v7/constants";
+import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/types/STORAGE_SCHEMA_VERSION";
 import { sanitizeImportPayload } from "../data/sanitize";
 
 import type { ExportPayload } from "../domain/model";
 import type { Company, Topic } from "@features/problems";
+
+/**
+ * Sidecar key holding the pre-v7 chrome.storage blob produced by the
+ * one-shot v6→v7→SQLite migration. The blob path is retired but legacy
+ * users may still have this key in storage; we surface it once for
+ * download then clear it.
+ */
+const PRE_V7_BACKUP_KEY = "leetcode_spaced_repetition_data_v2_pre_v7_backup";
 
 function topicIdsFromLabels(labels: readonly string[]): string[] {
   const out: string[] = [];
@@ -66,7 +70,6 @@ function topicIdsFromLabels(labels: readonly string[]): string[] {
 }
 
 export async function exportData(): Promise<ExportPayload> {
-  const data = await getAppData();
   const { db } = await getDb();
   const topics = await listTopics(db);
   const companies = await listCompanies(db);
@@ -82,7 +85,7 @@ export async function exportData(): Promise<ExportPayload> {
     version: CURRENT_STORAGE_SCHEMA_VERSION,
     problems,
     studyStatesBySlug,
-    settings: settings ?? data.settings,
+    settings: settings ?? createInitialUserSettings(),
     topicsById,
     companiesById,
     tracks,

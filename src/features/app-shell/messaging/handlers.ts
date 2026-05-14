@@ -14,14 +14,14 @@ import {
   buildTodayQueue,
   effectivelySuspendedFlag,
 } from "@features/queue/server";
-import { getUserSettings } from "@features/settings/server";
+import { createInitialUserSettings, getUserSettings } from "@features/settings/server";
 import { listStudyStates } from "@features/study/server";
 import { buildActiveTrackView, listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/url";
 import { extensionUrl, openTab } from "@platform/chrome/tabs";
 import { getDb } from "@platform/db/instance";
 
-import { getAppData } from "../../../data/repositories/appDataRepository";
+import { STORAGE_SCHEMA_VERSION } from "../../../domain/types/STORAGE_SCHEMA_VERSION";
 import {
   buildProblemView,
   buildStudyStateView,
@@ -44,24 +44,36 @@ import type {
   TrackWithGroups,
 } from "@features/tracks";
 
-async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
+/**
+ * Reads every aggregate (problems, study states, topics, companies,
+ * settings) from SQLite and assembles the legacy `AppData` shape that
+ * the downstream view-builders still consume. The v7 chrome.storage
+ * blob is retired — this is the only path into SQLite for app-shell
+ * reads.
+ */
+async function loadAppShellData(): Promise<AppData> {
   const { db } = await getDb();
-  const topics = await listTopics(db);
-  const companies = await listCompanies(db);
-  const settings = await getUserSettings(db);
-  const problems = await listProblems(db);
-  const studyStates = await listStudyStates(db);
-  const topicMap: Record<string, Topic> = {};
-  for (const t of topics) topicMap[t.id] = t;
-  data.topicsById = topicMap;
-  const companyMap: Record<string, Company> = {};
-  for (const c of companies) companyMap[c.id] = c;
-  data.companiesById = companyMap;
-  if (settings) data.settings = settings;
-  const problemMap: Record<string, Problem> = {};
-  for (const p of problems) problemMap[p.slug] = p;
-  data.problemsBySlug = problemMap;
-  data.studyStatesBySlug = studyStates;
+  const [topics, companies, settings, problems, studyStates] = await Promise.all([
+    listTopics(db),
+    listCompanies(db),
+    getUserSettings(db),
+    listProblems(db),
+    listStudyStates(db),
+  ]);
+  const topicsById: Record<string, Topic> = {};
+  for (const topic of topics) topicsById[topic.id] = topic;
+  const companiesById: Record<string, Company> = {};
+  for (const company of companies) companiesById[company.id] = company;
+  const problemsBySlug: Record<string, Problem> = {};
+  for (const problem of problems) problemsBySlug[problem.slug] = problem;
+  return {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    problemsBySlug,
+    studyStatesBySlug: studyStates,
+    topicsById,
+    companiesById,
+    settings: settings ?? createInitialUserSettings(),
+  };
 }
 
 async function loadTracks(): Promise<TrackWithGroups[]> {
@@ -131,7 +143,7 @@ function activeTrackEntityOf(
 }
 
 function libraryRows(
-  payload: Awaited<ReturnType<typeof getAppData>>,
+  payload: AppData,
   tracks: readonly TrackWithGroups[],
   now = new Date(),
 ): LibraryProblemRow[] {
@@ -213,7 +225,7 @@ function activeTrackCard(activeTrack: ActiveTrackView | null): TrackCardView | n
 }
 
 export function buildPopupShellPayload(
-  data: Awaited<ReturnType<typeof getAppData>>,
+  data: AppData,
   tracks: readonly TrackWithGroups[],
   now = new Date(),
 ): PopupShellPayload {
@@ -253,15 +265,13 @@ export function buildPopupShellPayload(
 }
 
 export async function getPopupShellData(): Promise<PopupShellPayload> {
-  const data = await getAppData();
-  await hydrateRegistriesFromDb(data);
+  const data = await loadAppShellData();
   const tracks = await loadTracks();
   return buildPopupShellPayload(data, tracks);
 }
 
 export async function getAppShellData(): Promise<AppShellPayload> {
-  const data = await getAppData();
-  await hydrateRegistriesFromDb(data);
+  const data = await loadAppShellData();
   const tracks = await loadTracks();
   const now = new Date();
   const popupShell = buildPopupShellPayload(data, tracks, now);
@@ -289,7 +299,7 @@ export async function getAppShellData(): Promise<AppShellPayload> {
 }
 
 export async function getQueue(): Promise<ReturnType<typeof buildTodayQueue>> {
-  const data = await getAppData();
+  const data = await loadAppShellData();
   return buildTodayQueue(data);
 }
 

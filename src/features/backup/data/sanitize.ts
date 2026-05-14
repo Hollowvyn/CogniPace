@@ -9,12 +9,13 @@ import { sanitizeStoredUserSettings } from "@features/settings/server";
 import { nowIso } from "@platform/time";
 import { uniqueStrings } from "@shared/strings";
 
-import {
-  aggregates as v7AggregateDescriptors,
-  EXPORTABLE_AGGREGATE_KEYS,
-} from "../../../data/repositories/v7/aggregateRegistry";
-import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../data/repositories/v7/constants";
+import { STORAGE_SCHEMA_VERSION as CURRENT_STORAGE_SCHEMA_VERSION } from "../../../domain/types/STORAGE_SCHEMA_VERSION";
 import { type ExportPayload } from "../domain/model";
+
+import {
+  aggregates as legacyAggregateDescriptors,
+  EXPORTABLE_AGGREGATE_KEYS,
+} from "./aggregateRegistry";
 
 import type { Problem } from "@features/problems";
 import type { UserSettings } from "@features/settings";
@@ -228,15 +229,14 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
     .map((problem) => sanitizeProblem(problem, importedAt))
     .filter((problem): problem is Problem => problem !== null);
 
-  // v7 aggregate fields are sanitised via the registry's per-aggregate
-  // function. Derived sanitisers (which validate per-entity shape) live
-  // alongside their entity in v7 land; here we just defer to the
-  // registry's defensive Record/array filter so corrupt blobs don't
-  // crash the importer.
-  const v7Aggregates = sanitizeV7AggregatesFromPayload(payload);
+  // Aggregate fields are sanitised via the registry's per-aggregate
+  // function. Per-entity validation lives alongside the respective
+  // entity; here we just defer to the registry's defensive
+  // Record/array filter so corrupt blobs don't crash the importer.
+  const aggregateFields = sanitizeAggregatesFromPayload(payload);
 
   return {
-    ...v7Aggregates,
+    ...aggregateFields,
     version:
       payload.version === undefined
         ? undefined
@@ -250,15 +250,15 @@ export function sanitizeImportPayload(payload: ExportPayload): ExportPayload {
 /**
  * Iterates the aggregateRegistry's exportable keys and applies each
  * descriptor's sanitiser. Returns a partial ExportPayload carrying only
- * the v7 aggregate fields that were present in the input — missing
- * fields stay missing so the spread doesn't introduce empty Records.
+ * the aggregate fields that were present in the input — missing fields
+ * stay missing so the spread doesn't introduce empty Records.
  */
-function sanitizeV7AggregatesFromPayload(
+function sanitizeAggregatesFromPayload(
   payload: ExportPayload,
 ): Partial<ExportPayload> {
   const out: Record<string, unknown> = {};
   const indexed = payload as unknown as Record<string, unknown>;
-  for (const descriptor of v7AggregateDescriptors) {
+  for (const descriptor of legacyAggregateDescriptors) {
     const raw = indexed[descriptor.key];
     if (raw === undefined) continue;
     out[descriptor.key] = descriptor.sanitize(raw);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DashboardShell } from "../../../src/app/dashboard/DashboardShell";
-import { STORAGE_KEY } from "../../../src/data/repositories/v7/constants";
+import { DB_TICK_KEY } from "../../../src/libs/event-bus/utils/DB_TICK_KEY";
 import { makePayload } from "../support/appShellFixtures";
 import { render, screen, waitFor, fireEvent } from "../support/render";
 import { emitLocalStorageChange, sendMessageMock } from "../support/setup";
@@ -111,9 +111,9 @@ describe("DashboardShell", () => {
       },
     };
     emitLocalStorageChange({
-      [STORAGE_KEY]: {
-        newValue: payload,
-        oldValue: {},
+      [DB_TICK_KEY]: {
+        newValue: { scope: { table: "*" } },
+        oldValue: undefined,
       },
     });
 

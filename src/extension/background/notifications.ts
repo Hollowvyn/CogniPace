@@ -1,20 +1,22 @@
 /** Notification helpers for the background worker's local daily reminder. */
+import { listProblems } from "@features/problems/server";
 import { buildTodayQueue } from "@features/queue/server";
 import {
+  createInitialUserSettings,
   getUserSettings,
   INITIAL_USER_SETTINGS,
-  type UserSettings,
 } from "@features/settings/server";
+import { listStudyStates } from "@features/study/server";
 import {
   readLocalStorage,
   writeLocalStorage,
 } from "@platform/chrome/storage";
 import { getDb } from "@platform/db/instance";
 
-import {
-  getAppData,
-  STORAGE_KEY,
-} from "../../data/repositories/appDataRepository";
+import { STORAGE_SCHEMA_VERSION } from "../../domain/types/STORAGE_SCHEMA_VERSION";
+
+import type { AppData } from "../../domain/types/AppData";
+import type { Problem } from "@features/problems";
 
 
 const DUE_CHECK_ALARM = "due-check";
@@ -83,14 +85,34 @@ async function writeDueNotificationState(
   });
 }
 
+/**
+ * Reads the fields `buildTodayQueue` needs from SQLite and assembles a
+ * legacy `AppData` shape. Topics/companies aren't read because the
+ * queue builder doesn't depend on them — keeping the helper minimal
+ * avoids needless DB roundtrips on every alarm fire.
+ */
+async function loadQueueContext(): Promise<AppData> {
+  const { db } = await getDb();
+  const [settings, problems, studyStates] = await Promise.all([
+    getUserSettings(db),
+    listProblems(db),
+    listStudyStates(db),
+  ]);
+  const problemsBySlug: Record<string, Problem> = {};
+  for (const problem of problems) problemsBySlug[problem.slug] = problem;
+  return {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    problemsBySlug,
+    studyStatesBySlug: studyStates,
+    topicsById: {},
+    companiesById: {},
+    settings: settings ?? createInitialUserSettings(),
+  };
+}
+
 /** Sends a due-queue notification when reminders are enabled. */
 export async function maybeNotifyDueQueue(now = new Date()): Promise<boolean> {
-  const data = await getAppData();
-  // Phase 5: settings live in SQLite. Read directly here rather than
-  // relying on the (no-longer-maintained) data.settings field.
-  const { db } = await getDb();
-  const settings = await getUserSettings(db);
-  data.settings = settings ?? data.settings;
+  const data = await loadQueueContext();
   if (!data.settings.notifications.enabled) {
     return false;
   }
@@ -119,14 +141,10 @@ export async function maybeNotifyDueQueue(now = new Date()): Promise<boolean> {
   return true;
 }
 
-/** Cancels any existing due-check alarm and schedules one local daily reminder check.
- *  Reads raw storage to avoid triggering a writeback that would re-fire storage.onChanged. */
+/** Cancels any existing due-check alarm and schedules one local daily reminder check. */
 export async function scheduleNextDueAlarm(now = new Date()): Promise<void> {
-  const result = await readLocalStorage([STORAGE_KEY]);
-  const stored = result[STORAGE_KEY] as
-    | { settings?: Partial<UserSettings> }
-    | undefined;
-  const settings = stored?.settings;
+  const { db } = await getDb();
+  const settings = await getUserSettings(db);
 
   await chrome.alarms.clear(DUE_CHECK_ALARM);
   if (!settings?.notifications?.enabled) {
@@ -144,11 +162,8 @@ export async function scheduleNextDueAlarm(now = new Date()): Promise<void> {
 
 /** Runs the startup reminder path without sending reminders before today's configured time. */
 export async function handleStartupDueCheck(now = new Date()): Promise<void> {
-  const result = await readLocalStorage([STORAGE_KEY]);
-  const stored = result[STORAGE_KEY] as
-    | { settings?: Partial<UserSettings> }
-    | undefined;
-  const settings = stored?.settings;
+  const { db } = await getDb();
+  const settings = await getUserSettings(db);
 
   if (settings?.notifications?.enabled) {
     const notificationTime = normalizeNotificationTime(

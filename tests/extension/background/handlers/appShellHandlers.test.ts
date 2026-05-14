@@ -1,4 +1,5 @@
 import { buildPopupShellPayload } from "@features/app-shell/server";
+import { sanitizeStoredUserSettings } from "@features/settings/server";
 import {
   asProblemSlug,
   asTrackGroupId,
@@ -6,13 +7,33 @@ import {
 } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
-import { normalizeStoredAppData } from "../../../../src/data/repositories/appDataRepository";
+import { STORAGE_SCHEMA_VERSION } from "../../../../src/domain/types/STORAGE_SCHEMA_VERSION";
 import {
   makeProblem,
   makeScheduledState,
 } from "../../../support/domainFixtures";
 
+import type { AppData } from "../../../../src/domain/types/AppData";
+import type { Problem } from "@features/problems";
+import type { StudyState } from "@features/study";
 import type { TrackWithGroups } from "@features/tracks";
+
+interface AppDataInput {
+  problemsBySlug?: Record<string, Problem>;
+  studyStatesBySlug?: Record<string, StudyState>;
+  settings?: unknown;
+}
+
+function buildAppData(input: AppDataInput): AppData {
+  return {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    problemsBySlug: input.problemsBySlug ?? {},
+    studyStatesBySlug: input.studyStatesBySlug ?? {},
+    topicsById: {},
+    companiesById: {},
+    settings: sanitizeStoredUserSettings(input.settings),
+  };
+}
 
 function makeTrack(
   id: string,
@@ -41,7 +62,7 @@ function makeTrack(
 
 describe("Popup Shell Handler", () => {
   it("builds only the popup read model", () => {
-    const data = normalizeStoredAppData({
+    const data = buildAppData({
       problemsBySlug: {
         "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
       },
@@ -72,7 +93,7 @@ describe("Popup Shell Handler", () => {
   });
 
   it("derives activeTrack from settings.activeFocus", () => {
-    const data = normalizeStoredAppData({
+    const data = buildAppData({
       problemsBySlug: {
         "two-sum": makeProblem("two-sum", "Two Sum", "Easy"),
       },
