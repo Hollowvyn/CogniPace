@@ -5,8 +5,8 @@ import { createInitialUserSettings } from "@features/settings";
 import { createDefaultStudyState } from "@libs/fsrs/constants";
 import { describe, it } from "vitest";
 
-import { sanitizeImportPayload } from "../../src/data/importexport/backup";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../src/data/repositories/v7/constants";
+import { sanitizeImportPayload } from "../../src/features/backup/data/sanitize";
 import { makeProblem } from "../support/domainFixtures";
 
 describe("backup import sanitization", () => {

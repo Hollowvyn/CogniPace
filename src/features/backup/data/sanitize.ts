@@ -1,21 +1,20 @@
-import { type ExportPayload } from "@features/backup/server";
+import {
+  normalizeSlug,
+  parseDifficulty,
+  slugToTitle,
+  slugToUrl,
+} from "@features/problems";
 import { resolveSeedTopicId } from "@features/problems/server";
 import { sanitizeStoredUserSettings } from "@features/settings/server";
+import { nowIso } from "@platform/time";
+import { uniqueStrings } from "@shared/strings";
 
 import {
   aggregates as v7AggregateDescriptors,
   EXPORTABLE_AGGREGATE_KEYS,
-} from "../repositories/v7/aggregateRegistry";
-
-import { CURRENT_STORAGE_SCHEMA_VERSION } from "./constants";
-import {
-  normalizeSlug,
-  nowIso,
-  parseDifficulty,
-  slugToTitle,
-  slugToUrl,
-  uniqueStrings,
-} from "./utils";
+} from "../../../data/repositories/v7/aggregateRegistry";
+import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../data/repositories/v7/constants";
+import { type ExportPayload } from "../domain/model";
 
 import type { Problem } from "@features/problems";
 import type { UserSettings } from "@features/settings";

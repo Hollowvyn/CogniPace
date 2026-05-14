@@ -4,6 +4,7 @@
  *  (draft, save, discard, reset) lives inside
  *  `features/settings/ui/hooks/useSettingsScreen`; the shell just passes
  *  the persisted snapshot through and surfaces status. */
+import { api } from "@app/api";
 import { useDI } from "@app/di";
 import { createMockAppShellPayload, useAppShellQuery } from "@features/app-shell";
 import { openProblemPage } from "@features/problems";
@@ -21,8 +22,6 @@ import {
   useState,
   useDeferredValue,
 } from "react";
-
-import { resetStudyHistory } from "../../data/repositories/settingsRepository";
 
 import {
   buildDashboardUrl,
@@ -191,7 +190,7 @@ export function useDashboardShellVM() {
   ]);
 
   const onResetStudyHistory = useCallback(async (): Promise<void> => {
-    await runMutation(resetStudyHistory(), "Study history reset.");
+    await runMutation(api.resetStudyHistory({}), "Study history reset.");
   }, [runMutation]);
 
   const onExportData = useCallback(async (): Promise<void> => {

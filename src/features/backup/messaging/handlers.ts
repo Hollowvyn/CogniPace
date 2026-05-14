@@ -46,12 +46,12 @@ import {
 } from "@shared/ids";
 import { uniqueStrings } from "@shared/strings";
 
-import { sanitizeImportPayload } from "../../../data/importexport/backup";
 import {
   getAppData,
   PRE_V7_BACKUP_KEY,
 } from "../../../data/repositories/appDataRepository";
 import { CURRENT_STORAGE_SCHEMA_VERSION } from "../../../data/repositories/v7/constants";
+import { sanitizeImportPayload } from "../data/sanitize";
 
 import type { ExportPayload } from "../domain/model";
 import type { Company, Topic } from "@features/problems";

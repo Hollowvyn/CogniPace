@@ -10,7 +10,7 @@ import { startTransition, useMemo, useRef, useState } from "react";
 import {
   openDashboardPage,
   openSettingsPage,
-} from "../../data/repositories/extensionNavigationRepository";
+} from "../dashboard/openDashboardPage";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],

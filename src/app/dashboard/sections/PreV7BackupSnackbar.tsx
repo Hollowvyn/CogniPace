@@ -5,12 +5,11 @@
  * archive the JSON before it disappears. After download (or dismissal)
  * the sidecar key is cleared via `consumePreV7Backup`.
  */
+import { api } from "@app/api";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
 import { useEffect, useRef, useState } from "react";
-
-import { consumePreV7Backup } from "../../../data/repositories/v7ActionRepository";
 
 function downloadJsonBlob(payload: unknown, filename: string): void {
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -33,7 +32,7 @@ export function PreV7BackupSnackbar() {
     if (requestedRef.current) return;
     requestedRef.current = true;
     let cancelled = false;
-    void consumePreV7Backup()
+    void api.consumePreV7Backup({})
       .then((result) => {
         if (cancelled) return;
         const blob = result?.backup ?? null;

@@ -5,6 +5,7 @@
  * `Problem.userEdits` via `markUserEdit: true` so subsequent re-imports
  * preserve the manual overrides.
  */
+import { api } from "@app/api";
 import Autocomplete, {
   createFilterOptions,
 } from "@mui/material/Autocomplete";
@@ -24,10 +25,6 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import React, { useState } from "react";
 
-import {
-  createCustomCompany,
-  editProblem,
-} from "../../../../../data/repositories/v7ActionRepository";
 
 import type {
   CompanyLabel,
@@ -109,7 +106,7 @@ async function resolveCompanySelection(
 
     if (!candidateName) continue;
     try {
-      const result = await createCustomCompany({ name: candidateName });
+      const result = await api.createCustomCompany({ name: candidateName });
       if (result?.id) {
         const created: CompanyLabel = {
           id: result.id,
@@ -176,7 +173,7 @@ export function EditProblemModal(props: EditProblemModalProps) {
     setError(null);
     try {
       const patch = buildPatch(draft, problem);
-      await editProblem({
+      await api.editProblem({
         slug: problem.slug,
         patch,
         markUserEdit: true,

@@ -15,6 +15,7 @@
  * a single group. Completion is informational (`Topic · 5/10` ratio in
  * the tab label) and every tab is clickable.
  */
+import { api } from "@app/api";
 import { SurfaceCard } from "@design-system/atoms";
 import {
   ProblemsTable,
@@ -42,10 +43,6 @@ import {
 } from "@shared/ids";
 import React, { useMemo, useState } from "react";
 
-import {
-  resetProblemSchedule,
-  suspendProblem,
-} from "../../../../data/repositories/v7ActionRepository";
 
 import type { TrackView } from "../../domain/model";
 import type { AppShellPayload } from "@features/app-shell";
@@ -155,11 +152,11 @@ export function TracksView(props: TracksViewProps) {
     setEditingSlug(slug);
   };
   const handleSuspend = async (slug: ProblemSlug, suspend: boolean) => {
-    await suspendProblem({ slug, suspend });
+    await api.suspendProblem({ slug, suspend });
     await props.onRefresh?.();
   };
   const handleReset = async (slug: ProblemSlug) => {
-    await resetProblemSchedule({ slug });
+    await api.resetProblemSchedule({ slug });
     await props.onRefresh?.();
   };
 

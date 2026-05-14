@@ -3,12 +3,9 @@
  *  from the dashboard shell's shared app-shell query for now; when the
  *  library grows its own data path, the VM gains its own reads and the
  *  screen stops needing those props. */
+import { api } from "@app/api";
 import { useMemo, useState } from "react";
 
-import {
-  resetProblemSchedule,
-  suspendProblem,
-} from "../../../../data/repositories/v7ActionRepository";
 import { LibraryFilters } from "../presentation/library";
 
 import type { LibraryProblemRow } from "../../domain/model";
@@ -125,11 +122,11 @@ export function useLibraryVM(input: UseLibraryVMInput): LibraryScreenModel {
       await input.onRefresh?.();
     },
     onSuspendProblem: async (slug, suspend) => {
-      await suspendProblem({ slug, suspend });
+      await api.suspendProblem({ slug, suspend });
       await input.onRefresh?.();
     },
     onResetSchedule: async (slug) => {
-      await resetProblemSchedule({ slug });
+      await api.resetProblemSchedule({ slug });
       await input.onRefresh?.();
     },
     onEnablePremium: () => void input.onEnablePremium(),
