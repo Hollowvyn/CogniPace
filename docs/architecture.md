@@ -2,317 +2,173 @@
 
 ## System Shape
 
-The extension now follows an explicit `ui + data + domain + extension + entrypoints + shared` layout built around a React 19 +
-MUI + Emotion UI stack.
-
-- `src/entrypoints/`
-  Small mount/bootstrap files only
-- `src/ui/`
-  React screens, reusable UI components, navigation models, local UI state, and presentation helpers
-- `src/data/`
-  Repositories, Chrome datasources, import/export, and catalog access
-- `src/domain/`
-  Pure business logic and business types
-- `src/extension/`
-  Chrome runtime contracts, validation, background routing, and notifications
-- `src/shared/`
-  Export proxies and reusable contracts for logic residing in the domain
-
-The goal is that a new engineer can find the right change area by directory alone.
-
-Shared UI bootstrapping and theming live in:
-
-- `src/ui/providers.tsx`
-  App-level providers shared across popup, dashboard, and overlay
-- `src/ui/theme.ts`
-  MUI theme tokens and component overrides for the current UI baseline
+```
+src/
+├── app/                   # React surfaces and DI wiring
+│   ├── di/               # DIContext (settingsRepository, backupRepository)
+│   ├── popup/            # Popup shell + sections
+│   ├── dashboard/        # Dashboard shell, rail, navigation, sections
+│   └── overlay/          # Overlay shell and host creation
+├── design-system/        # MUI-based atomic components and per-surface themes
+│   ├── atoms/            # card, chip, feedback, labels, layout, nav, table, tooltip
+│   └── theme/            # Per-surface MUI themes + design tokens
+├── entrypoints/          # Thin React bootstraps (popup, dashboard, overlay, dbDebug)
+├── extension/
+│   └── background/
+│       ├── index.ts      # SW lifecycle: onInstalled, onStartup, onSuspend, alarms, onMessage
+│       ├── dispatcher.ts # parse → authorize → lookup swApi → wrap envelope
+│       ├── swApi.ts      # Handler registry (~45 methods, grouped by feature)
+│       └── notifications.ts
+├── features/             # Feature slices — each owns data/domain/ui/messaging
+│   ├── app-shell/        # AppData read model: assembles projection from SQLite on each call
+│   ├── analytics/
+│   ├── backup/
+│   ├── overlay-session/
+│   ├── problems/
+│   ├── queue/
+│   ├── settings/
+│   ├── study/
+│   └── tracks/
+├── libs/
+│   ├── event-bus/        # Per-table mutation tick broadcaster + useTickQuery React hook
+│   ├── fsrs/             # Pure FSRS spaced-repetition algorithm
+│   ├── leetcode/         # Page detection and problem scraping
+│   └── runtime-rpc/      # createSwClient<SwApi>() typed RPC proxy
+├── platform/
+│   ├── chrome/           # chrome.storage and chrome.tabs wrappers
+│   ├── db/               # SQLite-WASM + Drizzle: schema, migrations, instance, proxy, snapshot
+│   └── time/
+└── shared/               # Branded types (ProblemSlug, TopicId, …), string utils
+```
 
 ## Runtime Surfaces
 
 ### Popup
 
-Entrypoint: `src/entrypoints/popup.tsx`  
-Screen: `src/ui/screens/popup/*`
+Entrypoint: `src/entrypoints/popup.tsx`
+Shell: `src/app/popup/`
 
-Responsibilities:
-
-- render the compact recommendation-first surface
-- mount the shared provider stack and theme
-- show due count, streak, recommended problem, and track-next state
-- toggle study mode
-- open problems or the dashboard
-- load through the narrow `GET_POPUP_SHELL_DATA` runtime read model so opening the popup does not require dashboard-only
-  library, analytics, or track-option projections
+Compact surface: due count, streak, recommended problem, active track, study-mode toggle.
+Uses the narrow `getPopupShellData` read model.
 
 ### Dashboard
 
-Entrypoint: `src/entrypoints/dashboard.tsx`  
-Screen: `src/ui/screens/dashboard/*`
+Entrypoint: `src/entrypoints/dashboard.tsx`
+Shell: `src/app/dashboard/`
 
-Responsibilities:
-
-- render overview, tracks, library, analytics, and settings screens
-- mount the shared provider stack and theme
-- own dashboard-local state such as filters, settings draft, and import file
-- preserve the `?view=` deep-link contract
-- keep tab-specific UI in `src/ui/screens/dashboard/tabs/*` while shared dashboard shell and surface wrappers stay in
-  `src/ui/screens/dashboard/components/*`
+Overview, tracks, library, analytics, and settings screens via `?view=` deep-link.
+Routes: `src/app/dashboard/navigation/routes.ts`.
 
 ### Overlay
 
-Entrypoint: `src/entrypoints/overlay.tsx`  
-Screen: `src/ui/screens/overlay/*`
+Entrypoint: `src/entrypoints/overlay.tsx`
+Shell: `src/app/overlay/`
 
-Responsibilities:
+Shadow-root-backed React overlay on LeetCode problem pages. Manages timer, structured log
+fields, FSRS assessment, and review-session actions. Emotion cache injected into shadow root.
 
-- mount a shadow-root-backed React overlay on LeetCode problem pages
-- inject an Emotion cache into the overlay shadow root before rendering
-- detect page context and current problem metadata
-- manage timer, structured log fields, FSRS assessment, and review-session actions
-- keep the compact inlay and expanded overlay panel separated inside `src/ui/screens/overlay/*`
-- compose page bootstrap in `useOverlayController.ts`, extracted helpers/hooks in `controller/*`, and explicit collapsed/expanded sections in `components/*`
-- save new review results and last-review overrides through runtime messaging
-
-### Library Redirect
-
-Entrypoint: `src/entrypoints/libraryRedirect.ts`
-
-Responsibilities:
-
-- preserve the legacy `database.html` alias by redirecting to `dashboard.html?view=library`
-
-### Background Worker
+### Background Service Worker
 
 Bootstrap: `src/extension/background/index.ts`
 
-Responsibilities:
-
-- validate runtime messages
-- dispatch messages through `src/extension/background/router.ts`
-- own alarms and due notifications
+Owns the SQLite DB lifecycle (boots and restores on `onInstalled`/`onStartup`), alarm
+scheduling, due-check notifications, and runtime message dispatch.
 
 ## Layer Ownership
 
-### UI Layer
+### Feature Slices (`src/features/`)
 
-Location: `src/ui/`
-
-Subdirectories:
-
-- `screens/`
-  Screen-specific React components and screen-local controllers
-- `components/`
-  Base visual primitives only
-- `features/`
-  Reusable feature widgets shared across screens
-- `navigation/`
-  Pure route/view models such as dashboard routes
-- `presentation/`
-  UI-only selectors, formatting, and form normalization
-- `state/`
-  Reusable UI hooks such as app-shell query state
+Each slice is self-contained: `data/datasource/`, `data/repository/`, `domain/model/`,
+`domain/policy/`, `ui/`, `messaging/handlers.ts`, exported through `server.ts`.
 
 Rules:
+- Feature UI calls `api.*` (typed RPC proxy) — no `chrome.*` from UI code.
+- Datasources take a `Db` argument; they do not call `getDb()` themselves.
+- Domain code is pure: no React, no `chrome`, no `window`.
 
-- UI does not call `sendMessage` directly
-- UI does not access `chrome.storage` directly
-- UI reads and writes through repositories in `src/data/repositories/*`
-- presentational components remain side-effect free
-- provider and theme changes should stay centralized in `src/ui/providers.tsx` and `src/ui/theme.ts`
+### Design System (`src/design-system/`)
 
-### Data Layer
+MUI-based atomic components and per-surface MUI theme factories. Shared across surfaces
+via `AppProviders`.
 
-Location: `src/data/`
+### Platform (`src/platform/`)
 
-Subdirectories:
+Chrome API wrappers and the SQLite-WASM + Drizzle stack. Nothing in `platform/` imports
+from `features/` or `app/`.
 
-- `repositories/`
-  Repository-style access for app shell, tracks, problem sessions, settings, backups, app data, and extension
-  navigation
-- `datasources/chrome/`
-  Raw Chrome platform access such as `chrome.storage.local`
-- `catalog/`
-  Built-in study plans and curated sets
-- `importexport/`
-  Backup sanitization and import/export helpers
+### Libs (`src/libs/`)
 
-Rules:
+Pure or near-pure utilities: FSRS scheduler, typed RPC proxy factory, LeetCode page
+detection, event-bus. No feature-domain imports.
 
-- repositories own transport and persistence access
-- datasources are platform-specific and thin
-- UI talks to repositories, not to Chrome APIs
+## Data Flow
 
-### Domain Layer
+```
+UI (React hook)
+  └─ api.someMethod(payload)           ← createSwClient<SwApi>() proxy
+       └─ chrome.runtime.sendMessage({ method, payload })
+            └─ dispatcher.ts: parse → authorize → swApi[method](payload)
+                 └─ handler (features/*/messaging/handlers.ts)
+                      └─ const { db } = await getDb()
+                           └─ datasource function (Drizzle query against SQLite)
+```
 
-Location: `src/domain/`
+Handler TypeScript signatures are the wire contract. The UI imports `type SwApi` from
+`swApi.ts` and gets compile-time autocomplete on every method call.
 
-Subdirectories:
+## Persistence
 
-- `problem/`
-  Slug identity and difficulty parsing
-- `fsrs/`
-  Scheduler state, review policy, and FSRS mutations
-- `tracks/`
-  Track progression and track-derived projections
-- `queue/`
-  Queue generation and recommendation building
-- `analytics/`
-  Analytics summarization
-- `common/`
-  Domain-safe shared helpers such as time and collections
+**SQLite-WASM is the SSoT.** `chrome.storage.local` holds two things only:
 
-Rules:
+1. **Snapshot** (`cognipace_db_snapshot_v1`) — written after every mutation via a 1-second
+   debounce in `platform/db/instance.ts`; flushed immediately on `chrome.runtime.onSuspend`.
+2. **Mutation tick** (`DB_TICK_KEY`) — a lightweight broadcast written after every Drizzle
+   `run`; open extension pages observe it and re-fetch through their query hooks.
 
-- domain code is pure
-- domain code does not import React
-- domain code does not import `chrome`, `window`, or `document`
+**AppData** (`features/app-shell/domain/model/AppData.ts`) is a read-only projection
+assembled from SQLite on each `getAppShellData` call. It is never persisted directly.
+Mutations write to datasources; the tick system drives UI refresh.
 
-### Extension Layer
+**Schema** — 9 tables in `src/platform/db/schema/`: `problems`, `studyStates`,
+`attemptHistory`, `topics`, `companies`, `tracks`, `trackGroups`, `trackGroupProblems`,
+`settingsKv`. Generated migrations in `platform/db/migrations/` — never hand-edit them.
 
-Location: `src/extension/`
-
-Subdirectories:
-
-- `runtime/`
-  Runtime client, contracts, and message validation
-- `background/`
-  Background bootstrap, router, handlers, notifications, and response helpers
-
-Rules:
-
-- runtime message names and payload contracts are defined here
-- background handlers coordinate repositories and domain logic
-
-## UI To Background Data Flow
-
-The intended runtime path for React surfaces is:
-
-1. A screen, controller, or shared UI hook calls a repository in `src/data/repositories/*`.
-2. The repository talks to either:
-
-- a runtime client in `src/extension/runtime/client.ts`, or
-- a datasource under `src/data/datasources/chrome/*`.
-
-3. The background bootstrap validates and routes runtime messages through `src/extension/background/router.ts`.
-4. Background handlers compose repositories and pure domain logic.
-5. The repository returns a typed payload back to the UI layer.
-
-This keeps React screens free of direct Chrome API calls and keeps domain logic free of UI concerns.
-
-The popup uses `GET_POPUP_SHELL_DATA` for its startup read. That payload contains only `settings`, `popup`, and
-`activeFocus`; dashboard and overlay surfaces continue to use the broader app-shell read model when they need queue,
-analytics, library, track-option, or dashboard-specific data.
-
-React app-shell surfaces also subscribe to app-data storage changes through a data repository so cross-surface mutations
-stay coherent. Each surface reloads its own read model after a persisted app-data change instead of sharing stale
-in-memory payloads or reading `chrome.storage` directly from UI code.
+**Export payload** (`features/backup/domain/model/ExportPayload.ts`):
+`problems`, `studyStatesBySlug`, `settings`, `topicsById`, `companiesById`, `tracks`.
 
 ## Where To Change Things
 
-- Popup UI: `src/ui/screens/popup/*`
-- Dashboard UI: `src/ui/screens/dashboard/*`, with tab screens under `src/ui/screens/dashboard/tabs/*`
-- Overlay UI: `src/ui/screens/overlay/*`
-- Shared providers and theme: `src/ui/providers.tsx`, `src/ui/theme.ts`
-- Shared cards/widgets: `src/ui/features/*`
-- Dashboard route contract: `src/ui/navigation/dashboardRoutes.ts`
-- Library filters/selectors: `src/ui/presentation/library.ts`
-- Study-state labels and tones: `src/ui/presentation/studyState.ts`
-- Track ingest normalization: `src/ui/presentation/trackIngest.ts`
-- App-shell query state: `src/ui/state/useAppShellQuery.ts`
-- Runtime-backed popup/dashboard reads: `src/data/repositories/appShellRepository.ts`
-- Cross-surface app-data change observation: `src/data/repositories/appDataChangeRepository.ts`
-- Storage and persisted app data: `src/data/repositories/appDataRepository.ts`
-- Raw Chrome storage access: `src/data/datasources/chrome/storage.ts`
-- Backup import/export: `src/data/importexport/backup.ts`
-- Built-in study plans: `src/data/catalog/curatedSets.ts`
-- Problem slug rules: `src/domain/problem/slug.ts`
-- Difficulty parsing and solve-time goals: `src/domain/problem/difficulty.ts`
-- FSRS logic: `src/domain/fsrs/*`
-- Track progression: `src/domain/tracks/trackProgress.ts`
-- Queue logic: `src/domain/queue/*`
-- Runtime contracts: `src/extension/runtime/contracts.ts`
-- Background router and handlers: `src/extension/background/*`
-- Reminder scheduling and due notifications: `src/extension/background/notifications.ts`
-- Overlay controller orchestration: `src/ui/screens/overlay/useOverlayController.ts`
-- Overlay controller helpers/hooks: `src/ui/screens/overlay/controller/*`
-- Overlay surface variants and sections: `src/ui/screens/overlay/OverlayPanel.tsx`,
-  `src/ui/screens/overlay/components/*`, `src/ui/screens/overlay/overlayPanel.types.ts`
-
-## Runtime Message Flow
-
-1. A UI repository calls `sendMessage` through `src/extension/runtime/client.ts`.
-2. The background bootstrap validates the message with `src/extension/runtime/validator.ts`.
-3. `src/extension/background/router.ts` dispatches to a grouped handler.
-4. The handler composes domain logic and data repositories.
-5. The result is returned in the canonical runtime response envelope.
-
-## Persisted Data
-
-`AppData` remains the canonical local-first persisted model.
-
-Important persisted areas:
-
-- `problemsBySlug`
-  Problem entries may include persisted metadata such as `isPremium` when the overlay can positively detect a
-  premium-only LeetCode page.
-- `studyStatesBySlug`
-  This now includes top-level saved log fields such as interview pattern, time complexity, space complexity, languages,
-  and notes.
-  Each attempt history entry may also include a structured `logSnapshot` used for review overrides and migration-safe
-  history replay.
-- `studySetsById`
-- `studySetProgressById`
-- `studySetOrder`
-- `settings`
-  Stores the current grouped user settings model. Top-level fields hold the daily question goal, study mode, active
-  track, and enabled source sets. Nested groups hold notification preferences, memory-review settings, question
-  filters, timing goals, and experimental flags. Missing or malformed settings are seeded once into the current model.
-  This grouped shape is the only supported persisted settings contract.
-  Short-lived migration code is acceptable when explicitly approved for a release boundary, but legacy compatibility is
-  not meant to linger in the runtime model or sanitizer indefinitely.
-  After the migration window closes, removed legacy fields are not preserved and should be deleted from runtime,
-  validation, import, and test paths.
-- background-only notification bookkeeping
-  Daily reminder dedupe state is stored separately in local extension storage so startup checks do not re-send the same
-  due notification multiple times in one local day.
-
-Export payload remains:
-
-- `version`
-- `problems`
-- `studyStatesBySlug`
-- `settings`
-- `studySetsById`
-- `studySetOrder`
-- `studySetProgressById`
-
-Review and history runtime contracts now include:
-
-- `GET_POPUP_SHELL_DATA`
-  returns the popup-specific startup read model without dashboard-only projections
-- `SAVE_REVIEW_RESULT`
-- `SAVE_OVERLAY_LOG_DRAFT`
-  appends a new FSRS review event and stores the current structured log fields
-- `OVERRIDE_LAST_REVIEW_RESULT`
-  replaces the latest attempt entry and rebuilds the FSRS card from review history
-- `RESET_STUDY_HISTORY`
-  clears review history, FSRS cards, solve-time/rating state, suspended flags, and track progress derived from study
-  history while preserving settings, tracks, source data, and the problem library
+- Popup UI: `src/app/popup/`
+- Dashboard UI: `src/app/dashboard/` (routes: `navigation/routes.ts`)
+- Overlay UI: `src/app/overlay/` + `src/features/overlay-session/`
+- Shared providers and theme: `src/app/providers.tsx`, `src/design-system/theme/`
+- DI bindings: `src/app/di/index.tsx`
+- New feature: slice under `src/features/<name>/` following `data/domain/ui/messaging`
+  layout; register handlers in `src/extension/background/swApi.ts`
+- New SW handler: add to `features/*/messaging/handlers.ts`, export from `server.ts`,
+  register in `swApi.ts`
+- New datasource query: add to `features/*/data/datasource/`; pass `Db` from the handler
+- Schema change: edit `src/platform/db/schema/`, run `drizzle-kit generate`, commit the
+  new migration
+- FSRS algorithm: `src/libs/fsrs/`
+- LeetCode page detection: `src/libs/leetcode/`
+- Runtime RPC proxy: `src/libs/runtime-rpc/`
+- SW lifecycle and alarms: `src/extension/background/index.ts`
+- Due notifications: `src/extension/background/notifications.ts`
+- Snapshot persistence: `src/platform/db/instance.ts`, `src/platform/db/snapshot.ts`
 
 ## Constraints
 
 - Manifest V3 Chrome extension
-- local-first storage only
-- no backend service
-- no account model
+- Local-first, no backend, no account model
 - React 19 + MUI + Emotion UI stack
-- `esbuild` remains the bundler for TSX entrypoints
-- runtime message names and persisted JSON contracts are stable unless explicitly updated in this document
+- `esbuild` bundler for TSX entrypoints
+- Handler signatures in `swApi.ts` and the schema in `platform/db/schema/` are the stable
+  wire and persistence contracts
 
 ## Related ADRs
 
-- `docs/decisions/0001-local-first-storage.md`
 - `docs/decisions/0002-no-account-system.md`
-- `docs/decisions/0003-react-mui-emotion-ui.md`
 - `docs/decisions/0004-no-backend-service.md`
 - `docs/decisions/0005-minimal-extension-permissions.md`
+- `docs/decisions/0006-desktop-only-scope.md`
