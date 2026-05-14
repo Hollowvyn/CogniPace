@@ -49,4 +49,3 @@ npm run check
 - Update [docs/product.md](docs/product.md) or [docs/features.md](docs/features.md) when behavior changes
 - Update [docs/architecture.md](docs/architecture.md) when boundaries, runtime flow, or storage/message contracts change
 - Update [docs/DESIGN_GUIDELINES.md](docs/DESIGN_GUIDELINES.md) when visual conventions change
-- Update [requiredStepsForSetup.md](requiredStepsForSetup.md) when setup or process expectations change
