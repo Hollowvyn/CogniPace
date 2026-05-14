@@ -556,10 +556,6 @@ export function getStudyStateSummary(
   };
 }
 
-export function getStudyPhaseLabel(phase: StudyPhase): string {
-  return phase.toUpperCase();
-}
-
 export function getFsrsScheduler() {
   return scheduler;
 }

@@ -1,7 +1,6 @@
 /** Reusable "next in track" card shared by popup and overlay surfaces. */
 import {SurfaceCard, ToneChip} from "@design-system/atoms";
 import {difficultyTone} from "@features/problems";
-import {getStudyPhaseLabel} from "@libs/fsrs/studyState";
 import Button, {ButtonProps} from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -36,7 +35,7 @@ export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
     onOpenProblem,
     view,
   } = props;
-  const phaseLabel = view.reviewPhase ? getStudyPhaseLabel(view.reviewPhase) : null;
+  const phaseLabel = view.reviewPhase ? view.reviewPhase.toUpperCase() : null;
 
   return (
     <SurfaceCard compact={compact} label={label} title={view.title}>

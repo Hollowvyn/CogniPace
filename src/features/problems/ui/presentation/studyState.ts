@@ -1,8 +1,6 @@
 /** UI-presentation helpers for the problems feature. Maps problem-domain
  *  values (Difficulty, RecommendedReason, StudyPhase, retrievability)
  *  to display strings and to the design-system Tone vocabulary. */
-import { getStudyPhaseLabel } from "@libs/fsrs/studyState";
-
 import type { Difficulty, RecommendedReason } from "../../domain/model";
 import type { Tone } from "@design-system/atoms/tone";
 import type { StudyPhase } from "@features/study";
@@ -39,7 +37,7 @@ export function formatStudyPhase(
   fallback = "NEW",
 ): string {
   if (!phase) return fallback;
-  return getStudyPhaseLabel(phase);
+  return phase.toUpperCase();
 }
 
 /**
