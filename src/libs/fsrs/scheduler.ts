@@ -1,10 +1,10 @@
 import { createDefaultStudyState } from "./constants";
 import {
   getFsrsCard,
-  getFsrsScheduler,
   hasReviewLogFields,
   normalizeReviewLogFields,
   normalizeStudyState,
+  scheduler,
   serializeFsrsCard,
   toFsrsRating,
 } from "./studyState";
@@ -41,7 +41,6 @@ export function applyReview(input: ApplyReviewInput): StudyState {
     throw new Error("Solve time is required by your settings.");
   }
 
-  const scheduler = getFsrsScheduler();
   const currentCard = getFsrsCard(state, now);
   const nextCard = scheduler.repeat(currentCard, new Date(now))[
     toFsrsRating(input.rating)

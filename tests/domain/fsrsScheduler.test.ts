@@ -7,8 +7,8 @@ import {
   overrideLastReview,
 } from "@libs/fsrs/scheduler";
 import {
-  getFsrsScheduler,
   getStudyStateSummary,
+  scheduler,
   serializeFsrsCard,
   toFsrsRating,
 } from "@libs/fsrs/studyState";
@@ -54,7 +54,6 @@ describe("FSRS scheduler", () => {
   });
 
   it("follows raw FSRS output for early repeats", () => {
-    const scheduler = getFsrsScheduler();
     let rawCard = createEmptyCard(new Date("2026-03-25T15:00:00.000Z"));
 
     const first = applyReview({
@@ -87,7 +86,6 @@ describe("FSRS scheduler", () => {
   });
 
   it("matches the raw FSRS scheduler across sequential reviews", () => {
-    const scheduler = getFsrsScheduler();
     const ratings: Rating[] = [2, 2, 2, 1];
     let rawCard = createEmptyCard(new Date("2026-03-01T15:00:00.000Z"));
     let appState: StudyState | undefined;
@@ -108,7 +106,6 @@ describe("FSRS scheduler", () => {
   });
 
   it("matches the raw FSRS scheduler for same-moment rapid resubmits", () => {
-    const scheduler = getFsrsScheduler();
     const ratings: Rating[] = [3, 3, 3, 2, 2];
     const reviewAt = new Date("2026-03-29T21:00:00.000Z");
     let rawCard = createEmptyCard(reviewAt);

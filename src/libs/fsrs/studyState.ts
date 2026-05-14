@@ -36,7 +36,7 @@ type FsrsGrade =
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_EASE = 2.5;
-const scheduler = fsrs(generatorParameters());
+export const scheduler = fsrs(generatorParameters());
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -556,6 +556,3 @@ export function getStudyStateSummary(
   };
 }
 
-export function getFsrsScheduler() {
-  return scheduler;
-}
