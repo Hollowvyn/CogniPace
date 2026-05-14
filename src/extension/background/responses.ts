@@ -1,20 +1,19 @@
 /** Shared runtime response helpers for background handlers. */
 import { RuntimeResponse } from "@libs/runtime-rpc/client";
-import { ResultAsync } from "neverthrow";
 
-/** Converts a feature handler's ResultAsync into the wire envelope. */
+/** Wraps a handler promise into the wire envelope. Errors are caught here. */
 export async function toEnvelope<T>(
-  result: ResultAsync<T, string>,
+  result: Promise<T>,
 ): Promise<RuntimeResponse<T>> {
-  const r = await result;
-  return r.match<RuntimeResponse<T>>(
-    (data) => ({ ok: true, data }),
-    (error) => ({ ok: false, error }),
-  );
+  try {
+    return { ok: true, data: await result };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
-/** Wraps a thrown handler error in the canonical runtime envelope.
- *  Used only in the SW lifecycle catch block — not in feature handlers. */
+/** Wraps a thrown lifecycle error in the canonical runtime envelope.
+ *  Used only in the SW onMessage catch block. */
 export function fail(error: unknown): RuntimeResponse<never> {
   const message = error instanceof Error ? error.message : "Unknown error";
   return { ok: false, error: message };

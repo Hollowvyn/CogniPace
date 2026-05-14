@@ -19,7 +19,6 @@ import { listStudyStates } from "@features/study/server";
 import { buildActiveTrackView, listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/validator";
 import { getDb } from "@platform/db/instance";
-import { ResultAsync } from "neverthrow";
 
 import { getAppData } from "../../../data/repositories/appDataRepository";
 import {
@@ -43,8 +42,6 @@ import type {
   TrackView,
   TrackWithGroups,
 } from "@features/tracks";
-
-const toErrMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 async function hydrateRegistriesFromDb(data: AppData): Promise<void> {
   const { db } = await getDb();
@@ -254,71 +251,51 @@ export function buildPopupShellPayload(
   };
 }
 
-export function getPopupShellData(): ResultAsync<PopupShellPayload, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const data = await getAppData();
-      await hydrateRegistriesFromDb(data);
-      const tracks = await loadTracks();
-      return buildPopupShellPayload(data, tracks);
-    })(),
-    toErrMsg,
-  );
+export async function getPopupShellData(): Promise<PopupShellPayload> {
+  const data = await getAppData();
+  await hydrateRegistriesFromDb(data);
+  const tracks = await loadTracks();
+  return buildPopupShellPayload(data, tracks);
 }
 
-export function getAppShellData(): ResultAsync<AppShellPayload, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const data = await getAppData();
-      await hydrateRegistriesFromDb(data);
-      const tracks = await loadTracks();
-      const now = new Date();
-      const popupShell = buildPopupShellPayload(data, tracks, now);
-      const queue = buildTodayQueue(data, now);
-      const analytics = summarizeAnalytics(data, now);
-      const trackViews = buildTrackViews(data, tracks, now);
+export async function getAppShellData(): Promise<AppShellPayload> {
+  const data = await getAppData();
+  await hydrateRegistriesFromDb(data);
+  const tracks = await loadTracks();
+  const now = new Date();
+  const popupShell = buildPopupShellPayload(data, tracks, now);
+  const queue = buildTodayQueue(data, now);
+  const analytics = summarizeAnalytics(data, now);
+  const trackViews = buildTrackViews(data, tracks, now);
 
-      const topicChoices = Object.values(data.topicsById)
-        .map((topic) => ({ id: topic.id, name: topic.name }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      const companyChoices = Object.values(data.companiesById)
-        .map((company) => ({ id: company.id, name: company.name }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+  const topicChoices = Object.values(data.topicsById)
+    .map((topic) => ({ id: topic.id, name: topic.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const companyChoices = Object.values(data.companiesById)
+    .map((company) => ({ id: company.id, name: company.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-      return {
-        ...popupShell,
-        queue,
-        analytics,
-        recommendedCandidates: popupShell.popup.recommendedCandidates,
-        library: libraryRows(data, tracks, now),
-        tracks: trackViews,
-        topicChoices,
-        companyChoices,
-      } as AppShellPayload;
-    })(),
-    toErrMsg,
-  );
+  return {
+    ...popupShell,
+    queue,
+    analytics,
+    recommendedCandidates: popupShell.popup.recommendedCandidates,
+    library: libraryRows(data, tracks, now),
+    tracks: trackViews,
+    topicChoices,
+    companyChoices,
+  } as AppShellPayload;
 }
 
-export function getQueue(): ResultAsync<ReturnType<typeof buildTodayQueue>, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const data = await getAppData();
-      return buildTodayQueue(data);
-    })(),
-    toErrMsg,
-  );
+export async function getQueue(): Promise<ReturnType<typeof buildTodayQueue>> {
+  const data = await getAppData();
+  return buildTodayQueue(data);
 }
 
-export function openExtensionPage(
+export async function openExtensionPage(
   payload: { path: string },
-): ResultAsync<{ opened: true }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const path = validateExtensionPagePath(payload.path);
-      await chrome.tabs.create({ url: chrome.runtime.getURL(path) });
-      return { opened: true as const };
-    })(),
-    toErrMsg,
-  );
+): Promise<{ opened: true }> {
+  const path = validateExtensionPagePath(payload.path);
+  await chrome.tabs.create({ url: chrome.runtime.getURL(path) });
+  return { opened: true as const };
 }

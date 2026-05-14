@@ -33,7 +33,6 @@ import {
   type CompanyId,
   type TopicId,
 } from "@shared/ids";
-import { ResultAsync } from "neverthrow";
 
 import { upsertCompany } from "../data/datasource/CompanyDataSource";
 import {
@@ -47,8 +46,6 @@ import { getCuratedSet } from "../data/seed/curatedSets";
 import { isProblemPage, normalizeSlug } from "../domain/model";
 
 import type { ProblemEditPatch } from "../domain/model";
-
-const toErrMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 // ---------- Helpers ----------
 
@@ -75,96 +72,81 @@ function buildReviewLogFields(
 
 // ---------- Page / context handlers ----------
 
-export function openProblemPage(
+export async function openProblemPage(
   payload: { slug: string; trackId?: string; groupId?: string },
   sender?: chrome.runtime.MessageSender,
-): ResultAsync<{ opened: true }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const slug = normalizeSlug(payload.slug);
-      if (!slug) throw new Error("Invalid slug.");
+): Promise<{ opened: true }> {
+  const slug = normalizeSlug(payload.slug);
+  if (!slug) throw new Error("Invalid slug.");
 
-      if (payload.trackId) {
-        const { db } = await getDb();
-        const current =
-          (await getUserSettings(db)) ?? createInitialUserSettings();
-        await saveUserSettings(db, {
-          ...current,
-          activeTrackId: asTrackId(payload.trackId),
-        });
-      }
+  if (payload.trackId) {
+    const { db } = await getDb();
+    const current =
+      (await getUserSettings(db)) ?? createInitialUserSettings();
+    await saveUserSettings(db, {
+      ...current,
+      activeTrackId: asTrackId(payload.trackId),
+    });
+  }
 
-      const url = canonicalProblemUrlForOpen(slug);
-      const senderUrl = readSenderUrl(sender);
-      const senderTabId = sender?.tab?.id;
-      const shouldReuseSenderTab =
-        typeof senderTabId === "number" &&
-        !!senderUrl &&
-        isProblemPage(senderUrl);
+  const url = canonicalProblemUrlForOpen(slug);
+  const senderUrl = readSenderUrl(sender);
+  const senderTabId = sender?.tab?.id;
+  const shouldReuseSenderTab =
+    typeof senderTabId === "number" &&
+    !!senderUrl &&
+    isProblemPage(senderUrl);
 
-      if (shouldReuseSenderTab) {
-        await chrome.tabs.update(senderTabId, { url });
-      } else {
-        await chrome.tabs.create({ url });
-      }
+  if (shouldReuseSenderTab) {
+    await chrome.tabs.update(senderTabId, { url });
+  } else {
+    await chrome.tabs.create({ url });
+  }
 
-      return { opened: true as const };
-    })(),
-    toErrMsg,
-  );
+  return { opened: true as const };
 }
 
-export function upsertFromPage(payload: {
+export async function upsertFromPage(payload: {
   slug: string;
   title?: string;
   difficulty?: string;
   isPremium?: boolean;
   url?: string;
   topics?: string[];
-}): ResultAsync<{ problem: unknown; studyState: unknown }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const slug = normalizeSlug(payload.slug);
-      if (!slug) throw new Error("Invalid slug.");
-      const { db } = await getDb();
-      const branded = asProblemSlug(slug);
-      const difficulty = normalizeDifficulty(payload.difficulty);
-      const problem = await importProblem(db, {
-        slug,
-        ...(payload.title !== undefined ? { title: payload.title } : {}),
-        ...(difficulty !== undefined ? { difficulty } : {}),
-        ...(payload.isPremium !== undefined
-          ? { isPremium: payload.isPremium }
-          : {}),
-        ...(payload.url !== undefined ? { url: payload.url } : {}),
-      });
-      const studyState = await ensureStudyState(db, branded);
-      return { problem, studyState };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ problem: unknown; studyState: unknown }> {
+  const slug = normalizeSlug(payload.slug);
+  if (!slug) throw new Error("Invalid slug.");
+  const { db } = await getDb();
+  const branded = asProblemSlug(slug);
+  const difficulty = normalizeDifficulty(payload.difficulty);
+  const problem = await importProblem(db, {
+    slug,
+    ...(payload.title !== undefined ? { title: payload.title } : {}),
+    ...(difficulty !== undefined ? { difficulty } : {}),
+    ...(payload.isPremium !== undefined
+      ? { isPremium: payload.isPremium }
+      : {}),
+    ...(payload.url !== undefined ? { url: payload.url } : {}),
+  });
+  const studyState = await ensureStudyState(db, branded);
+  return { problem, studyState };
 }
 
-export function getProblemContext(payload: {
+export async function getProblemContext(payload: {
   slug: string;
-}): ResultAsync<{ problem: unknown; studyState: unknown }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const slug = normalizeSlug(payload.slug);
-      if (!slug) return { problem: null, studyState: null };
-      const { db } = await getDb();
-      const branded = asProblemSlug(slug);
-      const problem = await getProblem(db, branded);
-      const studyState = await getStudyState(db, branded);
-      return { problem: problem ?? null, studyState: studyState ?? null };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ problem: unknown; studyState: unknown }> {
+  const slug = normalizeSlug(payload.slug);
+  if (!slug) return { problem: null, studyState: null };
+  const { db } = await getDb();
+  const branded = asProblemSlug(slug);
+  const problem = await getProblem(db, branded);
+  const studyState = await getStudyState(db, branded);
+  return { problem: problem ?? null, studyState: studyState ?? null };
 }
 
 // ---------- Review handlers ----------
 
-export function saveReviewResult(payload: {
+export async function saveReviewResult(payload: {
   slug: string;
   rating: 0 | 1 | 2 | 3;
   solveTimeMs?: number;
@@ -177,78 +159,68 @@ export function saveReviewResult(payload: {
   trackId?: string;
   groupId?: string;
 }) {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const normalized = normalizeSlug(payload.slug);
-      if (!normalized) throw new Error("Invalid slug.");
-      const now = nowIso();
-      const { db } = await getDb();
-      const branded = asProblemSlug(normalized);
-      const problem = await importProblem(db, { slug: normalized });
-      const current = await ensureStudyState(db, branded);
-      const logSnapshot = buildReviewLogFields(payload, current);
-      const settings =
-        (await getUserSettings(db)) ?? createInitialUserSettings();
-      const nextState = applyReview({
-        state: current,
-        difficulty: problem.difficulty,
-        rating: payload.rating,
-        solveTimeMs: payload.solveTimeMs,
-        mode: payload.mode,
-        logSnapshot,
-        settings,
-        now,
-      });
-      await upsertStudyState(db, branded, nextState);
-      const newAttempt =
-        nextState.attemptHistory[nextState.attemptHistory.length - 1];
-      if (newAttempt) await appendAttempt(db, branded, newAttempt);
-      if (payload.trackId) {
-        await saveUserSettings(db, {
-          ...settings,
-          activeTrackId: asTrackId(payload.trackId),
-        });
-      }
-      const studyStateSummary = getStudyStateSummary(nextState);
-      return {
-        studyState: nextState,
-        nextReviewAt: studyStateSummary.nextReviewAt,
-        phase: studyStateSummary.phase,
-        lastRating: nextState.lastRating,
-      };
-    })(),
-    toErrMsg,
-  );
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) throw new Error("Invalid slug.");
+  const now = nowIso();
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  const problem = await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const logSnapshot = buildReviewLogFields(payload, current);
+  const settings =
+    (await getUserSettings(db)) ?? createInitialUserSettings();
+  const nextState = applyReview({
+    state: current,
+    difficulty: problem.difficulty,
+    rating: payload.rating,
+    solveTimeMs: payload.solveTimeMs,
+    mode: payload.mode,
+    logSnapshot,
+    settings,
+    now,
+  });
+  await upsertStudyState(db, branded, nextState);
+  const newAttempt =
+    nextState.attemptHistory[nextState.attemptHistory.length - 1];
+  if (newAttempt) await appendAttempt(db, branded, newAttempt);
+  if (payload.trackId) {
+    await saveUserSettings(db, {
+      ...settings,
+      activeTrackId: asTrackId(payload.trackId),
+    });
+  }
+  const studyStateSummary = getStudyStateSummary(nextState);
+  return {
+    studyState: nextState,
+    nextReviewAt: studyStateSummary.nextReviewAt,
+    phase: studyStateSummary.phase,
+    lastRating: nextState.lastRating,
+  };
 }
 
-export function saveOverlayLogDraft(payload: {
+export async function saveOverlayLogDraft(payload: {
   slug: string;
   interviewPattern?: string;
   timeComplexity?: string;
   spaceComplexity?: string;
   languages?: string;
   notes?: string;
-}): ResultAsync<{ studyState: unknown }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const normalized = normalizeSlug(payload.slug);
-      if (!normalized) throw new Error("Invalid slug.");
-      const { db } = await getDb();
-      const branded = asProblemSlug(normalized);
-      await importProblem(db, { slug: normalized });
-      const current = await ensureStudyState(db, branded);
-      const nextLogFields = buildReviewLogFields(payload, current);
-      const saved = await upsertStudyState(db, branded, {
-        ...current,
-        ...nextLogFields,
-      });
-      return { studyState: saved };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ studyState: unknown }> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) throw new Error("Invalid slug.");
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const nextLogFields = buildReviewLogFields(payload, current);
+  const saved = await upsertStudyState(db, branded, {
+    ...current,
+    ...nextLogFields,
+  });
+  return { studyState: saved };
 }
 
-export function overrideLastReviewResult(payload: {
+export async function overrideLastReviewResult(payload: {
   slug: string;
   rating: 0 | 1 | 2 | 3;
   solveTimeMs?: number;
@@ -261,48 +233,43 @@ export function overrideLastReviewResult(payload: {
   trackId?: string;
   groupId?: string;
 }) {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const normalized = normalizeSlug(payload.slug);
-      if (!normalized) throw new Error("Invalid slug.");
-      const now = nowIso();
-      const { db } = await getDb();
-      const branded = asProblemSlug(normalized);
-      await importProblem(db, { slug: normalized });
-      const current = await ensureStudyState(db, branded);
-      const logSnapshot = buildReviewLogFields(payload, current);
-      const settings =
-        (await getUserSettings(db)) ?? createInitialUserSettings();
-      const nextState = overrideLastReview({
-        state: current,
-        rating: payload.rating,
-        solveTimeMs: payload.solveTimeMs,
-        mode: payload.mode,
-        logSnapshot,
-        settings,
-        now,
-      });
-      await upsertStudyState(db, branded, nextState);
-      const replacedAttempt =
-        nextState.attemptHistory[nextState.attemptHistory.length - 1];
-      if (replacedAttempt)
-        await replaceLastAttempt(db, branded, replacedAttempt);
-      if (payload.trackId) {
-        await saveUserSettings(db, {
-          ...settings,
-          activeTrackId: asTrackId(payload.trackId),
-        });
-      }
-      const studyStateSummary = getStudyStateSummary(nextState);
-      return {
-        studyState: nextState,
-        nextReviewAt: studyStateSummary.nextReviewAt,
-        phase: studyStateSummary.phase,
-        lastRating: nextState.lastRating,
-      };
-    })(),
-    toErrMsg,
-  );
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) throw new Error("Invalid slug.");
+  const now = nowIso();
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const logSnapshot = buildReviewLogFields(payload, current);
+  const settings =
+    (await getUserSettings(db)) ?? createInitialUserSettings();
+  const nextState = overrideLastReview({
+    state: current,
+    rating: payload.rating,
+    solveTimeMs: payload.solveTimeMs,
+    mode: payload.mode,
+    logSnapshot,
+    settings,
+    now,
+  });
+  await upsertStudyState(db, branded, nextState);
+  const replacedAttempt =
+    nextState.attemptHistory[nextState.attemptHistory.length - 1];
+  if (replacedAttempt)
+    await replaceLastAttempt(db, branded, replacedAttempt);
+  if (payload.trackId) {
+    await saveUserSettings(db, {
+      ...settings,
+      activeTrackId: asTrackId(payload.trackId),
+    });
+  }
+  const studyStateSummary = getStudyStateSummary(nextState);
+  return {
+    studyState: nextState,
+    nextReviewAt: studyStateSummary.nextReviewAt,
+    phase: studyStateSummary.phase,
+    lastRating: nextState.lastRating,
+  };
 }
 
 export function rateProblem(payload: {
@@ -323,91 +290,71 @@ export function rateProblem(payload: {
 
 // ---------- Study-state mutation handlers ----------
 
-export function updateNotes(payload: {
+export async function updateNotes(payload: {
   slug: string;
   notes: string;
-}): ResultAsync<{ studyState: unknown }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const normalized = normalizeSlug(payload.slug);
-      if (!normalized) throw new Error("Invalid slug.");
-      const { db } = await getDb();
-      const branded = asProblemSlug(normalized);
-      await importProblem(db, { slug: normalized });
-      const current = await ensureStudyState(db, branded);
-      const saved = await upsertStudyState(db, branded, {
-        ...current,
-        notes: payload.notes,
-      });
-      return { studyState: saved };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ studyState: unknown }> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) throw new Error("Invalid slug.");
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const saved = await upsertStudyState(db, branded, {
+    ...current,
+    notes: payload.notes,
+  });
+  return { studyState: saved };
 }
 
-export function updateTags(payload: {
+export async function updateTags(payload: {
   slug: string;
   tags: string[];
-}): ResultAsync<{ studyState: unknown }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const normalized = normalizeSlug(payload.slug);
-      if (!normalized) throw new Error("Invalid slug.");
-      const { db } = await getDb();
-      const branded = asProblemSlug(normalized);
-      await importProblem(db, { slug: normalized });
-      const current = await ensureStudyState(db, branded);
-      const saved = await upsertStudyState(db, branded, {
-        ...current,
-        tags: payload.tags.map((tag) => tag.trim()).filter(Boolean),
-      });
-      return { studyState: saved };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ studyState: unknown }> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) throw new Error("Invalid slug.");
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const saved = await upsertStudyState(db, branded, {
+    ...current,
+    tags: payload.tags.map((tag) => tag.trim()).filter(Boolean),
+  });
+  return { studyState: saved };
 }
 
-export function suspendProblem(payload: {
+export async function suspendProblem(payload: {
   slug: string;
   suspend: boolean;
-}): ResultAsync<{ studyState: unknown }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const normalized = normalizeSlug(payload.slug);
-      if (!normalized) throw new Error("Invalid slug.");
-      const { db } = await getDb();
-      const branded = asProblemSlug(normalized);
-      await importProblem(db, { slug: normalized });
-      const current = await ensureStudyState(db, branded);
-      const saved = await upsertStudyState(db, branded, {
-        ...current,
-        suspended: payload.suspend,
-      });
-      return { studyState: saved };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ studyState: unknown }> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) throw new Error("Invalid slug.");
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const current = await ensureStudyState(db, branded);
+  const saved = await upsertStudyState(db, branded, {
+    ...current,
+    suspended: payload.suspend,
+  });
+  return { studyState: saved };
 }
 
-export function resetProblem(payload: {
+export async function resetProblem(payload: {
   slug: string;
   keepNotes?: boolean;
-}): ResultAsync<{ studyState: unknown }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const normalized = normalizeSlug(payload.slug);
-      if (!normalized) throw new Error("Invalid slug.");
-      const { db } = await getDb();
-      const branded = asProblemSlug(normalized);
-      await importProblem(db, { slug: normalized });
-      const existing = await getStudyState(db, branded);
-      const reset = resetSchedule(existing, payload.keepNotes ?? true);
-      await clearAttempts(db, branded);
-      const saved = await upsertStudyState(db, branded, reset);
-      return { studyState: saved };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ studyState: unknown }> {
+  const normalized = normalizeSlug(payload.slug);
+  if (!normalized) throw new Error("Invalid slug.");
+  const { db } = await getDb();
+  const branded = asProblemSlug(normalized);
+  await importProblem(db, { slug: normalized });
+  const existing = await getStudyState(db, branded);
+  const reset = resetSchedule(existing, payload.keepNotes ?? true);
+  await clearAttempts(db, branded);
+  const saved = await upsertStudyState(db, branded, reset);
+  return { studyState: saved };
 }
 
 // ---------- Problem edit / classification handlers (from v7) ----------
@@ -418,37 +365,32 @@ export interface EditProblemPayload {
   markUserEdit?: boolean;
 }
 
-export function editProblemHandler(
+export async function editProblemHandler(
   payload: EditProblemPayload,
-): ResultAsync<{ slug: string }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const slug = asProblemSlug(payload.slug);
-      const patch: ProblemEditPatch = {
-        ...payload.patch,
-        topicIds: payload.patch.topicIds?.map((id) => asTopicId(id)) as
-          | TopicId[]
-          | undefined,
-        companyIds: payload.patch.companyIds?.map((id) =>
-          asCompanyId(id),
-        ) as CompanyId[] | undefined,
-      };
-      const { db } = await getDb();
-      const existing = await getProblem(db, slug);
-      if (!existing) {
-        throw new Error(
-          "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to edit. Visit the page and then come back.",
-        );
-      }
-      await editProblem(db, {
-        slug,
-        patch,
-        markUserEdit: payload.markUserEdit ?? true,
-      });
-      return { slug };
-    })(),
-    toErrMsg,
-  );
+): Promise<{ slug: string }> {
+  const slug = asProblemSlug(payload.slug);
+  const patch: ProblemEditPatch = {
+    ...payload.patch,
+    topicIds: payload.patch.topicIds?.map((id) => asTopicId(id)) as
+      | TopicId[]
+      | undefined,
+    companyIds: payload.patch.companyIds?.map((id) =>
+      asCompanyId(id),
+    ) as CompanyId[] | undefined,
+  };
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (!existing) {
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to edit. Visit the page and then come back.",
+    );
+  }
+  await editProblem(db, {
+    slug,
+    patch,
+    markUserEdit: payload.markUserEdit ?? true,
+  });
+  return { slug };
 }
 
 export interface CreateCustomTopicPayload {
@@ -456,21 +398,16 @@ export interface CreateCustomTopicPayload {
   description?: string;
 }
 
-export function createCustomTopicHandler(
+export async function createCustomTopicHandler(
   payload: CreateCustomTopicPayload,
-): ResultAsync<{ id: string }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const { db } = await getDb();
-      const topic = await upsertTopic(db, {
-        name: payload.name,
-        description: payload.description,
-        isCustom: true,
-      });
-      return { id: topic.id };
-    })(),
-    toErrMsg,
-  );
+): Promise<{ id: string }> {
+  const { db } = await getDb();
+  const topic = await upsertTopic(db, {
+    name: payload.name,
+    description: payload.description,
+    isCustom: true,
+  });
+  return { id: topic.id };
 }
 
 export interface CreateCustomCompanyPayload {
@@ -478,21 +415,16 @@ export interface CreateCustomCompanyPayload {
   description?: string;
 }
 
-export function createCustomCompanyHandler(
+export async function createCustomCompanyHandler(
   payload: CreateCustomCompanyPayload,
-): ResultAsync<{ id: string }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const { db } = await getDb();
-      const company = await upsertCompany(db, {
-        name: payload.name,
-        description: payload.description,
-        isCustom: true,
-      });
-      return { id: company.id };
-    })(),
-    toErrMsg,
-  );
+): Promise<{ id: string }> {
+  const { db } = await getDb();
+  const company = await upsertCompany(db, {
+    name: payload.name,
+    description: payload.description,
+    isCustom: true,
+  });
+  return { id: company.id };
 }
 
 export interface AssignTopicPayload {
@@ -501,37 +433,32 @@ export interface AssignTopicPayload {
   assigned?: boolean;
 }
 
-export function assignTopicHandler(
+export async function assignTopicHandler(
   payload: AssignTopicPayload,
-): ResultAsync<{ slug: string }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const slug = asProblemSlug(payload.slug);
-      const topicId = asTopicId(payload.topicId);
-      const assigned = payload.assigned ?? true;
-      const { db } = await getDb();
-      const existing = await getProblem(db, slug);
-      if (!existing) {
-        throw new Error(
-          "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a topic to.",
-        );
-      }
-      const current = existing.topicIds as TopicId[];
-      const has = current.includes(topicId);
-      if (assigned && has) return { slug };
-      if (!assigned && !has) return { slug };
-      const nextIds = assigned
-        ? [...current, topicId]
-        : current.filter((id) => id !== topicId);
-      await editProblem(db, {
-        slug,
-        patch: { topicIds: nextIds },
-        markUserEdit: true,
-      });
-      return { slug };
-    })(),
-    toErrMsg,
-  );
+): Promise<{ slug: string }> {
+  const slug = asProblemSlug(payload.slug);
+  const topicId = asTopicId(payload.topicId);
+  const assigned = payload.assigned ?? true;
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (!existing) {
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a topic to.",
+    );
+  }
+  const current = existing.topicIds as TopicId[];
+  const has = current.includes(topicId);
+  if (assigned && has) return { slug };
+  if (!assigned && !has) return { slug };
+  const nextIds = assigned
+    ? [...current, topicId]
+    : current.filter((id) => id !== topicId);
+  await editProblem(db, {
+    slug,
+    patch: { topicIds: nextIds },
+    markUserEdit: true,
+  });
+  return { slug };
 }
 
 export interface AssignCompanyPayload {
@@ -540,37 +467,32 @@ export interface AssignCompanyPayload {
   assigned?: boolean;
 }
 
-export function assignCompanyHandler(
+export async function assignCompanyHandler(
   payload: AssignCompanyPayload,
-): ResultAsync<{ slug: string }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const slug = asProblemSlug(payload.slug);
-      const companyId = asCompanyId(payload.companyId);
-      const assigned = payload.assigned ?? true;
-      const { db } = await getDb();
-      const existing = await getProblem(db, slug);
-      if (!existing) {
-        throw new Error(
-          "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a company to.",
-        );
-      }
-      const current = existing.companyIds as CompanyId[];
-      const has = current.includes(companyId);
-      if (assigned && has) return { slug };
-      if (!assigned && !has) return { slug };
-      const nextIds = assigned
-        ? [...current, companyId]
-        : current.filter((id) => id !== companyId);
-      await editProblem(db, {
-        slug,
-        patch: { companyIds: nextIds },
-        markUserEdit: true,
-      });
-      return { slug };
-    })(),
-    toErrMsg,
-  );
+): Promise<{ slug: string }> {
+  const slug = asProblemSlug(payload.slug);
+  const companyId = asCompanyId(payload.companyId);
+  const assigned = payload.assigned ?? true;
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (!existing) {
+    throw new Error(
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a company to.",
+    );
+  }
+  const current = existing.companyIds as CompanyId[];
+  const has = current.includes(companyId);
+  if (assigned && has) return { slug };
+  if (!assigned && !has) return { slug };
+  const nextIds = assigned
+    ? [...current, companyId]
+    : current.filter((id) => id !== companyId);
+  await editProblem(db, {
+    slug,
+    patch: { companyIds: nextIds },
+    markUserEdit: true,
+  });
+  return { slug };
 }
 
 // ---------- Catalog import handlers (from courseHandlers) ----------
@@ -607,74 +529,53 @@ async function importSetIntoDb(
   return { added, updated };
 }
 
-export function importCuratedTrackHandler(payload: {
+export async function importCuratedTrackHandler(payload: {
   trackName: string;
-}): ResultAsync<
-  { trackName: string; count: number; added: number; updated: number },
-  string
-> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const setProblems = getCuratedSet(payload.trackName);
-      if (setProblems.length === 0) {
-        throw new Error(`Unknown curated track: ${payload.trackName}`);
-      }
-      const importResult = await importSetIntoDb(setProblems);
-      return {
-        trackName: payload.trackName,
-        count: setProblems.length,
-        added: importResult.added,
-        updated: importResult.updated,
-      };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ trackName: string; count: number; added: number; updated: number }> {
+  const setProblems = getCuratedSet(payload.trackName);
+  if (setProblems.length === 0) {
+    throw new Error(`Unknown curated track: ${payload.trackName}`);
+  }
+  const importResult = await importSetIntoDb(setProblems);
+  return {
+    trackName: payload.trackName,
+    count: setProblems.length,
+    added: importResult.added,
+    updated: importResult.updated,
+  };
 }
 
-export function importCustomTrackHandler(payload: {
+export async function importCustomTrackHandler(payload: {
   trackName?: string;
   items: CatalogItem[];
-}): ResultAsync<
-  { trackName: string; count: number; added: number; updated: number },
-  string
-> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      if (!Array.isArray(payload.items) || payload.items.length === 0) {
-        throw new Error("Custom track import requires at least one item.");
-      }
-      const normalizedName = payload.trackName?.trim() || "Custom";
-      const importResult = await importSetIntoDb(payload.items);
-      return {
-        trackName: normalizedName,
-        count: payload.items.length,
-        added: importResult.added,
-        updated: importResult.updated,
-      };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ trackName: string; count: number; added: number; updated: number }> {
+  if (!Array.isArray(payload.items) || payload.items.length === 0) {
+    throw new Error("Custom track import requires at least one item.");
+  }
+  const normalizedName = payload.trackName?.trim() || "Custom";
+  const importResult = await importSetIntoDb(payload.items);
+  return {
+    trackName: normalizedName,
+    count: payload.items.length,
+    added: importResult.added,
+    updated: importResult.updated,
+  };
 }
 
-export function addProblemByInputHandler(payload: {
+export async function addProblemByInputHandler(payload: {
   input: string;
   sourceSet?: string;
   topics?: string[];
   markAsStarted?: boolean;
-}): ResultAsync<{ slug: string; problem: unknown; studyState: unknown }, string> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const parsed = parseProblemInput(payload.input);
-      const { db } = await getDb();
-      const branded = asProblemSlug(parsed.slug);
-      const problem = await importProblem(db, {
-        slug: parsed.slug,
-        url: parsed.url,
-        topicIds: payload.topics,
-      });
-      const studyState = await ensureStudyState(db, branded);
-      return { slug: parsed.slug, problem, studyState };
-    })(),
-    toErrMsg,
-  );
+}): Promise<{ slug: string; problem: unknown; studyState: unknown }> {
+  const parsed = parseProblemInput(payload.input);
+  const { db } = await getDb();
+  const branded = asProblemSlug(parsed.slug);
+  const problem = await importProblem(db, {
+    slug: parsed.slug,
+    url: parsed.url,
+    topicIds: payload.topics,
+  });
+  const studyState = await ensureStudyState(db, branded);
+  return { slug: parsed.slug, problem, studyState };
 }
