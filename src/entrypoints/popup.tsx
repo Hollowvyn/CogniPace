@@ -1,9 +1,9 @@
 /** Popup entrypoint that mounts the popup screen into the extension document. */
+import { AppProviders } from "@app/providers";
 import { StrictMode, createElement } from "react";
 import { createRoot } from "react-dom/client";
 
-import { AppProviders } from "../ui/providers";
-import { PopupApp } from "../ui/screens/popup/PopupApp";
+import { PopupShell } from "../app/popup/PopupShell";
 
 const mountNode = document.getElementById("popup-root");
 if (!mountNode) {
@@ -14,6 +14,6 @@ createRoot(mountNode).render(
   createElement(
     StrictMode,
     null,
-    createElement(AppProviders, null, createElement(PopupApp))
+    createElement(AppProviders, { surface: "popup" }, createElement(PopupShell))
   )
 );

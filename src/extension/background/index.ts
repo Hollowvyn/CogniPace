@@ -1,31 +1,18 @@
 /** Service-worker bootstrap for background lifecycle, alarms, and runtime routing. */
-import { flushSnapshot, getDb } from "../../data/db/instance";
-import {
-  getAppData,
-  STORAGE_KEY,
-} from "../../data/repositories/appDataRepository";
-import {
-  assertAuthorizedRuntimeMessage,
-  validateRuntimeMessage,
-} from "../runtime/validator";
+import { DB_TICK_KEY } from "@libs/event-bus/utils/DB_TICK_KEY";
+import { flushSnapshot, getDb } from "@platform/db/instance";
 
+import { dispatch } from "./dispatcher";
 import {
   handleStartupDueCheck,
   maybeNotifyDueQueue,
   scheduleNextDueAlarm,
 } from "./notifications";
-import { fail } from "./responses";
-import { handleMessage } from "./router";
 
 chrome.runtime.onInstalled.addListener((details) => {
   // Defer all async work so a single failure doesn't crash the
   // top-level install handler and leave the SW unable to wake.
   void (async () => {
-    try {
-      await getAppData();
-    } catch (err) {
-      console.error("[CogniPace] onInstalled getAppData failed:", err);
-    }
     try {
       // Eagerly boot the SQLite DB so the snapshot restore / catalog
       // seed happens before any handler call.
@@ -64,7 +51,10 @@ if (chrome.runtime.onSuspend?.addListener) {
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && STORAGE_KEY in changes) {
+  // Every SQLite mutation fires a `DB_TICK_KEY` write; treat that as the
+  // cue to re-check whether the user changed notification settings (and
+  // reschedule the alarm if so). The v7 blob path is retired.
+  if (area === "local" && DB_TICK_KEY in changes) {
     void scheduleNextDueAlarm();
   }
 });
@@ -75,21 +65,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-chrome.runtime.onMessage.addListener(
-  (message: unknown, sender, sendResponse) => {
-    void Promise.resolve()
-      .then(() => {
-        const validatedMessage = validateRuntimeMessage(message);
-        assertAuthorizedRuntimeMessage(
-          validatedMessage,
-          sender,
-          chrome.runtime.id,
-          chrome.runtime.getURL("")
-        );
-        return handleMessage(validatedMessage, sender);
-      })
-      .then((response) => sendResponse(response))
-      .catch((error) => sendResponse(fail(error)));
-    return true;
-  }
-);
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+  void dispatch(message, sender, chrome.runtime.id, chrome.runtime.getURL("")).then(
+    sendResponse,
+  );
+  return true; // keep the channel open for the async response
+});

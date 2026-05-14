@@ -1,6 +1,10 @@
 import * as fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "vitest/config";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Vite plugin: mirrors the esbuild `.sql` text loader configured in
@@ -21,9 +25,22 @@ const sqlTextLoader = {
 
 export default defineConfig({
   plugins: [sqlTextLoader],
+  resolve: {
+    alias: {
+      "@app": path.resolve(here, "src/app"),
+      "@extension": path.resolve(here, "src/extension"),
+      "@features": path.resolve(here, "src/features"),
+      "@libs": path.resolve(here, "src/libs"),
+      "@platform": path.resolve(here, "src/platform"),
+      "@design-system": path.resolve(here, "src/design-system"),
+      "@shared": path.resolve(here, "src/shared"),
+    },
+  },
   test: {
     environment: "node",
-    include: ["tests/**/*.test.ts"],
+    include: [
+      "src/tests/**/*.test.ts",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],

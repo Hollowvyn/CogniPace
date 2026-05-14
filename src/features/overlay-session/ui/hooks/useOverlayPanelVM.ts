@@ -1,0 +1,654 @@
+/** OverlayPanel's ViewModel — composes page bootstrap, timer state,
+ *  session state, and render-model shaping per the canonical Screen+VM
+ *  pattern. */
+import { appShellRepository, AppShellPayload } from "@features/app-shell";
+import {
+  Difficulty,
+  getProblemContext,
+  openExtensionPage,
+  openProblemPage,
+  upsertProblemFromPage,
+} from "@features/problems";
+import { createInitialUserSettings , UserSettings } from "@features/settings";
+import { Rating, StudyState } from "@features/study";
+import {
+  getProblemSlugFromUrl,
+  isStaleOverlayRequest,
+  readProblemPageSnapshot,
+} from "@libs/leetcode";
+import { formatClock } from "@platform/time";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+
+
+import {
+  defaultReviewMode,
+  deriveQuickRating,
+  goalForDifficulty,
+} from "../../domain/policy/reviewPolicy";
+import { draftsEqual } from "../screens/controller/draftFields";
+import {
+  buildHeaderStatus,
+  buildSessionLabel,
+} from "../screens/controller/headerStatus";
+import { deriveOverlaySubmitDecision } from "../screens/controller/submitDecision";
+import { useOverlaySessionMachine } from "../screens/controller/useOverlaySessionMachine";
+import { useOverlayTimer } from "../screens/controller/useOverlayTimer";
+import {
+  OverlayPostSubmitNextViewModel,
+  OverlayRenderModel,
+  OverlayTimerSectionViewModel,
+} from "../screens/overlayPanel.types";
+
+export interface OverlayPanelEnvironment {
+  documentRef: Document;
+  windowRef: Window;
+}
+
+/** Coordinates overlay orchestration while delegating timer/session logic to dedicated hooks. */
+export function useOverlayPanelVM(
+  environment: OverlayPanelEnvironment
+): { renderModel: OverlayRenderModel | null } {
+  const { documentRef, windowRef } = environment;
+  const timer = useOverlayTimer(windowRef);
+  const [postSubmitNext, setPostSubmitNext] =
+    useState<OverlayPostSubmitNextViewModel | null>(null);
+  const [settings, setSettings] = useState<UserSettings>(() =>
+    createInitialUserSettings()
+  );
+  const {
+    activateProblem,
+    applyProblemContext,
+    clearActiveProblem,
+    collapse,
+    dock,
+    expand,
+    pauseTimer,
+    persistDraft,
+    resetTimer,
+    restartSession,
+    saveOverride,
+    selectRating,
+    setFeedback,
+    startTimer,
+    state: currentState,
+    submitRating: persistSubmittedRating,
+    updateDraft,
+  } = useOverlaySessionMachine({ timer, windowRef });
+  const activeSlugRef = useRef("");
+  const lastHrefRef = useRef(windowRef.location.href);
+  const postSubmitRequestTokenRef = useRef(0);
+  const requestTokenRef = useRef(0);
+  const warmRefreshHandlesRef = useRef<number[]>([]);
+
+  const clearWarmRefreshes = useCallback(() => {
+    for (const handle of warmRefreshHandlesRef.current) {
+      windowRef.clearTimeout(handle);
+    }
+    warmRefreshHandlesRef.current = [];
+  }, [windowRef]);
+
+  const clearPostSubmitNext = useCallback(() => {
+    postSubmitRequestTokenRef.current += 1;
+    setPostSubmitNext(null);
+  }, []);
+
+  const showPostSubmitLoading = useCallback(() => {
+    setPostSubmitNext({
+      kind: "loading",
+      title: "Finding next question",
+      message: "Review saved. Pulling the latest recommendation now.",
+    });
+  }, []);
+
+  const openOverlayProblem = useCallback(
+    async (target: { slug: string; trackId?: string; groupId?: string }) => {
+      try {
+        await openProblemPage(target);
+      } catch (err) {
+        setFeedback((err as Error).message || "Failed to open problem.", true);
+      }
+    },
+    [setFeedback]
+  );
+
+  const derivePostSubmitNext = useCallback(
+    (
+      payload: AppShellPayload,
+      currentSlug: string
+    ): OverlayPostSubmitNextViewModel | null => {
+      const fallbackRecommended =
+        payload.popup.recommendedCandidates.find(
+          (candidate) => candidate.slug !== currentSlug
+        ) ??
+        (payload.popup.recommended &&
+        payload.popup.recommended.slug !== currentSlug
+          ? payload.popup.recommended
+          : null);
+
+      if (
+        payload.settings.studyMode === "studyPlan" &&
+        payload.popup.trackNext &&
+        payload.popup.trackNext.slug !== currentSlug
+      ) {
+        return {
+          kind: "track",
+          activeTrackId: payload.activeTrack?.id,
+          onOpenProblem: openOverlayProblem,
+          view: payload.popup.trackNext,
+        };
+      }
+
+      if (fallbackRecommended) {
+        return {
+          kind: "recommended",
+          onOpenProblem: openOverlayProblem,
+          recommended: fallbackRecommended,
+        };
+      }
+
+      return null;
+    },
+    [openOverlayProblem]
+  );
+
+  const refreshPostSubmitNext = useCallback(
+    async (currentSlug: string) => {
+      const requestToken = ++postSubmitRequestTokenRef.current;
+      let shell: AppShellPayload;
+      try {
+        shell = await appShellRepository.fetchAppShell();
+      } catch (err) {
+        if (requestToken !== postSubmitRequestTokenRef.current) return;
+        setPostSubmitNext({
+          kind: "empty",
+          title: "Next question unavailable",
+          message:
+            (err as Error).message ||
+            "Review saved, but the overlay could not load the latest recommendation.",
+        });
+        return;
+      }
+      if (requestToken !== postSubmitRequestTokenRef.current) return;
+
+      setPostSubmitNext(
+        derivePostSubmitNext(shell, currentSlug) ?? {
+          kind: "empty",
+          title: "No next question ready",
+          message:
+            "Review saved. The current study queue does not have another question ready.",
+        }
+      );
+    },
+    [derivePostSubmitNext]
+  );
+
+  const refreshCurrentPage = useCallback(
+    async (slugOverride?: string): Promise<void> => {
+      const slug =
+        slugOverride ?? getProblemSlugFromUrl(windowRef.location.href);
+      if (!slug) {
+        return;
+      }
+
+      const requestToken = ++requestTokenRef.current;
+      const pageSnapshot = readProblemPageSnapshot(documentRef, slug);
+
+      try {
+        await upsertProblemFromPage({
+          slug,
+          title: pageSnapshot.title,
+          difficulty: pageSnapshot.difficulty,
+          isPremium: pageSnapshot.isPremium,
+          url: `https://leetcode.com/problems/${slug}/`,
+        });
+      } catch (err) {
+        if (
+          isStaleOverlayRequest(
+            requestToken,
+            requestTokenRef.current,
+            activeSlugRef.current,
+            slug
+          )
+        ) {
+          return;
+        }
+        setFeedback(
+          (err as Error).message || "Failed to sync problem.",
+          true
+        );
+        return;
+      }
+
+      if (
+        isStaleOverlayRequest(
+          requestToken,
+          requestTokenRef.current,
+          activeSlugRef.current,
+          slug
+        )
+      ) {
+        return;
+      }
+
+      let problemContext: { problem: unknown; studyState: unknown };
+      let shell: AppShellPayload | null = null;
+      try {
+        const [contextResult, shellResult] = await Promise.all([
+          getProblemContext(slug),
+          appShellRepository.fetchAppShell(),
+        ]);
+        problemContext = contextResult;
+        shell = shellResult;
+      } catch (err) {
+        if (
+          isStaleOverlayRequest(
+            requestToken,
+            requestTokenRef.current,
+            activeSlugRef.current,
+            slug
+          )
+        ) {
+          return;
+        }
+        setFeedback(
+          (err as Error).message || "Failed to fetch context.",
+          true
+        );
+        return;
+      }
+
+      if (
+        isStaleOverlayRequest(
+          requestToken,
+          requestTokenRef.current,
+          activeSlugRef.current,
+          slug
+        )
+      ) {
+        return;
+      }
+
+      if (shell?.settings) {
+        setSettings(shell.settings);
+      }
+
+      const context = (problemContext ?? {
+        problem: null,
+        studyState: null,
+      }) as {
+        problem: { difficulty?: Difficulty; title?: string } | null;
+        studyState: StudyState | null;
+      };
+      applyProblemContext({
+        difficulty:
+          context.problem?.difficulty ?? pageSnapshot.difficulty,
+        slug,
+        studyState: context.studyState ?? null,
+        title: context.problem?.title ?? pageSnapshot.title,
+      });
+    },
+    [applyProblemContext, documentRef, setFeedback, windowRef]
+  );
+
+  const scheduleWarmRefreshes = useCallback(
+    (slug: string) => {
+      clearWarmRefreshes();
+      for (const delayMs of [600, 1800]) {
+        const handle = windowRef.setTimeout(() => {
+          if (activeSlugRef.current === slug) {
+            void refreshCurrentPage(slug);
+          }
+        }, delayMs);
+        warmRefreshHandlesRef.current.push(handle);
+      }
+    },
+    [clearWarmRefreshes, refreshCurrentPage, windowRef]
+  );
+
+  const bootstrap = useCallback(async (): Promise<void> => {
+    const slug = getProblemSlugFromUrl(windowRef.location.href);
+    if (!slug) {
+      ++requestTokenRef.current;
+      activeSlugRef.current = "";
+      clearWarmRefreshes();
+      clearPostSubmitNext();
+      clearActiveProblem();
+      return;
+    }
+
+    if (slug === activeSlugRef.current) {
+      return;
+    }
+
+    ++requestTokenRef.current;
+    activeSlugRef.current = slug;
+    clearWarmRefreshes();
+    clearPostSubmitNext();
+    activateProblem(readProblemPageSnapshot(documentRef, slug));
+
+    await refreshCurrentPage(slug);
+    scheduleWarmRefreshes(slug);
+  }, [
+    activateProblem,
+    clearActiveProblem,
+    clearPostSubmitNext,
+    clearWarmRefreshes,
+    documentRef,
+    refreshCurrentPage,
+    scheduleWarmRefreshes,
+    windowRef.location.href,
+  ]);
+
+  useEffect(() => {
+    const handle = windowRef.setTimeout(() => {
+      void bootstrap();
+    }, 0);
+
+    return () => {
+      windowRef.clearTimeout(handle);
+    };
+  }, [bootstrap, windowRef]);
+
+  useEffect(() => {
+    const handle = windowRef.setInterval(() => {
+      if (windowRef.location.href !== lastHrefRef.current) {
+        lastHrefRef.current = windowRef.location.href;
+        void bootstrap();
+      }
+    }, 1000);
+
+    return () => {
+      windowRef.clearInterval(handle);
+    };
+  }, [bootstrap, windowRef]);
+
+  useEffect(() => {
+    return () => {
+      clearWarmRefreshes();
+    };
+  }, [clearWarmRefreshes]);
+
+  if (!currentState.activeSlug) {
+    return { renderModel: null };
+  }
+
+  const sessionMode =
+    currentState.submittedSession?.mode ??
+    defaultReviewMode(currentState.currentState);
+  const canSubmit = currentState.submittedSession === null;
+  const canUpdate =
+    currentState.submittedSession !== null &&
+    (currentState.submittedSession.rating !== currentState.selectedRating ||
+      !draftsEqual(currentState.submittedSession.draft, currentState.draft));
+  const canRestart = currentState.submittedSession !== null;
+  const feedback = currentState.feedbackMessage
+    ? {
+        isError: currentState.feedbackIsError,
+        message: currentState.feedbackMessage,
+      }
+    : null;
+
+  const goalMs = goalForDifficulty(
+    currentState.currentDifficulty,
+    settings.timing.difficultyGoalMs
+  );
+  const isOvertime = timer.elapsedMs > goalMs;
+  const hardMode = settings.timing.hardMode;
+  const isHardModeOvertime = isOvertime && hardMode;
+
+  const assessmentAssist = {
+    id: "overlay-assessment-help",
+    message: isHardModeOvertime
+      ? "Overtime in Hard Mode forces an Again assessment."
+      : currentState.failureLocked
+        ? "Failed sessions stay locked to Again until you restart and open a fresh attempt."
+        : currentState.selectedRating === 3
+          ? "Easy means the solution felt immediate and you can trust the recall."
+          : currentState.selectedRating === 2
+            ? "Good means you finished with steady recall but not instantly."
+            : currentState.selectedRating === 1
+              ? "Hard means you got there with friction and should expect a sooner review."
+              : "Again means you could not complete it and want the shortest review interval.",
+    tone: isHardModeOvertime || currentState.failureLocked || currentState.selectedRating === 0
+      ? "danger"
+      : currentState.selectedRating === 1
+        ? "warning"
+        : currentState.selectedRating === 3
+          ? "success"
+          : "accent",
+  } as const;
+  const actionAssist = {
+    id: "overlay-action-help",
+    message: currentState.submittedSession
+      ? "Submit is locked for this session. Update replaces the latest saved result; Restart opens a fresh local attempt."
+      : "Submit saves this attempt. Use the selected assessment if you need more control than the compact quick-submit path.",
+    tone: currentState.submittedSession ? "accent" : "default",
+  } as const;
+  const collapsedAssist = {
+    id: "overlay-collapsed-help",
+    message: currentState.submittedSession
+      ? "Result saved. Expand to update or restart this session."
+      : "Collapsed mode keeps timer and quick review actions one click away.",
+    tone: currentState.submittedSession ? "accent" : "default",
+  } as const;
+
+  const refreshAfterMutation = async (persistedSlug: string | null) => {
+    if (persistedSlug) {
+      await refreshCurrentPage(persistedSlug);
+    }
+  };
+
+  const submitRating = async (
+    rating: Rating,
+    options?: {
+      lockFailureRating?: boolean;
+      solveTimeMs?: number;
+    }
+  ) => {
+    const persistedSlug = await persistSubmittedRating(rating, options);
+    if (!persistedSlug) {
+      clearPostSubmitNext();
+      return;
+    }
+    showPostSubmitLoading();
+    await refreshAfterMutation(persistedSlug);
+    await refreshPostSubmitNext(persistedSlug);
+  };
+
+  const performAssessmentSubmission = (rating?: Rating, forceLock = false) => {
+    const elapsedMs = timer.readElapsedMs();
+    const decision = deriveOverlaySubmitDecision({
+      elapsedMs,
+      explicitRating: rating,
+      forceLock,
+      goalMs,
+      hardMode,
+      selectedRating: currentState.selectedRating,
+    });
+
+    void submitRating(decision.rating, {
+      lockFailureRating: decision.lockFailureRating,
+      solveTimeMs: elapsedMs,
+    });
+  };
+
+  const onCompactSubmit = () => {
+    const elapsedMs = timer.readElapsedMs();
+    const rating = deriveQuickRating(
+      elapsedMs > 0 ? elapsedMs : undefined,
+      goalMs,
+      hardMode
+    );
+    performAssessmentSubmission(rating);
+  };
+
+  const onFailReview = () => {
+    performAssessmentSubmission(0, true);
+  };
+
+  const onSaveOverride = () => {
+    void saveOverride().then(async (persistedSlug) => {
+      if (!persistedSlug) {
+        return;
+      }
+      showPostSubmitLoading();
+      await refreshAfterMutation(persistedSlug);
+      await refreshPostSubmitNext(persistedSlug);
+    });
+  };
+
+  const onCollapseOverlay = async () => {
+    if (currentState.visualMode === "collapsed") {
+      return;
+    }
+
+    if (
+      currentState.activeSlug &&
+      !draftsEqual(currentState.draft, currentState.persistedDraft)
+    ) {
+      await persistDraft(currentState.activeSlug, currentState.draft);
+    }
+
+    collapse();
+  };
+
+  const onHideOverlay = async () => {
+    if (currentState.visualMode === "docked") {
+      return;
+    }
+
+    if (
+      currentState.activeSlug &&
+      !draftsEqual(currentState.draft, currentState.persistedDraft)
+    ) {
+      await persistDraft(currentState.activeSlug, currentState.draft);
+    }
+
+    dock();
+  };
+
+  const baseTimerModel: OverlayTimerSectionViewModel = {
+    canPause: canSubmit,
+    canReset: canSubmit && (timer.isRunning || timer.elapsedMs > 0),
+    canStart: canSubmit || canRestart,
+    display: formatClock(timer.elapsedMs),
+    isRunning: timer.isRunning,
+    onPause: pauseTimer,
+    onReset: resetTimer,
+    onStart: () => {
+      if (canRestart) {
+        clearPostSubmitNext();
+      }
+      startTimer();
+    },
+    startLabel: timer.isRunning
+      ? "Pause timer"
+      : canRestart && !canSubmit
+        ? "Start a new session"
+        : "Start timer",
+  };
+
+  if (currentState.visualMode === "collapsed") {
+    return {
+      renderModel: {
+        model: {
+          actions: {
+            canFail: canSubmit,
+            onHide: () => {
+              void onHideOverlay();
+            },
+            canSubmit,
+            onExpand: expand,
+            onFail: onFailReview,
+            onSubmit: onCompactSubmit,
+          },
+          assist: collapsedAssist,
+          feedback,
+          timer: baseTimerModel,
+        },
+        variant: "collapsed",
+      },
+    };
+  }
+
+  if (currentState.visualMode === "docked") {
+    return {
+      renderModel: {
+        model: {
+          onRestore: collapse,
+        },
+        variant: "docked",
+      },
+    };
+  }
+
+  const isAssessmentLocked = currentState.failureLocked || isHardModeOvertime;
+  const effectiveRating = isHardModeOvertime ? 0 : currentState.selectedRating;
+
+  return {
+    renderModel: {
+      model: {
+        actions: {
+          canFail: canSubmit,
+          canRestart,
+          canSubmit,
+          canUpdate,
+          onFail: onFailReview,
+          onRestart: () => {
+            clearPostSubmitNext();
+            restartSession(false);
+          },
+          onSubmit: () => {
+            performAssessmentSubmission();
+          },
+          onUpdate: onSaveOverride,
+        },
+        assessment: {
+          disabledRatings: isAssessmentLocked ? [1, 2, 3] : [],
+          onSelectRating: selectRating,
+          selectedRating: effectiveRating,
+        },
+        assessmentAssist,
+        actionAssist,
+        feedback,
+        header: {
+          difficulty: currentState.currentDifficulty,
+          onCollapse: () => {
+            void onCollapseOverlay();
+          },
+          onHide: () => {
+            void onHideOverlay();
+          },
+          onOpenSettings: () => {
+            void openExtensionPage("dashboard.html?view=settings");
+          },
+          sessionLabel: buildSessionLabel(
+            currentState.currentState,
+            sessionMode
+          ),
+          status: buildHeaderStatus(currentState.currentState),
+          title: currentState.currentTitle,
+        },
+        onClickAway: () => {
+          void onCollapseOverlay();
+        },
+        log: {
+          draft: currentState.draft,
+          onChange: updateDraft,
+        },
+        postSubmitNext,
+        timer: {
+          ...baseTimerModel,
+          targetDisplay: formatClock(
+            goalForDifficulty(
+              currentState.currentDifficulty,
+              settings.timing.difficultyGoalMs
+            )
+          ),
+        },
+      },
+      variant: "expanded",
+    },
+  };
+}

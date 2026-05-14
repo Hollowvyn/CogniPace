@@ -18,69 +18,65 @@
  * will use in Phase 6, so any wasm / proxy / Drizzle issue reproduces
  * here too. Resets on every reload — no persistence yet.
  */
-import { eq, and } from "drizzle-orm";
-
-import { listCatalogCompanySeeds } from "../data/catalog/companiesSeed";
-import { listCatalogTopicSeeds } from "../data/catalog/topicsSeed";
-import {
-  getCompany,
-  listCompanies,
-  removeCompany,
-  seedCatalogCompanies,
-  upsertCompany,
-} from "../data/companies/repository";
-import { createDb, type DbHandle } from "../data/db/client";
-import migrationSql from "../data/db/migrations/0000_initial.sql";
-import * as schema from "../data/db/schema";
-import {
-  base64ToBytes,
-  bytesToBase64,
-  computeFingerprint,
-  deserializeDb,
-  serializeDb,
-} from "../data/db/snapshot";
 import {
   bulkImportProblems,
   editProblem,
+  getCompany,
   getProblem,
+  getTopic,
   importProblem,
+  listCatalogCompanySeeds,
+  listCatalogTopicSeeds,
+  listCompanies,
   listProblems,
+  listTopics,
+  removeCompany,
   removeProblem,
-} from "../data/problems/repository";
+  removeTopic,
+  seedCatalogCompanies,
+  seedCatalogTopics,
+  upsertCompany,
+  upsertTopic,
+} from "@features/problems/server";
+import { createInitialUserSettings } from "@features/settings";
 import {
   getUserSettings,
   saveUserSettings,
   seedInitialSettings,
-} from "../data/settings/repository";
+} from "@features/settings/server";
 import {
   appendAttempt,
   ensureStudyState,
   getStudyState,
   upsertStudyState,
-} from "../data/studyStates/repository";
-import {
-  getTopic,
-  listTopics,
-  removeTopic,
-  seedCatalogTopics,
-  upsertTopic,
-} from "../data/topics/repository";
-import {
+} from "@features/study/server";
+import { buildTrackCatalogSeed ,
   addGroup as addGroupRepo,
   addProblemToGroup as addProblemToGroupRepo,
   createTrack as createTrackRepo,
   deleteTrack as deleteTrackRepo,
   listTracks as listTracksRepo,
   seedCatalogTracks,
-} from "../data/tracks/repository";
-import { buildTrackCatalogSeed } from "../data/tracks/seed";
+} from "@features/tracks/server";
+import { createDb, type DbHandle } from "@platform/db/client";
+import migrationSql from "@platform/db/migrations/0000_initial.sql";
+import * as schema from "@platform/db/schema";
+import {
+  base64ToBytes,
+  bytesToBase64,
+  computeFingerprint,
+  deserializeDb,
+  serializeDb,
+} from "@platform/db/snapshot";
 import {
   asCompanyId,
   asProblemSlug,
   asTopicId,
   asTrackId,
-} from "../domain/common/ids";
-import { createInitialUserSettings } from "../domain/settings";
+} from "@shared/ids";
+import { eq, and } from "drizzle-orm";
+
+
 
 let handle: DbHandle | undefined;
 

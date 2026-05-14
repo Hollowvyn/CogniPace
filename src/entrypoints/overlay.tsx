@@ -1,88 +1,26 @@
-/** Overlay entrypoint that mounts the React overlay into a shadow-root host on LeetCode pages. */
-import createCache from "@emotion/cache";
-import {CacheProvider} from "@emotion/react";
-import {createElement} from "react";
-import {createRoot, Root} from "react-dom/client";
+/** Overlay entrypoint — mounts the overlay shell into the shadow-root
+ *  host on LeetCode pages. Shadow-root + emotion cache setup lives in
+ *  `src/app/overlay/createOverlayHost.ts`; the React shell lives in
+ *  `src/app/overlay/OverlayShell.tsx`. */
+import { AppProviders } from "@app/providers";
+import { CacheProvider } from "@emotion/react";
+import { createElement } from "react";
 
-import {AppProviders} from "../ui/providers";
-import {OverlayRoot} from "../ui/screens/overlay/OverlayRoot";
+import { createOverlayHost } from "../app/overlay/createOverlayHost";
+import { OverlayShell } from "../app/overlay/OverlayShell";
 
-const OVERLAY_ID = "lcsr-overlay-root";
-
-interface OverlayMount {
-  cache: ReturnType<typeof createCache>;
-  portalContainer: HTMLElement;
-  root: Root;
-}
-
-let overlayMount: OverlayMount | null = null;
-
-function createOverlayMount(): OverlayMount {
-  const existingHost = document.getElementById(OVERLAY_ID);
-  if (existingHost?.shadowRoot) {
-    const mountNode = existingHost.shadowRoot.querySelector("[data-overlay-mount]");
-    const styleContainer = existingHost.shadowRoot.querySelector(
-      "[data-overlay-styles]"
-    );
-
-    if (mountNode instanceof HTMLDivElement && styleContainer instanceof HTMLElement) {
-      return {
-        cache: createCache({
-          key: "lcsr-overlay",
-          container: styleContainer,
-        }),
-        portalContainer: mountNode,
-        root: createRoot(mountNode),
-      };
-    }
-  }
-
-  const host = document.createElement("div");
-  host.id = OVERLAY_ID;
-  host.style.position = "fixed";
-  host.style.right = "20px";
-  host.style.bottom = "10px";
-  host.style.zIndex = "2147483647";
-  document.body.appendChild(host);
-
-  const shadowRoot = host.attachShadow({mode: "open"});
-  const styleContainer = document.createElement("div");
-  styleContainer.dataset.overlayStyles = "true";
-  const mountNode = document.createElement("div");
-  mountNode.dataset.overlayMount = "true";
-  shadowRoot.appendChild(styleContainer);
-  shadowRoot.appendChild(mountNode);
-
-  return {
-    cache: createCache({
-      key: "lcsr-overlay",
-      container: styleContainer,
-    }),
-    portalContainer: mountNode,
-    root: createRoot(mountNode),
-  };
-}
-
-function ensureOverlayMount(): OverlayMount {
-  if (!overlayMount) {
-    overlayMount = createOverlayMount();
-  }
-
-  return overlayMount;
-}
-
-const mount = ensureOverlayMount();
-mount.root.render(
+const host = createOverlayHost();
+host.root.render(
   createElement(
     CacheProvider,
-    {value: mount.cache},
+    { value: host.cache },
     createElement(
       AppProviders,
-      {portalContainer: mount.portalContainer},
-      createElement(OverlayRoot, {
+      { portalContainer: host.portalContainer, surface: "overlay" },
+      createElement(OverlayShell, {
         documentRef: document,
         windowRef: window,
-      })
-    )
-  )
+      }),
+    ),
+  ),
 );
