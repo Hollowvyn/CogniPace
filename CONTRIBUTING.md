@@ -25,9 +25,12 @@ npm run check
 ## Project Guardrails
 
 - React 19 + MUI + Emotion are the canonical UI stack
-- Keep `src/domain/*` React-free
+- Keep domain code in `src/libs/` and `src/features/*/domain/` React-free and `chrome`-free
 - Keep `src/entrypoints/*` thin
-- UI reads and writes should go through repositories and runtime clients, not direct `chrome.storage` access
+- UI reads and writes should go through the typed `api.*` proxy and feature datasources, not direct `chrome.storage` access
+- New features belong in a `src/features/<name>/` slice following the `data/domain/ui/messaging` layout; register SW handlers in `src/extension/background/swApi.ts`
+- New data access: add a datasource function under `src/features/<name>/data/datasource/` that accepts a `Db` argument; call `getDb()` only from a SW handler
+- Schema changes require editing `src/platform/db/schema/` and running `drizzle-kit generate`; never hand-edit the migration file
 - Keep popup, overlay, and dashboard behavior aligned with the product and architecture docs
 
 ## Validation And Review
