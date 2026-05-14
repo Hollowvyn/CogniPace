@@ -1,7 +1,6 @@
 /** Dashboard-specific surface primitives composed from the shared CogniPace theme. */
 import {
   InsetSurface,
-  SurfaceActionBar,
   SurfacePanel,
   SurfaceSectionLabel,
 } from "@design-system/atoms";
@@ -94,13 +93,5 @@ export function DashboardSettingsGroup(props: {
         {props.children}
       </Stack>
     </InsetSurface>
-  );
-}
-
-export function DashboardActionBar(props: { children: ReactNode }) {
-  return (
-    <SurfaceActionBar sx={{ borderTop: 1, borderColor: "divider", pt: 1.5 }}>
-      {props.children}
-    </SurfaceActionBar>
   );
 }
