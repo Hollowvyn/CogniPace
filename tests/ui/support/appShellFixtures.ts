@@ -128,7 +128,6 @@ export function makePayload() {
         topics: [],
         topicIds: [],
         companyIds: [],
-        sourceSet: ["Blind75"],
         createdAt: "2026-03-01T00:00:00.000Z",
         updatedAt: "2026-03-01T00:00:00.000Z",
       },

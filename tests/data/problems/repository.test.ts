@@ -65,7 +65,6 @@ function makeProblem(slug: string, overrides: Partial<Problem> = {}): Problem {
     topics: [],
     topicIds: [],
     companyIds: [],
-    sourceSet: [],
     createdAt: now,
     updatedAt: now,
     ...overrides,

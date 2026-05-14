@@ -54,9 +54,8 @@ import type { Db } from "@platform/db/client";
 type ProblemRow = typeof schema.problems.$inferSelect;
 
 /**
- * Schema row → domain Problem. v6 transitional fields (id,
- * leetcodeSlug, topics, sourceSet) are derived from slug or set to
- * empty until the broader v6/v7 cleanup phases.
+ * Schema row → domain Problem. Legacy aliases (id, leetcodeSlug, topics)
+ * are derived from slug or set to empty until their dedicated cuts land.
  */
 function toProblem(row: ProblemRow): Problem {
   const userEdits =
@@ -74,7 +73,6 @@ function toProblem(row: ProblemRow): Problem {
     topics: [],
     topicIds: row.topicIds,
     companyIds: row.companyIds,
-    sourceSet: [],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -187,7 +185,6 @@ export async function importProblem(
       topics: [],
       topicIds: brandTopicIds(args.topicIds),
       companyIds: brandCompanyIds(args.companyIds),
-      sourceSet: [],
       createdAt: now,
       updatedAt: now,
     };

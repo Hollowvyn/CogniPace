@@ -197,7 +197,6 @@ function synthesizeProblem(slug: string): Problem {
     topics: [],
     topicIds: [],
     companyIds: [],
-    sourceSet: [],
     createdAt: "",
     updatedAt: "",
   };

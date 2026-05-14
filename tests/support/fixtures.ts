@@ -32,7 +32,6 @@ export function makeProblem(
     topics: overrides.topics ?? [],
     topicIds: overrides.topicIds ?? [],
     companyIds: overrides.companyIds ?? [],
-    sourceSet: overrides.sourceSet ?? [],
     leetcodeId: overrides.leetcodeId,
     userEdits: overrides.userEdits,
     createdAt: overrides.createdAt ?? FIXTURE_NOW,

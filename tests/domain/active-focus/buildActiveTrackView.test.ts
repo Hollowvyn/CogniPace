@@ -96,7 +96,6 @@ function makeProblem(slug: string, title: string): Problem {
     topics: [],
     topicIds: [],
     companyIds: [],
-    sourceSet: ["Blind75"],
     createdAt: "",
     updatedAt: "",
   };

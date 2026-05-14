@@ -132,9 +132,6 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
         ? ((problem as { companyIds: string[] }).companyIds)
         : []
     ),
-    sourceSet: uniqueStrings(
-      isStringArray(problem.sourceSet) ? problem.sourceSet : []
-    ),
     createdAt:
       typeof problem.createdAt === "string" && problem.createdAt.trim()
         ? problem.createdAt

@@ -146,7 +146,6 @@ export async function importData(
       topics: labels,
       topicIds: finalTopicIds,
       companyIds: uniqueStrings(problem.companyIds ?? []),
-      sourceSet: uniqueStrings(problem.sourceSet ?? []),
       createdAt: problem.createdAt || now,
       updatedAt: problem.updatedAt || now,
     });

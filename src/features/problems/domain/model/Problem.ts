@@ -3,14 +3,14 @@ import type { EditableProblemField } from "./EditableProblemField";
 import type { ProblemEditFlags } from "./ProblemEditFlags";
 import type { ProblemEditPatch } from "./ProblemEditPatch";
 
-/** v7 Problem — the actively-used shape. Keeps the v6 fields (`id`,
- *  `leetcodeSlug`, `topics`, `sourceSet`, `userEdits`) for legacy import
- *  compat alongside v7 (`topicIds`, `companyIds`). `slug` is the
- *  canonical identifier. */
+/** Problem aggregate. Keeps the legacy aliases (`id`, `leetcodeSlug`,
+ *  `topics`) only until their dedicated cuts land; `slug` is the
+ *  canonical identifier. Track memberships live in `track_group_problems`
+ *  and are read via the tracks repo. */
 export interface Problem {
-  /** @deprecated Use `slug`. Retained equal to `slug` for v6 callers. */
+  /** @deprecated Use `slug`. Retained equal to `slug` for legacy callers. */
   id: string;
-  /** @deprecated Use `slug`. Retained equal to `slug` for v6 callers. */
+  /** @deprecated Use `slug`. Retained equal to `slug` for legacy callers. */
   leetcodeSlug: string;
   slug: string;
   leetcodeId?: string;
@@ -18,13 +18,10 @@ export interface Problem {
   difficulty: Difficulty;
   isPremium?: boolean;
   url: string;
-  /** @deprecated v6 string topics. Use `topicIds`. */
+  /** @deprecated Legacy string topics. Use `topicIds`. */
   topics: string[];
   topicIds: string[];
   companyIds: string[];
-  /** @deprecated v6 set-membership string. Track memberships live in
-   *  `track_group_problems` and are read via the tracks repo. */
-  sourceSet: string[];
   userEdits?: ProblemEditFlags;
   createdAt: string;
   updatedAt: string;

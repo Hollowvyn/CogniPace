@@ -59,7 +59,7 @@ export function buildProblemSeed(
   for (const [slug, data] of acc) {
     const problemSlug: ProblemSlug = asProblemSlug(slug);
     out[slug] = {
-      // v6 transitional fields — kept equal to `slug` until F.3 cleanup.
+      // Legacy aliases retired progressively; both equal `slug` for now.
       id: slug,
       leetcodeSlug: slug,
       slug: problemSlug,
@@ -70,7 +70,6 @@ export function buildProblemSeed(
       topics: [],
       topicIds: Array.from(data.topicIds),
       companyIds: [],
-      sourceSet: [],
       createdAt: now,
       updatedAt: now,
     };
