@@ -2,7 +2,7 @@
  *  rotation, and user-action intents per the canonical Screen+VM
  *  pattern (one Model object per render; intents are methods). */
 import { useDI } from "@app/di";
-import { appShellRepository, useAppShellQuery } from "@features/app-shell";
+import { appShellRepository, createMockPopupShellPayload, useAppShellQuery } from "@features/app-shell";
 import { openProblemPage, RecommendedProblemView } from "@features/problems";
 import { StudyMode } from "@features/settings";
 import { startTransition, useMemo, useRef, useState } from "react";
@@ -11,7 +11,6 @@ import {
   openDashboardPage,
   openSettingsPage,
 } from "../../data/repositories/extensionNavigationRepository";
-import { createMockPopupShellPayload } from "../../ui/mockData";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],

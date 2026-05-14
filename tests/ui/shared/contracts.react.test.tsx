@@ -21,7 +21,7 @@ import {
   buildHeaderStatus,
   formatSubmissionDateLabel,
 } from "../../../src/features/overlay-session/ui/screens/controller/headerStatus";
-import { filterLibraryRows } from "../../../src/ui/presentation/library";
+import { filterLibraryRows } from "../../../src/features/problems/ui/presentation/library";
 import { makePayload, makeStudyState } from "../support/appShellFixtures";
 
 describe("route and selector contracts", () => {

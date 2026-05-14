@@ -1,8 +1,12 @@
-/** Internal tone tables shared across primitives. */
+/** Canonical Tone type + tone tables shared across primitives. */
 import { cognipaceTokens } from "@design-system/theme";
 import { alpha } from "@mui/material/styles";
 
-import { Tone } from "../../ui/presentation/studyState";
+/** Semantic color tones used by chips, badges, status surfaces, etc.
+ *  Owned by the design-system because the rendered styles (toneStyles
+ *  below) consume these tokens. Feature code maps its domain values
+ *  (Difficulty, RecommendedReason, retrievability, …) to a Tone. */
+export type Tone = "default" | "accent" | "info" | "success" | "danger";
 
 export type AssistTone = Tone | "warning";
 

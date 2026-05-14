@@ -1,11 +1,12 @@
 /** Reusable "next in track" card shared by popup and overlay surfaces. */
 import {SurfaceCard, ToneChip} from "@design-system/atoms";
+import {difficultyTone} from "@features/problems";
 import {getStudyPhaseLabel} from "@libs/fsrs/studyState";
 import Button, {ButtonProps} from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {difficultyTone, labelForStatus,} from "../../../../ui/presentation/studyState";
+import {labelForStatus} from "../presentation/labels";
 
 import type {TrackQuestionView} from "../../domain/model";
 

@@ -10,16 +10,14 @@
  * line, then the next-up problem inline with its CTA row underneath.
  */
 import { ProgressTrack, SurfaceCard, ToneChip } from "@design-system/atoms";
+import { difficultyTone } from "@features/problems";
 import { getStudyPhaseLabel } from "@libs/fsrs/studyState";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {
-  difficultyTone,
-  labelForStatus,
-} from "../../../../ui/presentation/studyState";
+import { labelForStatus } from "../presentation/labels";
 
 import type { ActiveTrackView, TrackQuestionView } from "../../domain/model";
 

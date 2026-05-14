@@ -9,7 +9,7 @@ import {
   resetProblemSchedule,
   suspendProblem,
 } from "../../../../data/repositories/v7ActionRepository";
-import { LibraryFilters } from "../../../../ui/presentation/library";
+import { LibraryFilters } from "../presentation/library";
 
 import type { LibraryProblemRow } from "../../domain/model";
 import type { ProblemRowData, ProblemSelection } from "../components/problemsTable";

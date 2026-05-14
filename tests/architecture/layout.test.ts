@@ -7,17 +7,6 @@ import { describe, expect, it } from "vitest";
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(testsDir, "../..");
 
-function listFiles(root: string): string[] {
-  const entries = fs.readdirSync(root, { withFileTypes: true });
-  return entries.flatMap((entry) => {
-    const absolute = path.join(root, entry.name);
-    if (entry.isDirectory()) {
-      return listFiles(absolute);
-    }
-    return absolute;
-  });
-}
-
 function read(filePath: string): string {
   return fs.readFileSync(filePath, "utf8");
 }
@@ -86,39 +75,16 @@ describe("architecture layout", () => {
     expect(fs.existsSync(path.join(repoRoot, "src/background.ts"))).toBe(false);
   });
 
-  it("keeps the ui layer free of runtime transport and storage imports", () => {
-    const uiFiles = listFiles(path.join(repoRoot, "src/ui")).filter((file) =>
-      /\.(ts|tsx)$/.test(file)
-    );
+  // The old "ui layer free of runtime transport" and "domain layer free
+  // of react/browser" checks targeted `src/ui/` and `src/domain/`, both
+  // being retired during the legacy-dir cleanup. The feature-sliced
+  // equivalents live in `featureBoundaries.test.ts` (no chrome / @platform/db
+  // in features/<x>/domain/, no @platform/db in features/<x>/ui/). The
+  // "appDataRepository routes through @platform/chrome/storage" check is
+  // dropped along with that legacy file.
 
-    for (const file of uiFiles) {
-      const text = read(file);
-      expect(text).not.toMatch(/\bsendMessage\s*\(/);
-      expect(text).not.toMatch(/extension\/runtime\/client/);
-      expect(text).not.toMatch(/chrome\.storage/);
-      expect(text).not.toMatch(/datasources\/chrome\/storage/);
-    }
-  });
-
-  it("keeps the domain layer free of react and browser dependencies", () => {
-    const domainFiles = listFiles(path.join(repoRoot, "src/domain")).filter(
-      (file) => /\.(ts|tsx)$/.test(file)
-    );
-
-    for (const file of domainFiles) {
-      const text = read(file);
-      expect(text).not.toMatch(/from "react"|from 'react'/);
-      expect(text).not.toMatch(/\bchrome\./);
-      expect(text).not.toMatch(/\bdocument\./);
-      expect(text).not.toMatch(/\bwindow\./);
-    }
-  });
-
-  it("routes runtime and storage access through repositories and platform adapters", () => {
-    const appDataRepository = read(
-      path.join(repoRoot, "src/data/repositories/appDataRepository.ts")
-    );
-    const storageDatasource = read(
+  it("storage / chrome / DB side-effects flow through @platform wrappers", () => {
+    const storageAdapter = read(
       path.join(repoRoot, "src/platform/chrome/storage.ts")
     );
     const appShellRepository = read(
@@ -127,11 +93,9 @@ describe("architecture layout", () => {
         "src/features/app-shell/data/repository/AppShellRepository.ts",
       ),
     );
-
-    expect(appDataRepository).toContain("@platform/chrome/storage");
-    expect(storageDatasource).toContain("chrome.storage.local");
-    // Repositories now reach the SW via the typed proxy exposed by @app/api,
-    // not the legacy @libs/runtime-rpc/client `sendMessage` wrapper.
+    expect(storageAdapter).toContain("chrome.storage.local");
+    // UI repositories reach the SW via the typed proxy at @app/api, not
+    // raw chrome.runtime.sendMessage.
     expect(appShellRepository).toContain("@app/api");
   });
 

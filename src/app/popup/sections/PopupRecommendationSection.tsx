@@ -6,11 +6,9 @@ import {
   ToneChip,
 } from "@design-system/atoms";
 import { UiStatus } from "@features/app-shell";
-import { RecommendedProblemView , RecommendedProblemCard } from "@features/problems";
+import { difficultyTone, RecommendedProblemView , RecommendedProblemCard } from "@features/problems";
 import ShuffleRounded from "@mui/icons-material/ShuffleRounded";
 import Stack from "@mui/material/Stack";
-
-import { difficultyTone } from "../../../ui/presentation/studyState";
 
 function RecommendationHeaderAction(props: {
   canShuffle: boolean;

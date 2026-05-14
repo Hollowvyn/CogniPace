@@ -5,8 +5,13 @@
  *  `features/settings/ui/hooks/useSettingsScreen`; the shell just passes
  *  the persisted snapshot through and surfaces status. */
 import { useDI } from "@app/di";
-import { useAppShellQuery } from "@features/app-shell";
+import { createMockAppShellPayload, useAppShellQuery } from "@features/app-shell";
 import { openProblemPage } from "@features/problems";
+import {
+  createDefaultLibraryFilters,
+  filterLibraryRows,
+  LibraryFilters,
+} from "@features/problems/ui/presentation/library";
 import { isExtensionContext } from "@platform/chrome/tabs";
 import {
   startTransition,
@@ -18,12 +23,6 @@ import {
 } from "react";
 
 import { resetStudyHistory } from "../../data/repositories/settingsRepository";
-import { createMockAppShellPayload } from "../../ui/mockData";
-import {
-  createDefaultLibraryFilters,
-  filterLibraryRows,
-  LibraryFilters,
-} from "../../ui/presentation/library";
 
 import {
   buildDashboardUrl,

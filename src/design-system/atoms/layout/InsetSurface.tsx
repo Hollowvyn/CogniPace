@@ -3,8 +3,7 @@ import Box from "@mui/material/Box";
 import { alpha } from "@mui/material/styles";
 import { ReactNode } from "react";
 
-import { Tone } from "../../../ui/presentation/studyState";
-import { toneStyles } from "../tone";
+import { Tone, toneStyles } from "../tone";
 
 /**
  * Recessed sub-surface intended to live inside a SurfacePanel. Tone-aware,

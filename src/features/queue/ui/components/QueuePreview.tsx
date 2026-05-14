@@ -1,13 +1,9 @@
 import { InsetSurface, ToneChip } from "@design-system/atoms";
+import { difficultyTone, formatDisplayDate } from "@features/problems";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-
-import {
-  difficultyTone,
-  formatDisplayDate,
-} from "../../../../ui/presentation/studyState";
 
 import type { AppShellPayload } from "@features/app-shell";
 

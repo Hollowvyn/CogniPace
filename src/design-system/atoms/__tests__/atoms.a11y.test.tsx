@@ -11,6 +11,7 @@
  * Failing this file = a violation was introduced. Fix the atom (or
  * its consumer pattern) — do not relax the axe rules.
  */
+import { AppProviders } from "@app/providers";
 import {
   BrandMark,
   CogniPaceIcon,
@@ -33,7 +34,6 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 
-import { AppProviders } from "../../../ui/providers";
 
 function renderInTheme(node: React.ReactNode): HTMLElement {
   const { container } = render(<AppProviders surface="dashboard">{node}</AppProviders>);

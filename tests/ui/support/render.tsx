@@ -1,8 +1,8 @@
+import { AppProviders } from "@app/providers";
 import { render, RenderOptions } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReactElement, ReactNode } from "react";
 
-import { AppProviders } from "../../../src/ui/providers";
 
 /**
  * Custom wrapper for RTL render that includes theme and context providers.

@@ -44,7 +44,7 @@ import {
   formatRetention,
   formatStudyPhase,
   retrievalTone,
-} from "../../../../../ui/presentation/studyState";
+} from "../../presentation/studyState";
 
 
 import { ProblemRowDetail } from "./ProblemRowDetail";

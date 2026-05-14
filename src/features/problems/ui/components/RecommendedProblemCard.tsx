@@ -6,7 +6,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import { difficultyTone, formatDisplayDate, recommendedTone } from "../../../../ui/presentation/studyState";
+import { difficultyTone, formatDisplayDate, recommendedTone } from "../presentation/studyState";
 
 export interface RecommendedProblemCardProps {
   buttonFullWidth?: boolean;

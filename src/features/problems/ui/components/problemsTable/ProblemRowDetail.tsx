@@ -22,6 +22,7 @@
  * LeetCode" CTA lives on the title in the collapsed row.
  */
 import { ToneChip } from "@design-system/atoms/chip/ToneChip";
+import { type Tone } from "@design-system/atoms/tone";
 import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -31,11 +32,11 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React from "react";
 
+
 import {
   formatRetention,
   retrievalTone,
-  type Tone,
-} from "../../../../../ui/presentation/studyState";
+} from "../../presentation/studyState";
 
 import type { ProblemsTableVariant } from "./ProblemsTable";
 import type { ProblemRowData } from "./types";

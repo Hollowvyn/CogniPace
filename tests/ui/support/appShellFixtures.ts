@@ -1,7 +1,7 @@
 import { StudyStateView , StudyState, StudyStateSummary } from "@features/study";
 import { TrackQuestionView } from "@features/tracks";
 
-import { createMockAppShellPayload } from "../../../src/ui/mockData";
+import { createMockAppShellPayload } from "../../../src/features/app-shell/data/mockData";
 
 /** Wrap a bare summary into a StudyStateView for fixture rows. */
 function viewFromSummary(summary: StudyStateSummary): StudyStateView {

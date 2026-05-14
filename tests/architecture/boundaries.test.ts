@@ -29,7 +29,15 @@ function listFiles(root: string): string[] {
 }
 
 function isSource(file: string): boolean {
-  return /\.(ts|tsx)$/.test(file) && !/\.d\.ts$/.test(file);
+  if (!/\.(ts|tsx)$/.test(file)) return false;
+  if (/\.d\.ts$/.test(file)) return false;
+  // Architecture rules govern runtime-code boundaries. Test files
+  // inside production directories (e.g. `__tests__/`) frequently need
+  // to import providers, mocks, or fixtures across layers — that's
+  // legitimate test setup, not a boundary violation.
+  if (/\.test\.(ts|tsx)$/.test(file)) return false;
+  if (/\/__tests__\//.test(file)) return false;
+  return true;
 }
 
 function srcFiles(): string[] {
