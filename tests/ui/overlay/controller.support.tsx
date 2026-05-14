@@ -1,6 +1,6 @@
 import { StudyState } from "@features/study";
 
-import { OverlayRoot } from "../../../src/features/overlay-session/ui/screens/OverlayRoot";
+import { OverlayShell } from "../../../src/app/overlay/OverlayShell";
 import { act, render } from "../support/render";
 import { sendMessageMock } from "../support/setup";
 
@@ -167,9 +167,9 @@ export function createOverlayHarness(initialPage: OverlayPageFixture): OverlayHa
   };
 }
 
-export function renderOverlayRoot(harness: OverlayHarness) {
+export function renderOverlayShell(harness: OverlayHarness) {
   const renderResult = render(
-    <OverlayRoot
+    <OverlayShell
       documentRef={harness.documentRef}
       windowRef={harness.windowRef}
     />

@@ -1,4 +1,6 @@
-/** Overlay controller that composes page bootstrap, timer state, session state, and render-model shaping. */
+/** OverlayPanel's ViewModel — composes page bootstrap, timer state,
+ *  session state, and render-model shaping per the canonical Screen+VM
+ *  pattern. */
 import { appShellRepository, AppShellPayload } from "@features/app-shell";
 import {
   getProblemContext,
@@ -23,29 +25,28 @@ import {
   deriveQuickRating,
   goalForDifficulty,
 } from "../../domain/policy/reviewPolicy";
-
-import { draftsEqual } from "./controller/draftFields";
+import { draftsEqual } from "../screens/controller/draftFields";
 import {
   buildHeaderStatus,
   buildSessionLabel,
-} from "./controller/headerStatus";
-import { deriveOverlaySubmitDecision } from "./controller/submitDecision";
-import { useOverlaySessionMachine } from "./controller/useOverlaySessionMachine";
-import { useOverlayTimer } from "./controller/useOverlayTimer";
+} from "../screens/controller/headerStatus";
+import { deriveOverlaySubmitDecision } from "../screens/controller/submitDecision";
+import { useOverlaySessionMachine } from "../screens/controller/useOverlaySessionMachine";
+import { useOverlayTimer } from "../screens/controller/useOverlayTimer";
 import {
   OverlayPostSubmitNextViewModel,
   OverlayRenderModel,
   OverlayTimerSectionViewModel,
-} from "./overlayPanel.types";
+} from "../screens/overlayPanel.types";
 
-export interface OverlayControllerEnvironment {
+export interface OverlayPanelEnvironment {
   documentRef: Document;
   windowRef: Window;
 }
 
 /** Coordinates overlay orchestration while delegating timer/session logic to dedicated hooks. */
-export function useOverlayController(
-  environment: OverlayControllerEnvironment
+export function useOverlayPanelVM(
+  environment: OverlayPanelEnvironment
 ): { renderModel: OverlayRenderModel | null } {
   const { documentRef, windowRef } = environment;
   const timer = useOverlayTimer(windowRef);

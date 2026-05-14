@@ -7,7 +7,7 @@ import {
   createOverlayHarness,
   mockOverlayRuntime,
   problemForPage,
-  renderOverlayRoot,
+  renderOverlayShell,
   runtimeOk,
 } from "./controller.support";
 
@@ -55,7 +55,7 @@ describe("Overlay Controller Navigation", () => {
       return undefined;
     });
 
-    const { harness, user } = renderOverlayRoot(
+    const { harness, user } = renderOverlayShell(
       createOverlayHarness({
         difficulty: "Easy",
         slug: "two-sum",
@@ -98,7 +98,7 @@ describe("Overlay Controller Navigation", () => {
 
   it("docks and restores the overlay", async () => {
     mockOverlayRuntime(() => undefined);
-    const { user } = renderOverlayRoot(
+    const { user } = renderOverlayShell(
       createOverlayHarness({
         difficulty: "Easy",
         slug: "two-sum",

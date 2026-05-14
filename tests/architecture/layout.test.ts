@@ -44,12 +44,27 @@ describe("architecture layout", () => {
         path.join(repoRoot, "src/app/dashboard/navigation/routes.ts")
       )
     ).toBe(true);
-    // Overlay surface shell is added in Phase A Step 10.
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/app/overlay/OverlayShell.tsx"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(repoRoot, "src/app/overlay/createOverlayHost.ts"))
+    ).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(
+          repoRoot,
+          "src/features/overlay-session/ui/hooks/useOverlayPanelVM.ts",
+        ),
+      )
+    ).toBe(true);
+
+    // OverlayRoot.tsx (the pre-Phase-A overlay screen) is gone.
     expect(
       fs.existsSync(
         path.join(repoRoot, "src/features/overlay-session/ui/screens/OverlayRoot.tsx")
       )
-    ).toBe(true);
+    ).toBe(false);
 
     // Old locations from the v6 layout are gone.
     expect(

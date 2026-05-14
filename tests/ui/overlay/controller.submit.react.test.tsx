@@ -8,7 +8,7 @@ import {
   COUNTING_BITS_PAGE,
   createOverlayHarness,
   mockCountingBitsRuntime,
-  renderOverlayRoot,
+  renderOverlayShell,
   runtimeOk,
 } from "./controller.support";
 
@@ -50,7 +50,7 @@ describe("Overlay Controller Submission", () => {
         },
       });
 
-      const { harness, user } = renderOverlayRoot(
+      const { harness, user } = renderOverlayShell(
         createOverlayHarness(COUNTING_BITS_PAGE)
       );
 
@@ -105,7 +105,7 @@ describe("Overlay Controller Submission", () => {
         },
       });
 
-      const { harness, user } = renderOverlayRoot(
+      const { harness, user } = renderOverlayShell(
         createOverlayHarness(COUNTING_BITS_PAGE)
       );
 
@@ -144,7 +144,7 @@ describe("Overlay Controller Submission", () => {
         },
       });
 
-      const { harness, user } = renderOverlayRoot(
+      const { harness, user } = renderOverlayShell(
         createOverlayHarness(COUNTING_BITS_PAGE)
       );
 
@@ -194,7 +194,7 @@ describe("Overlay Controller Submission", () => {
         },
       });
 
-      const { user } = renderOverlayRoot(createOverlayHarness(COUNTING_BITS_PAGE));
+      const { user } = renderOverlayShell(createOverlayHarness(COUNTING_BITS_PAGE));
 
       await user.click(
         await screen.findByRole("button", { name: "Expand overlay" })
@@ -239,7 +239,7 @@ describe("Overlay Controller Submission", () => {
         },
       });
 
-      const { harness, user } = renderOverlayRoot(
+      const { harness, user } = renderOverlayShell(
         createOverlayHarness(COUNTING_BITS_PAGE)
       );
 
