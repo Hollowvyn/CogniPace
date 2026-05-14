@@ -44,9 +44,6 @@ export {
   openExtensionPage,
 } from "./data/repository/ProblemSessionRepository";
 
-// UI-side catalog actions (parse input, etc.) the dashboard library uses.
-export { parseProblemInput } from "./data/repository/ProblemRepository";
-
 export { LibraryScreen } from "./ui/screens/library/LibraryScreen";
 export { useLibraryVM } from "./ui/hooks/useLibraryVM";
 export type { LibraryScreenModel } from "./ui/hooks/useLibraryVM";

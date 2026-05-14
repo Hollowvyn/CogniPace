@@ -18,6 +18,7 @@ export {
   isProblemPage,
 } from "./slug";
 export { parseDifficulty, type Difficulty } from "./difficulty";
+export { parseProblemInput } from "./parseProblemInput";
 export {
   getProblemSlugFromUrl,
   detectDifficulty,

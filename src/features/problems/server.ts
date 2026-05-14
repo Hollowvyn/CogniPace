@@ -63,9 +63,3 @@ export {
 } from "./data/seed/curatedSets";
 
 export * from "./messaging/handlers";
-
-export {
-  parseProblemInput,
-  ensureProblem,
-  importProblemsIntoSet,
-} from "./data/repository/ProblemRepository";

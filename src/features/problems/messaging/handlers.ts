@@ -22,6 +22,7 @@ import {
   getStudyStateSummary,
   normalizeReviewLogFields,
 } from "@libs/fsrs/studyState";
+import { parseProblemInput } from "@libs/leetcode";
 import { canonicalProblemUrlForOpen } from "@libs/runtime-rpc/url";
 import { getDb } from "@platform/db/instance";
 import { nowIso } from "@platform/time";
@@ -41,9 +42,12 @@ import {
   importProblem,
 } from "../data/datasource/ProblemDataSource";
 import { upsertTopic } from "../data/datasource/TopicDataSource";
-import { normalizeDifficulty , parseProblemInput } from "../data/repository/ProblemRepository";
 import { getCuratedSet } from "../data/seed/curatedSets";
-import { isProblemPage, normalizeSlug } from "../domain/model";
+import {
+  isProblemPage,
+  normalizeSlug,
+  parseDifficulty,
+} from "../domain/model";
 
 import type { ProblemEditPatch } from "../domain/model";
 
@@ -126,7 +130,7 @@ export async function upsertFromPage(payload: {
   if (!slug) throw new Error("Invalid slug.");
   const { db } = await getDb();
   const branded = asProblemSlug(slug);
-  const difficulty = normalizeDifficulty(payload.difficulty);
+  const difficulty = parseDifficulty(payload.difficulty);
   const problem = await importProblem(db, {
     slug,
     ...(payload.title !== undefined ? { title: payload.title } : {}),
