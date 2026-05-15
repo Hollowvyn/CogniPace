@@ -45,7 +45,7 @@ function parseRequest(raw: unknown): RpcRequest & { method: keyof SwApi } {
   if (typeof raw !== "object" || raw === null) throw new Error("Invalid message.");
   const req = raw as Record<string, unknown>;
   if (typeof req.method !== "string") throw new Error("Missing or invalid method.");
-  if (!(req.method in swApi)) throw new Error(`Unknown method: ${req.method}`);
+  if (!Object.hasOwn(swApi, req.method)) throw new Error(`Unknown method: ${req.method}`);
   return { method: req.method as keyof SwApi, payload: req.payload };
 }
 
