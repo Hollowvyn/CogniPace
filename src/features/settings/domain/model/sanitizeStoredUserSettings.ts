@@ -1,8 +1,6 @@
 /** Boundary parser for UserSettings — coerces arbitrary input into a
  *  valid snapshot. Used at storage-read, backup-import, and merge
  *  boundaries. Idempotent. */
-import { asTrackId, type TrackId } from "@shared/ids";
-
 import {
   createInitialUserSettings,
 } from "./UserSettings";
@@ -77,24 +75,6 @@ function settingsRecord(value: unknown, fallback: object): UnknownRecord {
   return isRecord(value) ? value : (fallback as UnknownRecord);
 }
 
-/** Coerce arbitrary input into a `TrackId | null`. Recognises three
- *  shapes for backwards compat: explicit string `activeTrackId`, v7
- *  `activeFocus.id`, and v6 `activeCourseId`. Returns `null` when
- *  none of them are present or valid. */
-function sanitizeActiveTrackId(source: UnknownRecord): TrackId | null {
-  if (typeof source.activeTrackId === "string" && source.activeTrackId.trim()) {
-    return asTrackId(source.activeTrackId);
-  }
-  if (isRecord(source.activeFocus)) {
-    const id = (source.activeFocus as UnknownRecord).id;
-    if (typeof id === "string" && id.trim()) return asTrackId(id);
-  }
-  if (typeof source.activeCourseId === "string" && source.activeCourseId.trim()) {
-    return asTrackId(source.activeCourseId);
-  }
-  return null;
-}
-
 function sanitizeDifficultyGoalMs(
   value: unknown,
   fallback: DifficultyGoalSettings,
@@ -154,7 +134,6 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       initial.dailyQuestionGoal,
     ),
     studyMode: studyMode(source.studyMode, initial.studyMode),
-    activeTrackId: sanitizeActiveTrackId(source),
     notifications: {
       enabled: booleanValue(
         notifications.enabled,

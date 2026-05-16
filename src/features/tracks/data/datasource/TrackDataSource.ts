@@ -702,6 +702,34 @@ export async function seedCatalogTracks(
   }
 }
 
+// ─── Track session (single-row active-track selection) ──────────────────────
+
+export async function getActiveTrackId(db: Db): Promise<TrackId | null> {
+  try {
+    const rows = await db.select().from(schema.trackSession);
+    if (rows.length === 0) return null;
+    return (rows[0].activeTrackId ?? null) as TrackId | null;
+  } catch {
+    // Table may not exist yet on old snapshots — applyUpgrades() will create it
+    // on next boot. Returning null means "no active track", which is the safe default.
+    return null;
+  }
+}
+
+export async function saveActiveTrackId(
+  db: Db,
+  activeTrackId: TrackId | null,
+): Promise<void> {
+  const now = nowIso();
+  await db
+    .insert(schema.trackSession)
+    .values({ singleton: 1, activeTrackId, updatedAt: now })
+    .onConflictDoUpdate({
+      target: schema.trackSession.singleton,
+      set: { activeTrackId, updatedAt: now },
+    });
+}
+
 // drizzle-orm `sql` re-export — convenience for callers that need raw
 // SQL expressions in track-adjacent helpers (e.g. order-index bumps).
 export { sql };

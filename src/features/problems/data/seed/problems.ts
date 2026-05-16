@@ -68,6 +68,9 @@ export function buildProblemSeed(
       companyIds: [],
       createdAt: now,
       updatedAt: now,
+      studyState: null,
+      topics: [],
+      companies: [],
     };
   }
   return out;

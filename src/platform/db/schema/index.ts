@@ -9,7 +9,9 @@
  * SQL migrations under ./migrations/. Never hand-edit those migrations.
  */
 export { topics, topicsRelations } from "./topics";
-export { companies } from "./companies";
+export { companies, companiesRelations } from "./companies";
+export { problemTopics, problemTopicsRelations } from "./problemTopics";
+export { problemCompanies, problemCompaniesRelations } from "./problemCompanies";
 export { problems, problemsRelations } from "./problems";
 export { studyStates, studyStatesRelations } from "./studyStates";
 export { attemptHistory, attemptHistoryRelations } from "./attemptHistory";
@@ -20,3 +22,4 @@ export {
   trackGroupProblemsRelations,
 } from "./trackGroupProblems";
 export { settingsKv } from "./settingsKv";
+export { trackSession } from "./trackSession";

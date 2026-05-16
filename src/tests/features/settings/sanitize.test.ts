@@ -71,29 +71,4 @@ describe("settings sanitization", () => {
     assert.equal(sanitized.timing.difficultyGoalMs.Hard, initial.timing.difficultyGoalMs.Hard);
   });
 
-  it("derives activeTrackId from legacy v6 activeCourseId when nothing else is set", () => {
-    const sanitized = sanitizeStoredUserSettings({
-      activeCourseId: "Grind75",
-    });
-    assert.equal(sanitized.activeTrackId, "Grind75");
-  });
-
-  it("derives activeTrackId from legacy v7 activeFocus.id", () => {
-    const sanitized = sanitizeStoredUserSettings({
-      activeFocus: { kind: "track", id: "NeetCode150" },
-    });
-    assert.equal(sanitized.activeTrackId, "NeetCode150");
-  });
-
-  it("preserves an explicit activeTrackId", () => {
-    const sanitized = sanitizeStoredUserSettings({
-      activeTrackId: "Blind75",
-    });
-    assert.equal(sanitized.activeTrackId, "Blind75");
-  });
-
-  it("defaults activeTrackId to null when no source is present", () => {
-    const sanitized = sanitizeStoredUserSettings({});
-    assert.equal(sanitized.activeTrackId, null);
-  });
 });

@@ -31,17 +31,8 @@ export {
   difficultyGoalMs,
 } from "./domain/model";
 
-// UI-side wire-dispatch session actions (problem context, page upsert,
-// review submit, etc.) — used by overlay/popup callers.
-export {
-  upsertProblemFromPage,
-  getProblemContext,
-  saveReviewResult,
-  saveOverlayLogDraft,
-  overrideLastReviewResult,
-  openProblemPage,
-  openExtensionPage,
-} from "./data/repository/ProblemSessionRepository";
+export { problemRepository } from "./data/repository/ProblemRepository";
+export type { ProblemRepository } from "./data/repository/ProblemRepository";
 
 export { LibraryScreen } from "./ui/screens/library/LibraryScreen";
 export { useLibraryVM } from "./ui/hooks/useLibraryVM";

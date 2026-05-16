@@ -8,6 +8,11 @@ import {
   type UserSettingsPatch,
 } from "../domain/model";
 
+export async function getSettings() {
+  const { db } = await getDb();
+  return (await getUserSettings(db)) ?? createInitialUserSettings();
+}
+
 export async function updateSettings(
   payload: Record<string, unknown>,
 ): Promise<{ settings: unknown }> {

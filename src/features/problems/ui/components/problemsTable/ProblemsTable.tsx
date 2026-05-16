@@ -82,16 +82,6 @@ export interface ProblemsTableProps {
   toolbarExtras?: React.ReactNode;
   /** Empty-state message override. */
   emptyMessage?: string;
-  /** Expanded panel callback — open the Edit Problem modal for this slug. */
-  onEditProblem?: (slug: ProblemSlug) => void;
-  /** Expanded panel callback — toggle suspend on the problem's StudyState. */
-  onSuspendProblem?: (slug: ProblemSlug, suspend: boolean) => void;
-  /** Expanded panel callback — reset the FSRS schedule for this problem. */
-  onResetSchedule?: (slug: ProblemSlug) => void;
-  /** Expanded panel callback — re-enable premium questions globally
-   * (toggles `settings.skipPremium` off). Surfaced when a row is
-   * suspended only because of the premium gate. */
-  onEnablePremium?: () => void;
   /** When true, short pages render empty placeholder rows up to
    * `rowsPerPage` so the table height stays stable during pagination
    * and filtering. Use for fixed catalogs (the Library); skip for
@@ -127,10 +117,6 @@ export function ProblemsTable(props: ProblemsTableProps) {
     defaultRowsPerPage,
     toolbarExtras,
     emptyMessage = "No problems match these filters.",
-    onEditProblem,
-    onSuspendProblem,
-    onResetSchedule,
-    onEnablePremium,
     padToPageSize = false,
   } = props;
 
@@ -553,10 +539,6 @@ export function ProblemsTable(props: ProblemsTableProps) {
                           <ProblemRowDetail
                             row={row}
                             variant={variant}
-                            onEditProblem={onEditProblem}
-                            onSuspendProblem={onSuspendProblem}
-                            onResetSchedule={onResetSchedule}
-                            onEnablePremium={onEnablePremium}
                           />
                         </Collapse>
                       </TableCell>

@@ -53,12 +53,7 @@ export function DashboardShell() {
             ) : null}
 
             {controller.view === "tracks" ? (
-              <TracksView
-                onEnablePremium={controller.onEnablePremium}
-                onOpenProblem={controller.onOpenProblem}
-                onSetActiveFocus={controller.onSetActiveFocus}
-                payload={controller.payload}
-              />
+              <TracksView />
             ) : null}
 
             {controller.view === "analytics" ? (
@@ -83,9 +78,7 @@ export function DashboardShell() {
             {controller.view === "library" ? (
               <LibraryScreen
                 filters={controller.filters}
-                onEnablePremium={controller.onEnablePremium}
                 onFilterChange={controller.setFilters}
-                onRefresh={controller.refresh}
                 payload={controller.payload}
                 rows={controller.rows}
               />

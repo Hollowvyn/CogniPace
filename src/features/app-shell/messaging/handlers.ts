@@ -4,19 +4,14 @@ import {
   summarizeAnalytics,
 } from "@features/analytics/server";
 import { slugToTitle, slugToUrl } from "@features/problems";
-import {
-  listCompanies,
-  listProblems,
-  listTopics,
-} from "@features/problems/server";
+import { listProblems } from "@features/problems/server";
 import {
   buildRecommendedCandidates,
   buildTodayQueue,
   effectivelySuspendedFlag,
 } from "@features/queue/server";
 import { createInitialUserSettings, getUserSettings } from "@features/settings/server";
-import { listStudyStates } from "@features/study/server";
-import { buildActiveTrackView, listTracks } from "@features/tracks/server";
+import { buildActiveTrackView, getActiveTrackId, listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/url";
 import { extensionUrl, openTab } from "@platform/chrome/tabs";
 import { getDb } from "@platform/db/instance";
@@ -35,6 +30,7 @@ import type {
   Problem,
   Topic,
 } from "@features/problems";
+import type { StudyState } from "@features/study";
 import type {
   ActiveTrackView,
   TrackCardView,
@@ -42,6 +38,7 @@ import type {
   TrackView,
   TrackWithGroups,
 } from "@features/tracks";
+import type { TrackId } from "@shared/ids";
 
 /**
  * Reads every aggregate (problems, study states, topics, companies,
@@ -52,25 +49,32 @@ import type {
  */
 async function loadAppShellData(): Promise<AppData> {
   const { db } = await getDb();
-  const [topics, companies, settings, problems, studyStates] = await Promise.all([
-    listTopics(db),
-    listCompanies(db),
+  const [settings, problems, session] = await Promise.all([
     getUserSettings(db),
-    listProblems(db),
-    listStudyStates(db),
+    listProblems(db),  // one RQB call: problems + studyState + topics + companies
+    getActiveTrackId(db),
   ]);
-  const topicsById: Record<string, Topic> = {};
-  for (const topic of topics) topicsById[topic.id] = topic;
-  const companiesById: Record<string, Company> = {};
-  for (const company of companies) companiesById[company.id] = company;
+
+  // Build backward-compat lookup maps from the rich problems.
   const problemsBySlug: Record<string, Problem> = {};
-  for (const problem of problems) problemsBySlug[problem.slug] = problem;
+  const studyStatesBySlug: Record<string, StudyState> = {};
+  const topicsById: Record<string, Topic> = {};
+  const companiesById: Record<string, Company> = {};
+  for (const p of problems) {
+    problemsBySlug[p.slug] = p;
+    if (p.studyState) studyStatesBySlug[p.slug] = p.studyState;
+    for (const t of p.topics) topicsById[t.id] = t;
+    for (const c of p.companies) companiesById[c.id] = c;
+  }
+
   return {
+    problems,
     problemsBySlug,
-    studyStatesBySlug: studyStates,
+    studyStatesBySlug,
     topicsById,
     companiesById,
     settings: settings ?? createInitialUserSettings(),
+    activeTrackId: session,
   };
 }
 
@@ -126,7 +130,7 @@ function activeTrackViewOf(
   data: AppData,
   trackViews: readonly TrackView[],
 ): TrackView | null {
-  const focusedId = data.settings.activeTrackId;
+  const focusedId = data.activeTrackId;
   if (!focusedId) return null;
   return trackViews.find((view) => view.id === focusedId) ?? null;
 }
@@ -135,7 +139,7 @@ function activeTrackEntityOf(
   data: AppData,
   tracks: readonly TrackWithGroups[],
 ): TrackWithGroups | null {
-  const focusedId = data.settings.activeTrackId;
+  const focusedId = data.activeTrackId;
   if (!focusedId) return null;
   return tracks.find((track) => track.id === focusedId) ?? null;
 }
@@ -195,6 +199,9 @@ function synthesizeProblem(slug: string): Problem {
     companyIds: [],
     createdAt: "",
     updatedAt: "",
+    studyState: null,
+    topics: [],
+    companies: [],
   };
 }
 
@@ -227,7 +234,7 @@ export function buildPopupShellPayload(
   const activeTrackView = activeTrackViewOf(data, trackViews);
   const activeTrackEntity = activeTrackEntityOf(data, tracks);
   const activeTrack = buildActiveTrackView({
-    activeTrackId: data.settings.activeTrackId,
+    activeTrackId: data.activeTrackId,
     trackView: activeTrackView,
     trackEntity: activeTrackEntity,
     studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<
@@ -294,6 +301,44 @@ export async function getAppShellData(): Promise<AppShellPayload> {
 export async function getQueue(): Promise<ReturnType<typeof buildTodayQueue>> {
   const data = await loadAppShellData();
   return buildTodayQueue(data);
+}
+
+export async function getActiveTrack(): Promise<TrackView | null> {
+  const { db } = await getDb();
+  const [data, rawTracks, session] = await Promise.all([
+    loadAppShellData(),
+    loadTracks(),
+    getActiveTrackId(db),
+  ]);
+  if (!session) return null;
+  const entity = rawTracks.find(t => t.id === session);
+  if (!entity) return null;
+  return buildTrackViews(data, [entity], new Date())[0] ?? null;
+}
+
+export async function getTracks(): Promise<{
+  tracks: TrackView[];
+  activeTrackId: TrackId | null;
+  activeTrack: TrackView | null;
+}> {
+  const { db } = await getDb();
+  const [data, rawTracks, session] = await Promise.all([
+    loadAppShellData(),
+    loadTracks(),
+    getActiveTrackId(db),
+  ]);
+  const tracks = buildTrackViews(data, rawTracks, new Date());
+  const activeTrackId = session;
+  return {
+    tracks,
+    activeTrackId,
+    activeTrack: tracks.find(t => t.id === activeTrackId) ?? null,
+  };
+}
+
+export async function getLibrary(): Promise<Problem[]> {
+  const data = await loadAppShellData();
+  return data.problems;
 }
 
 export async function openExtensionPage(

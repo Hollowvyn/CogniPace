@@ -24,15 +24,18 @@
 import { ToneChip } from "@design-system/atoms/chip/ToneChip";
 import { type Tone } from "@design-system/atoms/tone";
 import { cognipaceTokens } from "@design-system/theme";
+import { problemRepository } from "../../../data/repository/ProblemRepository";
+import { settingsRepository } from "@features/settings";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import { alpha } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import { asProblemSlug } from "@shared/ids";
 import React from "react";
 
-
+import { useEditProblemStore } from "../../store/editProblemStore";
 import {
   formatRetention,
   retrievalTone,
@@ -46,7 +49,6 @@ import type {
   ReviewMode,
   StudyStateSummary,
 } from "@features/study";
-import type { ProblemSlug } from "@shared/ids";
 
 
 const MAX_VISIBLE_CHIPS = 6;
@@ -54,13 +56,6 @@ const MAX_VISIBLE_CHIPS = 6;
 interface ProblemRowDetailProps {
   row: ProblemRowData;
   variant: ProblemsTableVariant;
-  onEditProblem?: (slug: ProblemSlug) => void;
-  onSuspendProblem?: (slug: ProblemSlug, suspend: boolean) => void;
-  onResetSchedule?: (slug: ProblemSlug) => void;
-  /** Re-enables premium questions globally (toggles
-   * `settings.skipPremium` off). Surfaced on rows whose only reason
-   * for being suspended is the premium gate. */
-  onEnablePremium?: () => void;
 }
 
 interface SuspendAction {
@@ -76,39 +71,30 @@ interface SuspendAction {
 function resolveSuspendAction(
   reason: ProblemRowData["suspended"],
   onSuspend: (suspend: boolean) => void,
-  onEnablePremium: (() => void) | undefined,
+  onEnablePremium: () => void,
 ): SuspendAction | null {
   if (!reason) {
     return { label: "Suspend", onClick: () => onSuspend(true) };
   }
   if (reason === "premium") {
-    if (!onEnablePremium) return null;
     return { label: "Enable premium questions", onClick: onEnablePremium };
   }
   // manual or both — Resume clears the manual flag.
   return { label: "Resume", onClick: () => onSuspend(false) };
 }
 
-export function ProblemRowDetail({
-  row,
-  variant,
-  onEditProblem,
-  onSuspendProblem,
-  onResetSchedule,
-  onEnablePremium,
-}: ProblemRowDetailProps) {
+export function ProblemRowDetail({ row, variant }: ProblemRowDetailProps) {
+  const openForProblem = useEditProblemStore(s => s.openForProblem);
   const { view, studyState, trackMemberships } = row;
-  const slug = view.slug as ProblemSlug;
+  const slug = asProblemSlug(view.slug);
   const recentAttempts = studyState?.recentAttempts ?? [];
   const notes = studyState?.notes;
   const interviewPattern = studyState?.interviewPattern;
-  const suspendAction = onSuspendProblem
-    ? resolveSuspendAction(
-        row.suspended,
-        (suspend) => onSuspendProblem(slug, suspend),
-        onEnablePremium,
-      )
-    : null;
+  const suspendAction = resolveSuspendAction(
+    row.suspended,
+    (suspend) => void problemRepository.suspendProblem(slug, suspend),
+    () => void settingsRepository.setSkipPremium(false),
+  );
 
   return (
     <Box
@@ -211,21 +197,20 @@ export function ProblemRowDetail({
         flexWrap="wrap"
         sx={{ mt: 2, rowGap: 1 }}
       >
-        {onEditProblem ? (
-          <Button size="small" onClick={() => onEditProblem(slug)}>
-            Edit
-          </Button>
-        ) : null}
+        <Button size="small" onClick={() => openForProblem(view)}>
+          Edit
+        </Button>
         {suspendAction ? (
           <Button size="small" onClick={suspendAction.onClick}>
             {suspendAction.label}
           </Button>
         ) : null}
-        {onResetSchedule ? (
-          <Button size="small" onClick={() => onResetSchedule(slug)}>
-            Reset schedule
-          </Button>
-        ) : null}
+        <Button
+          size="small"
+          onClick={() => void problemRepository.resetProblemSchedule(slug)}
+        >
+          Reset schedule
+        </Button>
       </Stack>
     </Box>
   );

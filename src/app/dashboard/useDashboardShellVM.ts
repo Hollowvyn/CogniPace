@@ -7,7 +7,7 @@
 import { api } from "@app/api";
 import { useDI } from "@app/bootstrap";
 import { createMockAppShellPayload, useAppShellQuery } from "@features/app-shell";
-import { openProblemPage } from "@features/problems";
+import { problemRepository } from "@features/problems";
 import {
   createDefaultLibraryFilters,
   filterLibraryRows,
@@ -32,7 +32,6 @@ import {
 
 import type { ExportPayload } from "@features/backup";
 import type { UserSettings } from "@features/settings";
-import type { TrackId } from "@shared/ids";
 
 function isImportPayloadCandidate(value: unknown): value is ExportPayload {
   return Boolean(value) && typeof value === "object";
@@ -130,7 +129,7 @@ export function useDashboardShellVM() {
       trackId?: string;
     }): Promise<void> => {
       try {
-        await openProblemPage(target);
+        await problemRepository.openProblemPage(target);
       } catch (err) {
         setStatus({
           message: (err as Error).message || "Failed to open problem.",
@@ -238,27 +237,6 @@ export function useDashboardShellVM() {
     }
   }, [backupRepository, importFile, load, setStatus]);
 
-  const onSetActiveFocus = useCallback(
-    async (trackId: TrackId | null): Promise<void> => {
-      let savedSettings: UserSettings;
-      try {
-        savedSettings = await settingsRepository.setActiveTrack(trackId);
-      } catch (err) {
-        setStatus({
-            message: (err as Error).message || "Failed to update active track.",
-          isError: true,
-        });
-        return;
-      }
-      setPayload((current) =>
-        current ? { ...current, settings: savedSettings } : current,
-      );
-      if (isExtensionContext()) {
-        await load({ clearStatusOnSuccess: false });
-      }
-    },
-    [load, setPayload, setStatus, settingsRepository],
-  );
 
   const applySavedSettings = useCallback(
     (saved: UserSettings): void => {
@@ -282,7 +260,6 @@ export function useDashboardShellVM() {
     onImportData,
     onOpenProblem,
     onResetStudyHistory,
-    onSetActiveFocus,
     onToggleMode,
     payload,
     refresh,

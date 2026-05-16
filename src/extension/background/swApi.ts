@@ -3,9 +3,12 @@
  *
  *  Adding a new handler: import it here, add it to the object. Done. No god-files. */
 import {
+  getActiveTrack,
   getAppShellData,
+  getLibrary,
   getPopupShellData,
   getQueue,
+  getTracks,
   openExtensionPage,
 } from "@features/app-shell/server";
 import {
@@ -16,6 +19,7 @@ import {
 } from "@features/backup/server";
 import {
   addProblemByInputHandler,
+  getEditChoices,
   assignCompanyHandler,
   assignTopicHandler,
   createCustomCompanyHandler,
@@ -35,10 +39,11 @@ import {
   updateTags,
   upsertFromPage,
 } from "@features/problems/server";
-import { updateSettings } from "@features/settings/server";
+import { getSettings, updateSettings } from "@features/settings/server";
 import {
   createTrackHandler,
   deleteTrackHandler,
+  setActiveTrackHandler,
   updateTrackHandler,
 } from "@features/tracks/server";
 
@@ -60,6 +65,7 @@ export const swApi = {
   resetProblemSchedule: resetProblem,
   editProblem: editProblemHandler,
   // Problems — catalog management
+  getEditChoices,
   addProblemByInput: addProblemByInputHandler,
   createCustomTopic: createCustomTopicHandler,
   createCustomCompany: createCustomCompanyHandler,
@@ -68,16 +74,21 @@ export const swApi = {
   importCuratedTrack: importCuratedTrackHandler,
   importCustomTrack: importCustomTrackHandler,
   // App-shell — read aggregates
+  getActiveTrack,
   getAppShellData,
   getPopupShellData,
   getTodayQueue: getQueue,
+  getTracks,
+  getLibrary,
   openExtensionPage,
   // Settings
+  getSettings,
   updateSettings,
   // Tracks
   createTrack: createTrackHandler,
   updateTrack: updateTrackHandler,
   deleteTrack: deleteTrackHandler,
+  setActiveTrack: setActiveTrackHandler,
   // Backup
   exportData,
   importData,

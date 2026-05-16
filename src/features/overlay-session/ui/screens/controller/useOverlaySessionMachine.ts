@@ -1,8 +1,4 @@
-import {
-  overrideLastReviewResult,
-  saveOverlayLogDraft,
-  saveReviewResult,
- Difficulty } from "@features/problems";
+import { problemRepository, Difficulty } from "@features/problems";
 import { Rating, ReviewMode, StudyState } from "@features/study";
 import {useCallback, useState} from "react";
 
@@ -214,7 +210,7 @@ export function useOverlaySessionMachine(
       draft: OverlayDraftLogFields
     ): Promise<boolean> => {
       try {
-        await saveReviewResult({
+        await problemRepository.saveReviewResult({
           slug,
           rating,
           mode,
@@ -244,7 +240,7 @@ export function useOverlaySessionMachine(
       draft: OverlayDraftLogFields
     ): Promise<boolean> => {
       try {
-        await overrideLastReviewResult({
+        await problemRepository.overrideLastReviewResult({
           slug,
           rating,
           mode,
@@ -271,7 +267,7 @@ export function useOverlaySessionMachine(
       draft: OverlayDraftLogFields
     ): Promise<boolean> => {
       try {
-        await saveOverlayLogDraft({
+        await problemRepository.saveOverlayLogDraft({
           slug,
           ...reviewPayloadFromDraft(draft),
         });

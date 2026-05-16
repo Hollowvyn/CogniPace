@@ -4,7 +4,7 @@ export type {
   SettingsUpdateResponse,
 } from "./domain/model";
 
-export { updateSettings } from "./messaging/handlers";
+export { getSettings, updateSettings } from "./messaging/handlers";
 
 export {
   getUserSettings,

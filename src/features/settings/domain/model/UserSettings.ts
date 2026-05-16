@@ -8,15 +8,10 @@ import type { QuestionFilterSettings } from "./QuestionFilterSettings";
 import type { StudyMode } from "./StudyMode";
 import type { TimingSettings } from "./TimingSettings";
 import type { UserSettingsPatch } from "./UserSettingsPatch";
-import type { TrackId } from "@shared/ids";
 
 export interface UserSettings {
   dailyQuestionGoal: number;
   studyMode: StudyMode;
-  /** ID of the user's currently-focused track. `null` on fresh install
-   *  until the user picks one. Group selection within the track is
-   *  derived (first-incomplete-group); not persisted. */
-  activeTrackId: TrackId | null;
   notifications: NotificationSettings;
   memoryReview: MemoryReviewSettings;
   questionFilters: QuestionFilterSettings;
@@ -27,7 +22,6 @@ export interface UserSettings {
 export const INITIAL_USER_SETTINGS: UserSettings = {
   dailyQuestionGoal: 18,
   studyMode: "studyPlan",
-  activeTrackId: null,
   notifications: {
     enabled: false,
     dailyTime: "09:00",

@@ -3,7 +3,7 @@
  *  pattern (one Model object per render; intents are methods). */
 import { useDI } from "@app/bootstrap";
 import { appShellRepository, createMockPopupShellPayload, useAppShellQuery } from "@features/app-shell";
-import { openProblemPage, RecommendedProblemView } from "@features/problems";
+import { problemRepository, RecommendedProblemView } from "@features/problems";
 import { StudyMode } from "@features/settings";
 import { startTransition, useMemo, useRef, useState } from "react";
 
@@ -81,7 +81,7 @@ export function usePopupShellVM() {
     groupId?: string;
   }): Promise<void> {
     try {
-      await openProblemPage(target);
+      await problemRepository.openProblemPage(target);
     } catch (err) {
       setStatus({
         message: (err as Error).message || "Failed to open problem.",

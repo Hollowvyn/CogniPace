@@ -1316,6 +1316,8 @@ const allChecks: CheckDef[] = [
           sourceSet: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          studyState: null,
+          companies: [],
         },
         {
           id: slugB,
@@ -1331,6 +1333,8 @@ const allChecks: CheckDef[] = [
           sourceSet: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          studyState: null,
+          companies: [],
         },
       ];
       const firstRun = await bulkImportProblems(db, seed);

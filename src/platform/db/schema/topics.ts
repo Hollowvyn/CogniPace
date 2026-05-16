@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import { problemTopics } from "./problemTopics";
 import { trackGroups } from "./trackGroups";
 import { nowSql } from "./utils/nowSql";
 
@@ -17,4 +18,5 @@ export const topics = sqliteTable("topics", {
 
 export const topicsRelations = relations(topics, ({ many }) => ({
   trackGroups: many(trackGroups),
+  problems: many(problemTopics),
 }));

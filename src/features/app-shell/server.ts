@@ -19,5 +19,8 @@ export {
   getAppShellData,
   getPopupShellData,
   getQueue,
+  getActiveTrack,
+  getLibrary,
+  getTracks,
   openExtensionPage,
 } from "./messaging/handlers";

@@ -1,23 +1,25 @@
-import type { Problem , Company , Topic } from "@features/problems";
+import type { Problem, Company, Topic } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
-
+import type { TrackId } from "@shared/ids";
 
 /**
- * Transitional AppData root — hydrated by the dashboard handler from
- * SQLite (every aggregate that survived Phase 5). The blob shape is
- * deliberately slim now; new aggregates do NOT get added here.
+ * App-shell read model. `problems` is the canonical list (rich — carries
+ * studyState, topics, companies via Drizzle relations). The lookup maps
+ * are derived from it in `loadAppShellData` for backward-compat with
+ * queue/analytics consumers; they will be removed as those features
+ * are updated to use `problems` directly.
  */
 export interface AppData {
-  /** Problem aggregate, hydrated from SQLite at read time. */
+  /** Rich problems — studyState, topics, companies populated by Drizzle RQB. */
+  problems: Problem[];
+  /** Derived from problems — for backward-compat with queue/analytics. */
   problemsBySlug: Record<string, Problem>;
-  /** StudyState aggregate, hydrated from SQLite at read time. */
   studyStatesBySlug: Record<string, StudyState>;
-  /** Topic registry, hydrated from SQLite at read time. */
   topicsById: Record<string, Topic>;
-  /** Company registry, hydrated from SQLite at read time. */
   companiesById: Record<string, Company>;
   settings: UserSettings;
+  activeTrackId: TrackId | null;
   /** Set by the v6→v7 migration; surfaces in support diagnostics. */
   lastMigrationAt?: string;
 }
