@@ -15,7 +15,6 @@ branch, and PR rules.
 ## Platform Setup
 
 - Keep network access enabled.
-- Run and snapshot the repo setup script from `requiredStepsForSetup.md`.
 - Enable Suggested Tasks only inside documented maintenance lanes.
 - Enable Jules CI fixer only for Jules-created PRs.
 - Set default commit authorship to co-authored.
