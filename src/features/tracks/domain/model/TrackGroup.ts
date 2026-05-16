@@ -1,3 +1,4 @@
+import type { Problem } from "@features/problems/domain/model";
 import type { TopicId, TrackGroupId, TrackId } from "@shared/ids";
 
 export interface TrackGroup {
@@ -9,6 +10,6 @@ export interface TrackGroup {
    * or the parent track's name. */
   name?: string;
   description?: string;
-  /** Sort order within the parent track. */
-  orderIndex: number;
+  /** Ordered problems in this group. Storage order is translated into array order. */
+  problems: ReadonlyArray<Problem>;
 }

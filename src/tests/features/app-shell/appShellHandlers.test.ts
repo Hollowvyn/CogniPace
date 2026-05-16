@@ -49,20 +49,18 @@ describe("Popup Shell Handler", () => {
 
     expect(Object.keys(payload).sort()).toEqual([
       "activeTrack",
+      "activeTrackId",
       "popup",
+      "problems",
       "settings",
     ]);
     expect(payload).not.toHaveProperty("analytics");
-    expect(payload).not.toHaveProperty("library");
     expect(payload).not.toHaveProperty("queue");
     expect(payload.popup.dueCount).toBeGreaterThanOrEqual(1);
     expect(payload.popup.recommended?.slug).toBe("two-sum");
-    // TrackCardView is the popup's compact shape — never carries
-    // `chapters` (those live on the full ActiveTrackView only).
-    expect(payload.popup.activeTrack ?? {}).not.toHaveProperty("chapters");
   });
 
-  it("derives activeTrack from settings.activeFocus", () => {
+  it("derives activeTrackId from settings.activeFocus", () => {
     const data = buildAppData({
       problemsBySlug: {
         "two-sum": makeProblem("two-sum", { title: "Two Sum", difficulty: "Easy" }),
@@ -79,7 +77,7 @@ describe("Popup Shell Handler", () => {
     ];
     const payload = buildPopupShellPayload(data, tracks);
 
+    expect(payload.activeTrackId).toBe("Grind75");
     expect(payload.activeTrack?.id).toBe("Grind75");
-    expect(payload.popup.activeTrack?.id).toBe("Grind75");
   });
 });

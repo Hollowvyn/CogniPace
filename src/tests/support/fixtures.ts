@@ -15,7 +15,7 @@ import {
 
 import type { Company, Problem, Topic } from "@features/problems";
 import type { StudyState } from "@features/study/server";
-import type { TrackWithGroups } from "@features/tracks";
+import type { Track } from "@features/tracks";
 
 export const FIXTURE_NOW = "2026-03-01T00:00:00.000Z";
 
@@ -75,7 +75,7 @@ export function makeCompany(
 export function makeTrack(
   id: string,
   groupSlugs: ReadonlyArray<{ groupId: string; name?: string; slugs: string[] }> = [],
-): TrackWithGroups {
+): Track {
   const trackId = asTrackId(id);
   return {
     id: trackId,
@@ -84,16 +84,11 @@ export function makeTrack(
     isCurated: false,
     createdAt: FIXTURE_NOW,
     updatedAt: FIXTURE_NOW,
-    groups: groupSlugs.map((g, idx) => ({
+    groups: groupSlugs.map((g) => ({
       id: asTrackGroupId(g.groupId),
       trackId,
       name: g.name,
-      orderIndex: idx,
-      problems: g.slugs.map((slug, slugIdx) => ({
-        groupId: asTrackGroupId(g.groupId),
-        problemSlug: asProblemSlug(slug),
-        orderIndex: slugIdx,
-      })),
+      problems: g.slugs.map((slug) => makeProblem(slug)),
     })),
   };
 }

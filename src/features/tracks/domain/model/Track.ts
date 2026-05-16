@@ -1,3 +1,4 @@
+import type { TrackGroup } from "./TrackGroup";
 import type { TrackId } from "@shared/ids";
 
 export interface Track {
@@ -8,8 +9,8 @@ export interface Track {
   enabled: boolean;
   /** Curated tracks are protected from user delete/rename. */
   isCurated: boolean;
-  /** Position in the user-facing track list; lower comes first. */
-  orderIndex?: number;
+  /** Ordered groups in this track. Storage order is translated into array order. */
+  groups: ReadonlyArray<TrackGroup>;
   readonly createdAt: string;
   updatedAt: string;
 }

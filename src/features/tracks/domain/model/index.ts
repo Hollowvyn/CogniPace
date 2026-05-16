@@ -1,21 +1,11 @@
 export type { Track } from "./Track";
 export type { TrackGroup } from "./TrackGroup";
-export type { TrackGroupProblem } from "./TrackGroupProblem";
-export type { TrackGroupWithProblems } from "./TrackGroupWithProblems";
-export type { TrackWithGroups } from "./TrackWithGroups";
-export type { GroupCompletion } from "./GroupCompletion";
+export type { TrackMembership } from "./TrackMembership";
 export type { TrackProgress } from "./TrackProgress";
-export type { ComputeTrackProgressInput } from "./ComputeTrackProgressInput";
-export { computeTrackProgress } from "./TrackProgress";
-
-export type {
-  TrackView,
-  TrackGroupView,
-  TrackChapterView,
-  TrackChapterStatusView,
-  TrackQuestionView,
-  TrackQuestionStatusView,
-  TrackCardView,
-  TrackMembership,
-  ActiveTrackView,
-} from "./views";
+export {
+  getActiveTrackGroup,
+  getGroupCompletedCount,
+  getGroupTotalCount,
+  getNextTrackProblem,
+  getTrackProgress,
+} from "./TrackProgress";

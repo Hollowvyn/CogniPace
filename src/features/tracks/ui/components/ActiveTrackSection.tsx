@@ -1,6 +1,7 @@
 import { SurfaceCard } from "@design-system/atoms";
-import { buildStudyStateView } from "@features/app-shell/domain/policy/hydrate";
+import { listEditedFields } from "@features/problems";
 import { ProblemsTable, type ProblemRowData } from "@features/problems/ui/components/problemsTable";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
@@ -9,40 +10,69 @@ import Typography from "@mui/material/Typography";
 import { asTrackGroupId, asTrackId } from "@shared/ids";
 import { useMemo } from "react";
 
+import {
+  getGroupCompletedCount,
+  getGroupTotalCount,
+  getTrackProgress,
+} from "../../domain/model";
 import { selectActiveGroupId } from "../store/tracksSelectors";
 import { useTracksUiStore } from "../store/tracksUiStore";
 
-import type { TrackGroupView, TrackView } from "../../domain/model";
-import type { Problem, ProblemView } from "@features/problems/domain/model";
+import type { TrackGroup } from "../../domain/model";
+import type { Problem, ProblemView } from "@features/problems";
+import type { StudyState, StudyStateView } from "@features/study";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function rollupCompletion(track: TrackView): { completed: number; total: number } {
-  return track.groups.reduce(
-    (acc, group) => ({
-      completed: acc.completed + group.completedCount,
-      total: acc.total + group.totalCount,
-    }),
-    { completed: 0, total: 0 },
-  );
+function problemViewFromProblem(problem: Problem): ProblemView {
+  return {
+    slug: problem.slug,
+    title: problem.title,
+    difficulty: problem.difficulty,
+    isPremium: problem.isPremium ?? false,
+    url: problem.url,
+    leetcodeId: problem.leetcodeId,
+    topics: problem.topics.map((topic) => ({ id: topic.id, name: topic.name })),
+    companies: problem.companies.map((company) => ({
+      id: company.id,
+      name: company.name,
+    })),
+    editedFields: listEditedFields(problem),
+  };
 }
 
-function hydrateGroupRows(
-  group: TrackGroupView,
-  libraryBySlug: Map<string, Problem>,
+function studyStateViewFromStudyState(
+  studyState: StudyState | null,
+  now: Date,
+): StudyStateView | null {
+  if (!studyState) return null;
+  const summary = getStudyStateSummary(studyState, now, 0.85);
+  return {
+    ...summary,
+    interviewPattern: studyState.interviewPattern,
+    timeComplexity: studyState.timeComplexity,
+    spaceComplexity: studyState.spaceComplexity,
+    languages: studyState.languages,
+    notes: studyState.notes,
+    tags: studyState.tags,
+    bestTimeMs: studyState.bestTimeMs,
+    lastSolveTimeMs: studyState.lastSolveTimeMs,
+    lastRating: studyState.lastRating,
+    confidence: studyState.confidence,
+    recentAttempts: studyState.attemptHistory.slice(-5),
+  };
+}
+
+function buildGroupRows(
+  group: TrackGroup,
 ): ProblemRowData[] {
   const now = new Date();
-  return group.problems.map((problemView: ProblemView) => {
-    const richProblem = libraryBySlug.get(problemView.slug);
+  return group.problems.map((problem) => {
     return {
-      view: problemView,
-      studyState: buildStudyStateView({
-        studyState: richProblem?.studyState ?? null,
-        now,
-        targetRetention: 0.85,
-      }),
+      view: problemViewFromProblem(problem),
+      studyState: studyStateViewFromStudyState(problem.studyState, now),
       trackMemberships: [],
-      suspended: richProblem?.studyState?.suspended ? ("manual" as const) : undefined,
+      suspended: problem.studyState?.suspended ? ("manual" as const) : undefined,
     };
   });
 }
@@ -76,19 +106,14 @@ function TabLabel({ name, completed, total }: { name: string; completed: number;
 
 function TrackBody() {
   const activeTrack    = useTracksUiStore(s => s.activeTrack);
-  const library        = useTracksUiStore(s => s.library);
   const activeGroupId  = useTracksUiStore(selectActiveGroupId);
-  const libraryBySlug  = useMemo(
-    () => new Map(library.map(p => [p.slug, p])),
-    [library],
-  );
 
   const activeGroup =
     activeTrack?.groups.find(g => g.id === activeGroupId) ?? activeTrack?.groups[0];
 
   const rows = useMemo(
-    () => (activeGroup ? hydrateGroupRows(activeGroup, libraryBySlug) : []),
-    [activeGroup, libraryBySlug],
+    () => (activeGroup ? buildGroupRows(activeGroup) : []),
+    [activeGroup],
   );
 
   if (!activeTrack) return null;
@@ -108,19 +133,23 @@ function TrackBody() {
           variant="scrollable"
           scrollButtons="auto"
         >
-          {activeTrack.groups.map(group => (
-            <Tab
-              key={group.id}
-              value={group.id}
-              label={
-                <TabLabel
-                  name={group.name}
-                  completed={group.completedCount}
-                  total={group.totalCount}
-                />
-              }
-            />
-          ))}
+          {activeTrack.groups.map(group => {
+            const completedCount = getGroupCompletedCount(group);
+            const totalCount = getGroupTotalCount(group);
+            return (
+              <Tab
+                key={group.id}
+                value={group.id}
+                label={
+                  <TabLabel
+                    name={group.name ?? "Untitled Group"}
+                    completed={completedCount}
+                    total={totalCount}
+                  />
+                }
+              />
+            );
+          })}
         </Tabs>
       ) : null}
 
@@ -133,7 +162,6 @@ function TrackBody() {
 
 export function ActiveTrackSection() {
   const activeTrack         = useTracksUiStore(s => s.activeTrack);
-  const activeTrackDueCount = useTracksUiStore(s => s.activeTrackDueCount);
   const tracks              = useTracksUiStore(s => s.tracks);
   const activeTrackId       = useTracksUiStore(s => s.activeTrackId);
   const otherEnabledTracks  = useMemo(
@@ -143,8 +171,7 @@ export function ActiveTrackSection() {
 
   if (!activeTrack) return null;
 
-  const rollup  = rollupCompletion(activeTrack);
-  const percent = rollup.total > 0 ? Math.round((rollup.completed / rollup.total) * 100) : 0;
+  const progress = getTrackProgress(activeTrack);
 
   return (
     <SurfaceCard sx={{ p: 3 }}>
@@ -162,12 +189,12 @@ export function ActiveTrackSection() {
         ) : null}
       </Stack>
 
-      {rollup.total > 0 ? (
+      {progress.totalQuestions > 0 ? (
         <Stack spacing={0.75} sx={{ mb: 2 }}>
-          <LinearProgress variant="determinate" value={percent} sx={{ height: 6, borderRadius: 3 }} />
+          <LinearProgress variant="determinate" value={progress.completionPercent} sx={{ height: 6, borderRadius: 3 }} />
           <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: "tabular-nums" }}>
-            {rollup.completed} / {rollup.total} completed
-            {activeTrackDueCount > 0 ? ` · ${activeTrackDueCount} due for review` : ""}
+            {progress.completedQuestions} / {progress.totalQuestions} completed
+            {progress.dueCount > 0 ? ` · ${progress.dueCount} due for review` : ""}
           </Typography>
         </Stack>
       ) : null}

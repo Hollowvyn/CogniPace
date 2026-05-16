@@ -1,6 +1,4 @@
-import { problemRepository } from "@features/problems";
 import { subscribeToTick } from "@libs/event-bus";
-import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import { useEffect } from "react";
 import { create } from "zustand";
 
@@ -16,27 +14,6 @@ import type { TrackGroupId, TrackId } from "@shared/ids";
 export interface TracksUiStore extends TracksUiState {
   dispatchIntent: (intent: TracksUiIntent) => void;
   load: () => Promise<void>;
-}
-
-// ─── Pure helpers (no store access) ──────────────────────────────────────────
-
-function computeActiveTrackDueCount(
-  activeTrack: TracksUiState["activeTrack"],
-  library: TracksUiState["library"],
-): number {
-  if (!activeTrack) return 0;
-  const trackSlugs = new Set<string>();
-  for (const group of activeTrack.groups) {
-    for (const problem of group.problems) trackSlugs.add(problem.slug);
-  }
-  const now = new Date();
-  let count = 0;
-  for (const problem of library) {
-    if (trackSlugs.has(problem.slug) && problem.studyState) {
-      if (getStudyStateSummary(problem.studyState, now).isDue) count++;
-    }
-  }
-  return count;
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -63,17 +40,12 @@ export const useTracksUiStore = create<TracksUiStore>((set, get) => {
     set({ isLoading: true, error: null });
 
     try {
-      const [{ tracks, activeTrackId, activeTrack }, library] = await Promise.all([
-        tracksRepository.getTracks(),
-        problemRepository.getLibrary(),
-      ]);
+      const { tracks, activeTrackId, activeTrack } = await tracksRepository.getTracks();
 
       set({
         tracks,
         activeTrackId,
         activeTrack,
-        library,
-        activeTrackDueCount: computeActiveTrackDueCount(activeTrack, library),
         isLoading: false,
       });
     } catch (err) {

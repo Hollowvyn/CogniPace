@@ -43,8 +43,7 @@ describe("Popup States", () => {
 
   it("renders the no-active-track state", async () => {
     const payload = makePayload();
-    payload.popup.activeTrack = null;
-    payload.popup.trackNext = null;
+    payload.activeTrackId = null;
     payload.activeTrack = null;
 
     renderPopupWithPayload(payload);
@@ -54,12 +53,9 @@ describe("Popup States", () => {
 
   it("renders the track-complete state when no next question exists", async () => {
     const payload = makePayload();
-    payload.popup.trackNext = null;
     payload.activeTrack = {
       ...payload.activeTrack!,
-      activeChapterId: null,
-      activeChapterTitle: null,
-      nextQuestion: null,
+      groups: [],
     };
 
     renderPopupWithPayload(payload);

@@ -36,9 +36,11 @@ export function OverlayPostSubmitNextCard(
               activeTrackId={props.nextTarget.activeTrackId}
               buttonFullWidth
               compact
+              groupId={props.nextTarget.group.id}
+              groupName={props.nextTarget.group.name}
               label="Next in track"
               onOpenProblem={props.nextTarget.onOpenProblem}
-              view={props.nextTarget.view}
+              problem={props.nextTarget.problem}
             />
           ) : props.nextTarget?.kind === "recommended" ? (
             <RecommendedProblemCard

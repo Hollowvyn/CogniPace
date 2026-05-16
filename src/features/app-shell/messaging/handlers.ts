@@ -11,7 +11,7 @@ import {
   effectivelySuspendedFlag,
 } from "@features/queue/server";
 import { createInitialUserSettings, getUserSettings } from "@features/settings/server";
-import { buildActiveTrackView, getActiveTrackId, listTracks } from "@features/tracks/server";
+import { getActiveTrackId, listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/url";
 import { extensionUrl, openTab } from "@platform/chrome/tabs";
 import { getDb } from "@platform/db/instance";
@@ -19,7 +19,6 @@ import { getDb } from "@platform/db/instance";
 import {
   buildProblemView,
   buildStudyStateView,
-  buildTrackView,
 } from "../domain/policy/hydrate";
 
 import type { AppShellPayload, PopupShellPayload } from "../domain/model";
@@ -32,11 +31,8 @@ import type {
 } from "@features/problems";
 import type { StudyState } from "@features/study";
 import type {
-  ActiveTrackView,
-  TrackCardView,
   TrackMembership,
-  TrackView,
-  TrackWithGroups,
+  Track,
 } from "@features/tracks";
 import type { TrackId } from "@shared/ids";
 
@@ -78,19 +74,19 @@ async function loadAppShellData(): Promise<AppData> {
   };
 }
 
-async function loadTracks(): Promise<TrackWithGroups[]> {
+async function loadTracks(): Promise<Track[]> {
   const { db } = await getDb();
   return listTracks(db);
 }
 
 function trackMembershipsForSlug(
-  tracks: readonly TrackWithGroups[],
+  tracks: readonly Track[],
   slug: string,
 ): TrackMembership[] {
   const out: TrackMembership[] = [];
   for (const track of tracks) {
     for (const group of track.groups) {
-      const found = group.problems.find((m) => m.problemSlug === slug);
+      const found = group.problems.find((problem) => problem.slug === slug);
       if (found) {
         out.push({
           trackId: track.id,
@@ -103,45 +99,6 @@ function trackMembershipsForSlug(
     }
   }
   return out;
-}
-
-function buildTrackViews(
-  data: AppData,
-  tracks: readonly TrackWithGroups[],
-  now: Date,
-): TrackView[] {
-  return tracks.map((track) =>
-    buildTrackView({
-      track,
-      problemsBySlug: data.problemsBySlug as unknown as Parameters<
-        typeof buildTrackView
-      >[0]["problemsBySlug"],
-      topicsById: data.topicsById,
-      companiesById: data.companiesById,
-      studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<
-        typeof buildTrackView
-      >[0]["studyStatesBySlug"],
-      now,
-    }),
-  );
-}
-
-function activeTrackViewOf(
-  data: AppData,
-  trackViews: readonly TrackView[],
-): TrackView | null {
-  const focusedId = focusedTrackIdOf(data);
-  if (!focusedId) return null;
-  return trackViews.find((view) => view.id === focusedId) ?? null;
-}
-
-function activeTrackEntityOf(
-  data: AppData,
-  tracks: readonly TrackWithGroups[],
-): TrackWithGroups | null {
-  const focusedId = focusedTrackIdOf(data);
-  if (!focusedId) return null;
-  return tracks.find((track) => track.id === focusedId) ?? null;
 }
 
 function focusedTrackIdOf(data: AppData): TrackId | null {
@@ -160,15 +117,15 @@ function focusedTrackIdOf(data: AppData): TrackId | null {
 
 function libraryRows(
   payload: AppData,
-  tracks: readonly TrackWithGroups[],
+  tracks: readonly Track[],
   now = new Date(),
 ): LibraryProblemRow[] {
   const targetRetention = payload.settings.memoryReview.targetRetention;
   const slugs = new Set<string>(Object.keys(payload.problemsBySlug));
   for (const track of tracks) {
     for (const group of track.groups) {
-      for (const membership of group.problems) {
-        slugs.add(membership.problemSlug);
+      for (const problem of group.problems) {
+        slugs.add(problem.slug);
       }
     }
   }
@@ -219,50 +176,15 @@ function synthesizeProblem(slug: string): Problem {
   };
 }
 
-function activeTrackCard(activeTrack: ActiveTrackView | null): TrackCardView | null {
-  if (!activeTrack) return null;
-  return {
-    id: activeTrack.id,
-    name: activeTrack.name,
-    description: activeTrack.description,
-    sourceSet: activeTrack.sourceSet,
-    active: activeTrack.active,
-    totalQuestions: activeTrack.totalQuestions,
-    completedQuestions: activeTrack.completedQuestions,
-    completionPercent: activeTrack.completionPercent,
-    dueCount: activeTrack.dueCount,
-    totalChapters: activeTrack.totalChapters,
-    completedChapters: activeTrack.completedChapters,
-    nextQuestionTitle: activeTrack.nextQuestionTitle,
-    nextChapterTitle: activeTrack.nextChapterTitle,
-  };
-}
-
 export function buildPopupShellPayload(
   data: AppData,
-  tracks: readonly TrackWithGroups[],
+  tracks: readonly Track[],
   now = new Date(),
 ): PopupShellPayload {
   const queue = buildTodayQueue(data, now);
-  const trackViews = buildTrackViews(data, tracks, now);
-  const activeTrackView = activeTrackViewOf(data, trackViews);
-  const activeTrackEntity = activeTrackEntityOf(data, tracks);
-  const activeTrack = buildActiveTrackView({
-    activeTrackId: focusedTrackIdOf(data),
-    trackView: activeTrackView,
-    trackEntity: activeTrackEntity,
-    studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<
-      typeof buildActiveTrackView
-    >[0]["studyStatesBySlug"],
-    problemsBySlug: data.problemsBySlug as unknown as Parameters<
-      typeof buildActiveTrackView
-    >[0]["problemsBySlug"],
-    now,
-  });
-  const candidates = buildRecommendedCandidates(
-    queue,
-    activeTrack?.nextQuestion?.slug,
-  );
+  const activeTrackId = focusedTrackIdOf(data);
+  const activeTrack = tracks.find(t => t.id === activeTrackId) ?? null;
+  const candidates = buildRecommendedCandidates(queue, undefined);
 
   return {
     settings: data.settings,
@@ -271,10 +193,10 @@ export function buildPopupShellPayload(
       streakDays: computeReviewStreakDays(data, now),
       recommended: candidates[0] ?? null,
       recommendedCandidates: candidates,
-      trackNext: activeTrack?.nextQuestion ?? null,
-      activeTrack: activeTrackCard(activeTrack),
     },
-    activeTrack: activeTrack,
+    problems: data.problems,
+    activeTrackId,
+    activeTrack,
   };
 }
 
@@ -291,7 +213,6 @@ export async function getAppShellData(): Promise<AppShellPayload> {
   const popupShell = buildPopupShellPayload(data, tracks, now);
   const queue = buildTodayQueue(data, now);
   const analytics = summarizeAnalytics(data, now);
-  const trackViews = buildTrackViews(data, tracks, now);
 
   const topicChoices = Object.values(data.topicsById)
     .map((topic) => ({ id: topic.id, name: topic.name }))
@@ -306,10 +227,10 @@ export async function getAppShellData(): Promise<AppShellPayload> {
     analytics,
     recommendedCandidates: popupShell.popup.recommendedCandidates,
     library: libraryRows(data, tracks, now),
-    tracks: trackViews,
+    tracks,
     topicChoices,
     companyChoices,
-  } as AppShellPayload;
+  };
 }
 
 export async function getQueue(): Promise<ReturnType<typeof buildTodayQueue>> {
@@ -317,36 +238,31 @@ export async function getQueue(): Promise<ReturnType<typeof buildTodayQueue>> {
   return buildTodayQueue(data);
 }
 
-export async function getActiveTrack(): Promise<TrackView | null> {
+export async function getActiveTrack(): Promise<Track | null> {
   const { db } = await getDb();
-  const [data, rawTracks, session] = await Promise.all([
-    loadAppShellData(),
+  const [rawTracks, session] = await Promise.all([
     loadTracks(),
     getActiveTrackId(db),
   ]);
   if (!session) return null;
-  const entity = rawTracks.find(t => t.id === session);
-  if (!entity) return null;
-  return buildTrackViews(data, [entity], new Date())[0] ?? null;
+  return rawTracks.find(t => t.id === session) ?? null;
 }
 
 export async function getTracks(): Promise<{
-  tracks: TrackView[];
+  tracks: Track[];
   activeTrackId: TrackId | null;
-  activeTrack: TrackView | null;
+  activeTrack: Track | null;
 }> {
   const { db } = await getDb();
-  const [data, rawTracks, session] = await Promise.all([
-    loadAppShellData(),
+  const [rawTracks, session] = await Promise.all([
     loadTracks(),
     getActiveTrackId(db),
   ]);
-  const tracks = buildTrackViews(data, rawTracks, new Date());
   const activeTrackId = session;
   return {
-    tracks,
+    tracks: rawTracks,
     activeTrackId,
-    activeTrack: tracks.find(t => t.id === activeTrackId) ?? null,
+    activeTrack: rawTracks.find(t => t.id === activeTrackId) ?? null,
   };
 }
 

@@ -11,7 +11,7 @@ import {
 } from "@design-system/atoms";
 import { cognipaceControlScale } from "@design-system/theme";
 import { UiStatus } from "@features/app-shell";
-import { ActiveTrackView, TrackQuestionView } from "@features/tracks";
+import { getTrackProgress } from "@features/tracks";
 import CallMadeRounded from "@mui/icons-material/CallMadeRounded";
 import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import Button from "@mui/material/Button";
@@ -20,6 +20,8 @@ import Typography from "@mui/material/Typography";
 
 import { popupSmallButtonSx } from "./popupStyles";
 
+import type { Problem } from "@features/problems";
+import type { Track, TrackGroup } from "@features/tracks";
 import type { ReactNode } from "react";
 
 function TrackFooter(props: {
@@ -97,8 +99,9 @@ function TrackStateCard(props: {
 }
 
 function TrackNextInset(props: {
+  group: TrackGroup;
   trackId: string;
-  nextQuestion: TrackQuestionView;
+  problem: Problem;
   onOpenProblem: (target: {
     slug: string;
     trackId?: string;
@@ -125,16 +128,16 @@ function TrackNextInset(props: {
             noWrap
             translate="no"
           >
-            {props.nextQuestion.title}
+            {props.problem.title}
           </Typography>
           <SurfaceTooltip title="Continue path">
             <SurfaceIconButton
               aria-label="Continue path"
               onClick={() => {
                 void props.onOpenProblem({
-                  groupId: props.nextQuestion.groupId,
+                  groupId: props.group.id,
                   trackId: props.trackId,
-                  slug: props.nextQuestion.slug,
+                  slug: props.problem.slug,
                 });
               }}
               sx={{
@@ -262,15 +265,17 @@ export function TrackPanelStudyPlan(props: {
       groupId?: string;
     }) => Promise<void> | void;
   };
-  track: ActiveTrackView;
+  track: Track;
   disabled?: boolean;
-  nextQuestion: TrackQuestionView;
+  nextQuestion: { group: TrackGroup; problem: Problem };
   status?: UiStatus;
 }) {
+  const progress = getTrackProgress(props.track);
+
   return (
     <TrackStateCard
       action={
-        <ToneChip label={`${props.track.completionPercent}%`} tone="accent" />
+        <ToneChip label={`${progress.completionPercent}%`} tone="accent" />
       }
       disabled={props.disabled}
       helper="Study mode advances the active path. Use freestyle if you want queue-only review without changing track next."
@@ -286,15 +291,16 @@ export function TrackPanelStudyPlan(props: {
         </Typography>
         <ProgressTrack
           ariaLabel={`${props.track.name} completion`}
-          value={props.track.completionPercent}
+          value={progress.completionPercent}
         />
         <Typography color="text.secondary" variant="body2">
-          {props.track.completedQuestions}/{props.track.totalQuestions}{" "}
+          {progress.completedQuestions}/{progress.totalQuestions}{" "}
           questions traversed
         </Typography>
         <TrackNextInset
+          group={props.nextQuestion.group}
           trackId={props.track.id}
-          nextQuestion={props.nextQuestion}
+          problem={props.nextQuestion.problem}
           onOpenProblem={props.actions.onOpenProblem}
         />
       </Stack>

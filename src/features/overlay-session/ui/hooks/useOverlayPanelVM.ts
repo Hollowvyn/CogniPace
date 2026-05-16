@@ -5,6 +5,7 @@ import { appShellRepository, AppShellPayload } from "@features/app-shell";
 import { Difficulty, problemRepository } from "@features/problems";
 import { createInitialUserSettings , UserSettings } from "@features/settings";
 import { Rating, StudyState } from "@features/study";
+import { getNextTrackProblem } from "@features/tracks";
 import {
   getProblemSlugFromUrl,
   isStaleOverlayRequest,
@@ -119,17 +120,21 @@ export function useOverlayPanelVM(
         payload.popup.recommended.slug !== currentSlug
           ? payload.popup.recommended
           : null);
+      const trackNext = payload.activeTrack
+        ? getNextTrackProblem(payload.activeTrack)
+        : null;
 
       if (
         payload.settings.studyMode === "studyPlan" &&
-        payload.popup.trackNext &&
-        payload.popup.trackNext.slug !== currentSlug
+        trackNext &&
+        trackNext.problem.slug !== currentSlug
       ) {
         return {
           kind: "track",
           activeTrackId: payload.activeTrack?.id,
+          group: trackNext.group,
           onOpenProblem: openOverlayProblem,
-          view: payload.popup.trackNext,
+          problem: trackNext.problem,
         };
       }
 

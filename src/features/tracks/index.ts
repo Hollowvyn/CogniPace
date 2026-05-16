@@ -1,23 +1,16 @@
 export type {
   Track,
   TrackGroup,
-  TrackGroupProblem,
-  TrackGroupWithProblems,
-  TrackWithGroups,
-  GroupCompletion,
-  TrackProgress,
-  ComputeTrackProgressInput,
-  TrackView,
-  TrackGroupView,
-  TrackChapterView,
-  TrackChapterStatusView,
-  TrackQuestionView,
-  TrackQuestionStatusView,
-  TrackCardView,
   TrackMembership,
-  ActiveTrackView,
+  TrackProgress,
 } from "./domain/model";
-export { computeTrackProgress } from "./domain/model";
+export {
+  getActiveTrackGroup,
+  getGroupCompletedCount,
+  getGroupTotalCount,
+  getNextTrackProblem,
+  getTrackProgress,
+} from "./domain/model";
 
 export { tracksRepository } from "./data/repository/TracksRepository";
 export type { TracksRepository } from "./data/repository/TracksRepository";

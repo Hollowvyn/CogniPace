@@ -8,17 +8,19 @@ import Typography from "@mui/material/Typography";
 import { asTrackId } from "@shared/ids";
 import { useMemo, useState } from "react";
 
+import { getTrackProgress } from "../../domain/model";
 import { useTracksUiStore } from "../store/tracksUiStore";
 
-import type { TrackView } from "../../domain/model";
+import type { Track } from "../../domain/model";
 
 // ─── OtherTrackCard ───────────────────────────────────────────────────────────
 
-function OtherTrackCard({ track }: { track: TrackView }) {
-
-  const completed = track.groups.reduce((acc, g) => acc + g.completedCount, 0);
-  const total     = track.groups.reduce((acc, g) => acc + g.totalCount, 0);
-  const percent   = total > 0 ? Math.round((completed / total) * 100) : 0;
+function OtherTrackCard({
+  track,
+}: {
+  track: Track;
+}) {
+  const progress = getTrackProgress(track);
 
   return (
     <Box sx={theme => ({ p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: 1 })}>
@@ -29,7 +31,9 @@ function OtherTrackCard({ track }: { track: TrackView }) {
             <Typography variant="body2" color="text.secondary">{track.description}</Typography>
           ) : null}
           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums" }}>
-            {total > 0 ? `${completed} of ${total} completed` : "Empty track"}
+            {progress.totalQuestions > 0
+              ? `${progress.completedQuestions} of ${progress.totalQuestions} completed`
+              : "Empty track"}
           </Typography>
         </Stack>
         <Button
@@ -40,8 +44,8 @@ function OtherTrackCard({ track }: { track: TrackView }) {
           Set Active
         </Button>
       </Stack>
-      {total > 0 ? (
-        <LinearProgress variant="determinate" value={percent} sx={{ mt: 1.5, height: 4, borderRadius: 2 }} />
+      {progress.totalQuestions > 0 ? (
+        <LinearProgress variant="determinate" value={progress.completionPercent} sx={{ mt: 1.5, height: 4, borderRadius: 2 }} />
       ) : null}
     </Box>
   );
@@ -54,7 +58,7 @@ export function OtherTracksSection() {
   const activeTrackId = useTracksUiStore(s => s.activeTrackId);
   const [expanded, setExpanded] = useState(false);
   const otherTracks   = useMemo(
-    () => tracks.filter((t: TrackView) => t.enabled && t.id !== activeTrackId),
+    () => tracks.filter((t: Track) => t.enabled && t.id !== activeTrackId),
     [tracks, activeTrackId],
   );
 
@@ -75,7 +79,10 @@ export function OtherTracksSection() {
       {expanded ? (
         <Stack spacing={1.5}>
           {otherTracks.map(track => (
-            <OtherTrackCard key={track.id} track={track} />
+            <OtherTrackCard
+              key={track.id}
+              track={track}
+            />
           ))}
           <Tooltip title="Coming next" arrow>
             <span>

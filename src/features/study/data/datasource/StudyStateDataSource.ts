@@ -185,7 +185,7 @@ export async function getStudyState(
 /**
  * Returns every study state keyed by problem slug. Used by handler
  * hydration to fill `data.studyStatesBySlug` for view-layer
- * consumers (libraryRows, buildTrackView, etc.).
+ * consumers (library rows, track rollups, etc.).
  *
  * Uses ONE query each for states + attempts and joins in memory so
  * we don't end up running n+1 selects across hundreds of problems.

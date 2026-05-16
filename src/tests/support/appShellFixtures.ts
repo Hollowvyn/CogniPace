@@ -1,19 +1,23 @@
 import { createMockAppShellPayload } from "@features/app-shell/data/mockData";
-import { StudyStateView, StudyState, StudyStateSummary } from "@features/study";
-import { TrackQuestionView } from "@features/tracks";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
+import { asProblemSlug, asTrackGroupId, asTrackId } from "@shared/ids";
 
-/** Wrap a bare summary into a StudyStateView for fixture rows. */
-function viewFromSummary(summary: StudyStateSummary): StudyStateView {
-  return {
-    ...summary,
-    recentAttempts: [],
-    tags: [],
-  };
-}
+import type { AppShellPayload } from "@features/app-shell";
+import type { LibraryProblemRow, Problem, ProblemView } from "@features/problems";
+import type { StudyState, StudyStateView } from "@features/study";
+import type { Track } from "@features/tracks";
 
 function makeStudyState(nextReviewAt?: string): StudyState {
   return {
-    attemptHistory: [],
+    attemptHistory: nextReviewAt
+      ? [
+          {
+            reviewedAt: "2026-03-10T00:00:00.000Z",
+            rating: 2,
+            mode: "FULL_SOLVE",
+          },
+        ]
+      : [],
     fsrsCard: nextReviewAt
       ? {
           difficulty: 4,
@@ -25,6 +29,7 @@ function makeStudyState(nextReviewAt?: string): StudyState {
           scheduledDays: 2,
           stability: 2,
           state: "Review",
+          lastReview: "2026-03-10T00:00:00.000Z",
         }
       : undefined,
     suspended: false,
@@ -32,7 +37,58 @@ function makeStudyState(nextReviewAt?: string): StudyState {
   };
 }
 
-export function makePayload() {
+function problemViewFromProblem(problem: Problem): ProblemView {
+  return {
+    slug: problem.slug,
+    title: problem.title,
+    difficulty: problem.difficulty,
+    isPremium: problem.isPremium ?? false,
+    url: problem.url,
+    topics: [],
+    companies: [],
+    editedFields: [],
+  };
+}
+
+function studyStateViewFromStudyState(
+  studyState: StudyState | null,
+): StudyStateView | null {
+  if (!studyState) return null;
+  return {
+    ...getStudyStateSummary(studyState, new Date("2026-05-16T00:00:00.000Z")),
+    recentAttempts: studyState.attemptHistory.slice(-5),
+    tags: studyState.tags,
+    bestTimeMs: studyState.bestTimeMs,
+    lastSolveTimeMs: studyState.lastSolveTimeMs,
+    lastRating: studyState.lastRating,
+    confidence: studyState.confidence,
+    interviewPattern: studyState.interviewPattern,
+    timeComplexity: studyState.timeComplexity,
+    spaceComplexity: studyState.spaceComplexity,
+    languages: studyState.languages,
+    notes: studyState.notes,
+  };
+}
+
+function libraryRowFromProblem(problem: Problem): LibraryProblemRow {
+  return {
+    view: problemViewFromProblem(problem),
+    studyState: studyStateViewFromStudyState(problem.studyState),
+    trackMemberships:
+      problem.slug === asProblemSlug("two-sum")
+        ? [
+            {
+              trackId: asTrackId("Blind75"),
+              trackName: "Blind 75",
+              groupId: asTrackGroupId("arrays-1"),
+              groupName: "Arrays",
+            },
+          ]
+        : [],
+  };
+}
+
+export function makePayload(): AppShellPayload {
   const payload = createMockAppShellPayload();
   payload.popup.recommended = {
     slug: "two-sum",
@@ -56,66 +112,8 @@ export function makePayload() {
     },
   ] as NonNullable<typeof payload.popup.recommended>[];
 
-  const nextQuestion: TrackQuestionView = {
-    slug: "contains-duplicate",
-    title: "Contains Duplicate",
-    url: "https://leetcode.com/problems/contains-duplicate/",
-    difficulty: "Easy",
-    groupId: "arrays-1",
-    chapterTitle: "Arrays",
-    status: "READY",
-    reviewPhase: "Review",
-    nextReviewAt: "2026-03-30T00:00:00.000Z",
-    inLibrary: true,
-    isCurrent: true,
-  };
-
-  payload.popup.trackNext = nextQuestion;
-  payload.popup.activeTrack = {
-    id: "Blind75",
-    name: "Blind 75",
-    description: "Classic interview baseline.",
-    sourceSet: "Blind75",
-    active: true,
-    totalQuestions: 75,
-    completedQuestions: 15,
-    completionPercent: 20,
-    dueCount: 2,
-    totalChapters: 8,
-    completedChapters: 2,
-    nextQuestionTitle: "Contains Duplicate",
-    nextChapterTitle: "Arrays",
-  };
-
-  payload.activeTrack = {
-    ...payload.popup.activeTrack,
-    activeChapterId: "arrays-1",
-    activeChapterTitle: "Arrays",
-    nextQuestion,
-    chapters: [
-      {
-        id: "arrays-1",
-        title: "Arrays",
-        order: 1,
-        status: "CURRENT",
-        totalQuestions: 2,
-        completedQuestions: 1,
-        questions: [
-          nextQuestion,
-          {
-            ...nextQuestion,
-            slug: "two-sum",
-            title: "Two Sum",
-            status: "DUE_NOW",
-            isCurrent: false,
-          },
-        ],
-      },
-    ],
-  };
-
-  const blind75Problem = {
-    slug: "two-sum",
+  const blind75Problem: Problem = {
+    slug: asProblemSlug("two-sum"),
     title: "Two Sum",
     difficulty: "Easy" as const,
     url: "https://leetcode.com/problems/two-sum/",
@@ -124,86 +122,52 @@ export function makePayload() {
     companyIds: [],
     createdAt: "2026-03-01T00:00:00.000Z",
     updatedAt: "2026-03-01T00:00:00.000Z",
+    studyState: makeStudyState("2026-03-30T00:00:00.000Z"),
+    topics: [],
+    companies: [],
   };
-  const mergeIntervalsProblem = {
+  const containsDuplicateProblem: Problem = {
     ...blind75Problem,
-    slug: "merge-intervals",
-    title: "Merge Intervals",
-    difficulty: "Medium" as const,
-    url: "https://leetcode.com/problems/merge-intervals/",
+    slug: asProblemSlug("contains-duplicate"),
+    title: "Contains Duplicate",
+    studyState: null,
   };
 
-  payload.queue.items = [
+  payload.problems = [
     {
-      slug: blind75Problem.slug,
-      title: blind75Problem.title,
-      url: blind75Problem.url,
-      difficulty: blind75Problem.difficulty,
-      studyState: makeStudyState("2026-03-30T00:00:00.000Z"),
-      studyStateSummary: {
-        phase: "Review",
-        nextReviewAt: "2026-03-30T00:00:00.000Z",
-        lastReviewedAt: "2026-03-29T00:00:00.000Z",
-        reviewCount: 1,
-        lapses: 0,
-        difficulty: 4,
-        stability: 2,
-        scheduledDays: 2,
-        suspended: false,
-        isStarted: true,
-        isDue: true,
-        isOverdue: false,
-        overdueDays: 0,
-      },
-      due: true,
-      category: "due",
+      ...blind75Problem,
+    },
+    containsDuplicateProblem,
+    {
+      ...blind75Problem,
+      slug: asProblemSlug("merge-intervals"),
+      title: "Merge Intervals",
+      difficulty: "Medium",
+      studyState: makeStudyState("2026-04-02T00:00:00.000Z"),
     },
   ];
+  payload.library = payload.problems.map(libraryRowFromProblem);
 
-  payload.library = [
-    {
-      studyState: viewFromSummary(payload.queue.items[0].studyStateSummary),
-      view: {
-        slug: blind75Problem.slug,
-        title: blind75Problem.title,
-        difficulty: blind75Problem.difficulty,
-        isPremium: blind75Problem.isPremium ?? false,
-        url: blind75Problem.url,
-        topics: [],
-        companies: [],
-        editedFields: [],
+  payload.activeTrackId = asTrackId("Blind75");
+  const activeTrack: Track = {
+    id: asTrackId("Blind75"),
+    name: "Blind 75",
+    description: "Classic interview baseline.",
+    enabled: true,
+    isCurated: true,
+    createdAt: "2026-03-01T00:00:00.000Z",
+    updatedAt: "2026-03-01T00:00:00.000Z",
+    groups: [
+      {
+        id: asTrackGroupId("arrays-1"),
+        trackId: asTrackId("Blind75"),
+        name: "Arrays",
+        problems: [blind75Problem, containsDuplicateProblem],
       },
-      trackMemberships: [],
-    },
-    {
-      studyState: viewFromSummary({
-        phase: "Learning",
-        nextReviewAt: "2026-04-02T00:00:00.000Z",
-        lastReviewedAt: "2026-03-28T00:00:00.000Z",
-        reviewCount: 0,
-        lapses: 0,
-        difficulty: 5,
-        stability: 1,
-        scheduledDays: 1,
-        suspended: false,
-        isStarted: true,
-        isDue: false,
-        isOverdue: false,
-        overdueDays: 0,
-      }),
-      view: {
-        slug: mergeIntervalsProblem.slug,
-        title: mergeIntervalsProblem.title,
-        difficulty: mergeIntervalsProblem.difficulty,
-        isPremium: mergeIntervalsProblem.isPremium ?? false,
-        url: mergeIntervalsProblem.url,
-        topics: [],
-        companies: [],
-        editedFields: [],
-      },
-      trackMemberships: [],
-    },
-  ];
+    ],
+  };
+  payload.activeTrack = activeTrack;
+  payload.tracks = [activeTrack];
 
   return payload;
 }
