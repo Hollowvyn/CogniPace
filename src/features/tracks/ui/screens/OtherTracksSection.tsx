@@ -7,7 +7,9 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { asTrackId } from "@shared/ids";
 import { useMemo, useState } from "react";
+
 import { useTracksUiStore } from "../store/tracksUiStore";
+
 import type { TrackView } from "../../domain/model";
 
 // ─── OtherTrackCard ───────────────────────────────────────────────────────────

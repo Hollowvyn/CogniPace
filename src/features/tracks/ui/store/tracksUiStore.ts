@@ -1,13 +1,15 @@
-import { tracksRepository } from "../../data/repository/TracksRepository";
-import { getStudyStateSummary } from "@libs/fsrs/studyState";
-import { problemRepository } from "@features/problems/data/repository/ProblemRepository";
+import { problemRepository } from "@features/problems";
 import { subscribeToTick } from "@libs/event-bus";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import { useEffect } from "react";
 import { create } from "zustand";
-import type { TrackGroupId, TrackId } from "@shared/ids";
+
+import { tracksRepository } from "../../data/repository/TracksRepository";
+
+import { INITIAL_TRACKS_UI_STATE, type TracksUiState } from "./TracksUiState";
 
 import type { TracksUiIntent } from "./TracksUiIntent";
-import { INITIAL_TRACKS_UI_STATE, type TracksUiState } from "./TracksUiState";
+import type { TrackGroupId, TrackId } from "@shared/ids";
 
 // ─── Store shape ─────────────────────────────────────────────────────────────
 

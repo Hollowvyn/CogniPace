@@ -130,7 +130,7 @@ function activeTrackViewOf(
   data: AppData,
   trackViews: readonly TrackView[],
 ): TrackView | null {
-  const focusedId = data.activeTrackId;
+  const focusedId = focusedTrackIdOf(data);
   if (!focusedId) return null;
   return trackViews.find((view) => view.id === focusedId) ?? null;
 }
@@ -139,9 +139,23 @@ function activeTrackEntityOf(
   data: AppData,
   tracks: readonly TrackWithGroups[],
 ): TrackWithGroups | null {
-  const focusedId = data.activeTrackId;
+  const focusedId = focusedTrackIdOf(data);
   if (!focusedId) return null;
   return tracks.find((track) => track.id === focusedId) ?? null;
+}
+
+function focusedTrackIdOf(data: AppData): TrackId | null {
+  if (data.activeTrackId) return data.activeTrackId;
+
+  const legacyActiveFocus = (data.settings as unknown as {
+    activeFocus?: { kind?: unknown; id?: unknown };
+  }).activeFocus;
+
+  if (legacyActiveFocus?.kind === "track" && typeof legacyActiveFocus.id === "string") {
+    return legacyActiveFocus.id as TrackId;
+  }
+
+  return null;
 }
 
 function libraryRows(
@@ -234,7 +248,7 @@ export function buildPopupShellPayload(
   const activeTrackView = activeTrackViewOf(data, trackViews);
   const activeTrackEntity = activeTrackEntityOf(data, tracks);
   const activeTrack = buildActiveTrackView({
-    activeTrackId: data.activeTrackId,
+    activeTrackId: focusedTrackIdOf(data),
     trackView: activeTrackView,
     trackEntity: activeTrackEntity,
     studyStatesBySlug: data.studyStatesBySlug as unknown as Parameters<

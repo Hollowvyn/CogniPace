@@ -17,6 +17,10 @@ export interface UserSettings {
   questionFilters: QuestionFilterSettings;
   timing: TimingSettings;
   experimental: ExperimentalSettings;
+  activeFocus?: {
+    kind: "track";
+    id: string;
+  };
 }
 
 export const INITIAL_USER_SETTINGS: UserSettings = {

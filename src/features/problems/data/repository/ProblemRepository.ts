@@ -1,9 +1,11 @@
 import { api } from "@app/api";
 import { Rating, ReviewLogFields, ReviewMode } from "@features/study";
-import type { ProblemSlug } from "@shared/ids";
+
 
 import { Difficulty } from "../../domain/model";
+
 import type { Problem } from "../../domain/model";
+import type { ProblemSlug } from "@shared/ids";
 
 export const problemRepository = {
   upsertProblemFromPage: (input: {

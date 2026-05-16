@@ -1,7 +1,6 @@
 import { SurfaceCard } from "@design-system/atoms";
 import { buildStudyStateView } from "@features/app-shell/domain/policy/hydrate";
 import { ProblemsTable, type ProblemRowData } from "@features/problems/ui/components/problemsTable";
-import type { Problem, ProblemView } from "@features/problems/domain/model";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
@@ -12,7 +11,9 @@ import { useMemo } from "react";
 
 import { selectActiveGroupId } from "../store/tracksSelectors";
 import { useTracksUiStore } from "../store/tracksUiStore";
+
 import type { TrackGroupView, TrackView } from "../../domain/model";
+import type { Problem, ProblemView } from "@features/problems/domain/model";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

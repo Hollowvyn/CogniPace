@@ -26,8 +26,8 @@
  * undefined for the common "lookup by slug" case so callers don't
  * need defensive guards.
  */
+import { toStudyState } from "@features/study/server";
 import * as schema from "@platform/db/schema";
-import { toStudyState } from "@features/study/data/datasource/StudyStateDataSource";
 import { nowIso } from "@platform/time";
 import {
   asCompanyId,
@@ -37,7 +37,7 @@ import {
   type ProblemSlug,
   type TopicId,
 } from "@shared/ids";
-import { asc, eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 
 import {
   applyEdit,

@@ -1,7 +1,8 @@
 import { api } from "@app/api";
-import type { TrackId } from "@shared/ids";
 
 import type { TrackView } from "../../domain/model";
+import type { TrackId } from "@shared/ids";
+
 
 export const tracksRepository = {
   getTracks: () =>

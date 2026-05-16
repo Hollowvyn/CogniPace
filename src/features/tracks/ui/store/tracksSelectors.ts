@@ -1,8 +1,9 @@
 import { asTrackGroupId } from "@shared/ids";
-import type { TrackGroupId } from "@shared/ids";
-import type { Problem } from "@features/problems";
-import type { TrackView } from "../../domain/model";
+
 import type { TracksUiState } from "./TracksUiState";
+import type { TrackView } from "../../domain/model";
+import type { Problem } from "@features/problems";
+import type { TrackGroupId } from "@shared/ids";
 
 // Selectors operate on TracksUiState directly (flat store fields).
 // Use as: useTracksUiStore(selectXxx)

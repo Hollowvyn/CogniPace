@@ -71,6 +71,15 @@ function booleanValue(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
+function activeFocusValue(
+  value: unknown,
+): UserSettings["activeFocus"] | undefined {
+  if (!isRecord(value)) return undefined;
+  return value.kind === "track" && typeof value.id === "string"
+    ? { kind: "track", id: value.id }
+    : undefined;
+}
+
 function settingsRecord(value: unknown, fallback: object): UnknownRecord {
   return isRecord(value) ? value : (fallback as UnknownRecord);
 }
@@ -128,7 +137,7 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
     initial.timing.requireSolveTime,
   );
 
-  return {
+  const sanitized: UserSettings = {
     dailyQuestionGoal: nonNegativeInteger(
       source.dailyQuestionGoal,
       initial.dailyQuestionGoal,
@@ -179,4 +188,9 @@ export function sanitizeStoredUserSettings(value: unknown): UserSettings {
       ),
     },
   };
+
+  const activeFocus = activeFocusValue(source.activeFocus);
+  if (activeFocus) sanitized.activeFocus = activeFocus;
+
+  return sanitized;
 }

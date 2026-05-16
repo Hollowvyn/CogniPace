@@ -1,17 +1,18 @@
 import { SurfaceCard } from "@design-system/atoms";
+import { EditProblemModalConnected } from "@features/problems/ui/components/EditProblemModalConnected";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import React, { useEffect } from "react";
 
 import { useTracksUiStore, useTracksAutoRefresh } from "../store/tracksUiStore";
+
 import { ActiveTrackSection } from "./ActiveTrackSection";
-import { EditProblemModalConnected } from "@features/problems/ui/components/EditProblemModalConnected";
 import { OtherTracksSection } from "./OtherTracksSection";
 
 export function TracksView() {
   const activeTrack = useTracksUiStore(s => s.activeTrack);
-  const tracks      = useTracksUiStore(s => s.tracks);
+  const tracks      = useTracksUiStore(s => s.tracks) ?? [];
   const isLoading   = useTracksUiStore(s => s.isLoading);
   const error       = useTracksUiStore(s => s.error);
   const load        = useTracksUiStore(s => s.load);

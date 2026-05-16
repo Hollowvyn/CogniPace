@@ -1,4 +1,3 @@
-import type { StudyState } from "@features/study";
 
 import type { Company } from "./Company";
 import type { Difficulty } from "./Difficulty";
@@ -6,6 +5,7 @@ import type { EditableProblemField } from "./EditableProblemField";
 import type { ProblemEditFlags } from "./ProblemEditFlags";
 import type { ProblemEditPatch } from "./ProblemEditPatch";
 import type { Topic } from "./Topic";
+import type { StudyState } from "@features/study";
 
 /** Problem aggregate — canonical SSOT. Hydrated by the datasource via
  *  Drizzle relations; no separate study-state or topic/company lookups

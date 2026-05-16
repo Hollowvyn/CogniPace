@@ -24,7 +24,6 @@
 import { ToneChip } from "@design-system/atoms/chip/ToneChip";
 import { type Tone } from "@design-system/atoms/tone";
 import { cognipaceTokens } from "@design-system/theme";
-import { problemRepository } from "../../../data/repository/ProblemRepository";
 import { settingsRepository } from "@features/settings";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -35,11 +34,12 @@ import Typography from "@mui/material/Typography";
 import { asProblemSlug } from "@shared/ids";
 import React from "react";
 
-import { useEditProblemStore } from "../../store/editProblemStore";
+import { problemRepository } from "../../../data/repository/ProblemRepository";
 import {
   formatRetention,
   retrievalTone,
 } from "../../presentation/studyState";
+import { useEditProblemStore } from "../../store/editProblemStore";
 
 import type { ProblemsTableVariant } from "./ProblemsTable";
 import type { ProblemRowData } from "./types";

@@ -1,6 +1,6 @@
+import type { TrackView } from "../../domain/model";
 import type { Problem } from "@features/problems";
 import type { TrackGroupId, TrackId } from "@shared/ids";
-import type { TrackView } from "../../domain/model";
 
 export interface TracksUiState {
   // Data from repositories
