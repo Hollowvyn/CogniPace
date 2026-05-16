@@ -25,6 +25,8 @@ function buildAppData(input: AppDataInput): AppData {
     topicsById: {},
     companiesById: {},
     settings: sanitizeStoredUserSettings(input.settings),
+    activeTrackId: null,
+    problems: [],
   };
 }
 

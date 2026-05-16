@@ -1,11 +1,15 @@
+
+import type { Company } from "./Company";
 import type { Difficulty } from "./Difficulty";
 import type { EditableProblemField } from "./EditableProblemField";
 import type { ProblemEditFlags } from "./ProblemEditFlags";
 import type { ProblemEditPatch } from "./ProblemEditPatch";
+import type { Topic } from "./Topic";
+import type { StudyState } from "@features/study";
 
-/** Problem aggregate. `slug` is the canonical identifier. Track
- *  memberships live in `track_group_problems` and are read via the
- *  tracks repo. */
+/** Problem aggregate — canonical SSOT. Hydrated by the datasource via
+ *  Drizzle relations; no separate study-state or topic/company lookups
+ *  needed downstream. */
 export interface Problem {
   slug: string;
   leetcodeId?: string;
@@ -18,6 +22,11 @@ export interface Problem {
   userEdits?: ProblemEditFlags;
   createdAt: string;
   updatedAt: string;
+
+  // Relations — populated by listProblems() via Drizzle RQB
+  studyState: StudyState | null;
+  topics: Topic[];
+  companies: Company[];
 }
 
 const EDITABLE_FIELDS: readonly EditableProblemField[] = [

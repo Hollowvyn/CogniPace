@@ -70,7 +70,7 @@ export interface ProblemsTableProps {
   /** Variant controls Library-only columns (Track, Retention) and the Title slug subline. */
   variant?: ProblemsTableVariant;
   /** When true, renders a checkbox column and a selection toolbar. */
-  selectable?: boolean;
+  
   /** Controlled selection. Parent owns the state when supplied. */
   selectedSlugs?: ProblemSelection;
   onSelectionChange?: (next: ProblemSelection) => void;
@@ -82,16 +82,10 @@ export interface ProblemsTableProps {
   toolbarExtras?: React.ReactNode;
   /** Empty-state message override. */
   emptyMessage?: string;
-  /** Expanded panel callback — open the Edit Problem modal for this slug. */
-  onEditProblem?: (slug: ProblemSlug) => void;
-  /** Expanded panel callback — toggle suspend on the problem's StudyState. */
-  onSuspendProblem?: (slug: ProblemSlug, suspend: boolean) => void;
-  /** Expanded panel callback — reset the FSRS schedule for this problem. */
-  onResetSchedule?: (slug: ProblemSlug) => void;
-  /** Expanded panel callback — re-enable premium questions globally
-   * (toggles `settings.skipPremium` off). Surfaced when a row is
-   * suspended only because of the premium gate. */
-  onEnablePremium?: () => void;
+  /** Render slot for the expanded row detail panel. Defaults to
+   * `ProblemRowDetail`. Override to swap the panel for a surface-specific
+   * implementation without touching ProblemsTable internals. */
+  renderRowDetail?: (row: ProblemRowData) => React.ReactNode;
   /** When true, short pages render empty placeholder rows up to
    * `rowsPerPage` so the table height stays stable during pagination
    * and filtering. Use for fixed catalogs (the Library); skip for
@@ -120,17 +114,14 @@ export function ProblemsTable(props: ProblemsTableProps) {
   const {
     rows,
     variant = "library",
-    selectable,
+
     selectedSlugs,
     onSelectionChange,
     initialFilters,
     defaultRowsPerPage,
     toolbarExtras,
     emptyMessage = "No problems match these filters.",
-    onEditProblem,
-    onSuspendProblem,
-    onResetSchedule,
-    onEnablePremium,
+    renderRowDetail = (row) => <ProblemRowDetail row={row} variant={variant} />,
     padToPageSize = false,
   } = props;
 
@@ -228,11 +219,9 @@ export function ProblemsTable(props: ProblemsTableProps) {
   );
 
   const allOnPageSelected =
-    selectable &&
     pageRows.length > 0 &&
     pageRows.every((row) => isSelected(row.view.slug as ProblemSlug));
   const someOnPageSelected =
-    selectable &&
     pageRows.some((row) => isSelected(row.view.slug as ProblemSlug)) &&
     !allOnPageSelected;
 
@@ -252,7 +241,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
   // expanded panel.)
   const totalColumns =
     1 + // chevron
-    (selectable ? 1 : 0) +
+    1 + // checkbox
     1 + // title
     1 + // difficulty
     1 + // phase / status
@@ -323,7 +312,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
         {toolbarExtras}
       </Stack>
 
-      {selectable && selectedSlugs && selectedSlugs.size > 0 ? (
+      {selectedSlugs && selectedSlugs.size > 0 ? (
         <Box sx={{ mb: 1 }}>
           <Typography variant="body2" color="text.secondary">
             Selected: {selectedSlugs.size}{" "}
@@ -344,17 +333,15 @@ export function ProblemsTable(props: ProblemsTableProps) {
         <Table size="small" aria-label="Problems table">
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox" />
-              {selectable ? (
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    indeterminate={someOnPageSelected}
-                    checked={allOnPageSelected}
-                    onChange={togglePageSelection}
-                    inputProps={{ "aria-label": "Select page rows" }}
-                  />
-                </TableCell>
-              ) : null}
+              <TableCell padding="checkbox" aria-label="Row expand control" />
+              <TableCell padding="checkbox">
+                <Checkbox
+                  indeterminate={someOnPageSelected}
+                  checked={allOnPageSelected}
+                  onChange={togglePageSelection}
+                  inputProps={{ "aria-label": "Select page rows" }}
+                />
+              </TableCell>
               <TableCell sortDirection={sort.key === "title" ? sort.direction : false}>
                 <TableSortLabel
                   active={sort.key === "title"}
@@ -428,7 +415,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                   <Fragment key={slug}>
                     <TableRow
                       hover
-                      selected={selectable && isSelected(slug)}
+                      selected={isSelected(slug)}
                       data-expanded-row={isExpanded ? "true" : undefined}
                       onClick={(event) => handleRowClick(event, slug)}
                       sx={{
@@ -456,17 +443,15 @@ export function ProblemsTable(props: ProblemsTableProps) {
                           )}
                         </IconButton>
                       </TableCell>
-                      {selectable ? (
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={isSelected(slug)}
-                            onChange={() => toggleSelected(slug)}
-                            inputProps={{
-                              "aria-label": `Select ${row.view.title}`,
-                            }}
-                          />
-                        </TableCell>
-                      ) : null}
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={isSelected(slug)}
+                          onChange={() => toggleSelected(slug)}
+                          inputProps={{
+                            "aria-label": `Select ${row.view.title}`,
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Link
                           href={row.view.url}
@@ -550,14 +535,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         }}
                       >
                         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                          <ProblemRowDetail
-                            row={row}
-                            variant={variant}
-                            onEditProblem={onEditProblem}
-                            onSuspendProblem={onSuspendProblem}
-                            onResetSchedule={onResetSchedule}
-                            onEnablePremium={onEnablePremium}
-                          />
+                          {renderRowDetail(row)}
                         </Collapse>
                       </TableCell>
                     </TableRow>

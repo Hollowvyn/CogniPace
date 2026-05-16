@@ -36,6 +36,9 @@ export function makeProblem(
     userEdits: overrides.userEdits,
     createdAt: overrides.createdAt ?? FIXTURE_NOW,
     updatedAt: overrides.updatedAt ?? FIXTURE_NOW,
+    studyState: null,
+    topics: [],
+    companies: [],
   };
 }
 

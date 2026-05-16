@@ -57,7 +57,7 @@ type AttemptInsert = typeof schema.attemptHistory.$inferInsert;
  * populated; if any are null, `fsrsCard` is omitted (the user hasn't
  * had a first review yet).
  */
-function toStudyState(row: StudyStateRow, attempts: AttemptRow[]): StudyState {
+export function toStudyState(row: StudyStateRow, attempts: AttemptRow[]): StudyState {
   const fsrsCard = buildFsrsCard(row);
   const state: StudyState = {
     suspended: row.suspended,

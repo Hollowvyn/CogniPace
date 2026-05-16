@@ -144,6 +144,9 @@ function sanitizeProblem(problem: unknown, importedAt: string): Problem | null {
       typeof problem.updatedAt === "string" && problem.updatedAt.trim()
         ? problem.updatedAt
         : importedAt,
+    studyState: null,
+    topics: [],
+    companies: [],
   };
 }
 

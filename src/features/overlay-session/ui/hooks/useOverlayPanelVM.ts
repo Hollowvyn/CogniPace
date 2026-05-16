@@ -2,13 +2,7 @@
  *  session state, and render-model shaping per the canonical Screen+VM
  *  pattern. */
 import { appShellRepository, AppShellPayload } from "@features/app-shell";
-import {
-  Difficulty,
-  getProblemContext,
-  openExtensionPage,
-  openProblemPage,
-  upsertProblemFromPage,
-} from "@features/problems";
+import { Difficulty, problemRepository } from "@features/problems";
 import { createInitialUserSettings , UserSettings } from "@features/settings";
 import { Rating, StudyState } from "@features/study";
 import {
@@ -104,7 +98,7 @@ export function useOverlayPanelVM(
   const openOverlayProblem = useCallback(
     async (target: { slug: string; trackId?: string; groupId?: string }) => {
       try {
-        await openProblemPage(target);
+        await problemRepository.openProblemPage(target);
       } catch (err) {
         setFeedback((err as Error).message || "Failed to open problem.", true);
       }
@@ -195,7 +189,7 @@ export function useOverlayPanelVM(
       const pageSnapshot = readProblemPageSnapshot(documentRef, slug);
 
       try {
-        await upsertProblemFromPage({
+        await problemRepository.upsertProblemFromPage({
           slug,
           title: pageSnapshot.title,
           difficulty: pageSnapshot.difficulty,
@@ -235,7 +229,7 @@ export function useOverlayPanelVM(
       let shell: AppShellPayload | null = null;
       try {
         const [contextResult, shellResult] = await Promise.all([
-          getProblemContext(slug),
+          problemRepository.getProblemContext(slug),
           appShellRepository.fetchAppShell(),
         ]);
         problemContext = contextResult;
@@ -621,7 +615,7 @@ export function useOverlayPanelVM(
             void onHideOverlay();
           },
           onOpenSettings: () => {
-            void openExtensionPage("dashboard.html?view=settings");
+            void problemRepository.openExtensionPage("dashboard.html?view=settings");
           },
           sessionLabel: buildSessionLabel(
             currentState.currentState,

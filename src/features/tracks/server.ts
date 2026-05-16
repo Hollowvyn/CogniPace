@@ -28,6 +28,7 @@ export {
   createTrackHandler,
   updateTrackHandler,
   deleteTrackHandler,
+  setActiveTrackHandler,
   type CreateTrackPayload,
   type UpdateTrackPayload,
   type DeleteTrackPayload,
@@ -38,6 +39,11 @@ export {
 } from "./domain/policy/questionStatus";
 
 export { buildTrackCatalogSeed } from "./data/seed";
+
+export {
+  getActiveTrackId,
+  saveActiveTrackId,
+} from "./data/datasource/TrackDataSource";
 
 export {
   toTrack,

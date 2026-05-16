@@ -1,12 +1,12 @@
 /** Service-worker handlers for Track CRUD operations. */
-import { getUserSettings, saveUserSettings } from "@features/settings/server";
 import { getDb } from "@platform/db/instance";
-import { asTrackId } from "@shared/ids";
+import { asTrackId, type TrackId } from "@shared/ids";
 
 import {
   createTrack,
   deleteTrack,
   getTrackHeader,
+  saveActiveTrackId,
   updateTrack,
 } from "../data/datasource/TrackDataSource";
 
@@ -61,11 +61,14 @@ export async function deleteTrackHandler(
   if (!existing) return { ok: false as const, reason: "not-found" as const };
   if (existing.isCurated) return { ok: false as const, reason: "curated" as const };
   // FK CASCADE wipes groups + group_problems automatically.
+  // track_session.active_track_id FK ON DELETE SET NULL handles session cleanup.
   await deleteTrack(db, id);
-  // If the deleted track was the active focus, clear it.
-  const current = await getUserSettings(db);
-  if (current && current.activeTrackId === id) {
-    await saveUserSettings(db, { ...current, activeTrackId: null });
-  }
   return { ok: true as const };
+}
+
+export async function setActiveTrackHandler(
+  payload: { trackId: TrackId | null },
+): Promise<void> {
+  const { db } = await getDb();
+  await saveActiveTrackId(db, payload.trackId);
 }

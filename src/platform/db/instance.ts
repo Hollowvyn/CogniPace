@@ -36,6 +36,8 @@ import { nowIso } from "@platform/time";
 
 import { createDb, type DbHandle } from "./client";
 import migrationSql from "./migrations/0000_initial.sql";
+import migration0001 from "./migrations/0001_big_marvel_apes.sql";
+import migration0002 from "./migrations/0002_amazing_microchip.sql";
 import { setOnMutationHook } from "./proxy";
 import {
   clearSnapshot,
@@ -104,6 +106,32 @@ export async function flushSnapshot(): Promise<void> {
   await persistSnapshot();
 }
 
+/**
+ * Idempotent DDL upgrades that run on every boot, after both snapshot
+ * restore and fresh install. Each statement uses IF NOT EXISTS so it is
+ * safe to re-run against a DB that already has the table.
+ *
+ * Add a new entry here whenever a migration adds a table that must be
+ * present in existing snapshots without triggering a full reseed.
+ */
+function applyUpgrades(handle: DbHandle): void {
+  handle.rawDb.exec(migration0001.replace(/CREATE TABLE/g, "CREATE TABLE IF NOT EXISTS"));
+  handle.rawDb.exec(migration0002.replace(/CREATE TABLE/g, "CREATE TABLE IF NOT EXISTS"));
+
+  // Populate junction tables from existing JSON arrays (idempotent via INSERT OR IGNORE).
+  handle.rawDb.exec(`
+    INSERT OR IGNORE INTO problem_topics (problem_slug, topic_id)
+    SELECT p.slug, je.value
+    FROM problems p, json_each(p.topic_ids) je
+    WHERE p.topic_ids IS NOT NULL AND p.topic_ids != '[]';
+
+    INSERT OR IGNORE INTO problem_companies (problem_slug, company_id)
+    SELECT p.slug, je.value
+    FROM problems p, json_each(p.company_ids) je
+    WHERE p.company_ids IS NOT NULL AND p.company_ids != '[]';
+  `);
+}
+
 async function bootDb(): Promise<DbHandle> {
   console.log("[CogniPace] bootDb: starting");
   const handle = await createDb({
@@ -126,6 +154,7 @@ async function bootDb(): Promise<DbHandle> {
       );
       await clearSnapshot();
       handle.rawDb.exec(migrationSql);
+      applyUpgrades(handle);
       await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
       await seedCatalogCompanies(handle.db, listCatalogCompanySeeds());
       await seedInitialSettings(handle.db);
@@ -134,6 +163,8 @@ async function bootDb(): Promise<DbHandle> {
       const bytes = serializeDb(handle);
       await writeSnapshotToStorage({ fingerprint, bytes });
     }
+    // Apply any DDL upgrades that post-date this snapshot (idempotent).
+    applyUpgrades(handle);
     // Always ensure catalog problems + tracks are present, including on
     // restore paths where an earlier snapshot may pre-date the Phase 5
     // problems / tracks slices. Idempotent via ON CONFLICT DO NOTHING.
@@ -149,6 +180,7 @@ async function bootDb(): Promise<DbHandle> {
       console.log(`[CogniPace] bootDb: no snapshot found (fp=${fingerprint}); fresh seed`);
     }
     handle.rawDb.exec(migrationSql);
+    applyUpgrades(handle);
     await seedCatalogTopics(handle.db, listCatalogTopicSeeds());
     await seedCatalogCompanies(handle.db, listCatalogCompanySeeds());
     await seedInitialSettings(handle.db);

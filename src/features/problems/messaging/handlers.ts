@@ -2,7 +2,6 @@
 import {
   createInitialUserSettings,
   getUserSettings,
-  saveUserSettings,
 } from "@features/settings/server";
 import { ReviewLogFields } from "@features/study";
 import {
@@ -13,6 +12,7 @@ import {
   replaceLastAttempt,
   upsertStudyState,
 } from "@features/study/server";
+import { saveActiveTrackId } from "@features/tracks/server";
 import {
   applyReview,
   overrideLastReview,
@@ -36,13 +36,13 @@ import {
   type TopicId,
 } from "@shared/ids";
 
-import { upsertCompany } from "../data/datasource/CompanyDataSource";
+import { listCompanies, upsertCompany } from "../data/datasource/CompanyDataSource";
 import {
   editProblem,
   getProblem,
   importProblem,
 } from "../data/datasource/ProblemDataSource";
-import { upsertTopic } from "../data/datasource/TopicDataSource";
+import { listTopics, upsertTopic } from "../data/datasource/TopicDataSource";
 import { getCuratedSet } from "../data/seed/curatedSets";
 import {
   isProblemPage,
@@ -50,7 +50,8 @@ import {
   parseDifficulty,
 } from "../domain/model";
 
-import type { ProblemEditPatch } from "../domain/model";
+import type { CompanyLabel, TopicLabel , ProblemEditPatch } from "../domain/model";
+
 
 // ---------- Helpers ----------
 
@@ -94,12 +95,7 @@ export async function openProblemPage(
 
   if (payload.trackId) {
     const { db } = await getDb();
-    const current =
-      (await getUserSettings(db)) ?? createInitialUserSettings();
-    await saveUserSettings(db, {
-      ...current,
-      activeTrackId: asTrackId(payload.trackId),
-    });
+    await saveActiveTrackId(db, asTrackId(payload.trackId));
   }
 
   const url = canonicalProblemUrlForOpen(slug);
@@ -197,10 +193,7 @@ export async function saveReviewResult(payload: {
     nextState.attemptHistory[nextState.attemptHistory.length - 1];
   if (newAttempt) await appendAttempt(db, branded, newAttempt);
   if (payload.trackId) {
-    await saveUserSettings(db, {
-      ...settings,
-      activeTrackId: asTrackId(payload.trackId),
-    });
+    await saveActiveTrackId(db, asTrackId(payload.trackId));
   }
   const studyStateSummary = getStudyStateSummary(nextState);
   return {
@@ -271,10 +264,7 @@ export async function overrideLastReviewResult(payload: {
   if (replacedAttempt)
     await replaceLastAttempt(db, branded, replacedAttempt);
   if (payload.trackId) {
-    await saveUserSettings(db, {
-      ...settings,
-      activeTrackId: asTrackId(payload.trackId),
-    });
+    await saveActiveTrackId(db, asTrackId(payload.trackId));
   }
   const studyStateSummary = getStudyStateSummary(nextState);
   return {
@@ -591,4 +581,20 @@ export async function addProblemByInputHandler(payload: {
   });
   const studyState = await ensureStudyState(db, branded);
   return { slug: parsed.slug, problem, studyState };
+}
+
+export async function getEditChoices(): Promise<{
+  topicChoices: TopicLabel[];
+  companyChoices: CompanyLabel[];
+}> {
+  const { db } = await getDb();
+  const [topics, companies] = await Promise.all([listTopics(db), listCompanies(db)]);
+  return {
+    topicChoices: topics
+      .map((t): TopicLabel => ({ id: t.id, name: t.name }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    companyChoices: companies
+      .map((c): CompanyLabel => ({ id: c.id, name: c.name }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  };
 }

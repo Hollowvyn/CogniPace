@@ -26,5 +26,6 @@ export {
   listStudyStates,
   removeStudyState,
   replaceLastAttempt,
+  toStudyState,
   upsertStudyState,
 } from "./data/datasource/StudyStateDataSource";

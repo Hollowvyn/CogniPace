@@ -26,6 +26,7 @@
  * undefined for the common "lookup by slug" case so callers don't
  * need defensive guards.
  */
+import { toStudyState } from "@features/study/server";
 import * as schema from "@platform/db/schema";
 import { nowIso } from "@platform/time";
 import {
@@ -53,13 +54,14 @@ import type { Db } from "@platform/db/client";
 
 type ProblemRow = typeof schema.problems.$inferSelect;
 
-/** Schema row → domain Problem. */
-function toProblem(row: ProblemRow): Problem {
+/** Schema row → base Problem fields (no relations). */
+function toProblemBase(row: ProblemRow): Omit<Problem, "studyState" | "topics" | "companies"> {
+
   const userEdits =
     row.userEdits && Object.keys(row.userEdits).length > 0
       ? (row.userEdits as ProblemEditFlags)
       : undefined;
-  const transitional: Problem = {
+  const base: Omit<Problem, "studyState" | "topics" | "companies"> = {
     slug: row.slug,
     title: row.title,
     difficulty: row.difficulty as Difficulty,
@@ -70,9 +72,15 @@ function toProblem(row: ProblemRow): Problem {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
-  if (row.leetcodeId) transitional.leetcodeId = row.leetcodeId;
-  if (userEdits) transitional.userEdits = userEdits;
-  return transitional;
+  if (row.leetcodeId) base.leetcodeId = row.leetcodeId;
+  if (userEdits) base.userEdits = userEdits;
+  return base;
+}
+
+/** Schema row → Problem with empty relation fields (for CRUD/import paths
+ *  that don't need the full hydrated entity). */
+function toProblem(row: ProblemRow): Problem {
+  return { ...toProblemBase(row), studyState: null, topics: [], companies: [] };
 }
 
 /** Domain Problem → schema insert/update payload. Drops v6 fields. */
@@ -96,12 +104,41 @@ function toRow(
 }
 
 /**
- * Returns every problem, alphabetised by title for stable listing in
- * the dashboard library view. Used by handler hydration paths.
+ * Returns every problem with its relations (studyState, topics, companies)
+ * hydrated in one Drizzle RQB call. Alphabetised by title.
  */
 export async function listProblems(db: Db): Promise<Problem[]> {
-  const rows = await db.select().from(schema.problems);
-  return rows.map(toProblem).sort((a, b) => a.title.localeCompare(b.title));
+  const rows = await db.query.problems.findMany({
+    with: {
+      studyState: { with: { attempts: true } },
+      topics:     { with: { topic: true } },
+      companies:  { with: { company: true } },
+    },
+    orderBy: (t, { asc: drizzleAsc }) => [drizzleAsc(t.title)],
+  });
+
+  return rows.map(row => ({
+    ...toProblemBase(row),
+    studyState: row.studyState
+      ? toStudyState(row.studyState, row.studyState.attempts)
+      : null,
+    topics: row.topics.map(join => ({
+      id: asTopicId(join.topic.id),
+      name: join.topic.name,
+      description: join.topic.description ?? undefined,
+      isCustom: join.topic.isCustom,
+      createdAt: join.topic.createdAt,
+      updatedAt: join.topic.updatedAt,
+    })),
+    companies: row.companies.map(join => ({
+      id: asCompanyId(join.company.id),
+      name: join.company.name,
+      description: join.company.description ?? undefined,
+      isCustom: join.company.isCustom,
+      createdAt: join.company.createdAt,
+      updatedAt: join.company.updatedAt,
+    })),
+  }));
 }
 
 /** Lookup by slug. Returns undefined when missing (not an error). */
@@ -178,6 +215,9 @@ export async function importProblem(
       companyIds: brandCompanyIds(args.companyIds),
       createdAt: now,
       updatedAt: now,
+      studyState: null,
+      topics: [],
+      companies: [],
     };
     if (args.leetcodeId) next.leetcodeId = args.leetcodeId;
   }

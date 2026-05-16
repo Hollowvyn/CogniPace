@@ -129,6 +129,9 @@ export async function importData(
       companyIds: uniqueStrings(problem.companyIds ?? []),
       createdAt: problem.createdAt || now,
       updatedAt: problem.updatedAt || now,
+      studyState: null,
+      topics: [],
+      companies: [],
     });
   }
   for (const [slug, state] of Object.entries(
