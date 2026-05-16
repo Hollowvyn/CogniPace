@@ -84,7 +84,6 @@ function resolveSuspendAction(
 }
 
 export function ProblemRowDetail({ row, variant }: ProblemRowDetailProps) {
-  const openForProblem = useEditProblemStore(s => s.openForProblem);
   const { view, studyState, trackMemberships } = row;
   const slug = asProblemSlug(view.slug);
   const recentAttempts = studyState?.recentAttempts ?? [];
@@ -197,7 +196,7 @@ export function ProblemRowDetail({ row, variant }: ProblemRowDetailProps) {
         flexWrap="wrap"
         sx={{ mt: 2, rowGap: 1 }}
       >
-        <Button size="small" onClick={() => openForProblem(view)}>
+        <Button size="small" onClick={() => useEditProblemStore.getState().openForProblem(view)}>
           Edit
         </Button>
         {suspendAction ? (

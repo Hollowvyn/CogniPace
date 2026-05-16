@@ -19,7 +19,6 @@ export function LibraryScreen(props: LibraryScreenProps) {
         rows={model.tableRows}
         variant="library"
         padToPageSize
-        selectable
         selectedSlugs={model.selectedSlugs}
         onSelectionChange={model.onSelectionChange}
         toolbarExtras={

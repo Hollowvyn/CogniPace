@@ -14,7 +14,6 @@ export interface TracksUiState {
 
   // Canonical UI interaction state
   selectedGroupId: TrackGroupId | null;
-  othersExpanded: boolean;
 
   // Async operation state
   isLoading: boolean;
@@ -28,7 +27,6 @@ export const INITIAL_TRACKS_UI_STATE: TracksUiState = {
   library: [],
   activeTrackDueCount: 0,
   selectedGroupId: null,
-  othersExpanded: false,
   isLoading: false,
   error: null,
 };

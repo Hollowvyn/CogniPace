@@ -1,6 +1,6 @@
 import { tracksRepository } from "../../data/repository/TracksRepository";
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
-import { problemRepository } from "@features/problems";
+import { problemRepository } from "@features/problems/data/repository/ProblemRepository";
 import { subscribeToTick } from "@libs/event-bus";
 import { useEffect } from "react";
 import { create } from "zustand";
@@ -46,10 +46,6 @@ export const useTracksUiStore = create<TracksUiStore>((set, get) => {
     set({ selectedGroupId: groupId });
   }
 
-  function toggleOthers(): void {
-    set(s => ({ othersExpanded: !s.othersExpanded }));
-  }
-
   function switchTrack(trackId: TrackId): void {
     void tracksRepository.setActiveTrack(trackId);
   }
@@ -91,7 +87,6 @@ export const useTracksUiStore = create<TracksUiStore>((set, get) => {
   function dispatchIntent(intent: TracksUiIntent): void {
     switch (intent.type) {
       case "SELECT_TRACK_GROUP":  selectGroup(intent.groupId); break;
-      case "EXPAND_COLLAPSE_OTHER_TRACKS": toggleOthers(); break;
       case "SWITCH_TRACK":  switchTrack(intent.trackId); break;
       case "STOP_TRACK":    stopTrack(); break;
     }

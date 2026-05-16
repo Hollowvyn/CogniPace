@@ -6,14 +6,13 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { asTrackId } from "@shared/ids";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTracksUiStore } from "../store/tracksUiStore";
 import type { TrackView } from "../../domain/model";
 
 // ─── OtherTrackCard ───────────────────────────────────────────────────────────
 
 function OtherTrackCard({ track }: { track: TrackView }) {
-  const dispatchIntent = useTracksUiStore(s => s.dispatchIntent);
 
   const completed = track.groups.reduce((acc, g) => acc + g.completedCount, 0);
   const total     = track.groups.reduce((acc, g) => acc + g.totalCount, 0);
@@ -34,7 +33,7 @@ function OtherTrackCard({ track }: { track: TrackView }) {
         <Button
           size="small"
           variant="outlined"
-          onClick={() => dispatchIntent({ type: "SWITCH_TRACK", trackId: asTrackId(track.id) })}
+          onClick={() => useTracksUiStore.getState().dispatchIntent({ type: "SWITCH_TRACK", trackId: asTrackId(track.id) })}
         >
           Set Active
         </Button>
@@ -49,13 +48,12 @@ function OtherTrackCard({ track }: { track: TrackView }) {
 // ─── OtherTracksSection ───────────────────────────────────────────────────────
 
 export function OtherTracksSection() {
-  const tracks         = useTracksUiStore(s => s.tracks);
-  const activeTrack    = useTracksUiStore(s => s.activeTrack);
-  const othersExpanded = useTracksUiStore(s => s.othersExpanded);
-  const dispatchIntent = useTracksUiStore(s => s.dispatchIntent);
-  const otherTracks    = useMemo(
-    () => tracks.filter((t: TrackView) => t.enabled && (!activeTrack || t.id !== activeTrack.id)),
-    [tracks, activeTrack],
+  const tracks        = useTracksUiStore(s => s.tracks);
+  const activeTrackId = useTracksUiStore(s => s.activeTrackId);
+  const [expanded, setExpanded] = useState(false);
+  const otherTracks   = useMemo(
+    () => tracks.filter((t: TrackView) => t.enabled && t.id !== activeTrackId),
+    [tracks, activeTrackId],
   );
 
   return (
@@ -64,15 +62,15 @@ export function OtherTracksSection() {
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ mb: othersExpanded ? 2 : 0 }}
+        sx={{ mb: expanded ? 2 : 0 }}
       >
         <Typography variant="subtitle1">Other tracks · {otherTracks.length}</Typography>
-        <Button size="small" onClick={() => dispatchIntent({ type: "EXPAND_COLLAPSE_OTHER_TRACKS" })}>
-          {othersExpanded ? "Hide" : "Show"}
+        <Button size="small" onClick={() => setExpanded(e => !e)}>
+          {expanded ? "Hide" : "Show"}
         </Button>
       </Stack>
 
-      {othersExpanded ? (
+      {expanded ? (
         <Stack spacing={1.5}>
           {otherTracks.map(track => (
             <OtherTrackCard key={track.id} track={track} />

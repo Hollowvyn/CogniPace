@@ -1,13 +1,14 @@
 import { SurfaceCard } from "@design-system/atoms";
 import { buildStudyStateView } from "@features/app-shell/domain/policy/hydrate";
-import { type Problem, type ProblemRowData, ProblemsTable, type ProblemView } from "@features/problems";
+import { ProblemsTable, type ProblemRowData } from "@features/problems/ui/components/problemsTable";
+import type { Problem, ProblemView } from "@features/problems/domain/model";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
-import { asTrackGroupId, asTrackId, type TrackGroupId } from "@shared/ids";
-import React, { useMemo } from "react";
+import { asTrackGroupId, asTrackId } from "@shared/ids";
+import { useMemo } from "react";
 
 import { selectActiveGroupId } from "../store/tracksSelectors";
 import { useTracksUiStore } from "../store/tracksUiStore";
@@ -76,7 +77,6 @@ function TrackBody() {
   const activeTrack    = useTracksUiStore(s => s.activeTrack);
   const library        = useTracksUiStore(s => s.library);
   const activeGroupId  = useTracksUiStore(selectActiveGroupId);
-  const dispatchIntent = useTracksUiStore(s => s.dispatchIntent);
   const libraryBySlug  = useMemo(
     () => new Map(library.map(p => [p.slug, p])),
     [library],
@@ -101,7 +101,7 @@ function TrackBody() {
           value={activeGroup?.id ?? false}
           onChange={(_, next) => {
             if (typeof next === "string" && next) {
-              dispatchIntent({ type: "SELECT_TRACK_GROUP", groupId: asTrackGroupId(next) });
+              useTracksUiStore.getState().dispatchIntent({ type: "SELECT_TRACK_GROUP", groupId: asTrackGroupId(next) });
             }
           }}
           variant="scrollable"
@@ -123,7 +123,7 @@ function TrackBody() {
         </Tabs>
       ) : null}
 
-      <ProblemsTable rows={rows} variant="tracks" selectable />
+      <ProblemsTable rows={rows} variant="tracks" />
     </Stack>
   );
 }
@@ -134,10 +134,10 @@ export function ActiveTrackSection() {
   const activeTrack         = useTracksUiStore(s => s.activeTrack);
   const activeTrackDueCount = useTracksUiStore(s => s.activeTrackDueCount);
   const tracks              = useTracksUiStore(s => s.tracks);
-  const dispatchIntent      = useTracksUiStore(s => s.dispatchIntent);
+  const activeTrackId       = useTracksUiStore(s => s.activeTrackId);
   const otherEnabledTracks  = useMemo(
-    () => tracks.filter(t => t.enabled && t.id !== activeTrack?.id),
-    [tracks, activeTrack],
+    () => tracks.filter(t => t.enabled && t.id !== activeTrackId),
+    [tracks, activeTrackId],
   );
 
   if (!activeTrack) return null;
@@ -179,7 +179,7 @@ export function ActiveTrackSection() {
               variant="caption"
               color="text.secondary"
               sx={{ cursor: "pointer", textDecoration: "underline" }}
-              onClick={() => dispatchIntent({ type: "SWITCH_TRACK", trackId: asTrackId(track.id) })}
+              onClick={() => useTracksUiStore.getState().dispatchIntent({ type: "SWITCH_TRACK", trackId: asTrackId(track.id) })}
             >
               {track.name}
             </Typography>
