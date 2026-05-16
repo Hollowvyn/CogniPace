@@ -333,6 +333,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
         <Table size="small" aria-label="Problems table">
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox" aria-label="Row expand control" />
               <TableCell padding="checkbox">
                 <Checkbox
                   indeterminate={someOnPageSelected}
