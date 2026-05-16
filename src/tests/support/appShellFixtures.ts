@@ -1,10 +1,9 @@
 import { createMockAppShellPayload } from "@features/app-shell/data/mockData";
-import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import { asProblemSlug, asTrackGroupId, asTrackId } from "@shared/ids";
 
 import type { AppShellPayload } from "@features/app-shell";
-import type { LibraryProblemRow, Problem, ProblemView } from "@features/problems";
-import type { StudyState, StudyStateView } from "@features/study";
+import type { Problem } from "@features/problems";
+import type { StudyState } from "@features/study";
 import type { Track } from "@features/tracks";
 
 function makeStudyState(nextReviewAt?: string): StudyState {
@@ -34,57 +33,6 @@ function makeStudyState(nextReviewAt?: string): StudyState {
       : undefined,
     suspended: false,
     tags: [],
-  };
-}
-
-function problemViewFromProblem(problem: Problem): ProblemView {
-  return {
-    slug: problem.slug,
-    title: problem.title,
-    difficulty: problem.difficulty,
-    isPremium: problem.isPremium ?? false,
-    url: problem.url,
-    topics: [],
-    companies: [],
-    editedFields: [],
-  };
-}
-
-function studyStateViewFromStudyState(
-  studyState: StudyState | null,
-): StudyStateView | null {
-  if (!studyState) return null;
-  return {
-    ...getStudyStateSummary(studyState, new Date("2026-05-16T00:00:00.000Z")),
-    recentAttempts: studyState.attemptHistory.slice(-5),
-    tags: studyState.tags,
-    bestTimeMs: studyState.bestTimeMs,
-    lastSolveTimeMs: studyState.lastSolveTimeMs,
-    lastRating: studyState.lastRating,
-    confidence: studyState.confidence,
-    interviewPattern: studyState.interviewPattern,
-    timeComplexity: studyState.timeComplexity,
-    spaceComplexity: studyState.spaceComplexity,
-    languages: studyState.languages,
-    notes: studyState.notes,
-  };
-}
-
-function libraryRowFromProblem(problem: Problem): LibraryProblemRow {
-  return {
-    view: problemViewFromProblem(problem),
-    studyState: studyStateViewFromStudyState(problem.studyState),
-    trackMemberships:
-      problem.slug === asProblemSlug("two-sum")
-        ? [
-            {
-              trackId: asTrackId("Blind75"),
-              trackName: "Blind 75",
-              groupId: asTrackGroupId("arrays-1"),
-              groupName: "Arrays",
-            },
-          ]
-        : [],
   };
 }
 
@@ -146,8 +94,6 @@ export function makePayload(): AppShellPayload {
       studyState: makeStudyState("2026-04-02T00:00:00.000Z"),
     },
   ];
-  payload.library = payload.problems.map(libraryRowFromProblem);
-
   const activeTrack: Track = {
     id: asTrackId("Blind75"),
     name: "Blind 75",

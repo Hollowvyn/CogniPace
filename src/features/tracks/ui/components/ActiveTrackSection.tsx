@@ -1,7 +1,5 @@
 import { SurfaceCard } from "@design-system/atoms";
-import { listEditedFields } from "@features/problems";
-import { ProblemsTable, type ProblemRowData } from "@features/problems/ui/components/problemsTable";
-import { getStudyStateSummary } from "@libs/fsrs/studyState";
+import { TrackProblemTable } from "@features/problems/ui/components/problemsTable";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
@@ -17,65 +15,6 @@ import {
 } from "../../domain/model";
 import { selectActiveGroupId } from "../store/tracksSelectors";
 import { useTracksUiStore } from "../store/tracksUiStore";
-
-import type { TrackGroup } from "../../domain/model";
-import type { Problem, ProblemView } from "@features/problems";
-import type { StudyState, StudyStateView } from "@features/study";
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function problemViewFromProblem(problem: Problem): ProblemView {
-  return {
-    slug: problem.slug,
-    title: problem.title,
-    difficulty: problem.difficulty,
-    isPremium: problem.isPremium ?? false,
-    url: problem.url,
-    leetcodeId: problem.leetcodeId,
-    topics: problem.topics.map((topic) => ({ id: topic.id, name: topic.name })),
-    companies: problem.companies.map((company) => ({
-      id: company.id,
-      name: company.name,
-    })),
-    editedFields: listEditedFields(problem),
-  };
-}
-
-function studyStateViewFromStudyState(
-  studyState: StudyState | null,
-  now: Date,
-): StudyStateView | null {
-  if (!studyState) return null;
-  const summary = getStudyStateSummary(studyState, now, 0.85);
-  return {
-    ...summary,
-    interviewPattern: studyState.interviewPattern,
-    timeComplexity: studyState.timeComplexity,
-    spaceComplexity: studyState.spaceComplexity,
-    languages: studyState.languages,
-    notes: studyState.notes,
-    tags: studyState.tags,
-    bestTimeMs: studyState.bestTimeMs,
-    lastSolveTimeMs: studyState.lastSolveTimeMs,
-    lastRating: studyState.lastRating,
-    confidence: studyState.confidence,
-    recentAttempts: studyState.attemptHistory.slice(-5),
-  };
-}
-
-function buildGroupRows(
-  group: TrackGroup,
-): ProblemRowData[] {
-  const now = new Date();
-  return group.problems.map((problem) => {
-    return {
-      view: problemViewFromProblem(problem),
-      studyState: studyStateViewFromStudyState(problem.studyState, now),
-      trackMemberships: [],
-      suspended: problem.studyState?.suspended ? ("manual" as const) : undefined,
-    };
-  });
-}
 
 // ─── TabLabel ────────────────────────────────────────────────────────────────
 
@@ -107,14 +46,10 @@ function TabLabel({ name, completed, total }: { name: string; completed: number;
 function TrackBody() {
   const activeTrack    = useTracksUiStore(s => s.activeTrack);
   const activeGroupId  = useTracksUiStore(selectActiveGroupId);
+  const settings       = useTracksUiStore(s => s.settings);
 
   const activeGroup =
     activeTrack?.groups.find(g => g.id === activeGroupId) ?? activeTrack?.groups[0];
-
-  const rows = useMemo(
-    () => (activeGroup ? buildGroupRows(activeGroup) : []),
-    [activeGroup],
-  );
 
   if (!activeTrack) return null;
 
@@ -153,7 +88,10 @@ function TrackBody() {
         </Tabs>
       ) : null}
 
-      <ProblemsTable rows={rows} variant="tracks" />
+      <TrackProblemTable
+        problems={activeGroup?.problems ?? []}
+        settings={settings}
+      />
     </Stack>
   );
 }

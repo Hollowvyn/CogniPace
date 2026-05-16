@@ -572,7 +572,7 @@ export async function reorderGroupProblems(
 }
 
 /** Lists every group membership for a slug — "which tracks contain this
- * problem?". Used by the library's `trackMemberships` column. */
+ * problem?". */
 export async function listMembershipsForSlug(
   db: Db,
   slug: ProblemSlug,

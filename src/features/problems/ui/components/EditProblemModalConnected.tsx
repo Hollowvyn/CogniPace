@@ -9,6 +9,7 @@ export function EditProblemModalConnected() {
   const editingProblem  = useEditProblemStore(s => s.editingProblem);
   const topicChoices    = useEditProblemStore(s => s.topicChoices);
   const companyChoices  = useEditProblemStore(s => s.companyChoices);
+  const onSaved         = useEditProblemStore(s => s.onSaved);
 
   return (
     <EditProblemModal
@@ -17,6 +18,7 @@ export function EditProblemModalConnected() {
       topicChoices={topicChoices}
       companyChoices={companyChoices}
       onClose={() => useEditProblemStore.getState().close()}
+      onSaved={onSaved}
     />
   );
 }

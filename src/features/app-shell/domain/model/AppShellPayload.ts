@@ -2,7 +2,6 @@ import type { PopupShellPayload } from "./PopupShellPayload";
 import type { AnalyticsSummary } from "@features/analytics";
 import type {
   CompanyLabel,
-  LibraryProblemRow,
   RecommendedProblemView,
   TopicLabel,
 } from "@features/problems";
@@ -13,7 +12,6 @@ export interface AppShellPayload extends PopupShellPayload {
   queue: TodayQueue;
   analytics: AnalyticsSummary;
   recommendedCandidates: RecommendedProblemView[];
-  library: LibraryProblemRow[];
   /** Every Track aggregate for the dashboard's Tracks tab. */
   tracks: Track[];
   /** v7 — flat list of every Topic, sorted by name; for Autocomplete inputs. */

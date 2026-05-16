@@ -94,6 +94,13 @@ Rules:
 - Feature UI calls `api.*` (typed RPC proxy) — no `chrome.*` from UI code.
 - Datasources take a `Db` argument; they do not call `getDb()` themselves.
 - Domain code is pure: no React, no `chrome`, no `window`.
+- Feature UI state may live in screen VM hooks or Zustand stores. Store-backed
+  UI follows a UDF/MVI shape: components dispatch intents, stores own async
+  command flow, and repositories/runtime clients perform side effects.
+- Reusable feature UI should prefer domain-model inputs over exported view-row
+  models. For example, the problems table consumes `Problem[]` and derives
+  display cells from `Problem.studyState`, `Problem.topics`, and
+  `Problem.companies` instead of requiring callers to build table rows.
 
 ### Design System (`src/design-system/`)
 
@@ -136,7 +143,9 @@ Handler TypeScript signatures are the wire contract. The UI imports `type SwApi`
 
 **AppData** (`features/app-shell/domain/model/AppData.ts`) is a read-only projection
 assembled from SQLite on each `getAppShellData` call. It is never persisted directly.
-Mutations write to datasources; the tick system drives UI refresh.
+Mutations write to datasources; the tick system drives UI refresh. App-shell payloads
+return domain aggregates plus small surface summaries; they should not hydrate
+feature-specific table rows for UI consumers.
 
 **Schema** — 9 tables in `src/platform/db/schema/`: `problems`, `studyStates`,
 `attemptHistory`, `topics`, `companies`, `tracks`, `trackGroups`, `trackGroupProblems`,

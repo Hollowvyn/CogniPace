@@ -3,37 +3,26 @@ import {
   computeReviewStreakDays,
   summarizeAnalytics,
 } from "@features/analytics/server";
-import { slugToTitle, slugToUrl } from "@features/problems";
 import { listProblems } from "@features/problems/server";
 import {
   buildRecommendedCandidates,
   buildTodayQueue,
-  effectivelySuspendedFlag,
 } from "@features/queue/server";
-import { createInitialUserSettings, getUserSettings } from "@features/settings/server";
+import {
+  createInitialUserSettings,
+  getUserSettings,
+} from "@features/settings/server";
 import { getActiveTrackId, listTracks } from "@features/tracks/server";
 import { validateExtensionPagePath } from "@libs/runtime-rpc/url";
 import { extensionUrl, openTab } from "@platform/chrome/tabs";
 import { getDb } from "@platform/db/instance";
 
-import {
-  buildProblemView,
-  buildStudyStateView,
-} from "../domain/policy/hydrate";
-
 import type { AppShellPayload, PopupShellPayload } from "../domain/model";
 import type { AppData } from "../domain/model/AppData";
-import type {
-  Company,
-  LibraryProblemRow,
-  Problem,
-  Topic,
-} from "@features/problems";
+import type { Company, Problem, Topic } from "@features/problems";
+import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
-import type {
-  TrackMembership,
-  Track,
-} from "@features/tracks";
+import type { Track } from "@features/tracks";
 import type { TrackId } from "@shared/ids";
 
 /**
@@ -79,28 +68,6 @@ async function loadTracks(): Promise<Track[]> {
   return listTracks(db);
 }
 
-function trackMembershipsForSlug(
-  tracks: readonly Track[],
-  slug: string,
-): TrackMembership[] {
-  const out: TrackMembership[] = [];
-  for (const track of tracks) {
-    for (const group of track.groups) {
-      const found = group.problems.find((problem) => problem.slug === slug);
-      if (found) {
-        out.push({
-          trackId: track.id,
-          trackName: track.name,
-          groupId: group.id,
-          groupName: group.name,
-        });
-        break;
-      }
-    }
-  }
-  return out;
-}
-
 function focusedTrackIdOf(data: AppData): TrackId | null {
   if (data.focusedTrackId) return data.focusedTrackId;
 
@@ -113,67 +80,6 @@ function focusedTrackIdOf(data: AppData): TrackId | null {
   }
 
   return null;
-}
-
-function libraryRows(
-  payload: AppData,
-  tracks: readonly Track[],
-  now = new Date(),
-): LibraryProblemRow[] {
-  const targetRetention = payload.settings.memoryReview.targetRetention;
-  const slugs = new Set<string>(Object.keys(payload.problemsBySlug));
-  for (const track of tracks) {
-    for (const group of track.groups) {
-      for (const problem of group.problems) {
-        slugs.add(problem.slug);
-      }
-    }
-  }
-
-  return Array.from(slugs)
-    .map((slug): LibraryProblemRow => {
-      const problem = payload.problemsBySlug[slug] ?? synthesizeProblem(slug);
-      const studyState = payload.studyStatesBySlug[slug] ?? null;
-      const suspendFlag = effectivelySuspendedFlag(
-        problem,
-        studyState,
-        payload.settings,
-      );
-      return {
-        view: buildProblemView(
-          problem as unknown as Parameters<typeof buildProblemView>[0],
-          payload.topicsById,
-          payload.companiesById,
-        ),
-        studyState: buildStudyStateView({
-          studyState: studyState as unknown as Parameters<
-            typeof buildStudyStateView
-          >[0]["studyState"],
-          now,
-          targetRetention,
-        }),
-        trackMemberships: trackMembershipsForSlug(tracks, slug),
-        ...(suspendFlag.suspended ? { suspended: suspendFlag.reason } : {}),
-      };
-    })
-    .sort((a, b) => a.view.title.localeCompare(b.view.title));
-}
-
-function synthesizeProblem(slug: string): Problem {
-  return {
-    slug,
-    title: slugToTitle(slug),
-    difficulty: "Unknown",
-    isPremium: false,
-    url: slugToUrl(slug),
-    topicIds: [],
-    companyIds: [],
-    createdAt: "",
-    updatedAt: "",
-    studyState: null,
-    topics: [],
-    companies: [],
-  };
 }
 
 export function buildPopupShellPayload(
@@ -225,7 +131,6 @@ export async function getAppShellData(): Promise<AppShellPayload> {
     queue,
     analytics,
     recommendedCandidates: popupShell.popup.recommendedCandidates,
-    library: libraryRows(data, tracks, now),
     tracks,
     topicChoices,
     companyChoices,
@@ -250,16 +155,19 @@ export async function getActiveTrack(): Promise<Track | null> {
 export async function getTracks(): Promise<{
   tracks: Track[];
   activeTrack: Track | null;
+  settings: UserSettings;
 }> {
   const { db } = await getDb();
-  const [rawTracks, session] = await Promise.all([
+  const [rawTracks, session, settings] = await Promise.all([
     loadTracks(),
     getActiveTrackId(db),
+    getUserSettings(db),
   ]);
   const focusedTrackId = session;
   return {
     tracks: rawTracks,
     activeTrack: rawTracks.find(t => t.id === focusedTrackId) ?? null,
+    settings: settings ?? createInitialUserSettings(),
   };
 }
 

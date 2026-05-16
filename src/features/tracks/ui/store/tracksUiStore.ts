@@ -40,11 +40,12 @@ export const useTracksUiStore = create<TracksUiStore>((set, get) => {
     set({ isLoading: true, error: null });
 
     try {
-      const { tracks, activeTrack } = await tracksRepository.getTracks();
+      const { tracks, activeTrack, settings } = await tracksRepository.getTracks();
 
       set({
         tracks,
         activeTrack,
+        settings,
         isLoading: false,
       });
     } catch (err) {

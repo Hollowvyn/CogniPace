@@ -55,7 +55,6 @@ export function createMockAppShellPayload(): AppShellPayload {
     },
     recommendedCandidates: [],
     problems: [],
-    library: [],
     tracks: [],
     topicChoices: [],
     companyChoices: [],

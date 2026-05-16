@@ -24,7 +24,6 @@
 import { ToneChip } from "@design-system/atoms/chip/ToneChip";
 import { type Tone } from "@design-system/atoms/tone";
 import { cognipaceTokens } from "@design-system/theme";
-import { settingsRepository } from "@features/settings";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -34,28 +33,43 @@ import Typography from "@mui/material/Typography";
 import { asProblemSlug } from "@shared/ids";
 import React from "react";
 
-import { problemRepository } from "../../../data/repository/ProblemRepository";
 import {
   formatRetention,
   retrievalTone,
 } from "../../presentation/studyState";
-import { useEditProblemStore } from "../../store/editProblemStore";
 
-import type { ProblemsTableVariant } from "./ProblemsTable";
-import type { ProblemRowData } from "./types";
+import {
+  getProblemStudySummary,
+  getProblemSuspendedReason,
+  getProblemTrackLabels,
+} from "./problemTableSelectors";
+
+import type { ProblemTableIntent } from "./problemTableStore";
+import type {
+  PendingProblemTableAction,
+  SuspendedReason,
+} from "./types";
+import type { Problem } from "../../../domain/model";
+import type { UserSettings } from "@features/settings";
 import type {
   AttemptHistoryEntry,
   Rating,
   ReviewMode,
   StudyStateSummary,
 } from "@features/study";
+import type { Track } from "@features/tracks";
 
 
 const MAX_VISIBLE_CHIPS = 6;
 
 interface ProblemRowDetailProps {
-  row: ProblemRowData;
-  variant: ProblemsTableVariant;
+  commandsPending: PendingProblemTableAction | null;
+  dispatchIntent: (intent: ProblemTableIntent) => void;
+  now: Date;
+  problem: Problem;
+  settings: UserSettings;
+  showTrackDetails: boolean;
+  tracks: readonly Track[];
 }
 
 interface SuspendAction {
@@ -69,7 +83,7 @@ interface SuspendAction {
  * Both: clearing the manual flag still leaves it premium-suspended,
  * but it's a meaningful step the user can take. */
 function resolveSuspendAction(
-  reason: ProblemRowData["suspended"],
+  reason: SuspendedReason | undefined,
   onSuspend: (suspend: boolean) => void,
   onEnablePremium: () => void,
 ): SuspendAction | null {
@@ -83,17 +97,36 @@ function resolveSuspendAction(
   return { label: "Resume", onClick: () => onSuspend(false) };
 }
 
-export function ProblemRowDetail({ row, variant }: ProblemRowDetailProps) {
-  const { view, studyState, trackMemberships } = row;
-  const slug = asProblemSlug(view.slug);
-  const recentAttempts = studyState?.recentAttempts ?? [];
-  const notes = studyState?.notes;
-  const interviewPattern = studyState?.interviewPattern;
-  const suspendAction = resolveSuspendAction(
-    row.suspended,
-    (suspend) => void problemRepository.suspendProblem(slug, suspend),
-    () => void settingsRepository.setSkipPremium(false),
+export function ProblemRowDetail({
+  commandsPending,
+  dispatchIntent,
+  now,
+  problem,
+  settings,
+  showTrackDetails,
+  tracks,
+}: ProblemRowDetailProps) {
+  const slug = asProblemSlug(problem.slug);
+  const studySummary = getProblemStudySummary(
+    problem,
+    now,
+    settings.memoryReview.targetRetention,
   );
+  const recentAttempts = problem.studyState?.attemptHistory.slice(-5) ?? [];
+  const notes = problem.studyState?.notes;
+  const interviewPattern = problem.studyState?.interviewPattern;
+  const suspended = getProblemSuspendedReason(problem, settings);
+  const trackLabels = getProblemTrackLabels(problem, tracks);
+  const suspendAction = resolveSuspendAction(
+    suspended,
+    (suspend) => {
+      dispatchIntent({ type: "SUSPEND_PROBLEM", problem, suspend });
+    },
+    () => {
+      dispatchIntent({ type: "ENABLE_PREMIUM_QUESTIONS" });
+    },
+  );
+  const isPendingForProblem = commandsPending?.slug === slug;
 
   return (
     <Box
@@ -117,15 +150,15 @@ export function ProblemRowDetail({ row, variant }: ProblemRowDetailProps) {
               <Typography
                 variant="body2"
                 sx={{ fontVariantNumeric: "tabular-nums" }}
-                color={view.isPremium ? "warning.main" : "text.secondary"}
+                color={problem.isPremium ? "warning.main" : "text.secondary"}
               >
-                {view.isPremium ? "true" : "false"}
+                {problem.isPremium ? "true" : "false"}
               </Typography>
             </DetailRow>
 
             <DetailRow label="Topics">
               <ChipOverflow
-                items={view.topics.map((t) => ({ id: t.id, label: t.name }))}
+                items={problem.topics.map((t) => ({ id: t.id, label: t.name }))}
                 tone="info"
                 emptyHint="None"
               />
@@ -133,19 +166,20 @@ export function ProblemRowDetail({ row, variant }: ProblemRowDetailProps) {
 
             <DetailRow label="Companies">
               <ChipOverflow
-                items={view.companies.map((c) => ({ id: c.id, label: c.name }))}
+                items={problem.companies.map((c) => ({
+                  id: c.id,
+                  label: c.name,
+                }))}
                 tone="accent"
                 emptyHint="None"
               />
             </DetailRow>
 
-            {variant === "library" ? (
+            {showTrackDetails ? (
               <DetailRow label="Tracks">
-                {trackMemberships.length > 0 ? (
+                {trackLabels.length > 0 ? (
                   <Typography variant="body2" color="text.primary">
-                    {trackMemberships
-                      .map((track) => track.trackName)
-                      .join(" · ")}
+                    {trackLabels.join(" · ")}
                   </Typography>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
@@ -161,7 +195,7 @@ export function ProblemRowDetail({ row, variant }: ProblemRowDetailProps) {
           <Stack spacing={1.25} divider={<RowDivider />}>
             <SectionHeading>Analytics and history</SectionHeading>
 
-            <FsrsRows summary={studyState} />
+            <FsrsRows summary={studySummary} />
 
             <DetailRow label="Last 5 attempts">
               <RecentAttemptsRow attempts={recentAttempts} />
@@ -196,17 +230,30 @@ export function ProblemRowDetail({ row, variant }: ProblemRowDetailProps) {
         flexWrap="wrap"
         sx={{ mt: 2, rowGap: 1 }}
       >
-        <Button size="small" onClick={() => useEditProblemStore.getState().openForProblem(view)}>
+        <Button
+          size="small"
+          disabled={isPendingForProblem}
+          onClick={() => {
+            dispatchIntent({ type: "EDIT_PROBLEM", problem });
+          }}
+        >
           Edit
         </Button>
         {suspendAction ? (
-          <Button size="small" onClick={suspendAction.onClick}>
+          <Button
+            size="small"
+            disabled={isPendingForProblem}
+            onClick={suspendAction.onClick}
+          >
             {suspendAction.label}
           </Button>
         ) : null}
         <Button
           size="small"
-          onClick={() => void problemRepository.resetProblemSchedule(slug)}
+          disabled={isPendingForProblem}
+          onClick={() => {
+            dispatchIntent({ type: "RESET_SCHEDULE", problem });
+          }}
         >
           Reset schedule
         </Button>

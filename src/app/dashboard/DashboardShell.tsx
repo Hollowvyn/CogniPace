@@ -77,10 +77,8 @@ export function DashboardShell() {
 
             {controller.view === "library" ? (
               <LibraryScreen
-                filters={controller.filters}
-                onFilterChange={controller.setFilters}
+                onRefresh={controller.refresh}
                 payload={controller.payload}
-                rows={controller.rows}
               />
             ) : null}
           </Stack>

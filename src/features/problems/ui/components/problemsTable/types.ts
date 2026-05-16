@@ -1,10 +1,7 @@
-/**
- * Shared types for the `ProblemsTable` family. Kept separate from the
- * components so the controller hook + tests can import the shapes
- * without pulling React/MUI in.
- */
-import type { Difficulty, ProblemView } from "../../../domain/model";
-import type { StudyPhase , StudyStateView } from "@features/study";
+import type { Difficulty, Problem } from "../../../domain/model";
+import type { UserSettings } from "@features/settings";
+import type { StudyPhase } from "@features/study";
+import type { Track } from "@features/tracks";
 import type {
   CompanyId,
   ProblemSlug,
@@ -13,30 +10,11 @@ import type {
   TrackId,
 } from "@shared/ids";
 
-/** A single row passed to the table. */
-export interface ProblemRowData {
-  view: ProblemView;
-  studyState: StudyStateView | null;
-  trackMemberships: ReadonlyArray<{
-    trackId: TrackId;
-    trackName: string;
-    groupId?: TrackGroupId;
-    groupName?: string;
-  }>;
-  /** Combined flag: true when the problem is queue-skipped — either
-   * the user manually suspended it, or `skipPremium` is on and the
-   * problem is premium-locked. UI uses this to render a Suspended
-   * badge regardless of the underlying reason. */
-  suspended?: SuspendedReason;
-}
-
-/** Why a row reads as suspended. `manual` = user clicked Suspend.
- * `premium` = settings.skipPremium is on and isPremium is true.
- * `both` = manually suspended *and* premium-and-skipPremium. */
 export type SuspendedReason = "manual" | "premium" | "both";
 
 /** Sortable column key. */
 export type SortKey =
+  | "source"
   | "title"
   | "difficulty"
   | "phase"
@@ -46,16 +24,22 @@ export type SortKey =
 /** Sort direction. */
 export type SortDirection = "asc" | "desc";
 
+export interface ProblemTableSort {
+  key: SortKey;
+  direction: SortDirection;
+}
+
 /** Filter state for the table toolbar. */
 export interface ProblemsTableFilters {
   query: string;
   difficulty: Difficulty | "all";
-  phase: StudyPhase | "all";
+  phase: StudyPhase | "New" | "all";
+  trackId: TrackId | "all";
 }
 
 /** Default filter values. */
 export function createDefaultFilters(): ProblemsTableFilters {
-  return { query: "", difficulty: "all", phase: "all" };
+  return { query: "", difficulty: "all", phase: "all", trackId: "all" };
 }
 
 /** Allowed pagination sizes — fixed per the plan. */
@@ -63,6 +47,39 @@ export const ROWS_PER_PAGE_OPTIONS = [20, 30, 50] as const;
 export type RowsPerPage = (typeof ROWS_PER_PAGE_OPTIONS)[number];
 
 export type ProblemSelection = ReadonlySet<ProblemSlug>;
+
+export type ProblemTableActionKind =
+  | "open"
+  | "edit"
+  | "suspend"
+  | "reset"
+  | "premium";
+
+export interface PendingProblemTableAction {
+  kind: ProblemTableActionKind;
+  slug?: ProblemSlug;
+}
+
+export interface ProblemTableCommands {
+  openProblem?: (target: {
+    slug: string;
+    trackId?: string;
+    groupId?: string;
+  }) => Promise<void> | void;
+  editProblem?: (problem: Problem) => Promise<void> | void;
+  suspendProblem?: (slug: ProblemSlug, suspend: boolean) => Promise<void>;
+  resetProblemSchedule?: (slug: ProblemSlug) => Promise<void>;
+  enablePremiumQuestions?: () => Promise<void>;
+  refresh?: () => Promise<void>;
+}
+
+export interface ProblemTableInput {
+  problems: readonly Problem[];
+  settings: UserSettings;
+  tracks?: readonly Track[];
+  now?: Date;
+  commands?: ProblemTableCommands;
+}
 
 // Re-export brands the consumer is likely to need.
 export type { CompanyId, ProblemSlug, TrackId, TrackGroupId, TopicId };
