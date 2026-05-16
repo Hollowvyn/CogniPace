@@ -148,7 +148,6 @@ export function makePayload(): AppShellPayload {
   ];
   payload.library = payload.problems.map(libraryRowFromProblem);
 
-  payload.activeTrackId = asTrackId("Blind75");
   const activeTrack: Track = {
     id: asTrackId("Blind75"),
     name: "Blind 75",

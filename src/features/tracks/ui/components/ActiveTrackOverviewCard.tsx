@@ -103,11 +103,11 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
 
         {nextQuestion ? (
           <NextUpRow
-            activeTrackId={course.id}
             group={nextQuestion.group}
             problem={nextQuestion.problem}
             onOpenProblem={onOpenProblem}
             onOpenTracks={onOpenTracks}
+            trackId={course.id}
           />
         ) : (
           <Stack spacing={0.5}>
@@ -147,17 +147,17 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
 }
 
 function NextUpRow({
-  activeTrackId,
   group,
   problem,
   onOpenProblem,
   onOpenTracks,
+  trackId,
 }: {
-  activeTrackId: string;
   group: TrackGroup;
   problem: Problem;
   onOpenProblem: ActiveTrackOverviewCardProps["onOpenProblem"];
   onOpenTracks: () => void;
+  trackId: string;
 }) {
   const phaseLabel = getStudyStateSummary(problem.studyState).phase.toUpperCase();
 
@@ -198,7 +198,7 @@ function NextUpRow({
           onClick={() => {
             void onOpenProblem({
               slug: problem.slug,
-              trackId: activeTrackId,
+              trackId,
               groupId: group.id,
             });
           }}

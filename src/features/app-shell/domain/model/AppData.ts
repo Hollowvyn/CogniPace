@@ -19,7 +19,7 @@ export interface AppData {
   topicsById: Record<string, Topic>;
   companiesById: Record<string, Company>;
   settings: UserSettings;
-  activeTrackId: TrackId | null;
+  focusedTrackId: TrackId | null;
   /** Set by the v6→v7 migration; surfaces in support diagnostics. */
   lastMigrationAt?: string;
 }

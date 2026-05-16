@@ -120,21 +120,23 @@ export function useOverlayPanelVM(
         payload.popup.recommended.slug !== currentSlug
           ? payload.popup.recommended
           : null);
-      const trackNext = payload.activeTrack
-        ? getNextTrackProblem(payload.activeTrack)
+      const activeTrack = payload.activeTrack;
+      const trackNext = activeTrack
+        ? getNextTrackProblem(activeTrack)
         : null;
 
       if (
         payload.settings.studyMode === "studyPlan" &&
+        activeTrack &&
         trackNext &&
         trackNext.problem.slug !== currentSlug
       ) {
         return {
           kind: "track",
-          activeTrackId: payload.activeTrack?.id,
           group: trackNext.group,
           onOpenProblem: openOverlayProblem,
           problem: trackNext.problem,
+          trackId: activeTrack.id,
         };
       }
 

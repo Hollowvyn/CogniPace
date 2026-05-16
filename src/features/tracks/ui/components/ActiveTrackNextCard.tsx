@@ -10,7 +10,7 @@ import type { Problem } from "@features/problems";
 
 export interface ActiveTrackNextCardProps {
   actionLabel?: string;
-  activeTrackId?: string;
+  trackId?: string;
   buttonFullWidth?: boolean;
   buttonVariant?: ButtonProps["variant"];
   compact?: boolean;
@@ -28,7 +28,6 @@ export interface ActiveTrackNextCardProps {
 export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
   const {
     actionLabel = "Continue Path",
-    activeTrackId,
     buttonFullWidth = false,
     buttonVariant = "outlined",
     compact = false,
@@ -37,6 +36,7 @@ export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
     label = "Next in track",
     onOpenProblem,
     problem,
+    trackId,
   } = props;
   const summary = getStudyStateSummary(problem.studyState);
   const phaseLabel = summary.phase.toUpperCase();
@@ -59,7 +59,7 @@ export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
           onClick={() => {
             void onOpenProblem({
               slug: problem.slug,
-              trackId: activeTrackId,
+              trackId,
               groupId,
             });
           }}

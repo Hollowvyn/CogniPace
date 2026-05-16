@@ -55,11 +55,11 @@ function OtherTrackCard({
 
 export function OtherTracksSection() {
   const tracks        = useTracksUiStore(s => s.tracks);
-  const activeTrackId = useTracksUiStore(s => s.activeTrackId);
+  const activeTrack   = useTracksUiStore(s => s.activeTrack);
   const [expanded, setExpanded] = useState(false);
   const otherTracks   = useMemo(
-    () => tracks.filter((t: Track) => t.enabled && t.id !== activeTrackId),
-    [tracks, activeTrackId],
+    () => tracks.filter((t: Track) => t.enabled && t.id !== activeTrack?.id),
+    [tracks, activeTrack?.id],
   );
 
   return (

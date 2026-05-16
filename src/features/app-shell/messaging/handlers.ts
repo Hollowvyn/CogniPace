@@ -70,7 +70,7 @@ async function loadAppShellData(): Promise<AppData> {
     topicsById,
     companiesById,
     settings: settings ?? createInitialUserSettings(),
-    activeTrackId: session,
+    focusedTrackId: session,
   };
 }
 
@@ -102,7 +102,7 @@ function trackMembershipsForSlug(
 }
 
 function focusedTrackIdOf(data: AppData): TrackId | null {
-  if (data.activeTrackId) return data.activeTrackId;
+  if (data.focusedTrackId) return data.focusedTrackId;
 
   const legacyActiveFocus = (data.settings as unknown as {
     activeFocus?: { kind?: unknown; id?: unknown };
@@ -182,8 +182,8 @@ export function buildPopupShellPayload(
   now = new Date(),
 ): PopupShellPayload {
   const queue = buildTodayQueue(data, now);
-  const activeTrackId = focusedTrackIdOf(data);
-  const activeTrack = tracks.find(t => t.id === activeTrackId) ?? null;
+  const focusedTrackId = focusedTrackIdOf(data);
+  const activeTrack = tracks.find(t => t.id === focusedTrackId) ?? null;
   const candidates = buildRecommendedCandidates(queue, undefined);
 
   return {
@@ -195,7 +195,6 @@ export function buildPopupShellPayload(
       recommendedCandidates: candidates,
     },
     problems: data.problems,
-    activeTrackId,
     activeTrack,
   };
 }
@@ -250,7 +249,6 @@ export async function getActiveTrack(): Promise<Track | null> {
 
 export async function getTracks(): Promise<{
   tracks: Track[];
-  activeTrackId: TrackId | null;
   activeTrack: Track | null;
 }> {
   const { db } = await getDb();
@@ -258,11 +256,10 @@ export async function getTracks(): Promise<{
     loadTracks(),
     getActiveTrackId(db),
   ]);
-  const activeTrackId = session;
+  const focusedTrackId = session;
   return {
     tracks: rawTracks,
-    activeTrackId,
-    activeTrack: rawTracks.find(t => t.id === activeTrackId) ?? null,
+    activeTrack: rawTracks.find(t => t.id === focusedTrackId) ?? null,
   };
 }
 

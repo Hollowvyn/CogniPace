@@ -43,7 +43,6 @@ describe("Popup States", () => {
 
   it("renders the no-active-track state", async () => {
     const payload = makePayload();
-    payload.activeTrackId = null;
     payload.activeTrack = null;
 
     renderPopupWithPayload(payload);

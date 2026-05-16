@@ -1,10 +1,9 @@
 import type { Track } from "../../domain/model";
-import type { TrackGroupId, TrackId } from "@shared/ids";
+import type { TrackGroupId } from "@shared/ids";
 
 export interface TracksUiState {
   // Data from repositories
   tracks: Track[];
-  activeTrackId: TrackId | null;
   activeTrack: Track | null;
 
   // Canonical UI interaction state
@@ -17,7 +16,6 @@ export interface TracksUiState {
 
 export const INITIAL_TRACKS_UI_STATE: TracksUiState = {
   tracks: [],
-  activeTrackId: null,
   activeTrack: null,
   selectedGroupId: null,
   isLoading: false,

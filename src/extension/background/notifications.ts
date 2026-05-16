@@ -104,7 +104,7 @@ async function loadQueueContext(): Promise<AppData> {
     topicsById: {},
     companiesById: {},
     settings: settings ?? createInitialUserSettings(),
-    activeTrackId: null,
+    focusedTrackId: null,
     problems: [],
   };
 }

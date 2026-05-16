@@ -33,11 +33,9 @@ export interface OverviewScreenModel {
 export function useOverviewVM(input: UseOverviewVMInput): OverviewScreenModel {
   const { payload } = input;
 
-  const activeTrackEntity = payload?.tracks.find(t => t.id === payload.activeTrackId);
-
   return {
     recommended: payload?.popup.recommended ?? null,
-    activeTrack: activeTrackEntity ?? null,
+    activeTrack: payload?.activeTrack ?? null,
     dueCount: payload?.queue.dueCount ?? 0,
     streakDays: payload?.analytics.streakDays ?? 0,
     reviewCardCount: payload?.analytics.phaseCounts.Review ?? 0,

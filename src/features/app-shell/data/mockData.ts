@@ -10,7 +10,6 @@ export function createMockPopupShellPayload(): PopupShellPayload {
       recommendedCandidates: [],
     },
     problems: [],
-    activeTrackId: null,
     activeTrack: null,
     settings: createInitialUserSettings(),
   };

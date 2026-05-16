@@ -13,7 +13,6 @@ export type OverlayPostSubmitNextViewModel =
       title: string;
     }
   | {
-      activeTrackId?: string;
       kind: "track";
       onOpenProblem: (target: {
         slug: string;
@@ -22,6 +21,7 @@ export type OverlayPostSubmitNextViewModel =
       }) => Promise<void> | void;
       group: TrackGroup;
       problem: Problem;
+      trackId: string;
     }
   | {
       kind: "recommended";

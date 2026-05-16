@@ -163,10 +163,9 @@ function TrackBody() {
 export function ActiveTrackSection() {
   const activeTrack         = useTracksUiStore(s => s.activeTrack);
   const tracks              = useTracksUiStore(s => s.tracks);
-  const activeTrackId       = useTracksUiStore(s => s.activeTrackId);
   const otherEnabledTracks  = useMemo(
-    () => tracks.filter(t => t.enabled && t.id !== activeTrackId),
-    [tracks, activeTrackId],
+    () => tracks.filter(t => t.enabled && t.id !== activeTrack?.id),
+    [tracks, activeTrack?.id],
   );
 
   if (!activeTrack) return null;

@@ -93,8 +93,8 @@ describe("OverlayPanel Expanded", () => {
         renderModel={makeExpandedRenderModel({
           postSubmitNext: {
             kind: "track",
-            activeTrackId: "Blind75",
             onOpenProblem,
+            trackId: "Blind75",
             group: {
               id: asTrackGroupId("arrays-1"),
               trackId: asTrackId("Blind75"),

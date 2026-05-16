@@ -25,7 +25,7 @@ function buildAppData(input: AppDataInput): AppData {
     topicsById: {},
     companiesById: {},
     settings: sanitizeStoredUserSettings(input.settings),
-    activeTrackId: null,
+    focusedTrackId: null,
     problems: [],
   };
 }
@@ -49,7 +49,6 @@ describe("Popup Shell Handler", () => {
 
     expect(Object.keys(payload).sort()).toEqual([
       "activeTrack",
-      "activeTrackId",
       "popup",
       "problems",
       "settings",
@@ -60,7 +59,7 @@ describe("Popup Shell Handler", () => {
     expect(payload.popup.recommended?.slug).toBe("two-sum");
   });
 
-  it("derives activeTrackId from settings.activeFocus", () => {
+  it("derives activeTrack from settings.activeFocus", () => {
     const data = buildAppData({
       problemsBySlug: {
         "two-sum": makeProblem("two-sum", { title: "Two Sum", difficulty: "Easy" }),
@@ -77,7 +76,6 @@ describe("Popup Shell Handler", () => {
     ];
     const payload = buildPopupShellPayload(data, tracks);
 
-    expect(payload.activeTrackId).toBe("Grind75");
     expect(payload.activeTrack?.id).toBe("Grind75");
   });
 });
