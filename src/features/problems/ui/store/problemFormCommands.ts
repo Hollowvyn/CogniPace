@@ -14,7 +14,6 @@ import {
 } from "./problemFormModel";
 
 import type {
-  ProblemFormUiEffect,
   ProblemFormValues,
   ProblemFormViewModel,
 } from "./problemFormTypes";
@@ -25,14 +24,10 @@ import type { StoreApi } from "zustand";
 export type ProblemFormGet = StoreApi<ProblemFormViewModel>["getState"];
 export type ProblemFormSet = StoreApi<ProblemFormViewModel>["setState"];
 
-let latestLoadId = 0;
-
 export async function loadProblemForm(
   slugId: ProblemSlug | undefined,
   set: ProblemFormSet
 ): Promise<void> {
-  latestLoadId += 1;
-  const loadId = latestLoadId;
   const normalizedSlug = slugId ? normalizeSlug(slugId) : null;
 
   set({
@@ -40,20 +35,20 @@ export async function loadProblemForm(
       slugId: normalizedSlug,
       isLoading: true,
     }),
+    uiEffect: null,
   });
 
   if (!normalizedSlug) {
-    await loadCreateState(loadId, set);
+    await loadCreateState(set);
     return;
   }
 
-  await loadEditState(loadId, normalizedSlug, set);
+  await loadEditState(normalizedSlug, set);
 }
 
 export async function saveProblemForm(
   get: ProblemFormGet,
-  set: ProblemFormSet,
-  emitEffect: (effect: ProblemFormUiEffect) => void
+  set: ProblemFormSet
 ): Promise<void> {
   if (!get().uiState.canSave) return;
 
@@ -73,7 +68,7 @@ export async function saveProblemForm(
         ? await createProblem(values)
         : await editProblem(slugId, values);
 
-    setSavedState(set, emitEffect, mode, savedSlugId, values);
+    setSavedState(set, mode, savedSlugId, values);
   } catch (err) {
     set((current) => ({
       uiState: makeProblemFormUiState({
@@ -86,9 +81,12 @@ export async function saveProblemForm(
 }
 
 export function updateProblemFormValues(
+  get: ProblemFormGet,
   set: ProblemFormSet,
   patch: Partial<ProblemFormValues>
 ): void {
+  if (get().uiState.isSaving) return;
+
   set((state) => ({
     uiState: makeProblemFormUiState({
       ...state.uiState,
@@ -101,13 +99,9 @@ export function updateProblemFormValues(
   }));
 }
 
-async function loadCreateState(
-  loadId: number,
-  set: ProblemFormSet
-): Promise<void> {
+async function loadCreateState(set: ProblemFormSet): Promise<void> {
   try {
     const choices = await loadFormChoices();
-    if (loadId !== latestLoadId) return;
 
     set({
       uiState: createProblemFormUiState({
@@ -118,7 +112,6 @@ async function loadCreateState(
       }),
     });
   } catch (err) {
-    if (loadId !== latestLoadId) return;
     set({
       uiState: createProblemFormUiState({
         slugId: null,
@@ -132,7 +125,6 @@ async function loadCreateState(
 }
 
 async function loadEditState(
-  loadId: number,
   slugId: ProblemSlug,
   set: ProblemFormSet
 ): Promise<void> {
@@ -141,7 +133,6 @@ async function loadEditState(
       loadFormChoices(),
       problemRepository.getProblemForEdit(slugId),
     ]);
-    if (loadId !== latestLoadId) return;
 
     if (!problem) {
       set({
@@ -172,7 +163,6 @@ async function loadEditState(
       }),
     });
   } catch (err) {
-    if (loadId !== latestLoadId) return;
     set({
       uiState: createProblemFormUiState({
         slugId,
@@ -224,7 +214,6 @@ async function editProblem(
 
 function setSavedState(
   set: ProblemFormSet,
-  emitEffect: (effect: ProblemFormUiEffect) => void,
   mode: "create" | "edit",
   savedSlugId: ProblemSlug,
   valuesForSave: ProblemFormValues
@@ -237,6 +226,10 @@ function setSavedState(
       isSaving: false,
       saveError: null,
     }),
+    uiEffect: {
+      mode,
+      slugId: savedSlugId,
+      type: "Saved",
+    },
   }));
-  emitEffect({ mode, slugId: savedSlugId, type: "Saved" });
 }

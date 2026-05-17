@@ -14,30 +14,58 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useStore } from "zustand";
 
-import { useProblemFormViewModel } from "../../store/problemFormStore";
+import { createProblemFormViewModel } from "../../store/problemFormStore";
 
 import type { Difficulty } from "../../../domain/model";
 import type { ProblemSlug } from "@shared/ids";
 
+export type ProblemFormDialogCloseReason =
+  | { type: "cancel" }
+  | { mode: "create" | "edit"; slugId: ProblemSlug; type: "saved" };
+
 export interface ProblemFormDialogProps {
+  onClose: (reason: ProblemFormDialogCloseReason) => void;
   slugId?: ProblemSlug;
 }
 
 const DIFFICULTY_OPTIONS: Difficulty[] = ["Easy", "Medium", "Hard", "Unknown"];
 
 export function ProblemFormDialog(props: ProblemFormDialogProps) {
-  const { dispatch, uiState } = useProblemFormViewModel();
+  const { onClose, slugId } = props;
+  const [store] = useState(createProblemFormViewModel);
+  const { dispatch, uiEffect, uiState } = useStore(
+    store,
+    (state) => state
+  );
+  const controlsDisabled = uiState.isSaving;
 
   useEffect(() => {
-    dispatch({ type: "Load", slugId: props.slugId });
-  }, [dispatch, props.slugId]);
+    dispatch({ type: "Load", slugId });
+  }, [dispatch, slugId]);
+
+  useEffect(() => {
+    if (!uiEffect) {
+      return;
+    }
+    onClose({
+      mode: uiEffect.mode,
+      slugId: uiEffect.slugId,
+      type: "saved",
+    });
+  }, [onClose, uiEffect]);
 
   return (
     <Dialog
       open
-      onClose={() => dispatch({ type: "Cancel" })}
+      onClose={() => {
+        if (!uiState.isSaving) {
+          onClose({ type: "cancel" });
+        }
+      }}
+      disableEscapeKeyDown={uiState.isSaving}
       fullWidth
       maxWidth="sm"
       aria-labelledby="problem-form-dialog-title"
@@ -64,6 +92,7 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
                     value: event.target.value,
                   })
                 }
+                disabled={controlsDisabled}
                 fullWidth
                 required
                 size="small"
@@ -76,11 +105,12 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
               onChange={(event) =>
                 dispatch({ type: "ChangeTitle", value: event.target.value })
               }
+              disabled={controlsDisabled}
               fullWidth
               size="small"
             />
 
-            <FormControl size="small" fullWidth>
+            <FormControl size="small" fullWidth disabled={controlsDisabled}>
               <InputLabel id="problem-form-difficulty">Difficulty</InputLabel>
               <Select
                 labelId="problem-form-difficulty"
@@ -107,12 +137,14 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
               onChange={(event) =>
                 dispatch({ type: "ChangeUrl", value: event.target.value })
               }
+              disabled={controlsDisabled}
               fullWidth
               size="small"
             />
 
             <Autocomplete
               multiple
+              disabled={controlsDisabled}
               options={uiState.topicOptions}
               value={uiState.values.topics}
               onChange={(_, next) => {
@@ -132,6 +164,7 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
 
             <Autocomplete
               multiple
+              disabled={controlsDisabled}
               options={uiState.companyOptions}
               value={uiState.values.companies}
               onChange={(_, next) => {
@@ -156,6 +189,7 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
               control={
                 <Switch
                   checked={uiState.values.isPremium}
+                  disabled={controlsDisabled}
                   onChange={(event) =>
                     dispatch({
                       type: "SetPremium",
@@ -177,7 +211,7 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
       </DialogContent>
       <DialogActions>
         <Button
-          onClick={() => dispatch({ type: "Cancel" })}
+          onClick={() => onClose({ type: "cancel" })}
           disabled={uiState.isSaving}
         >
           Cancel

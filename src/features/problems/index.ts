@@ -34,15 +34,16 @@ export { problemRepository } from "./data/repository/ProblemRepository";
 export type { ProblemRepository } from "./data/repository/ProblemRepository";
 
 export { LibraryScreen } from "./ui/screens/library/LibraryScreen";
-export { ProblemFormDialog } from "./ui/screens/library/ProblemFormDialog";
 export {
-  subscribeProblemFormEffect,
-  useProblemFormViewModel,
+  ProblemFormDialog,
+  type ProblemFormDialogCloseReason,
+} from "./ui/screens/library/ProblemFormDialog";
+export {
+  createProblemFormViewModel,
 } from "./ui/store/problemFormStore";
 export type {
   ProblemFormIntent,
-  ProblemFormUiEffect,
-  ProblemFormUiState,
+  ProblemFormStore,
 } from "./ui/store/problemFormStore";
 export {
   LibraryProblemTable,

@@ -36,9 +36,11 @@ export interface ProblemFormUiState {
   canSave: boolean;
 }
 
-export type ProblemFormUiEffect =
-  | { type: "CloseRequested" }
-  | { mode: ProblemFormMode; slugId: ProblemSlug; type: "Saved" };
+export type ProblemFormUiEffect = {
+  mode: ProblemFormMode;
+  slugId: ProblemSlug;
+  type: "Saved";
+};
 
 export type ProblemFormIntent =
   | { type: "Load"; slugId?: ProblemSlug }
@@ -49,10 +51,10 @@ export type ProblemFormIntent =
   | { type: "SetTopics"; value: TopicLabel[] }
   | { type: "SetCompanies"; value: CompanyLabel[] }
   | { type: "SetPremium"; value: boolean }
-  | { type: "Save" }
-  | { type: "Cancel" };
+  | { type: "Save" };
 
 export interface ProblemFormViewModel {
   uiState: ProblemFormUiState;
+  uiEffect: ProblemFormUiEffect | null;
   dispatch: (intent: ProblemFormIntent) => void;
 }

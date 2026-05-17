@@ -4,8 +4,8 @@ import {
   LibraryScreen,
   ProblemFormDialog,
   problemRepository,
-  subscribeProblemFormEffect,
   type Problem,
+  type ProblemFormDialogCloseReason,
 } from "@features/problems";
 import { createDefaultProblemTableCommands } from "@features/problems/ui/components/problemsTable";
 import { SettingsScreen as SettingsView } from "@features/settings";
@@ -268,49 +268,38 @@ function DashboardProblemModal(props: {
   background: DashboardModalBackground;
   slugId?: ProblemSlug;
 }) {
-  useProblemFormRouteController(props.background);
+  const { refresh, setStatus } = useDashboardController();
+  const navigate = useNavigate();
+  const closeTo = getDashboardRoute(props.background).path;
+  const formKey = props.slugId ? `edit:${props.slugId}` : "new";
+  const close = useCallback(
+    (reason: ProblemFormDialogCloseReason): void => {
+      if (reason.type === "saved") {
+        setStatus({
+          message:
+            reason.mode === "create" ? "Problem added." : "Problem updated.",
+          isError: false,
+        });
+        void refresh(false);
+      }
+      void navigate({
+        to: closeTo,
+        replace: true,
+      });
+    },
+    [closeTo, navigate, refresh, setStatus]
+  );
 
   return (
     <>
       <DashboardBackgroundContent view={props.background} />
-      <ProblemFormDialog slugId={props.slugId} />
+      <ProblemFormDialog
+        key={formKey}
+        onClose={close}
+        slugId={props.slugId}
+      />
     </>
   );
-}
-
-function useProblemFormRouteController(background: DashboardModalBackground) {
-  const { refresh, setStatus } = useDashboardController();
-  const navigate = useNavigate();
-  const closeTo = getDashboardRoute(background).path;
-
-  const close = useCallback(
-    (replace = true): void => {
-      void navigate({
-        to: closeTo,
-        replace,
-      });
-    },
-    [closeTo, navigate]
-  );
-
-  useEffect(() => {
-    return subscribeProblemFormEffect((effect) => {
-      if (effect.type === "CloseRequested") {
-        close(true);
-        return;
-      }
-
-      void (async () => {
-        setStatus({
-          message:
-            effect.mode === "create" ? "Problem added." : "Problem updated.",
-          isError: false,
-        });
-        await refresh(false);
-        close(true);
-      })();
-    });
-  }, [close, refresh, setStatus]);
 }
 
 function DashboardBackgroundContent(props: { view: DashboardModalBackground }) {
@@ -383,6 +372,9 @@ function useActiveDashboardView(): DashboardView {
 function validateProblemSearch(
   search: Record<string, unknown>
 ): DashboardProblemSearch {
+  if (search.background === undefined) {
+    return { background: "library" };
+  }
   if (!isDashboardModalBackground(search.background)) {
     throw new Error("Invalid dashboard problem background.");
   }

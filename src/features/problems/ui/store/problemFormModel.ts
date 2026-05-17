@@ -67,6 +67,10 @@ export function makeProblemFormUiState(input: {
 }): ProblemFormUiState {
   const mode: ProblemFormMode = input.slugId ? "edit" : "create";
   const canRenderForm = !input.isLoading && input.loadError === null;
+  const canSave =
+    canRenderForm &&
+    !input.isSaving &&
+    (mode === "edit" || input.values.problemInput.trim().length > 0);
   return {
     slugId: input.slugId,
     mode,
@@ -84,7 +88,7 @@ export function makeProblemFormUiState(input: {
     isSaving: input.isSaving,
     saveError: input.saveError,
     canRenderForm,
-    canSave: canRenderForm && !input.isSaving,
+    canSave,
   };
 }
 

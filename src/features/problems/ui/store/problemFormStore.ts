@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createStore, type StoreApi } from "zustand/vanilla";
 
 import {
   loadProblemForm,
@@ -11,7 +11,6 @@ import { createProblemFormUiState } from "./problemFormModel";
 
 import type {
   ProblemFormIntent,
-  ProblemFormUiEffect,
   ProblemFormViewModel,
 } from "./problemFormTypes";
 import type { CompanyLabel, Difficulty, TopicLabel } from "../../domain/model";
@@ -27,32 +26,16 @@ export type {
 } from "./problemFormTypes";
 export { createEmptyProblemFormValues } from "./problemFormModel";
 
-type ProblemFormEffectListener = (effect: ProblemFormUiEffect) => void;
+export type ProblemFormStore = StoreApi<ProblemFormViewModel>;
 
-const effectListeners = new Set<ProblemFormEffectListener>();
-
-export const useProblemFormViewModel = create<ProblemFormViewModel>(
-  (set, get) => ({
+export function createProblemFormViewModel(): ProblemFormStore {
+  return createStore<ProblemFormViewModel>((set, get) => ({
     uiState: createProblemFormUiState(),
+    uiEffect: null,
     dispatch: (intent) => {
       onProblemFormIntent(intent, get, set);
     },
-  })
-);
-
-export function subscribeProblemFormEffect(
-  listener: ProblemFormEffectListener
-): () => void {
-  effectListeners.add(listener);
-  return () => {
-    effectListeners.delete(listener);
-  };
-}
-
-function emitProblemFormEffect(effect: ProblemFormUiEffect): void {
-  for (const listener of effectListeners) {
-    listener(effect);
-  }
+  }));
 }
 
 function onProblemFormIntent(
@@ -65,59 +48,84 @@ function onProblemFormIntent(
       void loadProblemForm(intent.slugId, set);
       return;
     case "ChangeProblemInput":
-      changeProblemInput(set, intent.value);
+      changeProblemInput(get, set, intent.value);
       return;
     case "ChangeTitle":
-      changeTitle(set, intent.value);
+      changeTitle(get, set, intent.value);
       return;
     case "SetDifficulty":
-      setDifficulty(set, intent.value);
+      setDifficulty(get, set, intent.value);
       return;
     case "ChangeUrl":
-      changeUrl(set, intent.value);
+      changeUrl(get, set, intent.value);
       return;
     case "SetTopics":
-      setTopics(set, intent.value);
+      setTopics(get, set, intent.value);
       return;
     case "SetCompanies":
-      setCompanies(set, intent.value);
+      setCompanies(get, set, intent.value);
       return;
     case "SetPremium":
-      setPremium(set, intent.value);
+      setPremium(get, set, intent.value);
       return;
     case "Save":
-      void saveProblemForm(get, set, emitProblemFormEffect);
-      return;
-    case "Cancel":
-      emitProblemFormEffect({ type: "CloseRequested" });
+      void saveProblemForm(get, set);
       return;
   }
 }
 
-function changeProblemInput(set: ProblemFormSet, value: string): void {
-  updateProblemFormValues(set, { problemInput: value });
+function changeProblemInput(
+  get: ProblemFormGet,
+  set: ProblemFormSet,
+  value: string
+): void {
+  updateProblemFormValues(get, set, { problemInput: value });
 }
 
-function changeTitle(set: ProblemFormSet, value: string): void {
-  updateProblemFormValues(set, { title: value });
+function changeTitle(
+  get: ProblemFormGet,
+  set: ProblemFormSet,
+  value: string
+): void {
+  updateProblemFormValues(get, set, { title: value });
 }
 
-function setDifficulty(set: ProblemFormSet, value: Difficulty): void {
-  updateProblemFormValues(set, { difficulty: value });
+function setDifficulty(
+  get: ProblemFormGet,
+  set: ProblemFormSet,
+  value: Difficulty
+): void {
+  updateProblemFormValues(get, set, { difficulty: value });
 }
 
-function changeUrl(set: ProblemFormSet, value: string): void {
-  updateProblemFormValues(set, { url: value });
+function changeUrl(
+  get: ProblemFormGet,
+  set: ProblemFormSet,
+  value: string
+): void {
+  updateProblemFormValues(get, set, { url: value });
 }
 
-function setTopics(set: ProblemFormSet, value: TopicLabel[]): void {
-  updateProblemFormValues(set, { topics: value });
+function setTopics(
+  get: ProblemFormGet,
+  set: ProblemFormSet,
+  value: TopicLabel[]
+): void {
+  updateProblemFormValues(get, set, { topics: value });
 }
 
-function setCompanies(set: ProblemFormSet, value: CompanyLabel[]): void {
-  updateProblemFormValues(set, { companies: value });
+function setCompanies(
+  get: ProblemFormGet,
+  set: ProblemFormSet,
+  value: CompanyLabel[]
+): void {
+  updateProblemFormValues(get, set, { companies: value });
 }
 
-function setPremium(set: ProblemFormSet, value: boolean): void {
-  updateProblemFormValues(set, { isPremium: value });
+function setPremium(
+  get: ProblemFormGet,
+  set: ProblemFormSet,
+  value: boolean
+): void {
+  updateProblemFormValues(get, set, { isPremium: value });
 }

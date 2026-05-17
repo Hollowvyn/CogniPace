@@ -39,6 +39,9 @@ function renderDashboardWithPayload(payload = makePayload()) {
         data: payload.problems.find((problem) => problem.slug === slug) ?? null,
       };
     }
+    if (type === "createProblem") {
+      return { ok: true, data: { slug: "valid-palindrome" } };
+    }
     return { ok: true, data: {} };
   });
 
@@ -108,5 +111,38 @@ describe("dashboard navigation", () => {
       await screen.findByRole("heading", { name: "Add problem" })
     ).toBeInTheDocument();
     expect(window.location.hash).toBe("#/problems/new?background=tracks");
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => {
+      expect(window.location.hash).toBe("#/tracks");
+    });
   });
+
+  it("handles saved problem form closes in the route layer", async () => {
+    const payload = makePayload();
+
+    window.history.pushState(
+      {},
+      "",
+      "/dashboard.html#/problems/new?background=library"
+    );
+
+    const { user } = renderDashboardWithPayload(payload);
+
+    await user.type(
+      await screen.findByLabelText(/LeetCode URL or slug/),
+      "valid-palindrome"
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(sendMessageMock).toHaveBeenCalledWith("createProblem", {
+        input: "valid-palindrome",
+      });
+      expect(window.location.hash).toBe("#/library");
+      expect(screen.getByText("Problem added.")).toBeInTheDocument();
+    });
+  });
+
 });
