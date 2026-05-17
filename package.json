@@ -67,7 +67,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.10",
-    "@mui/material": "^7.3.10",
+    "@mui/material": "^9.0.1",
     "@sqlite.org/sqlite-wasm": "^3.53.0-build1",
     "@tanstack/react-router": "^1.170.3",
     "drizzle-orm": "^0.45.2",
