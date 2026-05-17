@@ -1,17 +1,19 @@
 import {
-  createProblemFormViewModel,
   type CompanyLabel,
   type Problem,
-  type ProblemFormIntent,
-  type ProblemFormStore,
   type TopicLabel,
 } from "@features/problems";
+import {
+  createProblemFormViewModel,
+  type ProblemFormIntent,
+  type ProblemFormStore,
+} from "@features/problems/ui/screens/editcreateform/viewmodel/problemFormStore";
 import { asProblemSlug } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
-import { makeProblem } from "../../support/fixtures";
-import { act, waitFor } from "../../support/render";
-import { sendMessageMock } from "../../support/setup";
+import { makeProblem } from "../../../../../../support/fixtures";
+import { act, waitFor } from "../../../../../../support/render";
+import { sendMessageMock } from "../../../../../../support/setup";
 
 const TOPICS: TopicLabel[] = [{ id: "arrays", name: "Arrays" }];
 const COMPANIES: CompanyLabel[] = [{ id: "meta", name: "Meta" }];

@@ -5,10 +5,11 @@ import {
 import { createInitialUserSettings } from "@features/settings";
 import { describe, expect, it } from "vitest";
 
+import { makePayload } from "../../../../../support/appShellFixtures";
 import {
   makeProblem,
   makeScheduledState,
-} from "../../support/fixtures";
+} from "../../../../../support/fixtures";
 
 import type { Difficulty, Problem } from "@features/problems";
 import type { StudyPhase } from "@features/study";
@@ -92,6 +93,27 @@ describe("problem table selectors", () => {
     );
     expect(out).toHaveLength(1);
     expect(out[0].title).toBe("A");
+  });
+
+  it("applies library track-aware filters to domain problems", () => {
+    const payload = makePayload();
+    const out = filterAndSortProblems(
+      payload.problems,
+      {
+        ...createDefaultFilters(),
+        difficulty: "Easy",
+        phase: "Review",
+        query: "two",
+        trackId: "all",
+      },
+      { key: "title", direction: "asc" },
+      payload.settings,
+      now,
+      payload.tracks
+    );
+
+    expect(out).toHaveLength(1);
+    expect(out[0]?.slug).toBe("two-sum");
   });
 
   it("sorts by title asc then desc", () => {
