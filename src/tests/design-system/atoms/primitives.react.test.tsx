@@ -1,5 +1,4 @@
 import {
-  DifficultyChip,
   SurfaceControlRow,
   SurfaceTableContainer,
   ToneChip,
@@ -25,22 +24,6 @@ describe("shared CogniPace UI primitives", () => {
     expect(screen.getByText("Danger")).toBeInTheDocument();
     expect(screen.getByText("Info")).toBeInTheDocument();
     expect(screen.getByText("Success")).toBeInTheDocument();
-  });
-
-  it("renders difficulty chips for every problem difficulty", () => {
-    render(
-      <>
-        <DifficultyChip difficulty="Easy" />
-        <DifficultyChip difficulty="Medium" />
-        <DifficultyChip difficulty="Hard" />
-        <DifficultyChip difficulty="Unknown" />
-      </>
-    );
-
-    expect(screen.getByText("Easy")).toBeInTheDocument();
-    expect(screen.getByText("Medium")).toBeInTheDocument();
-    expect(screen.getByText("Hard")).toBeInTheDocument();
-    expect(screen.getByText("Unknown")).toBeInTheDocument();
   });
 
   it("preserves semantic table markup inside the shared table surface", () => {

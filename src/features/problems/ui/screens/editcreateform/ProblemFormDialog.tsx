@@ -1,3 +1,4 @@
+import { CompanyChip, TopicChip } from "@design-system/atoms";
 import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -152,6 +153,14 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
               }}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               getOptionLabel={(option) => option.name}
+              renderValue={(selectedTopics, getItemProps) =>
+                selectedTopics.map((topic, index) => {
+                  const { key, ...itemProps } = getItemProps({ index });
+                  return (
+                    <TopicChip key={key} name={topic.name} {...itemProps} />
+                  );
+                })
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -175,6 +184,18 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
               }}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               getOptionLabel={(option) => option.name}
+              renderValue={(selectedCompanies, getItemProps) =>
+                selectedCompanies.map((company, index) => {
+                  const { key, ...itemProps } = getItemProps({ index });
+                  return (
+                    <CompanyChip
+                      key={key}
+                      name={company.name}
+                      {...itemProps}
+                    />
+                  );
+                })
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}

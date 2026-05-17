@@ -17,11 +17,11 @@
  *                Pattern (optional) / Notes (optional)
  *                                       [ Edit ] [ Suspend ] [ Reset ]
  *
- * Topic + Company chip rows cap at MAX_VISIBLE_CHIPS; overflow collapses
+ * Topic and company chip rows cap their visible chips; overflow collapses
  * into a `+N more` chip whose tooltip lists the rest. The "Open in
  * LeetCode" CTA lives on the title in the collapsed row.
  */
-import { ToneChip } from "@design-system/atoms/chip/ToneChip";
+import { CompanyChipList, TopicChipList } from "@design-system/atoms";
 import { type Tone } from "@design-system/atoms/tone";
 import { cognipaceTokens } from "@design-system/theme";
 import Box from "@mui/material/Box";
@@ -58,9 +58,6 @@ import type {
   StudyStateSummary,
 } from "@features/study";
 import type { Track } from "@features/tracks";
-
-
-const MAX_VISIBLE_CHIPS = 6;
 
 interface ProblemRowDetailProps {
   commandsPending: PendingProblemTableAction | null;
@@ -159,22 +156,11 @@ export function ProblemRowDetail({
             </DetailRow>
 
             <DetailRow label="Topics">
-              <ChipOverflow
-                items={problem.topics.map((t) => ({ id: t.id, label: t.name }))}
-                tone="info"
-                emptyHint="None"
-              />
+              <TopicChipList topics={problem.topics} />
             </DetailRow>
 
             <DetailRow label="Companies">
-              <ChipOverflow
-                items={problem.companies.map((c) => ({
-                  id: c.id,
-                  label: c.name,
-                }))}
-                tone="accent"
-                emptyHint="None"
-              />
+              <CompanyChipList companies={problem.companies} />
             </DetailRow>
 
             {showTrackDetails ? (
@@ -316,59 +302,6 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
     >
       {children}
     </Typography>
-  );
-}
-
-/**
- * Renders a row of chips capped at MAX_VISIBLE_CHIPS. Overflow collapses
- * into a `+N more` chip whose tooltip lists the hidden labels.
- */
-function ChipOverflow({
-  items,
-  tone,
-  emptyHint,
-}: {
-  items: Array<{ id: string; label: string }>;
-  tone: Tone;
-  emptyHint: string;
-}) {
-  if (items.length === 0) {
-    return (
-      <Typography variant="body2" color="text.secondary">
-        {emptyHint}
-      </Typography>
-    );
-  }
-  const visible = items.slice(0, MAX_VISIBLE_CHIPS);
-  const overflow = items.slice(MAX_VISIBLE_CHIPS);
-  return (
-    <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ rowGap: 0.5 }}>
-      {visible.map((item) => (
-        <ToneChip key={item.id} label={item.label} tone={tone} />
-      ))}
-      {overflow.length > 0 ? (
-        <Tooltip
-          arrow
-          title={
-            <Stack spacing={0.25}>
-              {overflow.map((item) => (
-                <Typography
-                  key={item.id}
-                  variant="caption"
-                  sx={{ color: "inherit" }}
-                >
-                  {item.label}
-                </Typography>
-              ))}
-            </Stack>
-          }
-        >
-          <span>
-            <ToneChip label={`+${overflow.length} more`} tone="default" />
-          </span>
-        </Tooltip>
-      ) : null}
-    </Stack>
   );
 }
 

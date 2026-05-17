@@ -15,7 +15,6 @@ import { AppProviders } from "@app/bootstrap";
 import {
   BrandMark,
   CogniPaceIcon,
-  DifficultyChip,
   FieldAssistRow,
   InlineStatusRegion,
   MetricCard,
@@ -89,12 +88,6 @@ describe("design-system atoms a11y smoke", () => {
       "danger",
     ] as const) {
       await expectNoAxeViolations(<ToneChip label="status" tone={tone} />);
-    }
-  });
-
-  it("DifficultyChip renders without axe violations across difficulties", async () => {
-    for (const difficulty of ["Easy", "Medium", "Hard", "Unknown"] as const) {
-      await expectNoAxeViolations(<DifficultyChip difficulty={difficulty} />);
     }
   });
 
