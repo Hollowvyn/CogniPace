@@ -106,6 +106,10 @@ Rules:
 - Feature UI state may live in screen VM hooks or Zustand stores. Store-backed
   UI follows a UDF/MVI shape: components dispatch intents, stores own async
   command flow, and repositories/runtime clients perform side effects.
+- Screen-specific feature UI lives under `ui/screens/<screen>/`, with local
+  `viewmodel/` and `components/` folders when the screen owns derived state or
+  private composition. Reusable cross-screen feature UI stays under
+  `ui/components/`.
 - Reusable feature UI should prefer domain-model inputs over exported view-row
   models. For example, the problems table consumes `Problem[]` and derives
   display cells from `Problem.studyState`, `Problem.topics`, and

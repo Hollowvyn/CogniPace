@@ -1,8 +1,8 @@
 import { SurfaceCard } from "@design-system/atoms";
-import { createInitialUserSettings } from "@features/settings";
 import Button from "@mui/material/Button";
 
-import { LibraryProblemTable } from "../../components/problemsTable";
+import { LibraryProblemTable } from "./components/LibraryProblemTable";
+import { useLibraryVM } from "./viewmodel/useLibraryVM";
 
 import type { Problem } from "../../../domain/model";
 import type { ProblemTableCommands } from "../../components/problemsTable";
@@ -23,6 +23,8 @@ export function LibraryScreen({
   onRefresh,
   payload,
 }: LibraryScreenProps) {
+  const viewModel = useLibraryVM(payload);
+
   return (
     <SurfaceCard
       action={
@@ -33,13 +35,13 @@ export function LibraryScreen({
         ) : null
       }
       label="Library"
-      title="All Tracked Problems"
+      title={viewModel.title}
     >
       <LibraryProblemTable
         commands={commands}
-        problems={payload?.problems ?? []}
-        tracks={payload?.tracks ?? []}
-        settings={payload?.settings ?? createInitialUserSettings()}
+        problems={viewModel.problems}
+        tracks={viewModel.tracks}
+        settings={viewModel.settings}
         onEditProblem={onEditProblem}
         onRefresh={onRefresh}
       />

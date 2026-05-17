@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 
-import { ProblemsTable } from "./ProblemsTable";
-import { createDefaultProblemTableCommands } from "./problemTableCommands";
-import { useProblemTableStore } from "./useProblemTableStore";
+import { ProblemsTable } from "../../../components/problemsTable/ProblemsTable";
+import { createDefaultProblemTableCommands } from "../../../components/problemsTable/problemTableCommands";
+import { useProblemTableStore } from "../../../components/problemsTable/useProblemTableStore";
 
-import type { ProblemTableCommands } from "./types";
-import type { Problem } from "../../../domain/model";
+import type { Problem } from "../../../../domain/model";
+import type { ProblemTableCommands } from "../../../components/problemsTable/types";
 import type { UserSettings } from "@features/settings";
 import type { Track } from "@features/tracks";
 

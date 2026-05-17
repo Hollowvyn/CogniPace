@@ -1,5 +1,3 @@
-export { LibraryProblemTable } from "./LibraryProblemTable";
-export type { LibraryProblemTableProps } from "./LibraryProblemTable";
 export { TrackProblemTable } from "./TrackProblemTable";
 export type { TrackProblemTableProps } from "./TrackProblemTable";
 export { createDefaultProblemTableCommands } from "./problemTableCommands";

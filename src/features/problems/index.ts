@@ -45,8 +45,9 @@ export type {
   ProblemFormIntent,
   ProblemFormStore,
 } from "./ui/screens/editcreateform/viewmodel/problemFormStore";
+export { LibraryProblemTable } from "./ui/screens/library/components/LibraryProblemTable";
+export type { LibraryProblemTableProps } from "./ui/screens/library/components/LibraryProblemTable";
 export {
-  LibraryProblemTable,
   TrackProblemTable,
   type ProblemTableCommands,
 } from "./ui/components/problemsTable";
