@@ -7,11 +7,14 @@ import { toneStyles } from "../tone";
 import type { Tone } from "../tone";
 import type { Difficulty } from "@libs/leetcode";
 
+const difficultyChipHeight = 22;
+const difficultyChipLabelPaddingX = 0.9;
+
 const difficultyChipTypography = {
-  fontSize: 11,
+  fontSize: 12,
   fontWeight: 700,
   letterSpacing: 0,
-  lineHeight: "18px",
+  lineHeight: "20px",
   textTransform: "none",
 } as const;
 
@@ -52,11 +55,11 @@ export const DifficultyChip = memo(function DifficultyChip(props: {
         backgroundColor: ui.backgroundColor,
         border: `1px solid ${ui.borderColor}`,
         color: ui.color,
-        height: 20,
-        minHeight: 20,
+        height: difficultyChipHeight,
+        minHeight: difficultyChipHeight,
         ...ui.typography,
         "& .MuiChip-label": {
-          px: 0.75,
+          px: difficultyChipLabelPaddingX,
           py: 0,
           ...ui.typography,
         },
