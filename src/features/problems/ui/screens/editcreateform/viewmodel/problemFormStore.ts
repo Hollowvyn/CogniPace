@@ -13,7 +13,11 @@ import type {
   ProblemFormIntent,
   ProblemFormViewModel,
 } from "./problemFormTypes";
-import type { CompanyLabel, Difficulty, TopicLabel } from "../../domain/model";
+import type {
+  CompanyLabel,
+  Difficulty,
+  TopicLabel,
+} from "../../../../domain/model";
 
 export type {
   ProblemFormIntent,

@@ -40,7 +40,13 @@ import { DashboardFrame } from "../sections/DashboardSurface";
 import { PreV7BackupSnackbar } from "../sections/PreV7BackupSnackbar";
 import { useDashboardShellVM } from "../useDashboardShellVM";
 
-import { getDashboardRoute, getDashboardViewForPathname } from "./routes";
+import { getDashboardRoute, getDashboardViewForPathname } from "./maps";
+import {
+  DASHBOARD_PROBLEM_EDIT_PATH,
+  DASHBOARD_PROBLEM_EDIT_TO,
+  DASHBOARD_PROBLEM_NEW_PATH,
+  DASHBOARD_PROBLEM_NEW_TO,
+} from "./routes";
 
 import type { ProblemTableCommands } from "@features/problems/ui/components/problemsTable";
 
@@ -85,14 +91,14 @@ const settingsRoute = createRoute({
 
 const problemNewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "problems/new",
+  path: DASHBOARD_PROBLEM_NEW_PATH,
   validateSearch: validateProblemSearch,
   component: DashboardProblemNewRoute,
 });
 
 const problemEditRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "problems/$slugId/edit",
+  path: DASHBOARD_PROBLEM_EDIT_PATH,
   validateSearch: validateProblemSearch,
   component: DashboardProblemEditRoute,
 });
@@ -213,7 +219,7 @@ function DashboardTracksRoute() {
       onEditProblem={editProblem}
       onCreateProblem={() => {
         void navigate({
-          to: "/problems/new",
+          to: DASHBOARD_PROBLEM_NEW_TO,
           search: { background: "tracks" },
         });
       }}
@@ -320,7 +326,7 @@ function DashboardLibraryContent() {
       onEditProblem={editProblem}
       onCreateProblem={() => {
         void navigate({
-          to: "/problems/new",
+          to: DASHBOARD_PROBLEM_NEW_TO,
           search: { background: "library" },
         });
       }}
@@ -352,7 +358,7 @@ function useEditProblemNavigation(background: DashboardModalBackground) {
   return useCallback(
     (problem: Problem): void => {
       void navigate({
-        to: "/problems/$slugId/edit",
+        to: DASHBOARD_PROBLEM_EDIT_TO,
         params: { slugId: problem.slug },
         search: { background },
       });

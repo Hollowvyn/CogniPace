@@ -1,6 +1,6 @@
 import { normalizeSlug } from "@libs/leetcode";
 
-import { problemRepository } from "../../data/repository/ProblemRepository";
+import { problemRepository } from "../../../../data/repository/ProblemRepository";
 
 import {
   buildCreatePatch,
@@ -17,7 +17,7 @@ import type {
   ProblemFormValues,
   ProblemFormViewModel,
 } from "./problemFormTypes";
-import type { CompanyLabel, TopicLabel } from "../../domain/model";
+import type { CompanyLabel, TopicLabel } from "../../../../domain/model";
 import type { ProblemSlug } from "@shared/ids";
 import type { StoreApi } from "zustand";
 

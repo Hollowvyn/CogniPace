@@ -1,7 +1,7 @@
 import {
   getDashboardRoute,
   getDashboardViewForPathname,
-} from "@app/dashboard/navigation/routes";
+} from "@app/dashboard/navigation/maps";
 import { describe, expect, it } from "vitest";
 
 describe("dashboard routes", () => {

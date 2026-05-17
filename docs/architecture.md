@@ -72,7 +72,8 @@ and `#/settings`. Problem create/edit dialogs are route-backed overlays at
 `#/problems/:slugId/edit?background=library|tracks`; the background search
 parameter selects the visible page behind the modal.
 Routes: `src/app/dashboard/navigation/router.tsx` and
-`src/app/dashboard/navigation/routes.ts`.
+`src/app/dashboard/navigation/routes.ts`; lookup helpers live in
+`src/app/dashboard/navigation/maps.ts`.
 
 ### Overlay
 
@@ -166,7 +167,7 @@ feature-specific table rows for UI consumers.
 
 - Popup UI: `src/app/popup/`
 - Dashboard UI: `src/app/dashboard/` (TanStack route tree: `navigation/router.tsx`; route metadata:
-  `navigation/routes.ts`)
+  `navigation/routes.ts`; route lookup maps: `navigation/maps.ts`)
 - Overlay UI: `src/app/overlay/` + `src/features/overlay-session/`
 - Surface bootstrap wiring: `src/app/bootstrap/`
 - Shared theme factories: `src/design-system/theme/`

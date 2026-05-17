@@ -17,7 +17,7 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 import { useStore } from "zustand";
 
-import { createProblemFormViewModel } from "../../store/problemFormStore";
+import { createProblemFormViewModel } from "./viewmodel/problemFormStore";
 
 import type { Difficulty } from "../../../domain/model";
 import type { ProblemSlug } from "@shared/ids";

@@ -1,9 +1,5 @@
-/** Dashboard deep-link model for the hash-route contract. */
-import {
-  DASHBOARD_VIEW_PATHS,
-  isDashboardModalBackground,
-  type DashboardView,
-} from "@libs/runtime-rpc/url";
+/** Dashboard route declarations for the hash-route contract. */
+import { DASHBOARD_VIEW_PATHS, type DashboardView } from "@libs/runtime-rpc/url";
 
 export type { DashboardView };
 
@@ -13,6 +9,21 @@ export interface DashboardRoute {
   label: string;
   path: string;
   view: DashboardView;
+}
+
+export const DASHBOARD_PROBLEM_NEW_PATH = "problems/new";
+export const DASHBOARD_PROBLEM_EDIT_PATH = "problems/$slugId/edit";
+export const DASHBOARD_PROBLEM_NEW_TO = toDashboardRoutePath(
+  DASHBOARD_PROBLEM_NEW_PATH
+);
+export const DASHBOARD_PROBLEM_EDIT_TO = toDashboardRoutePath(
+  DASHBOARD_PROBLEM_EDIT_PATH
+);
+
+function toDashboardRoutePath<const TPath extends string>(
+  path: TPath
+): `/${TPath}` {
+  return `/${path}`;
 }
 
 /** Canonical dashboard route table. */
@@ -48,24 +59,3 @@ export const dashboardRoutes: DashboardRoute[] = [
     copy: "Global configuration for review cadence, automation behavior, and alerts.",
   },
 ];
-
-/** Returns the route metadata for the requested view. */
-export function getDashboardRoute(view: DashboardView): DashboardRoute {
-  return (
-    dashboardRoutes.find((route) => route.view === view) ?? dashboardRoutes[0]
-  );
-}
-
-export function getDashboardViewForPathname(
-  pathname: string,
-  background?: unknown
-): DashboardView {
-  const route = dashboardRoutes.find((item) => item.path === pathname);
-  if (route) {
-    return route.view;
-  }
-  if (pathname.startsWith("/problems/")) {
-    return isDashboardModalBackground(background) ? background : "dashboard";
-  }
-  return "dashboard";
-}

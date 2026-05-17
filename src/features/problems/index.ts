@@ -37,14 +37,14 @@ export { LibraryScreen } from "./ui/screens/library/LibraryScreen";
 export {
   ProblemFormDialog,
   type ProblemFormDialogCloseReason,
-} from "./ui/screens/library/ProblemFormDialog";
+} from "./ui/screens/editcreateform/ProblemFormDialog";
 export {
   createProblemFormViewModel,
-} from "./ui/store/problemFormStore";
+} from "./ui/screens/editcreateform/viewmodel/problemFormStore";
 export type {
   ProblemFormIntent,
   ProblemFormStore,
-} from "./ui/store/problemFormStore";
+} from "./ui/screens/editcreateform/viewmodel/problemFormStore";
 export {
   LibraryProblemTable,
   TrackProblemTable,

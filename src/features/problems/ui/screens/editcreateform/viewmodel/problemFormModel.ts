@@ -11,7 +11,7 @@ import type {
   Problem,
   ProblemEditPatch,
   TopicLabel,
-} from "../../domain/model";
+} from "../../../../domain/model";
 import type { ProblemSlug } from "@shared/ids";
 
 export function parseProblemFormSlug(input: string): ProblemSlug {

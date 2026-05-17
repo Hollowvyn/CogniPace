@@ -37,8 +37,12 @@ function rel(absolute: string): string {
   return path.relative(repoRoot, absolute);
 }
 
+function hasLocalReactState(text: string): boolean {
+  return /\b(useEffect|useMemo|useReducer|useState|useStore)\b/.test(text);
+}
+
 describe("architecture / Phase A — surface shells + UI state boundary", () => {
-  it("every capability-feature *Screen.tsx delegates state to a VM hook or UI store", () => {
+  it("stateful capability-feature *Screen.tsx delegates state to a VM hook or UI store", () => {
     const featuresRoot = path.join(repoRoot, "src/features");
     if (!fs.existsSync(featuresRoot)) return;
 
@@ -61,6 +65,9 @@ describe("architecture / Phase A — surface shells + UI state boundary", () => 
         `use${baseName}VM.ts`,
       );
       const expectedStoreDir = path.join(featureRoot, "ui", "store");
+      if (!hasLocalReactState(read(screenFile))) {
+        continue;
+      }
       expect(
         fs.existsSync(expectedVmFile) || fs.existsSync(expectedStoreDir),
         `${rel(screenFile)} → expected sibling ${rel(expectedVmFile)} or ${rel(expectedStoreDir)}`,

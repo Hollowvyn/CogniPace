@@ -2,7 +2,7 @@ import type {
   CompanyLabel,
   Difficulty,
   TopicLabel,
-} from "../../domain/model";
+} from "../../../../domain/model";
 import type { ProblemSlug } from "@shared/ids";
 
 export type ProblemFormMode = "create" | "edit";
