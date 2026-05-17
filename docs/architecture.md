@@ -45,6 +45,7 @@ src/
 ## Runtime Surfaces
 
 Entry contract:
+
 - `src/entrypoints/*` owns runtime bootstrap only: locate/create mount targets, create the
   React root, install shared providers, and render exactly one surface shell.
 - `src/app/<surface>/` owns React composition only: shells, view-model hooks, and navigation
@@ -64,8 +65,14 @@ Uses the narrow `getPopupShellData` read model.
 Entrypoint: `src/entrypoints/dashboard.tsx`
 Shell: `src/app/dashboard/`
 
-Overview, tracks, library, analytics, and settings screens via `?view=` deep-link.
-Routes: `src/app/dashboard/navigation/routes.ts`.
+Overview, tracks, library, analytics, and settings screens via TanStack Router
+hash routes. Dashboard routes are `#/`, `#/tracks`, `#/library`, `#/analytics`,
+and `#/settings`. Problem create/edit dialogs are route-backed overlays at
+`#/problems/new?background=library|tracks` and
+`#/problems/:slugId/edit?background=library|tracks`; the background search
+parameter selects the visible page behind the modal.
+Routes: `src/app/dashboard/navigation/router.tsx` and
+`src/app/dashboard/navigation/routes.ts`.
 
 ### Overlay
 
@@ -91,6 +98,7 @@ Each slice is self-contained: `data/datasource/`, `data/repository/`, `domain/mo
 `domain/policy/`, `ui/`, `messaging/handlers.ts`, exported through `server.ts`.
 
 Rules:
+
 - Feature UI calls `api.*` (typed RPC proxy) — no `chrome.*` from UI code.
 - Datasources take a `Db` argument; they do not call `getDb()` themselves.
 - Domain code is pure: no React, no `chrome`, no `window`.
@@ -157,7 +165,8 @@ feature-specific table rows for UI consumers.
 ## Where To Change Things
 
 - Popup UI: `src/app/popup/`
-- Dashboard UI: `src/app/dashboard/` (routes: `navigation/routes.ts`)
+- Dashboard UI: `src/app/dashboard/` (TanStack route tree: `navigation/router.tsx`; route metadata:
+  `navigation/routes.ts`)
 - Overlay UI: `src/app/overlay/` + `src/features/overlay-session/`
 - Surface bootstrap wiring: `src/app/bootstrap/`
 - Shared theme factories: `src/design-system/theme/`

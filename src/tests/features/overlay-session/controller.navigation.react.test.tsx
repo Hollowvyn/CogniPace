@@ -29,7 +29,7 @@ describe("Overlay Controller Navigation", () => {
     }>();
 
     mockOverlayRuntime((type, payload) => {
-      if (type === "UPSERT_PROBLEM_FROM_PAGE") {
+      if (type === "upsertProblemFromPage") {
         return runtimeOk({
           problem: problemForPage({
             difficulty: "Easy",
@@ -40,15 +40,15 @@ describe("Overlay Controller Navigation", () => {
         });
       }
 
-      if (type === "GET_PROBLEM_CONTEXT" && payload.slug === "two-sum") {
+      if (type === "getProblemContext" && payload.slug === "two-sum") {
         return firstContext.promise;
       }
 
-      if (type === "GET_PROBLEM_CONTEXT" && payload.slug === "group-anagrams") {
+      if (type === "getProblemContext" && payload.slug === "group-anagrams") {
         return secondContext.promise;
       }
 
-      if (type === "OPEN_EXTENSION_PAGE") {
+      if (type === "openExtensionPage") {
         return runtimeOk({ opened: true });
       }
 
@@ -78,7 +78,9 @@ describe("Overlay Controller Navigation", () => {
       },
     });
 
-    await user.click(await screen.findByRole("button", { name: "Expand overlay" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Expand overlay" })
+    );
     expect(await screen.findByText("Group Anagrams")).toBeInTheDocument();
 
     firstContext.resolve({
@@ -106,10 +108,16 @@ describe("Overlay Controller Navigation", () => {
       })
     );
 
-    await user.click(await screen.findByRole("button", { name: "Hide overlay" }));
-    expect(screen.getByRole("button", { name: "Show overlay" })).toBeInTheDocument();
+    await user.click(
+      await screen.findByRole("button", { name: "Hide overlay" })
+    );
+    expect(
+      screen.getByRole("button", { name: "Show overlay" })
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Show overlay" }));
-    expect(screen.getByRole("button", { name: "Expand overlay" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand overlay" })
+    ).toBeInTheDocument();
   });
 });

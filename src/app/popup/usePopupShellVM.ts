@@ -8,7 +8,7 @@ import { StudyMode } from "@features/settings";
 import { getNextTrackProblem } from "@features/tracks";
 import { startTransition, useMemo, useRef, useState } from "react";
 
-import { openDashboardPage } from "../dashboard/navigation/openDashboardPage";
+import { openDashboardPage } from "../dashboard/openDashboardPage";
 
 function currentRecommended(
   candidates: RecommendedProblemView[],

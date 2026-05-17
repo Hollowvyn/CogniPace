@@ -285,11 +285,11 @@ and less like:
 
 These are not the main target of this prompt, but they are part of the current product:
 
-1. Full-page dashboard
+1. Dashboard control surface
 
 - analytics
 - course management
-- problem database
+- tracked problem library
 
 2. LeetCode page overlay
 

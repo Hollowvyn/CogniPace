@@ -12,7 +12,7 @@
  *    `user_edits` only when the caller asks via `markUserEdit`.
  *  - `importProblem` — for catalog seed / page-detect imports;
  *    preserves user-edited fields (sticky edits) per
- *    `mergeImported` from `src/domain/problems/operations.ts`.
+ *    `mergeImported` in the problem domain model.
  *  - `editProblem` — user-driven edits; flags every touched field in
  *    `user_edits` per `applyEdit`.
  *  - `seedCatalogProblems` — idempotent bulk insert at SW boot. Uses
@@ -55,8 +55,9 @@ import type { Db } from "@platform/db/client";
 type ProblemRow = typeof schema.problems.$inferSelect;
 
 /** Schema row → base Problem fields (no relations). */
-function toProblemBase(row: ProblemRow): Omit<Problem, "studyState" | "topics" | "companies"> {
-
+function toProblemBase(
+  row: ProblemRow
+): Omit<Problem, "studyState" | "topics" | "companies"> {
   const userEdits =
     row.userEdits && Object.keys(row.userEdits).length > 0
       ? (row.userEdits as ProblemEditFlags)
@@ -84,9 +85,7 @@ function toProblem(row: ProblemRow): Problem {
 }
 
 /** Domain Problem → schema insert/update payload. Drops v6 fields. */
-function toRow(
-  problem: Problem,
-): typeof schema.problems.$inferInsert {
+function toRow(problem: Problem): typeof schema.problems.$inferInsert {
   const userEdits = problem.userEdits ?? {};
   return {
     slug: problem.slug,
@@ -111,18 +110,18 @@ export async function listProblems(db: Db): Promise<Problem[]> {
   const rows = await db.query.problems.findMany({
     with: {
       studyState: { with: { attempts: true } },
-      topics:     { with: { topic: true } },
-      companies:  { with: { company: true } },
+      topics: { with: { topic: true } },
+      companies: { with: { company: true } },
     },
     orderBy: (t, { asc: drizzleAsc }) => [drizzleAsc(t.title)],
   });
 
-  return rows.map(row => ({
+  return rows.map((row) => ({
     ...toProblemBase(row),
     studyState: row.studyState
       ? toStudyState(row.studyState, row.studyState.attempts)
       : null,
-    topics: row.topics.map(join => ({
+    topics: row.topics.map((join) => ({
       id: asTopicId(join.topic.id),
       name: join.topic.name,
       description: join.topic.description ?? undefined,
@@ -130,7 +129,7 @@ export async function listProblems(db: Db): Promise<Problem[]> {
       createdAt: join.topic.createdAt,
       updatedAt: join.topic.updatedAt,
     })),
-    companies: row.companies.map(join => ({
+    companies: row.companies.map((join) => ({
       id: asCompanyId(join.company.id),
       name: join.company.name,
       description: join.company.description ?? undefined,
@@ -144,7 +143,7 @@ export async function listProblems(db: Db): Promise<Problem[]> {
 /** Lookup by slug. Returns undefined when missing (not an error). */
 export async function getProblem(
   db: Db,
-  slug: ProblemSlug,
+  slug: ProblemSlug
 ): Promise<Problem | undefined> {
   const [row] = await db
     .select()
@@ -153,11 +152,21 @@ export async function getProblem(
   return row ? toProblem(row) : undefined;
 }
 
+/** Hydrated lookup for dashboard edit forms. Returns relations because the
+ * form needs selected topic and company labels, not just persisted ids. */
+export async function getProblemForEdit(
+  db: Db,
+  slug: ProblemSlug
+): Promise<Problem | undefined> {
+  const problems = await listProblems(db);
+  return problems.find((problem) => problem.slug === slug);
+}
+
 /** Batch lookup. Returns problems in the order their slugs appear in
  * the input (missing slugs are skipped silently). */
 export async function getProblemsBySlugs(
   db: Db,
-  slugs: readonly string[],
+  slugs: readonly string[]
 ): Promise<Problem[]> {
   if (slugs.length === 0) return [];
   const rows = await db
@@ -192,7 +201,7 @@ export interface ImportProblemArgs {
  */
 export async function importProblem(
   db: Db,
-  args: ImportProblemArgs,
+  args: ImportProblemArgs
 ): Promise<Problem> {
   const slug = asProblemSlug(args.slug);
   if (!slug) throw new Error("importProblem: slug cannot be empty");
@@ -240,7 +249,7 @@ export interface EditProblemArgs {
  */
 export async function editProblem(
   db: Db,
-  args: EditProblemArgs,
+  args: EditProblemArgs
 ): Promise<Problem> {
   const slug = asProblemSlug(args.slug);
   const existing = await getProblem(db, slug);
@@ -255,19 +264,19 @@ export async function editProblem(
 
 /**
  * Generic upsert by slug. Used by code paths that already have a
- * complete Problem object (e.g. addProblemByInput, course imports).
+ * complete Problem object (e.g. dashboard create flow, course imports).
  * If the slug exists, the existing row is replaced with the supplied
  * fields. If absent, a new row is inserted.
  */
 export async function upsertProblem(
   db: Db,
-  problem: Problem,
+  problem: Problem
 ): Promise<Problem> {
   await upsertRow(db, toRow(problem));
   const reread = await getProblem(db, asProblemSlug(problem.slug));
   if (!reread) {
     throw new Error(
-      `upsertProblem: post-insert re-read returned undefined for "${problem.slug}"`,
+      `upsertProblem: post-insert re-read returned undefined for "${problem.slug}"`
     );
   }
   return reread;
@@ -281,7 +290,7 @@ export async function upsertProblem(
  */
 export async function bulkImportProblems(
   db: Db,
-  problems: readonly Problem[],
+  problems: readonly Problem[]
 ): Promise<number> {
   if (problems.length === 0) return 0;
   const rows = problems.map(toRow);
@@ -303,7 +312,7 @@ export async function bulkImportProblems(
  */
 export async function seedCatalogProblems(
   db: Db,
-  catalog: readonly Problem[],
+  catalog: readonly Problem[]
 ): Promise<number> {
   return bulkImportProblems(db, catalog);
 }
@@ -311,10 +320,7 @@ export async function seedCatalogProblems(
 /** Removes a problem by slug. Cascade behaviour on FKs (study_states,
  * track_group_problems) is configured in schema.ts. Throws when the
  * slug doesn't exist. */
-export async function removeProblem(
-  db: Db,
-  slug: ProblemSlug,
-): Promise<void> {
+export async function removeProblem(db: Db, slug: ProblemSlug): Promise<void> {
   const existing = await getProblem(db, slug);
   if (!existing) {
     throw new Error(`removeProblem: no problem with slug "${slug}"`);
@@ -328,7 +334,7 @@ export async function removeProblem(
 
 async function upsertRow(
   db: Db,
-  row: typeof schema.problems.$inferInsert,
+  row: typeof schema.problems.$inferInsert
 ): Promise<void> {
   await db
     .insert(schema.problems)
@@ -344,9 +350,60 @@ async function upsertRow(
         topicIds: row.topicIds,
         companyIds: row.companyIds,
         userEdits: row.userEdits,
-        updatedAt: row.updatedAt ?? sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`,
+        updatedAt:
+          row.updatedAt ?? sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`,
       },
     });
+  await syncProblemTopicRows(db, row.slug, row.topicIds ?? []);
+  await syncProblemCompanyRows(db, row.slug, row.companyIds ?? []);
+}
+
+async function syncProblemTopicRows(
+  db: Db,
+  slug: string,
+  topicIds: readonly string[]
+): Promise<void> {
+  await db
+    .delete(schema.problemTopics)
+    .where(eq(schema.problemTopics.problemSlug, slug));
+  if (topicIds.length === 0) return;
+
+  const existingTopics = await db
+    .select({ id: schema.topics.id })
+    .from(schema.topics)
+    .where(inArray(schema.topics.id, [...topicIds]));
+  if (existingTopics.length === 0) return;
+
+  await db.insert(schema.problemTopics).values(
+    existingTopics.map((topic) => ({
+      problemSlug: slug,
+      topicId: topic.id,
+    }))
+  );
+}
+
+async function syncProblemCompanyRows(
+  db: Db,
+  slug: string,
+  companyIds: readonly string[]
+): Promise<void> {
+  await db
+    .delete(schema.problemCompanies)
+    .where(eq(schema.problemCompanies.problemSlug, slug));
+  if (companyIds.length === 0) return;
+
+  const existingCompanies = await db
+    .select({ id: schema.companies.id })
+    .from(schema.companies)
+    .where(inArray(schema.companies.id, [...companyIds]));
+  if (existingCompanies.length === 0) return;
+
+  await db.insert(schema.problemCompanies).values(
+    existingCompanies.map((company) => ({
+      problemSlug: slug,
+      companyId: company.id,
+    }))
+  );
 }
 
 function buildPatch(args: ImportProblemArgs): ProblemEditPatch {
@@ -363,9 +420,7 @@ function buildPatch(args: ImportProblemArgs): ProblemEditPatch {
   return patch;
 }
 
-function brandTopicIds(
-  input?: ReadonlyArray<TopicId | string>,
-): TopicId[] {
+function brandTopicIds(input?: ReadonlyArray<TopicId | string>): TopicId[] {
   if (!input) return [];
   return input
     .map((v) => (typeof v === "string" ? asTopicId(v) : v))
@@ -373,7 +428,7 @@ function brandTopicIds(
 }
 
 function brandCompanyIds(
-  input?: ReadonlyArray<CompanyId | string>,
+  input?: ReadonlyArray<CompanyId | string>
 ): CompanyId[] {
   if (!input) return [];
   return input

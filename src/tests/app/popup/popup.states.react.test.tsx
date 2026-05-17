@@ -13,7 +13,7 @@ describe("Popup States", () => {
     }>();
 
     renderPopupWithPayload(makePopupPayload(), (type) =>
-      type === "GET_POPUP_SHELL_DATA" ? loadResponse.promise : undefined
+      type === "getPopupShellData" ? loadResponse.promise : undefined
     );
 
     expect(screen.getByText("Loading Queue")).toBeInTheDocument();

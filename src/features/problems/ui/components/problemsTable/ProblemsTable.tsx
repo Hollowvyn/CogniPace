@@ -56,7 +56,7 @@ import {
 } from "./useProblemTableStore";
 
 import type { ProblemTableStore } from "./problemTableStore";
-import type { Difficulty } from "../../../domain/model";
+import type { Difficulty, Problem } from "../../../domain/model";
 import type { StudyPhase } from "@features/study";
 import type { ProblemSlug } from "@shared/ids";
 
@@ -68,6 +68,7 @@ interface ProblemsTableProps {
   showSelection?: boolean;
   padToPageSize?: boolean;
   emptyMessage?: string;
+  onEditProblem?: (problem: Problem) => void;
 }
 
 const DIFFICULTY_OPTIONS: ReadonlyArray<Difficulty | "all"> = [
@@ -90,6 +91,7 @@ const PHASE_OPTIONS: ReadonlyArray<StudyPhase | "all" | "New"> = [
 export function ProblemsTable(props: ProblemsTableProps) {
   const {
     emptyMessage = "No problems match these filters.",
+    onEditProblem,
     padToPageSize = false,
     showRetentionColumn = false,
     showSelection = false,
@@ -495,6 +497,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                           <ProblemRowDetail
                             commandsPending={pendingAction}
                             dispatchIntent={dispatchIntent}
+                            onEditProblem={onEditProblem}
                             problem={problem}
                             settings={settings}
                             showTrackDetails={showTrackDetails}

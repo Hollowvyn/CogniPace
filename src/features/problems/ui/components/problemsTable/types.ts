@@ -50,7 +50,6 @@ export type ProblemSelection = ReadonlySet<ProblemSlug>;
 
 export type ProblemTableActionKind =
   | "open"
-  | "edit"
   | "suspend"
   | "reset"
   | "premium";
@@ -66,7 +65,6 @@ export interface ProblemTableCommands {
     trackId?: string;
     groupId?: string;
   }) => Promise<void> | void;
-  editProblem?: (problem: Problem) => Promise<void> | void;
   suspendProblem?: (slug: ProblemSlug, suspend: boolean) => Promise<void>;
   resetProblemSchedule?: (slug: ProblemSlug) => Promise<void>;
   enablePremiumQuestions?: () => Promise<void>;

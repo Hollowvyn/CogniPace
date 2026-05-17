@@ -14,11 +14,13 @@ export interface LibraryProblemTableProps {
   tracks: readonly Track[];
   settings: UserSettings;
   commands?: ProblemTableCommands;
+  onEditProblem?: (problem: Problem) => void;
   onRefresh?: () => Promise<void> | void;
 }
 
 export function LibraryProblemTable(props: LibraryProblemTableProps) {
-  const { commands, onRefresh, problems, settings, tracks } = props;
+  const { commands, onEditProblem, onRefresh, problems, settings, tracks } =
+    props;
   const tableCommands = useMemo(
     () => commands ?? createDefaultProblemTableCommands(onRefresh),
     [commands, onRefresh],
@@ -39,6 +41,7 @@ export function LibraryProblemTable(props: LibraryProblemTableProps) {
       showRetentionColumn
       showSelection
       padToPageSize
+      onEditProblem={onEditProblem}
     />
   );
 }

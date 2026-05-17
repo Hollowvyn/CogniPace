@@ -36,27 +36,30 @@ import {
   type TopicId,
 } from "@shared/ids";
 
-import { listCompanies, upsertCompany } from "../data/datasource/CompanyDataSource";
+import {
+  listCompanies,
+  upsertCompany,
+} from "../data/datasource/CompanyDataSource";
 import {
   editProblem,
   getProblem,
+  getProblemForEdit,
   importProblem,
 } from "../data/datasource/ProblemDataSource";
 import { listTopics, upsertTopic } from "../data/datasource/TopicDataSource";
 import { getCuratedSet } from "../data/seed/curatedSets";
-import {
-  isProblemPage,
-  normalizeSlug,
-  parseDifficulty,
+import { isProblemPage, normalizeSlug, parseDifficulty } from "../domain/model";
+
+import type {
+  CompanyLabel,
+  TopicLabel,
+  ProblemEditPatch,
 } from "../domain/model";
-
-import type { CompanyLabel, TopicLabel , ProblemEditPatch } from "../domain/model";
-
 
 // ---------- Helpers ----------
 
 function readSenderUrl(
-  sender?: chrome.runtime.MessageSender,
+  sender?: chrome.runtime.MessageSender
 ): string | undefined {
   if (typeof sender?.url === "string") return sender.url;
   if (typeof sender?.tab?.url === "string") return sender.tab.url;
@@ -65,7 +68,7 @@ function readSenderUrl(
 
 function buildReviewLogFields(
   payload: Partial<ReviewLogFields>,
-  current: ReviewLogFields,
+  current: ReviewLogFields
 ): ReviewLogFields {
   return normalizeReviewLogFields({
     interviewPattern: payload.interviewPattern ?? current.interviewPattern,
@@ -88,7 +91,7 @@ function buildReviewLogFields(
 // the orphan).
 export async function openProblemPage(
   payload: { slug: string; trackId?: string; groupId?: string },
-  sender?: chrome.runtime.MessageSender,
+  sender?: chrome.runtime.MessageSender
 ): Promise<{ opened: true }> {
   const slug = normalizeSlug(payload.slug);
   if (!slug) throw new Error("Invalid slug.");
@@ -102,9 +105,7 @@ export async function openProblemPage(
   const senderUrl = readSenderUrl(sender);
   const senderTabId = sender?.tab?.id;
   const shouldReuseSenderTab =
-    typeof senderTabId === "number" &&
-    !!senderUrl &&
-    isProblemPage(senderUrl);
+    typeof senderTabId === "number" && !!senderUrl && isProblemPage(senderUrl);
 
   if (shouldReuseSenderTab) {
     await updateTabUrl(senderTabId, url);
@@ -176,8 +177,7 @@ export async function saveReviewResult(payload: {
   const problem = await importProblem(db, { slug: normalized });
   const current = await ensureStudyState(db, branded);
   const logSnapshot = buildReviewLogFields(payload, current);
-  const settings =
-    (await getUserSettings(db)) ?? createInitialUserSettings();
+  const settings = (await getUserSettings(db)) ?? createInitialUserSettings();
   const nextState = applyReview({
     state: current,
     difficulty: problem.difficulty,
@@ -247,8 +247,7 @@ export async function overrideLastReviewResult(payload: {
   await importProblem(db, { slug: normalized });
   const current = await ensureStudyState(db, branded);
   const logSnapshot = buildReviewLogFields(payload, current);
-  const settings =
-    (await getUserSettings(db)) ?? createInitialUserSettings();
+  const settings = (await getUserSettings(db)) ?? createInitialUserSettings();
   const nextState = overrideLastReview({
     state: current,
     rating: payload.rating,
@@ -261,8 +260,7 @@ export async function overrideLastReviewResult(payload: {
   await upsertStudyState(db, branded, nextState);
   const replacedAttempt =
     nextState.attemptHistory[nextState.attemptHistory.length - 1];
-  if (replacedAttempt)
-    await replaceLastAttempt(db, branded, replacedAttempt);
+  if (replacedAttempt) await replaceLastAttempt(db, branded, replacedAttempt);
   if (payload.trackId) {
     await saveActiveTrackId(db, asTrackId(payload.trackId));
   }
@@ -368,24 +366,35 @@ export interface EditProblemPayload {
   markUserEdit?: boolean;
 }
 
-export async function editProblemHandler(
-  payload: EditProblemPayload,
-): Promise<{ slug: string }> {
-  const slug = asProblemSlug(payload.slug);
-  const patch: ProblemEditPatch = {
-    ...payload.patch,
-    topicIds: payload.patch.topicIds?.map((id) => asTopicId(id)) as
+type ProblemFormPatchPayload = ProblemEditPatch & {
+  topicIds?: string[];
+  companyIds?: string[];
+};
+
+function normalizeProblemFormPatch(
+  payload: ProblemFormPatchPayload
+): ProblemEditPatch {
+  return {
+    ...payload,
+    topicIds: payload.topicIds?.map((id) => asTopicId(id)) as
       | TopicId[]
       | undefined,
-    companyIds: payload.patch.companyIds?.map((id) =>
-      asCompanyId(id),
-    ) as CompanyId[] | undefined,
+    companyIds: payload.companyIds?.map((id) => asCompanyId(id)) as
+      | CompanyId[]
+      | undefined,
   };
+}
+
+export async function editProblemHandler(
+  payload: EditProblemPayload
+): Promise<{ slug: string }> {
+  const slug = asProblemSlug(payload.slug);
+  const patch = normalizeProblemFormPatch(payload.patch);
   const { db } = await getDb();
   const existing = await getProblem(db, slug);
   if (!existing) {
     throw new Error(
-      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to edit. Visit the page and then come back.",
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to edit. Visit the page and then come back."
     );
   }
   await editProblem(db, {
@@ -396,13 +405,56 @@ export async function editProblemHandler(
   return { slug };
 }
 
+export interface CreateProblemPayload {
+  input: string;
+  patch?: ProblemFormPatchPayload;
+}
+
+export async function createProblemHandler(
+  payload: CreateProblemPayload
+): Promise<{ slug: string; problem: unknown; studyState: unknown }> {
+  const parsed = parseProblemInput(payload.input);
+  const slug = asProblemSlug(parsed.slug);
+  const { db } = await getDb();
+  const existing = await getProblem(db, slug);
+  if (existing) {
+    throw new Error("This problem is already in the library.");
+  }
+
+  await importProblem(db, {
+    slug,
+    url: parsed.url,
+  });
+
+  if (payload.patch && Object.keys(payload.patch).length > 0) {
+    await editProblem(db, {
+      slug,
+      patch: normalizeProblemFormPatch(payload.patch),
+      markUserEdit: true,
+    });
+  }
+
+  const problem = await getProblemForEdit(db, slug);
+  const studyState = await ensureStudyState(db, slug);
+  return { slug, problem: problem ?? null, studyState };
+}
+
+export async function getProblemForEditHandler(payload: {
+  slug: string;
+}): Promise<unknown> {
+  const slug = asProblemSlug(payload.slug);
+  if (!slug) return null;
+  const { db } = await getDb();
+  return (await getProblemForEdit(db, slug)) ?? null;
+}
+
 export interface CreateCustomTopicPayload {
   name: string;
   description?: string;
 }
 
 export async function createCustomTopicHandler(
-  payload: CreateCustomTopicPayload,
+  payload: CreateCustomTopicPayload
 ): Promise<{ id: string }> {
   const { db } = await getDb();
   const topic = await upsertTopic(db, {
@@ -419,7 +471,7 @@ export interface CreateCustomCompanyPayload {
 }
 
 export async function createCustomCompanyHandler(
-  payload: CreateCustomCompanyPayload,
+  payload: CreateCustomCompanyPayload
 ): Promise<{ id: string }> {
   const { db } = await getDb();
   const company = await upsertCompany(db, {
@@ -437,7 +489,7 @@ export interface AssignTopicPayload {
 }
 
 export async function assignTopicHandler(
-  payload: AssignTopicPayload,
+  payload: AssignTopicPayload
 ): Promise<{ slug: string }> {
   const slug = asProblemSlug(payload.slug);
   const topicId = asTopicId(payload.topicId);
@@ -446,7 +498,7 @@ export async function assignTopicHandler(
   const existing = await getProblem(db, slug);
   if (!existing) {
     throw new Error(
-      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a topic to.",
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a topic to."
     );
   }
   const current = existing.topicIds as TopicId[];
@@ -471,7 +523,7 @@ export interface AssignCompanyPayload {
 }
 
 export async function assignCompanyHandler(
-  payload: AssignCompanyPayload,
+  payload: AssignCompanyPayload
 ): Promise<{ slug: string }> {
   const slug = asProblemSlug(payload.slug);
   const companyId = asCompanyId(payload.companyId);
@@ -480,7 +532,7 @@ export async function assignCompanyHandler(
   const existing = await getProblem(db, slug);
   if (!existing) {
     throw new Error(
-      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a company to.",
+      "Open this problem on LeetCode first — it hasn't been initialised yet, so there's nothing to assign a company to."
     );
   }
   const current = existing.companyIds as CompanyId[];
@@ -510,7 +562,7 @@ interface CatalogItem {
 }
 
 async function importSetIntoDb(
-  items: readonly CatalogItem[],
+  items: readonly CatalogItem[]
 ): Promise<{ added: number; updated: number }> {
   const { db } = await getDb();
   let added = 0;
@@ -534,7 +586,12 @@ async function importSetIntoDb(
 
 export async function importCuratedTrackHandler(payload: {
   trackName: string;
-}): Promise<{ trackName: string; count: number; added: number; updated: number }> {
+}): Promise<{
+  trackName: string;
+  count: number;
+  added: number;
+  updated: number;
+}> {
   const setProblems = getCuratedSet(payload.trackName);
   if (setProblems.length === 0) {
     throw new Error(`Unknown curated track: ${payload.trackName}`);
@@ -551,7 +608,12 @@ export async function importCuratedTrackHandler(payload: {
 export async function importCustomTrackHandler(payload: {
   trackName?: string;
   items: CatalogItem[];
-}): Promise<{ trackName: string; count: number; added: number; updated: number }> {
+}): Promise<{
+  trackName: string;
+  count: number;
+  added: number;
+  updated: number;
+}> {
   if (!Array.isArray(payload.items) || payload.items.length === 0) {
     throw new Error("Custom track import requires at least one item.");
   }
@@ -565,36 +627,23 @@ export async function importCustomTrackHandler(payload: {
   };
 }
 
-export async function addProblemByInputHandler(payload: {
-  input: string;
-  sourceSet?: string;
-  topics?: string[];
-  markAsStarted?: boolean;
-}): Promise<{ slug: string; problem: unknown; studyState: unknown }> {
-  const parsed = parseProblemInput(payload.input);
+export async function getTopics(): Promise<TopicLabel[]> {
   const { db } = await getDb();
-  const branded = asProblemSlug(parsed.slug);
-  const problem = await importProblem(db, {
-    slug: parsed.slug,
-    url: parsed.url,
-    topicIds: payload.topics,
-  });
-  const studyState = await ensureStudyState(db, branded);
-  return { slug: parsed.slug, problem, studyState };
+  const topics = await listTopics(db);
+  return topics
+    .map((topic): TopicLabel => ({ id: topic.id, name: topic.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function getEditChoices(): Promise<{
-  topicChoices: TopicLabel[];
-  companyChoices: CompanyLabel[];
-}> {
+export async function getCompanies(): Promise<CompanyLabel[]> {
   const { db } = await getDb();
-  const [topics, companies] = await Promise.all([listTopics(db), listCompanies(db)]);
-  return {
-    topicChoices: topics
-      .map((t): TopicLabel => ({ id: t.id, name: t.name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-    companyChoices: companies
-      .map((c): CompanyLabel => ({ id: c.id, name: c.name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-  };
+  const companies = await listCompanies(db);
+  return companies
+    .map(
+      (company): CompanyLabel => ({
+        id: company.id,
+        name: company.name,
+      })
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

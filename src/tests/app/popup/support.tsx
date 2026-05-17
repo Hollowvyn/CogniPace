@@ -5,10 +5,7 @@ import { makePayload } from "../../support/appShellFixtures";
 import { render } from "../../support/render";
 import { sendMessageMock } from "../../support/setup";
 
-export type PopupRuntimeOverride = (
-  type: string,
-  request: unknown
-) => unknown;
+export type PopupRuntimeOverride = (type: string, request: unknown) => unknown;
 
 export function okResponse(data: unknown = {}) {
   return Promise.resolve({ ok: true, data });
@@ -37,7 +34,7 @@ export function renderPopupWithPayload(
     if (overridden !== undefined) {
       return overridden;
     }
-    if (type === "GET_POPUP_SHELL_DATA") {
+    if (type === "getPopupShellData") {
       return okResponse(payload);
     }
     return okResponse();

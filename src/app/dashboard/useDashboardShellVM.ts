@@ -1,28 +1,17 @@
-/** DashboardShell's ViewModel — owns route state, filters, and the
- *  cross-feature concerns (backup export/import, study-history reset)
+/** DashboardShell's ViewModel — owns dashboard data and the cross-feature
+ *  concerns (backup export/import, study-history reset)
  *  that don't have a dedicated feature owner yet. Settings-screen state
  *  (draft, save, discard, reset) lives inside
  *  `features/settings/ui/hooks/useSettingsScreen`; the shell just passes
  *  the persisted snapshot through and surfaces status. */
 import { api } from "@app/api";
 import { useDI } from "@app/bootstrap";
-import { createMockAppShellPayload, useAppShellQuery } from "@features/app-shell";
-import { problemRepository } from "@features/problems";
+import {
+  createMockAppShellPayload,
+  useAppShellQuery,
+} from "@features/app-shell";
 import { isExtensionContext } from "@platform/chrome/tabs";
-import {
-  startTransition,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import {
-  buildDashboardUrl,
-  getDashboardRoute,
-  readDashboardViewFromSearch,
-  DashboardView,
-} from "./navigation/routes";
+import { useCallback, useMemo, useState } from "react";
 
 import type { ExportPayload } from "@features/backup";
 import type { UserSettings } from "@features/settings";
@@ -37,23 +26,7 @@ export function useDashboardShellVM() {
   const mockPayload = useMemo(() => createMockAppShellPayload(), []);
   const { load, payload, setPayload, setStatus, status } =
     useAppShellQuery(mockPayload);
-  const [view, setView] = useState<DashboardView>(() =>
-    readDashboardViewFromSearch(window.location.search)
-  );
   const [importFile, setImportFile] = useState<File | null>(null);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      startTransition(() => {
-        setView(readDashboardViewFromSearch(window.location.search));
-      });
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, []);
 
   const refresh = useCallback(
     async (clearStatus = true): Promise<void> => {
@@ -61,17 +34,6 @@ export function useDashboardShellVM() {
     },
     [load]
   );
-
-  const navigateToView = useCallback((nextView: DashboardView): void => {
-    startTransition(() => {
-      setView(nextView);
-    });
-    window.history.pushState(
-      {},
-      "",
-      buildDashboardUrl(window.location.href, nextView)
-    );
-  }, []);
 
   const runMutation = useCallback(
     async <T>(
@@ -100,43 +62,6 @@ export function useDashboardShellVM() {
     [load, setStatus]
   );
 
-  const onOpenProblem = useCallback(
-    async (target: {
-      slug: string;
-      groupId?: string;
-      trackId?: string;
-    }): Promise<void> => {
-      try {
-        await problemRepository.openProblemPage(target);
-      } catch (err) {
-        setStatus({
-          message: (err as Error).message || "Failed to open problem.",
-          isError: true,
-        });
-      }
-    },
-    [setStatus]
-  );
-
-  const onEnablePremium = useCallback(async (): Promise<void> => {
-    // Hook → Repository → Client → SW → DataSource → DB.
-    try {
-      const saved = await settingsRepository.setSkipPremium(false);
-      setPayload((current) =>
-        current ? { ...current, settings: saved } : current,
-      );
-      setStatus({ message: "Premium questions enabled.", isError: false });
-      if (isExtensionContext()) {
-        await load({ clearStatusOnSuccess: false });
-      }
-    } catch (err) {
-      setStatus({
-        message: (err as Error).message || "Action failed.",
-        isError: true,
-      });
-    }
-  }, [load, setPayload, setStatus, settingsRepository]);
-
   const onToggleMode = useCallback(async (): Promise<void> => {
     const nextMode =
       payload?.settings?.studyMode === "studyPlan" ? "freestyle" : "studyPlan";
@@ -146,7 +71,7 @@ export function useDashboardShellVM() {
     try {
       const saved = await settingsRepository.setStudyMode(nextMode);
       setPayload((current) =>
-        current ? { ...current, settings: saved } : current,
+        current ? { ...current, settings: saved } : current
       );
       setStatus({ message: "Study mode updated.", isError: false });
       if (isExtensionContext()) {
@@ -215,35 +140,29 @@ export function useDashboardShellVM() {
     }
   }, [backupRepository, importFile, load, setStatus]);
 
-
   const applySavedSettings = useCallback(
     (saved: UserSettings): void => {
       setPayload((current) =>
-        current ? { ...current, settings: saved } : current,
+        current ? { ...current, settings: saved } : current
       );
       if (isExtensionContext()) {
         void load({ clearStatusOnSuccess: false });
       }
     },
-    [load, setPayload],
+    [load, setPayload]
   );
 
   return {
     applySavedSettings,
     importFile,
-    navigateToView,
-    onEnablePremium,
     onExportData,
     onImportData,
-    onOpenProblem,
     onResetStudyHistory,
     onToggleMode,
     payload,
     refresh,
-    route: getDashboardRoute(view),
     setImportFile,
     setStatus,
     status,
-    view,
   };
 }

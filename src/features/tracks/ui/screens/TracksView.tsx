@@ -1,28 +1,39 @@
 import { SurfaceCard } from "@design-system/atoms";
-import { EditProblemModalConnected } from "@features/problems/ui/components/EditProblemModalConnected";
+import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import { ActiveTrackSection } from "../components/ActiveTrackSection";
 import { OtherTracksSection } from "../components/OtherTracksSection";
 import { useTracksAutoRefresh, useTracksUiStore } from "../store/tracksUiStore";
 
-export function TracksView() {
-  const activeTrack = useTracksUiStore(s => s.activeTrack);
-  const tracks      = useTracksUiStore(s => s.tracks) ?? [];
-  const isLoading   = useTracksUiStore(s => s.isLoading);
-  const error       = useTracksUiStore(s => s.error);
-  const load        = useTracksUiStore(s => s.load);
+import type { Problem } from "@features/problems";
+import type { ProblemTableCommands } from "@features/problems/ui/components/problemsTable";
 
-  useEffect(() => { void load(); }, [load]);
+export function TracksView(props: {
+  onCreateProblem?: () => void;
+  onEditProblem?: (problem: Problem) => void;
+  problemCommands?: ProblemTableCommands;
+}) {
+  const activeTrack = useTracksUiStore((s) => s.activeTrack);
+  const tracks = useTracksUiStore((s) => s.tracks) ?? [];
+  const isLoading = useTracksUiStore((s) => s.isLoading);
+  const error = useTracksUiStore((s) => s.error);
+  const load = useTracksUiStore((s) => s.load);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
   useTracksAutoRefresh();
 
   if (error) {
     return (
       <SurfaceCard sx={{ p: 3 }}>
-        <Typography variant="h6" color="error">Failed to load tracks</Typography>
+        <Typography variant="h6" color="error">
+          Failed to load tracks
+        </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {error}
         </Typography>
@@ -36,8 +47,21 @@ export function TracksView() {
 
   if (tracks.length === 0) {
     return (
-      <SurfaceCard sx={{ p: 3 }}>
-        <Typography variant="h6">No tracks yet</Typography>
+      <SurfaceCard
+        action={
+          props.onCreateProblem ? (
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={props.onCreateProblem}
+            >
+              Add problem
+            </Button>
+          ) : null
+        }
+        title="No tracks yet"
+        sx={{ p: 3 }}
+      >
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           Start by activating a curated track or importing a custom one.
         </Typography>
@@ -47,20 +71,37 @@ export function TracksView() {
 
   return (
     <Stack spacing={3}>
-      {activeTrack
-        ? <ActiveTrackSection />
-        : <NoActiveTrackCard />
-      }
+      {activeTrack ? (
+        <ActiveTrackSection
+          onCreateProblem={props.onCreateProblem}
+          onEditProblem={props.onEditProblem}
+          problemCommands={props.problemCommands}
+        />
+      ) : (
+        <NoActiveTrackCard onCreateProblem={props.onCreateProblem} />
+      )}
       <OtherTracksSection />
-      <EditProblemModalConnected />
     </Stack>
   );
 }
 
-function NoActiveTrackCard() {
+function NoActiveTrackCard(props: { onCreateProblem?: () => void }) {
   return (
-    <SurfaceCard sx={{ p: 3 }}>
-      <Typography variant="h6">No active track</Typography>
+    <SurfaceCard
+      action={
+        props.onCreateProblem ? (
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={props.onCreateProblem}
+          >
+            Add problem
+          </Button>
+        ) : null
+      }
+      title="No active track"
+      sx={{ p: 3 }}
+    >
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         Pick a track below to focus your queue.
       </Typography>

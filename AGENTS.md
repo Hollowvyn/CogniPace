@@ -27,11 +27,11 @@ Read these in order before planning or implementing changes:
 
 - React 19 + MUI + Emotion are the canonical UI stack.
 - Do not reintroduce direct DOM-rendered UI patterns into popup or dashboard surfaces.
-- Keep `src/domain/*` React-free.
+- Keep `src/libs/*` and `src/features/*/domain/*` React-free.
 - Keep `src/entrypoints/*` thin. They bootstrap screens; they do not own product logic.
 - UI reads and writes should flow through repositories and runtime clients, not direct `chrome.storage` access from UI code.
-- Treat `src/ui/providers.tsx` and `src/ui/theme.ts` as shared repo contracts.
-- Keep the layered boundary intact across `src/ui/*`, `src/data/*`, `src/domain/*`, and `src/extension/*`.
+- Treat `src/app/bootstrap/AppProviders.tsx` and `src/design-system/theme/*` as shared repo contracts.
+- Keep the layered boundary intact across `src/app/*`, `src/features/*`, `src/platform/*`, `src/libs/*`, `src/shared/*`, and `src/extension/*`.
 
 ## Agent Lanes
 
@@ -75,7 +75,7 @@ Codex reviews should prioritize:
 
 - product-scope drift, especially auth, backend, sync, or broad SaaS behavior
 - Chrome extension permission changes and runtime-message validation risks
-- layer-boundary violations across `src/ui/*`, `src/data/*`, `src/domain/*`, and `src/extension/*`
+- layer-boundary violations across `src/app/*`, `src/features/*`, `src/platform/*`, `src/libs/*`, `src/shared/*`, and `src/extension/*`
 - direct Chrome storage or runtime access from React UI instead of repositories/runtime clients
 - long-lived legacy compatibility paths that keep removed persisted shapes or deprecated runtime contracts alive without
   an explicit current migration window
@@ -89,7 +89,7 @@ Codex reviews should prioritize:
 - manifest permission changes
 - auth, account, or backend introduction
 - major dependency shifts
-- major architecture changes across `ui`, `data`, `domain`, and `extension`
+- major architecture changes across `app`, `features`, `platform`, `libs`, `shared`, and `extension`
 - storage model redesign
 - styling-system replacement
 

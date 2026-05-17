@@ -38,13 +38,10 @@ describe("Overlay Controller Submission", () => {
     try {
       mockCountingBitsRuntime({
         handle: (type, payload) => {
-          if (
-            type === "SAVE_REVIEW_RESULT" &&
-            payload.slug === "counting-bits"
-          ) {
+          if (type === "saveReviewResult" && payload.slug === "counting-bits") {
             return runtimeOk();
           }
-          if (type === "GET_APP_SHELL_DATA") {
+          if (type === "getAppShellData") {
             return runtimeOk(makePayload());
           }
 
@@ -73,7 +70,7 @@ describe("Overlay Controller Submission", () => {
 
       await waitFor(() => {
         expect(sendMessageMock).toHaveBeenCalledWith(
-          "SAVE_REVIEW_RESULT",
+          "saveReviewResult",
           expect.objectContaining({
             slug: "counting-bits",
             rating: 2,
@@ -101,8 +98,8 @@ describe("Overlay Controller Submission", () => {
     try {
       mockCountingBitsRuntime({
         handle: (type) => {
-          if (type === "SAVE_REVIEW_RESULT") return runtimeOk();
-          if (type === "GET_APP_SHELL_DATA") return runtimeOk(makePayload());
+          if (type === "saveReviewResult") return runtimeOk();
+          if (type === "getAppShellData") return runtimeOk(makePayload());
           return undefined;
         },
       });
@@ -111,7 +108,9 @@ describe("Overlay Controller Submission", () => {
         createOverlayHarness(COUNTING_BITS_PAGE)
       );
 
-      await user.click(await screen.findByRole("button", { name: "Start timer" }));
+      await user.click(
+        await screen.findByRole("button", { name: "Start timer" })
+      );
       nowMs = 5000;
       harness.runIntervalTick();
 
@@ -119,7 +118,7 @@ describe("Overlay Controller Submission", () => {
 
       await waitFor(() => {
         expect(sendMessageMock).toHaveBeenCalledWith(
-          "SAVE_REVIEW_RESULT",
+          "saveReviewResult",
           expect.objectContaining({ rating: 0 })
         );
       });
@@ -138,8 +137,8 @@ describe("Overlay Controller Submission", () => {
     try {
       mockCountingBitsRuntime({
         handle: (type) => {
-          if (type === "SAVE_REVIEW_RESULT") return runtimeOk();
-          if (type === "GET_APP_SHELL_DATA") {
+          if (type === "saveReviewResult") return runtimeOk();
+          if (type === "getAppShellData") {
             return runtimeOk(makePayloadWithHardMode(true));
           }
           return undefined;
@@ -160,7 +159,7 @@ describe("Overlay Controller Submission", () => {
 
       await waitFor(() => {
         expect(sendMessageMock).toHaveBeenCalledWith(
-          "SAVE_REVIEW_RESULT",
+          "saveReviewResult",
           expect.objectContaining({
             rating: 0,
             solveTimeMs: EASY_GOAL_MS + 1000,
@@ -169,12 +168,13 @@ describe("Overlay Controller Submission", () => {
       });
 
       expect(
-        await screen.findByText("Overtime in Hard Mode forces an Again assessment.")
+        await screen.findByText(
+          "Overtime in Hard Mode forces an Again assessment."
+        )
       ).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Again Failed" })).toHaveAttribute(
-        "aria-pressed",
-        "true"
-      );
+      expect(
+        screen.getByRole("button", { name: "Again Failed" })
+      ).toHaveAttribute("aria-pressed", "true");
       expect(screen.getByRole("button", { name: "Easy Fast" })).toBeDisabled();
     } finally {
       dateNowSpy.mockRestore();
@@ -188,15 +188,17 @@ describe("Overlay Controller Submission", () => {
     try {
       mockCountingBitsRuntime({
         handle: (type) => {
-          if (type === "SAVE_REVIEW_RESULT") return runtimeOk();
-          if (type === "GET_APP_SHELL_DATA") {
+          if (type === "saveReviewResult") return runtimeOk();
+          if (type === "getAppShellData") {
             return runtimeOk(makePayloadWithHardMode(true));
           }
           return undefined;
         },
       });
 
-      const { user } = renderOverlayShell(createOverlayHarness(COUNTING_BITS_PAGE));
+      const { user } = renderOverlayShell(
+        createOverlayHarness(COUNTING_BITS_PAGE)
+      );
 
       await user.click(
         await screen.findByRole("button", { name: "Expand overlay" })
@@ -209,7 +211,7 @@ describe("Overlay Controller Submission", () => {
 
       await waitFor(() => {
         expect(sendMessageMock).toHaveBeenCalledWith(
-          "SAVE_REVIEW_RESULT",
+          "saveReviewResult",
           expect.objectContaining({
             rating: 0,
             solveTimeMs: EASY_GOAL_MS + 1,
@@ -220,7 +222,9 @@ describe("Overlay Controller Submission", () => {
       expect(
         await screen.findByRole("button", { name: "Again Failed" })
       ).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByRole("button", { name: "Good Stable" })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Good Stable" })
+      ).toBeDisabled();
     } finally {
       dateNowSpy.mockRestore();
     }
@@ -233,8 +237,8 @@ describe("Overlay Controller Submission", () => {
     try {
       mockCountingBitsRuntime({
         handle: (type) => {
-          if (type === "SAVE_REVIEW_RESULT") return runtimeOk();
-          if (type === "GET_APP_SHELL_DATA") {
+          if (type === "saveReviewResult") return runtimeOk();
+          if (type === "getAppShellData") {
             return runtimeOk(makePayloadWithHardMode(false));
           }
           return undefined;
@@ -254,7 +258,7 @@ describe("Overlay Controller Submission", () => {
 
       await waitFor(() => {
         expect(sendMessageMock).toHaveBeenCalledWith(
-          "SAVE_REVIEW_RESULT",
+          "saveReviewResult",
           expect.objectContaining({
             rating: 1,
             solveTimeMs: EASY_GOAL_MS + 1000,
@@ -284,7 +288,7 @@ describe("Overlay Controller Submission", () => {
       getStudyState: () => currentState,
       handle: (type, payload) => {
         if (
-          type === "SAVE_OVERLAY_LOG_DRAFT" &&
+          type === "saveOverlayLogDraft" &&
           payload.slug === "counting-bits"
         ) {
           currentState = {
@@ -297,9 +301,13 @@ describe("Overlay Controller Submission", () => {
       },
     });
 
-    const { user } = renderOverlayShell(createOverlayHarness(COUNTING_BITS_PAGE));
+    const { user } = renderOverlayShell(
+      createOverlayHarness(COUNTING_BITS_PAGE)
+    );
 
-    await user.click(await screen.findByRole("button", { name: "Expand overlay" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Expand overlay" })
+    );
 
     fireEvent.change(screen.getByLabelText("Notes"), {
       target: { value: "Remember parity shortcut" },
@@ -309,14 +317,16 @@ describe("Overlay Controller Submission", () => {
 
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith(
-        "SAVE_OVERLAY_LOG_DRAFT",
+        "saveOverlayLogDraft",
         expect.objectContaining({
           slug: "counting-bits",
           notes: "Remember parity shortcut",
-        }),
+        })
       );
     });
 
-    expect(screen.getByRole("button", { name: "Expand overlay" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand overlay" })
+    ).toBeInTheDocument();
   });
 });
