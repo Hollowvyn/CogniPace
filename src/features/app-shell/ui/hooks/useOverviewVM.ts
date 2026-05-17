@@ -1,6 +1,7 @@
 import type { AppShellPayload } from "../../domain/model/AppShellPayload";
 import type { RecommendedProblemView } from "@features/problems";
 import type { StudyMode } from "@features/settings";
+import type { Track } from "@features/tracks";
 
 export interface UseOverviewVMInput {
   payload: AppShellPayload | null;
@@ -16,7 +17,7 @@ export interface UseOverviewVMInput {
 
 export interface OverviewScreenModel {
   recommended: RecommendedProblemView | null;
-  activeTrack: AppShellPayload["activeTrack"] | null;
+  activeTrack: Track | null;
   dueCount: number;
   streakDays: number;
   reviewCardCount: number;
@@ -31,6 +32,7 @@ export interface OverviewScreenModel {
 
 export function useOverviewVM(input: UseOverviewVMInput): OverviewScreenModel {
   const { payload } = input;
+
   return {
     recommended: payload?.popup.recommended ?? null,
     activeTrack: payload?.activeTrack ?? null,

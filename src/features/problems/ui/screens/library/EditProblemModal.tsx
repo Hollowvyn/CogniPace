@@ -23,19 +23,21 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { asProblemSlug } from "@shared/ids";
 import React, { useState } from "react";
 
+import { problemRepository } from "../../../data/repository/ProblemRepository";
 
 import type {
   CompanyLabel,
-  ProblemView,
+  Problem,
   TopicLabel,
 } from "../../../domain/model";
 import type { Difficulty } from "@features/problems";
 
 export interface EditProblemModalProps {
   open: boolean;
-  problem: ProblemView | null;
+  problem: Problem | null;
   topicChoices: TopicLabel[];
   companyChoices: CompanyLabel[];
   onClose: () => void;
@@ -126,7 +128,7 @@ async function resolveCompanySelection(
   return resolved;
 }
 
-function makeDraft(problem: ProblemView | null): DraftState {
+function makeDraft(problem: Problem | null): DraftState {
   if (!problem) {
     return {
       title: "",
@@ -141,9 +143,12 @@ function makeDraft(problem: ProblemView | null): DraftState {
     title: problem.title,
     difficulty: problem.difficulty,
     url: problem.url,
-    isPremium: problem.isPremium,
-    topicIds: [...problem.topics],
-    companyIds: [...problem.companies],
+    isPremium: problem.isPremium ?? false,
+    topicIds: problem.topics.map((topic) => ({ id: topic.id, name: topic.name })),
+    companyIds: problem.companies.map((company) => ({
+      id: company.id,
+      name: company.name,
+    })),
   };
 }
 
@@ -173,8 +178,8 @@ export function EditProblemModal(props: EditProblemModalProps) {
     setError(null);
     try {
       const patch = buildPatch(draft, problem);
-      await api.editProblem({
-        slug: problem.slug,
+      await problemRepository.editProblem({
+        slug: asProblemSlug(problem.slug),
         patch,
         markUserEdit: true,
       });
@@ -347,7 +352,7 @@ export function EditProblemModal(props: EditProblemModalProps) {
  * only fields the user actually changed so `userEdits` flags don't get set
  * on untouched fields.
  */
-function buildPatch(draft: DraftState, original: ProblemView) {
+function buildPatch(draft: DraftState, original: Problem) {
   const patch: {
     title?: string;
     difficulty?: Difficulty;
@@ -365,15 +370,15 @@ function buildPatch(draft: DraftState, original: ProblemView) {
   if (draft.url.trim() && draft.url !== original.url) {
     patch.url = draft.url.trim();
   }
-  if (draft.isPremium !== original.isPremium) {
+  if (draft.isPremium !== (original.isPremium ?? false)) {
     patch.isPremium = draft.isPremium;
   }
   const topicIds = draft.topicIds.map((t) => t.id);
-  if (!sameStringArray(topicIds, original.topics.map((t) => t.id))) {
+  if (!sameStringArray(topicIds, original.topicIds)) {
     patch.topicIds = topicIds;
   }
   const companyIds = draft.companyIds.map((c) => c.id);
-  if (!sameStringArray(companyIds, original.companies.map((c) => c.id))) {
+  if (!sameStringArray(companyIds, original.companyIds)) {
     patch.companyIds = companyIds;
   }
   return patch;

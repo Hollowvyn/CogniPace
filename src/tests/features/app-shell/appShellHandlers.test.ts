@@ -25,7 +25,7 @@ function buildAppData(input: AppDataInput): AppData {
     topicsById: {},
     companiesById: {},
     settings: sanitizeStoredUserSettings(input.settings),
-    activeTrackId: null,
+    focusedTrackId: null,
     problems: [],
   };
 }
@@ -50,16 +50,13 @@ describe("Popup Shell Handler", () => {
     expect(Object.keys(payload).sort()).toEqual([
       "activeTrack",
       "popup",
+      "problems",
       "settings",
     ]);
     expect(payload).not.toHaveProperty("analytics");
-    expect(payload).not.toHaveProperty("library");
     expect(payload).not.toHaveProperty("queue");
     expect(payload.popup.dueCount).toBeGreaterThanOrEqual(1);
     expect(payload.popup.recommended?.slug).toBe("two-sum");
-    // TrackCardView is the popup's compact shape — never carries
-    // `chapters` (those live on the full ActiveTrackView only).
-    expect(payload.popup.activeTrack ?? {}).not.toHaveProperty("chapters");
   });
 
   it("derives activeTrack from settings.activeFocus", () => {
@@ -80,6 +77,5 @@ describe("Popup Shell Handler", () => {
     const payload = buildPopupShellPayload(data, tracks);
 
     expect(payload.activeTrack?.id).toBe("Grind75");
-    expect(payload.popup.activeTrack?.id).toBe("Grind75");
   });
 });

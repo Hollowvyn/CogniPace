@@ -1,3 +1,4 @@
+import { asTrackGroupId, asTrackId } from "@shared/ids";
 import { describe, expect, it, vi } from "vitest";
 
 import { OverlayPanel } from "../../../features/overlay-session/ui/screens/OverlayPanel";
@@ -92,20 +93,27 @@ describe("OverlayPanel Expanded", () => {
         renderModel={makeExpandedRenderModel({
           postSubmitNext: {
             kind: "track",
-            activeTrackId: "Blind75",
             onOpenProblem,
-            view: {
+            trackId: "Blind75",
+            group: {
+              id: asTrackGroupId("arrays-1"),
+              trackId: asTrackId("Blind75"),
+              name: "Arrays",
+              problems: [],
+            },
+            problem: {
               slug: "contains-duplicate",
               title: "Contains Duplicate",
               url: "https://leetcode.com/problems/contains-duplicate/",
               difficulty: "Easy",
-              groupId: "arrays-1",
-              chapterTitle: "Arrays",
-              status: "READY",
-              reviewPhase: "Review",
-              nextReviewAt: "2026-03-30T00:00:00.000Z",
-              inLibrary: true,
-              isCurrent: true,
+              isPremium: false,
+              topicIds: [],
+              companyIds: [],
+              createdAt: "2026-03-01T00:00:00.000Z",
+              updatedAt: "2026-03-01T00:00:00.000Z",
+              studyState: null,
+              topics: [],
+              companies: [],
             },
           },
         })}

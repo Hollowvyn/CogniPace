@@ -1,46 +1,24 @@
 import { SurfaceCard } from "@design-system/atoms";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
+import { createInitialUserSettings } from "@features/settings";
 
 import { EditProblemModalConnected } from "../../components/EditProblemModalConnected";
-import { ProblemsTable } from "../../components/problemsTable";
-import { useLibraryVM, UseLibraryVMInput } from "../../hooks/useLibraryVM";
+import { LibraryProblemTable } from "../../components/problemsTable";
 
-export type LibraryScreenProps = UseLibraryVMInput;
+import type { AppShellPayload } from "@features/app-shell";
 
-export function LibraryScreen(props: LibraryScreenProps) {
-  const model = useLibraryVM(props);
+export interface LibraryScreenProps {
+  payload: AppShellPayload | null;
+  onRefresh?: () => Promise<void> | void;
+}
 
+export function LibraryScreen({ onRefresh, payload }: LibraryScreenProps) {
   return (
     <SurfaceCard label="Library" title="All Tracked Problems">
-      <ProblemsTable
-        rows={model.tableRows}
-        variant="library"
-        padToPageSize
-        selectedSlugs={model.selectedSlugs}
-        onSelectionChange={model.onSelectionChange}
-        toolbarExtras={
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel id="library-filter-track-label">Track</InputLabel>
-            <Select
-              labelId="library-filter-track-label"
-              label="Track"
-              value={model.filters.trackId}
-              onChange={(event) => {
-                model.onTrackFilterChange(event.target.value);
-              }}
-            >
-              <MenuItem value="all">All tracks</MenuItem>
-              {model.trackOptions.map((option) => (
-                <MenuItem key={option.trackId} value={option.trackId}>
-                  {option.trackName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        }
+      <LibraryProblemTable
+        problems={payload?.problems ?? []}
+        tracks={payload?.tracks ?? []}
+        settings={payload?.settings ?? createInitialUserSettings()}
+        onRefresh={onRefresh}
       />
 
       <EditProblemModalConnected />

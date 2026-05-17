@@ -40,7 +40,7 @@ export interface SeedTrackGroup {
   orderIndex: number;
 }
 
-export interface SeedTrackGroupProblem {
+export interface SeedTrackProblemMembership {
   groupId: TrackGroupId;
   problemSlug: ProblemSlug;
   orderIndex: number;
@@ -49,7 +49,7 @@ export interface SeedTrackGroupProblem {
 export interface SeedTracksPayload {
   tracks: SeedTrack[];
   groups: SeedTrackGroup[];
-  groupProblems: SeedTrackGroupProblem[];
+  groupProblems: SeedTrackProblemMembership[];
 }
 
 /** Builds the deterministic seed payload for every curated catalog plan.
@@ -58,7 +58,7 @@ export function buildTrackCatalogSeed(): SeedTracksPayload {
   const plans = listCatalogPlans();
   const tracks: SeedTrack[] = [];
   const groups: SeedTrackGroup[] = [];
-  const groupProblems: SeedTrackGroupProblem[] = [];
+  const groupProblems: SeedTrackProblemMembership[] = [];
 
   plans.forEach((plan, planIndex) => {
     const trackId = asTrackId(plan.id);

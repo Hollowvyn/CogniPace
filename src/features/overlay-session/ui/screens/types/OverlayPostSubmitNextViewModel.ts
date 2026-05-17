@@ -1,5 +1,5 @@
-import type { RecommendedProblemView } from "@features/problems";
-import type { TrackQuestionView } from "@features/tracks";
+import type { Problem, RecommendedProblemView } from "@features/problems";
+import type { TrackGroup } from "@features/tracks";
 
 export type OverlayPostSubmitNextViewModel =
   | {
@@ -13,14 +13,15 @@ export type OverlayPostSubmitNextViewModel =
       title: string;
     }
   | {
-      activeTrackId?: string;
       kind: "track";
       onOpenProblem: (target: {
         slug: string;
         trackId?: string;
         groupId?: string;
       }) => Promise<void> | void;
-      view: TrackQuestionView;
+      group: TrackGroup;
+      problem: Problem;
+      trackId: string;
     }
   | {
       kind: "recommended";

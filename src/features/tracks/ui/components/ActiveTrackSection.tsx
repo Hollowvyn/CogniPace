@@ -1,6 +1,5 @@
 import { SurfaceCard } from "@design-system/atoms";
-import { buildStudyStateView } from "@features/app-shell/domain/policy/hydrate";
-import { ProblemsTable, type ProblemRowData } from "@features/problems/ui/components/problemsTable";
+import { TrackProblemTable } from "@features/problems/ui/components/problemsTable";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
@@ -9,43 +8,13 @@ import Typography from "@mui/material/Typography";
 import { asTrackGroupId, asTrackId } from "@shared/ids";
 import { useMemo } from "react";
 
+import {
+  getGroupCompletedCount,
+  getGroupTotalCount,
+  getTrackProgress,
+} from "../../domain/model";
 import { selectActiveGroupId } from "../store/tracksSelectors";
 import { useTracksUiStore } from "../store/tracksUiStore";
-
-import type { TrackGroupView, TrackView } from "../../domain/model";
-import type { Problem, ProblemView } from "@features/problems/domain/model";
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function rollupCompletion(track: TrackView): { completed: number; total: number } {
-  return track.groups.reduce(
-    (acc, group) => ({
-      completed: acc.completed + group.completedCount,
-      total: acc.total + group.totalCount,
-    }),
-    { completed: 0, total: 0 },
-  );
-}
-
-function hydrateGroupRows(
-  group: TrackGroupView,
-  libraryBySlug: Map<string, Problem>,
-): ProblemRowData[] {
-  const now = new Date();
-  return group.problems.map((problemView: ProblemView) => {
-    const richProblem = libraryBySlug.get(problemView.slug);
-    return {
-      view: problemView,
-      studyState: buildStudyStateView({
-        studyState: richProblem?.studyState ?? null,
-        now,
-        targetRetention: 0.85,
-      }),
-      trackMemberships: [],
-      suspended: richProblem?.studyState?.suspended ? ("manual" as const) : undefined,
-    };
-  });
-}
 
 // ─── TabLabel ────────────────────────────────────────────────────────────────
 
@@ -76,20 +45,11 @@ function TabLabel({ name, completed, total }: { name: string; completed: number;
 
 function TrackBody() {
   const activeTrack    = useTracksUiStore(s => s.activeTrack);
-  const library        = useTracksUiStore(s => s.library);
   const activeGroupId  = useTracksUiStore(selectActiveGroupId);
-  const libraryBySlug  = useMemo(
-    () => new Map(library.map(p => [p.slug, p])),
-    [library],
-  );
+  const settings       = useTracksUiStore(s => s.settings);
 
   const activeGroup =
     activeTrack?.groups.find(g => g.id === activeGroupId) ?? activeTrack?.groups[0];
-
-  const rows = useMemo(
-    () => (activeGroup ? hydrateGroupRows(activeGroup, libraryBySlug) : []),
-    [activeGroup, libraryBySlug],
-  );
 
   if (!activeTrack) return null;
 
@@ -108,23 +68,30 @@ function TrackBody() {
           variant="scrollable"
           scrollButtons="auto"
         >
-          {activeTrack.groups.map(group => (
-            <Tab
-              key={group.id}
-              value={group.id}
-              label={
-                <TabLabel
-                  name={group.name}
-                  completed={group.completedCount}
-                  total={group.totalCount}
-                />
-              }
-            />
-          ))}
+          {activeTrack.groups.map(group => {
+            const completedCount = getGroupCompletedCount(group);
+            const totalCount = getGroupTotalCount(group);
+            return (
+              <Tab
+                key={group.id}
+                value={group.id}
+                label={
+                  <TabLabel
+                    name={group.name ?? "Untitled Group"}
+                    completed={completedCount}
+                    total={totalCount}
+                  />
+                }
+              />
+            );
+          })}
         </Tabs>
       ) : null}
 
-      <ProblemsTable rows={rows} variant="tracks" />
+      <TrackProblemTable
+        problems={activeGroup?.problems ?? []}
+        settings={settings}
+      />
     </Stack>
   );
 }
@@ -133,18 +100,15 @@ function TrackBody() {
 
 export function ActiveTrackSection() {
   const activeTrack         = useTracksUiStore(s => s.activeTrack);
-  const activeTrackDueCount = useTracksUiStore(s => s.activeTrackDueCount);
   const tracks              = useTracksUiStore(s => s.tracks);
-  const activeTrackId       = useTracksUiStore(s => s.activeTrackId);
   const otherEnabledTracks  = useMemo(
-    () => tracks.filter(t => t.enabled && t.id !== activeTrackId),
-    [tracks, activeTrackId],
+    () => tracks.filter(t => t.enabled && t.id !== activeTrack?.id),
+    [tracks, activeTrack?.id],
   );
 
   if (!activeTrack) return null;
 
-  const rollup  = rollupCompletion(activeTrack);
-  const percent = rollup.total > 0 ? Math.round((rollup.completed / rollup.total) * 100) : 0;
+  const progress = getTrackProgress(activeTrack);
 
   return (
     <SurfaceCard sx={{ p: 3 }}>
@@ -162,12 +126,12 @@ export function ActiveTrackSection() {
         ) : null}
       </Stack>
 
-      {rollup.total > 0 ? (
+      {progress.totalQuestions > 0 ? (
         <Stack spacing={0.75} sx={{ mb: 2 }}>
-          <LinearProgress variant="determinate" value={percent} sx={{ height: 6, borderRadius: 3 }} />
+          <LinearProgress variant="determinate" value={progress.completionPercent} sx={{ height: 6, borderRadius: 3 }} />
           <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: "tabular-nums" }}>
-            {rollup.completed} / {rollup.total} completed
-            {activeTrackDueCount > 0 ? ` · ${activeTrackDueCount} due for review` : ""}
+            {progress.completedQuestions} / {progress.totalQuestions} completed
+            {progress.dueCount > 0 ? ` · ${progress.dueCount} due for review` : ""}
           </Typography>
         </Stack>
       ) : null}

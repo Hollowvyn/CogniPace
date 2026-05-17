@@ -1,12 +1,12 @@
 /**
  * View-layer hydration helpers. Background view-builders call these to
- * convert raw entities into the UI-friendly `ProblemView` / `TrackView`
- * shapes (FK ids resolved to display labels, flag maps flattened).
+ * convert raw entities into UI-friendly problem and study-state shapes
+ * (FK ids resolved to display labels, flag maps flattened).
  *
  * UI components must NOT call these directly — they consume the result
  * over the message channel.
  */
-import { slugToTitle, slugToUrl, listEditedFields } from "@features/problems";
+import { listEditedFields } from "@features/problems";
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 
 
@@ -20,11 +20,6 @@ import type {
   TopicLabel,
 } from "@features/problems";
 import type { StudyState, StudyStateView } from "@features/study";
-import type {
-  TrackGroupView,
-  TrackView,
-  TrackWithGroups,
-} from "@features/tracks";
 
 const EDITABLE_FIELDS_ORDER: readonly EditableProblemField[] = [
   "title",
@@ -83,91 +78,6 @@ export function buildStudyStateView(
     lastRating: studyState.lastRating,
     confidence: studyState.confidence,
     recentAttempts: studyState.attemptHistory.slice(-limit),
-  };
-}
-
-export interface BuildTrackViewInput {
-  track: TrackWithGroups;
-  problemsBySlug: Record<string, Problem>;
-  topicsById: Record<string, Topic>;
-  companiesById: Record<string, Company>;
-  /** SSoT for "is this slug done?" — derived from the user's review history,
-   * so per-group completion counts match the rest of the UI the moment a
-   * review is recorded. Optional for callers that don't carry study-state
-   * context yet (treated as empty when omitted). */
-  studyStatesBySlug?: Record<string, StudyState>;
-  now?: Date;
-}
-
-/** Hydrates a Track (slim, charter-pure) into its display-ready view shape. */
-export function buildTrackView(input: BuildTrackViewInput): TrackView {
-  const {
-    track,
-    problemsBySlug,
-    topicsById,
-    companiesById,
-    studyStatesBySlug,
-    now,
-  } = input;
-  const studyStates = studyStatesBySlug ?? {};
-  const isSlugDone = (slug: string): boolean =>
-    getStudyStateSummary(studyStates[slug], now).isStarted;
-  // The Tracks tab always shows every curated slug — even ones the user
-  // has never opened. The Problem entity might not exist yet (fresh
-  // install pre-seed, mid-migration, user wiped data), so synthesize a
-  // minimal display view from the slug itself when missing. Real details
-  // get filled in when the user opens the page.
-  const hydrate = (slug: string): ProblemView => {
-    const p = problemsBySlug[slug];
-    if (p) return buildProblemView(p, topicsById, companiesById);
-    return synthesizeProblemView(slug);
-  };
-
-  const groups: TrackGroupView[] = track.groups.map((group) => {
-    const slugs = group.problems.map((p) => p.problemSlug);
-    const completedCount = slugs.reduce(
-      (acc, slug) => (isSlugDone(slug) ? acc + 1 : acc),
-      0,
-    );
-    const displayName =
-      group.name ??
-      (group.topicId
-        ? (topicsById[group.topicId]?.name ?? String(group.id))
-        : track.name);
-    return {
-      id: group.id,
-      name: displayName,
-      topicId: group.topicId ?? null,
-      problems: slugs.map(hydrate),
-      completedCount,
-      totalCount: slugs.length,
-    };
-  });
-
-  return {
-    id: track.id,
-    name: track.name,
-    description: track.description,
-    enabled: track.enabled,
-    isCurated: track.isCurated,
-    groups,
-  };
-}
-
-/** Minimal ProblemView assembled from just a slug. Used when the
- * Problem entity isn't in the store yet (fresh install, mid-migration,
- * or a curated slug never opened). Title comes from the kebab slug,
- * URL points at LeetCode, difficulty is Unknown until real data lands. */
-function synthesizeProblemView(slug: string): ProblemView {
-  return {
-    slug,
-    title: slugToTitle(slug),
-    difficulty: "Unknown",
-    isPremium: false,
-    url: slugToUrl(slug),
-    topics: [],
-    companies: [],
-    editedFields: [],
   };
 }
 

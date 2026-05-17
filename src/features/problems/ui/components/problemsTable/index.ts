@@ -1,14 +1,19 @@
-export { ProblemsTable, type ProblemsTableProps } from "./ProblemsTable";
+export { LibraryProblemTable } from "./LibraryProblemTable";
+export type { LibraryProblemTableProps } from "./LibraryProblemTable";
+export { TrackProblemTable } from "./TrackProblemTable";
+export type { TrackProblemTableProps } from "./TrackProblemTable";
 export {
-  applyFiltersAndSort,
-  useProblemsTable,
-  type UseProblemsTableOptions,
-  type UseProblemsTableResult,
-} from "./useProblemsTable";
+  filterAndSortProblems,
+  getProblemStudySummary,
+  getProblemSuspendedReason,
+  listTrackOptions,
+  pageProblems,
+} from "./problemTableSelectors";
 export {
   ROWS_PER_PAGE_OPTIONS,
   createDefaultFilters,
-  type ProblemRowData,
+  type ProblemTableCommands,
+  type ProblemTableSort,
   type ProblemsTableFilters,
   type ProblemSelection,
   type RowsPerPage,

@@ -147,7 +147,7 @@ export async function importData(
     }
   }
   if (sanitized.tracks) {
-    for (const incoming of sanitized.tracks) {
+    for (const [trackIndex, incoming] of sanitized.tracks.entries()) {
       if (incoming.isCurated) continue;
       const trackId = asTrackId(incoming.id);
       const created = await createTrack(db, {
@@ -156,9 +156,9 @@ export async function importData(
         description: incoming.description,
         enabled: incoming.enabled,
         isCurated: false,
-        orderIndex: incoming.orderIndex,
+        orderIndex: trackIndex,
       });
-      for (const group of incoming.groups) {
+      for (const [groupIndex, group] of incoming.groups.entries()) {
         const groupId = asTrackGroupId(group.id);
         await addGroup(db, {
           id: groupId,
@@ -166,13 +166,13 @@ export async function importData(
           topicId: group.topicId,
           name: group.name,
           description: group.description,
-          orderIndex: group.orderIndex,
+          orderIndex: groupIndex,
         });
-        for (const membership of group.problems) {
+        for (const [problemIndex, problem] of group.problems.entries()) {
           await addProblemToGroup(db, {
             groupId,
-            problemSlug: asProblemSlug(membership.problemSlug),
-            orderIndex: membership.orderIndex,
+            problemSlug: asProblemSlug(problem.slug),
+            orderIndex: problemIndex,
           });
         }
       }

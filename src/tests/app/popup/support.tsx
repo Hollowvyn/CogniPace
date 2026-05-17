@@ -22,6 +22,7 @@ export function makePopupPayload(): PopupShellPayload {
   const payload = makePayload();
   return {
     activeTrack: payload.activeTrack,
+    problems: payload.problems,
     popup: payload.popup,
     settings: payload.settings,
   };

@@ -1,16 +1,14 @@
-import type { TrackView } from "../../domain/model";
-import type { Problem } from "@features/problems";
-import type { TrackGroupId, TrackId } from "@shared/ids";
+import { createInitialUserSettings } from "@features/settings";
+
+import type { Track } from "../../domain/model";
+import type { UserSettings } from "@features/settings";
+import type { TrackGroupId } from "@shared/ids";
 
 export interface TracksUiState {
   // Data from repositories
-  tracks: TrackView[];
-  activeTrackId: TrackId | null;
-  activeTrack: TrackView | null;
-  library: Problem[];
-
-  // Computed in load()
-  activeTrackDueCount: number;
+  tracks: Track[];
+  activeTrack: Track | null;
+  settings: UserSettings;
 
   // Canonical UI interaction state
   selectedGroupId: TrackGroupId | null;
@@ -22,10 +20,8 @@ export interface TracksUiState {
 
 export const INITIAL_TRACKS_UI_STATE: TracksUiState = {
   tracks: [],
-  activeTrackId: null,
   activeTrack: null,
-  library: [],
-  activeTrackDueCount: 0,
+  settings: createInitialUserSettings(),
   selectedGroupId: null,
   isLoading: false,
   error: null,

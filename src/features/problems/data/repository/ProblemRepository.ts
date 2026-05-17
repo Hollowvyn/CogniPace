@@ -4,7 +4,7 @@ import { Rating, ReviewLogFields, ReviewMode } from "@features/study";
 
 import { Difficulty } from "../../domain/model";
 
-import type { Problem } from "../../domain/model";
+import type { Problem, ProblemEditPatch } from "../../domain/model";
 import type { ProblemSlug } from "@shared/ids";
 
 export const problemRepository = {
@@ -69,6 +69,12 @@ export const problemRepository = {
 
   resetProblemSchedule: (slug: ProblemSlug) =>
     api.resetProblemSchedule({ slug }),
+
+  editProblem: (input: {
+    slug: ProblemSlug;
+    patch: ProblemEditPatch;
+    markUserEdit: boolean;
+  }) => api.editProblem(input),
 
   getLibrary: () => api.getLibrary({}) as Promise<Problem[]>,
 

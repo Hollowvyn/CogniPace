@@ -1743,7 +1743,7 @@ const allChecks: CheckDef[] = [
       });
       const list = await listTracksRepo(db);
       const mine = list.find((t) => t.id === track.id);
-      const slugs = mine?.groups[0]?.problems.map((p) => p.problemSlug) ?? [];
+      const slugs = mine?.groups[0]?.problems.map((p) => p.slug) ?? [];
       await deleteTrackRepo(db, track.id);
       await db.delete(schema.problems).where(eq(schema.problems.slug, slugA));
       await db.delete(schema.problems).where(eq(schema.problems.slug, slugB));

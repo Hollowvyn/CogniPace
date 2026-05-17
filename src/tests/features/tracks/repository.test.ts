@@ -73,8 +73,8 @@ describe("tracks repository", () => {
   it("createTrack lands at MAX(order_index) + 1 by default", async () => {
     const first = await createTrack(db, { name: "Track A" });
     const second = await createTrack(db, { name: "Track B" });
-    expect(first.orderIndex).toBe(0);
-    expect(second.orderIndex).toBe(1);
+    const listed = await listTracks(db);
+    expect(listed.map((track) => track.id)).toEqual([first.id, second.id]);
   });
 
   it("createTrack rejects empty names", async () => {
@@ -213,7 +213,7 @@ describe("tracks repository", () => {
     const listed = await listTracks(db);
     expect(listed.length).toBe(1);
     expect(listed[0].groups.length).toBe(1);
-    expect(listed[0].groups[0].problems.map((p) => p.problemSlug)).toEqual([
+    expect(listed[0].groups[0].problems.map((p) => p.slug)).toEqual([
       "two-sum",
       "valid-anagram",
     ]);

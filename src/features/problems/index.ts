@@ -12,7 +12,6 @@ export type {
   ProblemView,
   RecommendedProblemView,
   RecommendedReason,
-  LibraryProblemRow,
   TopicLabel,
   CompanyLabel,
   ProblemContextResponse,
@@ -35,11 +34,10 @@ export { problemRepository } from "./data/repository/ProblemRepository";
 export type { ProblemRepository } from "./data/repository/ProblemRepository";
 
 export { LibraryScreen } from "./ui/screens/library/LibraryScreen";
-export { useLibraryVM } from "./ui/hooks/useLibraryVM";
-export type { LibraryScreenModel } from "./ui/hooks/useLibraryVM";
 export {
-  ProblemsTable,
-  type ProblemRowData,
+  LibraryProblemTable,
+  TrackProblemTable,
+  type ProblemTableCommands,
 } from "./ui/components/problemsTable";
 export { RecommendedProblemCard } from "./ui/components/RecommendedProblemCard";
 export type { RecommendedProblemCardProps } from "./ui/components/RecommendedProblemCard";

@@ -33,7 +33,7 @@ export function recommendedTone(reason: RecommendedReason): Tone {
 
 /** Formats a study phase with a screen-specific fallback. */
 export function formatStudyPhase(
-  phase?: StudyPhase | null,
+  phase?: StudyPhase | "New" | null,
   fallback = "NEW",
 ): string {
   if (!phase) return fallback;

@@ -11,17 +11,23 @@
  */
 import { ProgressTrack, SurfaceCard, ToneChip } from "@design-system/atoms";
 import { difficultyTone } from "@features/problems";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import { labelForStatus } from "../presentation/labels";
+import {
+  getActiveTrackGroup,
+  getNextTrackProblem,
+  getTrackProgress,
+} from "../../domain/model";
 
-import type { ActiveTrackView, TrackQuestionView } from "../../domain/model";
+import type { Track, TrackGroup } from "../../domain/model";
+import type { Problem } from "@features/problems";
 
 export interface ActiveTrackOverviewCardProps {
-  course: ActiveTrackView | null;
+  course: Track | null;
   studyMode: "studyPlan" | "freestyle";
   onOpenProblem: (target: {
     slug: string;
@@ -52,12 +58,14 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
     );
   }
 
-  const nextQuestion = course.nextQuestion ?? null;
+  const progress = getTrackProgress(course);
+  const activeGroup = getActiveTrackGroup(course);
+  const nextQuestion = getNextTrackProblem(course);
 
   return (
     <SurfaceCard
       action={
-        <ToneChip label={`${course.completionPercent}%`} tone="accent" />
+        <ToneChip label={`${progress.completionPercent}%`} tone="accent" />
       }
       label="Active Track"
       title={course.name}
@@ -71,7 +79,7 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
 
         <ProgressTrack
           ariaLabel={`${course.name} completion`}
-          value={course.completionPercent}
+          value={progress.completionPercent}
         />
 
         <Stack
@@ -80,10 +88,10 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
           spacing={0.5}
         >
           <Typography color="text.secondary" variant="body2">
-            {course.completedQuestions}/{course.totalQuestions} questions
+            {progress.completedQuestions}/{progress.totalQuestions} questions
             traversed
-            {course.activeChapterTitle
-              ? ` · Current chapter: ${course.activeChapterTitle}`
+            {activeGroup?.name
+              ? ` · Current chapter: ${activeGroup.name}`
               : ""}
           </Typography>
           <Typography color="text.secondary" variant="body2">
@@ -95,10 +103,11 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
 
         {nextQuestion ? (
           <NextUpRow
-            activeTrackId={course.id}
-            view={nextQuestion}
+            group={nextQuestion.group}
+            problem={nextQuestion.problem}
             onOpenProblem={onOpenProblem}
             onOpenTracks={onOpenTracks}
+            trackId={course.id}
           />
         ) : (
           <Stack spacing={0.5}>
@@ -138,19 +147,19 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
 }
 
 function NextUpRow({
-  activeTrackId,
-  view,
+  group,
+  problem,
   onOpenProblem,
   onOpenTracks,
+  trackId,
 }: {
-  activeTrackId: string;
-  view: TrackQuestionView;
+  group: TrackGroup;
+  problem: Problem;
   onOpenProblem: ActiveTrackOverviewCardProps["onOpenProblem"];
   onOpenTracks: () => void;
+  trackId: string;
 }) {
-  const phaseLabel = view.reviewPhase
-    ? view.reviewPhase.toUpperCase()
-    : null;
+  const phaseLabel = getStudyStateSummary(problem.studyState).phase.toUpperCase();
 
   return (
     <Stack spacing={1}>
@@ -169,18 +178,17 @@ function NextUpRow({
             Next up
           </Typography>
           <Typography variant="subtitle1" fontWeight={500}>
-            {view.title}
+            {problem.title}
           </Typography>
           <Stack direction="row" flexWrap="wrap" gap={0.75}>
-            <ToneChip label={view.chapterTitle} />
+            {group.name ? <ToneChip label={group.name} /> : null}
             <ToneChip
-              label={view.difficulty}
-              tone={difficultyTone(view.difficulty)}
+              label={problem.difficulty}
+              tone={difficultyTone(problem.difficulty)}
             />
           </Stack>
           <Typography color="text.secondary" variant="caption">
-            Path: {labelForStatus(view.status)}
-            {phaseLabel ? ` · FSRS: ${phaseLabel}` : ""}
+            FSRS: {phaseLabel}
           </Typography>
         </Stack>
       </Stack>
@@ -189,9 +197,9 @@ function NextUpRow({
         <Button
           onClick={() => {
             void onOpenProblem({
-              slug: view.slug,
-              trackId: activeTrackId,
-              groupId: view.groupId,
+              slug: problem.slug,
+              trackId,
+              groupId: group.id,
             });
           }}
           variant="contained"

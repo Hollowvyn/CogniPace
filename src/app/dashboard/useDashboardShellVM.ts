@@ -8,11 +8,6 @@ import { api } from "@app/api";
 import { useDI } from "@app/bootstrap";
 import { createMockAppShellPayload, useAppShellQuery } from "@features/app-shell";
 import { problemRepository } from "@features/problems";
-import {
-  createDefaultLibraryFilters,
-  filterLibraryRows,
-  LibraryFilters,
-} from "@features/problems/ui/presentation/library";
 import { isExtensionContext } from "@platform/chrome/tabs";
 import {
   startTransition,
@@ -20,7 +15,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  useDeferredValue,
 } from "react";
 
 import {
@@ -46,12 +40,7 @@ export function useDashboardShellVM() {
   const [view, setView] = useState<DashboardView>(() =>
     readDashboardViewFromSearch(window.location.search)
   );
-  const [filters, setFilters] = useState<LibraryFilters>(
-    createDefaultLibraryFilters()
-  );
   const [importFile, setImportFile] = useState<File | null>(null);
-  const deferredQuery = useDeferredValue(filters.query);
-  const { trackId, difficulty, status: filterStatus } = filters;
 
   useEffect(() => {
     const handlePopState = () => {
@@ -65,17 +54,6 @@ export function useDashboardShellVM() {
       window.removeEventListener("popstate", handlePopState);
     };
   }, []);
-
-  const rows = useMemo(
-    () =>
-      filterLibraryRows(payload?.library ?? [], {
-        trackId,
-        difficulty,
-        status: filterStatus,
-        query: deferredQuery,
-      }),
-    [trackId, deferredQuery, difficulty, filterStatus, payload?.library]
-  );
 
   const refresh = useCallback(
     async (clearStatus = true): Promise<void> => {
@@ -252,7 +230,6 @@ export function useDashboardShellVM() {
 
   return {
     applySavedSettings,
-    filters,
     importFile,
     navigateToView,
     onEnablePremium,
@@ -264,8 +241,6 @@ export function useDashboardShellVM() {
     payload,
     refresh,
     route: getDashboardRoute(view),
-    rows,
-    setFilters,
     setImportFile,
     setStatus,
     status,

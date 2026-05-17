@@ -5,6 +5,7 @@ import { useDI } from "@app/bootstrap";
 import { appShellRepository, createMockPopupShellPayload, useAppShellQuery } from "@features/app-shell";
 import { problemRepository, RecommendedProblemView } from "@features/problems";
 import { StudyMode } from "@features/settings";
+import { getNextTrackProblem } from "@features/tracks";
 import { startTransition, useMemo, useRef, useState } from "react";
 
 import { openDashboardPage } from "../dashboard/navigation/openDashboardPage";
@@ -50,6 +51,11 @@ export function usePopupShellVM() {
   const persistedStudyMode = payload?.settings.studyMode ?? "studyPlan";
   const studyMode = pendingStudyMode ?? persistedStudyMode;
   const isUpdatingStudyMode = pendingStudyMode !== null;
+
+  const activeTrackDetail = payload?.activeTrack ?? null;
+  const trackNext = activeTrackDetail
+    ? getNextTrackProblem(activeTrackDetail)
+    : null;
 
   const recommended = useMemo(
     () =>
@@ -142,9 +148,8 @@ export function usePopupShellVM() {
   }
 
   return {
-    activeTrackDetail: payload?.activeTrack ?? null,
-    activeTrack: payload?.popup.activeTrack ?? null,
-    trackNext: payload?.popup.trackNext ?? null,
+    activeTrackDetail,
+    trackNext,
     hasMultipleRecommended:
       (payload?.popup.recommendedCandidates.length ?? 0) > 1,
     isInitialLoading: payload === null && !status.message,

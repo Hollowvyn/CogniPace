@@ -24,7 +24,6 @@ export type {
   ProblemView,
   RecommendedProblemView,
   RecommendedReason,
-  LibraryProblemRow,
   TopicLabel,
   CompanyLabel,
   ProblemContextResponse,

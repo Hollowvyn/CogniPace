@@ -1,7 +1,7 @@
 /**
  * Phase A architecture tests — the rules that landed when surface
  * shells moved to src/app/<surface>/ and capability features adopted
- * the canonical Screen+VM pattern.
+ * explicit UI state boundaries through VM hooks or feature stores.
  *
  * Each test name IS the rule. Per-assertion messages carry only the
  * file path of the violation.
@@ -37,8 +37,8 @@ function rel(absolute: string): string {
   return path.relative(repoRoot, absolute);
 }
 
-describe("architecture / Phase A — surface shells + Screen+VM pattern", () => {
-  it("every capability-feature *Screen.tsx has a sibling use*VM.ts hook", () => {
+describe("architecture / Phase A — surface shells + UI state boundary", () => {
+  it("every capability-feature *Screen.tsx delegates state to a VM hook or UI store", () => {
     const featuresRoot = path.join(repoRoot, "src/features");
     if (!fs.existsSync(featuresRoot)) return;
 
@@ -60,9 +60,10 @@ describe("architecture / Phase A — surface shells + Screen+VM pattern", () => 
         "hooks",
         `use${baseName}VM.ts`,
       );
+      const expectedStoreDir = path.join(featureRoot, "ui", "store");
       expect(
-        fs.existsSync(expectedVmFile),
-        `${rel(screenFile)} → expected sibling ${rel(expectedVmFile)}`,
+        fs.existsSync(expectedVmFile) || fs.existsSync(expectedStoreDir),
+        `${rel(screenFile)} → expected sibling ${rel(expectedVmFile)} or ${rel(expectedStoreDir)}`,
       ).toBe(true);
     }
   });

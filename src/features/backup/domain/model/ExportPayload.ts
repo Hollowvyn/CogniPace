@@ -1,7 +1,7 @@
 import type { Company , Topic , Problem } from "@features/problems";
 import type { UserSettings } from "@features/settings";
 import type { StudyState } from "@features/study";
-import type { TrackWithGroups } from "@features/tracks";
+import type { Track } from "@features/tracks";
 
 export interface ExportPayload {
   version?: number;
@@ -10,5 +10,5 @@ export interface ExportPayload {
   settings?: Partial<UserSettings>;
   topicsById?: Record<string, Topic>;
   companiesById?: Record<string, Company>;
-  tracks?: TrackWithGroups[];
+  tracks?: Track[];
 }

@@ -1,116 +1,121 @@
-import { createDefaultFilters } from "@features/problems/ui/components/problemsTable/types";
-import { applyFiltersAndSort } from "@features/problems/ui/components/problemsTable/useProblemsTable";
 import {
-  asProblemSlug,
-} from "@shared/ids";
+  createDefaultFilters,
+  filterAndSortProblems,
+} from "@features/problems/ui/components/problemsTable";
+import { createInitialUserSettings } from "@features/settings";
 import { describe, expect, it } from "vitest";
 
+import {
+  makeProblem,
+  makeScheduledState,
+} from "../../support/fixtures";
 
-import type { Difficulty } from "@features/problems";
-import type { ProblemRowData } from "@features/problems/ui/components/problemsTable/types";
+import type { Difficulty, Problem } from "@features/problems";
 import type { StudyPhase } from "@features/study";
 
+const settings = createInitialUserSettings();
+const now = new Date("2026-05-16T00:00:00.000Z");
 
-
-function row(
+function problem(
   slug: string,
   title: string,
   difficulty: Difficulty,
-  phase: StudyPhase | "New" = "New",
+  phase: Exclude<StudyPhase, "Suspended"> | "New" = "New",
   nextReviewAt?: string,
-): ProblemRowData {
+): Problem {
+  const base = makeProblem(slug, {
+    title,
+    difficulty,
+  });
+  if (phase === "New") return base;
+  const scheduled = makeScheduledState(
+    nextReviewAt ?? "2026-04-10T00:00:00.000Z",
+  );
   return {
-    view: {
-      slug: asProblemSlug(slug),
-      title,
-      difficulty,
-      isPremium: false,
-      url: `https://leetcode.com/problems/${slug}/`,
-      topics: [],
-      companies: [],
-      editedFields: [],
+    ...base,
+    studyState: {
+      ...scheduled,
+      fsrsCard: {
+        ...scheduled.fsrsCard!,
+        state: phase,
+      },
     },
-    studyState:
-      phase === "New"
-        ? null
-        : {
-            phase,
-            nextReviewAt,
-            reviewCount: 1,
-            lapses: 0,
-            suspended: false,
-            isStarted: true,
-            isDue: false,
-            isOverdue: false,
-            overdueDays: 0,
-            recentAttempts: [],
-            tags: [],
-          },
-    trackMemberships: [],
   };
 }
 
-describe("ProblemsTable controller", () => {
-  it("filters by search query (case-insensitive on title and slug)", () => {
-    const rows = [
-      row("two-sum", "Two Sum", "Easy"),
-      row("three-sum", "3Sum", "Medium"),
-      row("merge-intervals", "Merge Intervals", "Medium"),
+describe("problem table selectors", () => {
+  it("filters by search query case-insensitively on title and slug", () => {
+    const problems = [
+      problem("two-sum", "Two Sum", "Easy"),
+      problem("three-sum", "3Sum", "Medium"),
+      problem("merge-intervals", "Merge Intervals", "Medium"),
     ];
-    const out = applyFiltersAndSort(
-      rows,
+    const out = filterAndSortProblems(
+      problems,
       { ...createDefaultFilters(), query: "sum" },
       { key: "title", direction: "asc" },
+      settings,
+      now,
     );
-    expect(out.map((r) => r.view.title)).toEqual(["3Sum", "Two Sum"]);
+    expect(out.map((p) => p.title)).toEqual(["3Sum", "Two Sum"]);
   });
 
   it("filters by difficulty", () => {
-    const rows = [
-      row("a", "A", "Easy"),
-      row("b", "B", "Medium"),
-      row("c", "C", "Hard"),
+    const problems = [
+      problem("a", "A", "Easy"),
+      problem("b", "B", "Medium"),
+      problem("c", "C", "Hard"),
     ];
-    const out = applyFiltersAndSort(
-      rows,
+    const out = filterAndSortProblems(
+      problems,
       { ...createDefaultFilters(), difficulty: "Hard" },
       { key: "title", direction: "asc" },
+      settings,
+      now,
     );
     expect(out).toHaveLength(1);
-    expect(out[0].view.title).toBe("C");
+    expect(out[0].title).toBe("C");
   });
 
-  it("filters by phase ('New' matches rows with no study state)", () => {
-    const rows = [
-      row("a", "A", "Medium", "New"),
-      row("b", "B", "Medium", "Review"),
-      row("c", "C", "Medium", "Learning"),
+  it("filters by phase with New matching problems with no study state", () => {
+    const problems = [
+      problem("a", "A", "Medium", "New"),
+      problem("b", "B", "Medium", "Review"),
+      problem("c", "C", "Medium", "Learning"),
     ];
-    const out = applyFiltersAndSort(
-      rows,
+    const out = filterAndSortProblems(
+      problems,
       { ...createDefaultFilters(), phase: "New" },
       { key: "title", direction: "asc" },
+      settings,
+      now,
     );
     expect(out).toHaveLength(1);
-    expect(out[0].view.title).toBe("A");
+    expect(out[0].title).toBe("A");
   });
 
   it("sorts by title asc then desc", () => {
-    const rows = [
-      row("c", "Charlie", "Easy"),
-      row("a", "Alpha", "Easy"),
-      row("b", "Bravo", "Easy"),
+    const problems = [
+      problem("c", "Charlie", "Easy"),
+      problem("a", "Alpha", "Easy"),
+      problem("b", "Bravo", "Easy"),
     ];
-    const asc = applyFiltersAndSort(rows, createDefaultFilters(), {
-      key: "title",
-      direction: "asc",
-    });
-    expect(asc.map((r) => r.view.title)).toEqual(["Alpha", "Bravo", "Charlie"]);
-    const desc = applyFiltersAndSort(rows, createDefaultFilters(), {
-      key: "title",
-      direction: "desc",
-    });
-    expect(desc.map((r) => r.view.title)).toEqual([
+    const asc = filterAndSortProblems(
+      problems,
+      createDefaultFilters(),
+      { key: "title", direction: "asc" },
+      settings,
+      now,
+    );
+    expect(asc.map((p) => p.title)).toEqual(["Alpha", "Bravo", "Charlie"]);
+    const desc = filterAndSortProblems(
+      problems,
+      createDefaultFilters(),
+      { key: "title", direction: "desc" },
+      settings,
+      now,
+    );
+    expect(desc.map((p) => p.title)).toEqual([
       "Charlie",
       "Bravo",
       "Alpha",
@@ -118,17 +123,20 @@ describe("ProblemsTable controller", () => {
   });
 
   it("sorts by difficulty Easy < Medium < Hard < Unknown", () => {
-    const rows = [
-      row("a", "A", "Hard"),
-      row("b", "B", "Easy"),
-      row("c", "C", "Unknown"),
-      row("d", "D", "Medium"),
+    const problems = [
+      problem("a", "A", "Hard"),
+      problem("b", "B", "Easy"),
+      problem("c", "C", "Unknown"),
+      problem("d", "D", "Medium"),
     ];
-    const out = applyFiltersAndSort(rows, createDefaultFilters(), {
-      key: "difficulty",
-      direction: "asc",
-    });
-    expect(out.map((r) => r.view.difficulty)).toEqual([
+    const out = filterAndSortProblems(
+      problems,
+      createDefaultFilters(),
+      { key: "difficulty", direction: "asc" },
+      settings,
+      now,
+    );
+    expect(out.map((p) => p.difficulty)).toEqual([
       "Easy",
       "Medium",
       "Hard",
@@ -136,28 +144,35 @@ describe("ProblemsTable controller", () => {
     ]);
   });
 
-  it("sorts by next review with undefined coming last", () => {
-    const rows = [
-      row("a", "A", "Easy", "Review", "2026-04-10T00:00:00Z"),
-      row("b", "B", "Easy", "Review", "2026-04-01T00:00:00Z"),
-      row("c", "C", "Easy", "New"),
+  it("sorts by next review with unscheduled problems last", () => {
+    const problems = [
+      problem("a", "A", "Easy", "Review", "2026-04-10T00:00:00Z"),
+      problem("b", "B", "Easy", "Review", "2026-04-01T00:00:00Z"),
+      problem("c", "C", "Easy", "New"),
     ];
-    const out = applyFiltersAndSort(rows, createDefaultFilters(), {
-      key: "nextReview",
-      direction: "asc",
-    });
-    expect(out.map((r) => r.view.title)).toEqual(["B", "A", "C"]);
+    const out = filterAndSortProblems(
+      problems,
+      createDefaultFilters(),
+      { key: "nextReview", direction: "asc" },
+      settings,
+      now,
+    );
+    expect(out.map((p) => p.title)).toEqual(["B", "A", "C"]);
   });
 
-  it("returns the full set when no filters apply", () => {
-    const rows = [
-      row("a", "A", "Easy"),
-      row("b", "B", "Medium"),
+  it("preserves input order when source sort is selected", () => {
+    const problems = [
+      problem("c", "Charlie", "Easy"),
+      problem("a", "Alpha", "Easy"),
+      problem("b", "Bravo", "Easy"),
     ];
-    const out = applyFiltersAndSort(rows, createDefaultFilters(), {
-      key: "title",
-      direction: "asc",
-    });
-    expect(out).toHaveLength(2);
+    const out = filterAndSortProblems(
+      problems,
+      createDefaultFilters(),
+      { key: "source", direction: "asc" },
+      settings,
+      now,
+    );
+    expect(out.map((p) => p.title)).toEqual(["Charlie", "Alpha", "Bravo"]);
   });
 });

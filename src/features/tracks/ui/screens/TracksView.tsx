@@ -5,10 +5,9 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import React, { useEffect } from "react";
 
-import { useTracksUiStore, useTracksAutoRefresh } from "../store/tracksUiStore";
-
-import { ActiveTrackSection } from "./ActiveTrackSection";
-import { OtherTracksSection } from "./OtherTracksSection";
+import { ActiveTrackSection } from "../components/ActiveTrackSection";
+import { OtherTracksSection } from "../components/OtherTracksSection";
+import { useTracksAutoRefresh, useTracksUiStore } from "../store/tracksUiStore";
 
 export function TracksView() {
   const activeTrack = useTracksUiStore(s => s.activeTrack);

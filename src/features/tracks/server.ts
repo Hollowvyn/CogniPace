@@ -1,28 +1,16 @@
 export type {
   Track,
   TrackGroup,
-  TrackGroupProblem,
-  TrackGroupWithProblems,
-  TrackWithGroups,
-  GroupCompletion,
-  TrackProgress,
-  ComputeTrackProgressInput,
-  TrackView,
-  TrackGroupView,
-  TrackChapterView,
-  TrackChapterStatusView,
-  TrackQuestionView,
-  TrackQuestionStatusView,
-  TrackCardView,
   TrackMembership,
-  ActiveTrackView,
+  TrackProgress,
 } from "./domain/model";
-export { computeTrackProgress } from "./domain/model";
-
 export {
-  buildActiveTrackView,
-  nextSlugForActiveTrack,
-} from "./domain/policy/buildActiveTrackView";
+  getActiveTrackGroup,
+  getGroupCompletedCount,
+  getGroupTotalCount,
+  getNextTrackProblem,
+  getTrackProgress,
+} from "./domain/model";
 
 export {
   createTrackHandler,
@@ -33,10 +21,6 @@ export {
   type UpdateTrackPayload,
   type DeleteTrackPayload,
 } from "./messaging/handlers";
-export {
-  trackQuestionStatus,
-  findCurrentSlugInGroup,
-} from "./domain/policy/questionStatus";
 
 export { buildTrackCatalogSeed } from "./data/seed";
 
@@ -48,7 +32,6 @@ export {
 export {
   toTrack,
   toTrackGroup,
-  toTrackGroupProblem,
   listTracks,
   getTrack,
   getTrackHeader,

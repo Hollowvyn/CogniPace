@@ -1,15 +1,13 @@
 /**
- * Tracks repository — SQLite source of truth for the Track + TrackGroup
- * + TrackGroupProblem trio.
+ * Tracks repository — SQLite source of truth for Track aggregates.
  *
  * Charter rules in force:
  *   - Repos throw on failure; SW message boundary translates into a
  *     `{ ok: false, error }` envelope. No defensive try/catch.
- *   - Row → domain conversion is named: `toTrack`, `toTrackGroup`,
- *     `toTrackGroupProblem`.
+ *   - Row → domain conversion is named: `toTrack`, `toTrackGroup`.
  *   - Reads compose via simple `select()` everywhere except `listTracks`
  *     / `getTrack`, which use the relational query builder so a single
- *     SQLite round trip returns the full track + groups + problems tree
+ *     SQLite round trip returns the full Track → groups → Problems tree
  *     (the one place RQB earns its keep, per the Phase 1 data-shape doc).
  *
  * Order semantics:
@@ -17,6 +15,7 @@
  *     get sequential indexes; user creates land at `MAX + 1`.
  *   - `track_groups.order_index`: sort order within a track.
  *   - `track_group_problems.order_index`: sort order within a group.
+ * These are storage concerns. Domain models expose ordered arrays.
  *
  * Curated protection:
  *   - `deleteTrack` refuses when `track.isCurated`.
@@ -24,10 +23,13 @@
  *     user can rebrand the list they see). If we ever need to lock the
  *     name on curated tracks, gate it here.
  */
+import { toStudyState } from "@features/study/server";
 import * as schema from "@platform/db/schema";
 import { nowIso } from "@platform/time";
 import {
+  asCompanyId,
   asProblemSlug,
+  asTopicId,
   asTrackGroupId,
   asTrackId,
   newTrackGroupId,
@@ -40,18 +42,31 @@ import {
 import { and, asc, eq, max, sql } from "drizzle-orm";
 
 
+import type { Track, TrackGroup } from "../../domain/model";
 import type {
-  Track,
-  TrackGroup,
-  TrackGroupProblem,
-  TrackGroupWithProblems,
-  TrackWithGroups,
-} from "../../domain/model";
+  Company,
+  Difficulty,
+  Problem,
+  ProblemEditFlags,
+  Topic,
+} from "@features/problems/domain/model";
 import type { Db } from "@platform/db/client";
 
 type TrackRow = typeof schema.tracks.$inferSelect;
 type TrackGroupRow = typeof schema.trackGroups.$inferSelect;
-type TrackGroupProblemRow = typeof schema.trackGroupProblems.$inferSelect;
+type TrackProblemMembershipRow = typeof schema.trackGroupProblems.$inferSelect;
+type ProblemRow = typeof schema.problems.$inferSelect;
+type ProblemTopicRow = typeof schema.problemTopics.$inferSelect;
+type ProblemCompanyRow = typeof schema.problemCompanies.$inferSelect;
+type TopicRow = typeof schema.topics.$inferSelect;
+type CompanyRow = typeof schema.companies.$inferSelect;
+type StudyStateRow = typeof schema.studyStates.$inferSelect;
+type AttemptHistoryRow = typeof schema.attemptHistory.$inferSelect;
+
+export interface TrackProblemMembershipRecord {
+  groupId: TrackGroupId;
+  problemSlug: ProblemSlug;
+}
 
 // ---------- row → domain ----------
 
@@ -61,11 +76,11 @@ export function toTrack(row: TrackRow): Track {
     name: row.name,
     enabled: row.enabled,
     isCurated: row.isCurated,
+    groups: [],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
   if (row.description !== null) track.description = row.description;
-  if (row.orderIndex !== null) track.orderIndex = row.orderIndex;
   return track;
 }
 
@@ -73,7 +88,7 @@ export function toTrackGroup(row: TrackGroupRow): TrackGroup {
   const group: TrackGroup = {
     id: asTrackGroupId(row.id),
     trackId: asTrackId(row.trackId),
-    orderIndex: row.orderIndex,
+    problems: [],
   };
   if (row.topicId !== null) group.topicId = row.topicId as TopicId;
   if (row.name !== null) group.name = row.name;
@@ -81,13 +96,12 @@ export function toTrackGroup(row: TrackGroupRow): TrackGroup {
   return group;
 }
 
-export function toTrackGroupProblem(
-  row: TrackGroupProblemRow,
-): TrackGroupProblem {
+function toTrackProblemMembership(
+  row: TrackProblemMembershipRow,
+): TrackProblemMembershipRecord {
   return {
     groupId: asTrackGroupId(row.groupId),
     problemSlug: asProblemSlug(row.problemSlug),
-    orderIndex: row.orderIndex,
   };
 }
 
@@ -97,7 +111,7 @@ export function toTrackGroupProblem(
  * `tracks.order_index` (tracks), `track_groups.order_index` (groups
  * within a track), `track_group_problems.order_index` (problems within
  * a group). Uses RQB — see file header. */
-export async function listTracks(db: Db): Promise<TrackWithGroups[]> {
+export async function listTracks(db: Db): Promise<Track[]> {
   const rows = await db.query.tracks.findMany({
     orderBy: (t, { asc: a }) => [a(t.orderIndex), a(t.createdAt)],
     with: {
@@ -106,12 +120,21 @@ export async function listTracks(db: Db): Promise<TrackWithGroups[]> {
         with: {
           problems: {
             orderBy: (p, { asc: a }) => [a(p.orderIndex)],
+            with: {
+              problem: {
+                with: {
+                  studyState: { with: { attempts: true } },
+                  topics: { with: { topic: true } },
+                  companies: { with: { company: true } },
+                },
+              },
+            },
           },
         },
       },
     },
   });
-  return rows.map(rqbRowToTrackWithGroups);
+  return rows.map(rqbRowToTrack);
 }
 
 /** Fetches a single track + groups + problems. Returns `undefined` when
@@ -119,7 +142,7 @@ export async function listTracks(db: Db): Promise<TrackWithGroups[]> {
 export async function getTrack(
   db: Db,
   id: TrackId,
-): Promise<TrackWithGroups | undefined> {
+): Promise<Track | undefined> {
   const row = await db.query.tracks.findFirst({
     where: (t, { eq: e }) => e(t.id, id),
     with: {
@@ -128,12 +151,21 @@ export async function getTrack(
         with: {
           problems: {
             orderBy: (p, { asc: a }) => [a(p.orderIndex)],
+            with: {
+              problem: {
+                with: {
+                  studyState: { with: { attempts: true } },
+                  topics: { with: { topic: true } },
+                  companies: { with: { company: true } },
+                },
+              },
+            },
           },
         },
       },
     },
   });
-  return row ? rqbRowToTrackWithGroups(row) : undefined;
+  return row ? rqbRowToTrack(row) : undefined;
 }
 
 /** Plain-row read of a track without its groups; useful for the
@@ -447,7 +479,7 @@ export interface AddProblemToGroupArgs {
 export async function addProblemToGroup(
   db: Db,
   args: AddProblemToGroupArgs,
-): Promise<TrackGroupProblem> {
+): Promise<TrackProblemMembershipRecord> {
   const existingMembership = await db
     .select()
     .from(schema.trackGroupProblems)
@@ -458,7 +490,7 @@ export async function addProblemToGroup(
       ),
     );
   if (existingMembership[0]) {
-    return toTrackGroupProblem(existingMembership[0]);
+    return toTrackProblemMembership(existingMembership[0]);
   }
   const group = await getTrackGroup(db, args.groupId);
   if (!group) {
@@ -478,7 +510,6 @@ export async function addProblemToGroup(
   return {
     groupId: args.groupId,
     problemSlug: args.problemSlug,
-    orderIndex,
   };
 }
 
@@ -541,17 +572,17 @@ export async function reorderGroupProblems(
 }
 
 /** Lists every group membership for a slug — "which tracks contain this
- * problem?". Used by the library's `trackMemberships` column. */
+ * problem?". */
 export async function listMembershipsForSlug(
   db: Db,
   slug: ProblemSlug,
-): Promise<TrackGroupProblem[]> {
+): Promise<TrackProblemMembershipRecord[]> {
   const rows = await db
     .select()
     .from(schema.trackGroupProblems)
     .where(eq(schema.trackGroupProblems.problemSlug, slug))
     .orderBy(asc(schema.trackGroupProblems.orderIndex));
-  return rows.map(toTrackGroupProblem);
+  return rows.map(toTrackProblemMembership);
 }
 
 // ---------- helpers ----------
@@ -592,16 +623,66 @@ interface RqbTrackRow extends TrackRow {
   groups: RqbGroupRow[];
 }
 interface RqbGroupRow extends TrackGroupRow {
-  problems: TrackGroupProblemRow[];
+  problems: RqbTrackProblemMembershipRow[];
+}
+interface RqbTrackProblemMembershipRow extends TrackProblemMembershipRow {
+  problem: RqbProblemRow;
+}
+interface RqbProblemRow extends ProblemRow {
+  studyState: (StudyStateRow & { attempts: AttemptHistoryRow[] }) | null;
+  topics: Array<ProblemTopicRow & { topic: TopicRow }>;
+  companies: Array<ProblemCompanyRow & { company: CompanyRow }>;
 }
 
-function rqbRowToTrackWithGroups(row: RqbTrackRow): TrackWithGroups {
+function rqbProblemToProblem(row: RqbProblemRow): Problem {
+  const userEdits =
+    row.userEdits && Object.keys(row.userEdits).length > 0
+      ? (row.userEdits as ProblemEditFlags)
+      : undefined;
+  const problem: Problem = {
+    slug: asProblemSlug(row.slug),
+    title: row.title,
+    difficulty: row.difficulty as Difficulty,
+    isPremium: row.isPremium,
+    url: row.url,
+    topicIds: row.topicIds,
+    companyIds: row.companyIds,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    studyState: row.studyState
+      ? toStudyState(row.studyState, row.studyState.attempts)
+      : null,
+    topics: row.topics.map((join): Topic => ({
+      id: asTopicId(join.topic.id),
+      name: join.topic.name,
+      description: join.topic.description ?? undefined,
+      isCustom: join.topic.isCustom,
+      createdAt: join.topic.createdAt,
+      updatedAt: join.topic.updatedAt,
+    })),
+    companies: row.companies.map((join): Company => ({
+      id: asCompanyId(join.company.id),
+      name: join.company.name,
+      description: join.company.description ?? undefined,
+      isCustom: join.company.isCustom,
+      createdAt: join.company.createdAt,
+      updatedAt: join.company.updatedAt,
+    })),
+  };
+  if (row.leetcodeId) problem.leetcodeId = row.leetcodeId;
+  if (userEdits) problem.userEdits = userEdits;
+  return problem;
+}
+
+function rqbRowToTrack(row: RqbTrackRow): Track {
   const base = toTrack(row);
-  const groups: TrackGroupWithProblems[] = row.groups.map((groupRow) => {
+  const groups: TrackGroup[] = row.groups.map((groupRow) => {
     const groupBase = toTrackGroup(groupRow);
     return {
       ...groupBase,
-      problems: groupRow.problems.map(toTrackGroupProblem),
+      problems: groupRow.problems.map((membership) =>
+        rqbProblemToProblem(membership.problem),
+      ),
     };
   });
   return { ...base, groups };
@@ -624,7 +705,7 @@ export interface SeedTrackGroupRow {
   orderIndex: number;
 }
 
-export interface SeedTrackGroupProblemRow {
+export interface SeedTrackProblemMembershipRow {
   groupId: TrackGroupId;
   problemSlug: ProblemSlug;
   orderIndex: number;
@@ -633,7 +714,7 @@ export interface SeedTrackGroupProblemRow {
 export interface SeedTracksInput {
   tracks: ReadonlyArray<SeedTrackRow>;
   groups: ReadonlyArray<SeedTrackGroupRow>;
-  groupProblems: ReadonlyArray<SeedTrackGroupProblemRow>;
+  groupProblems: ReadonlyArray<SeedTrackProblemMembershipRow>;
 }
 
 /**

@@ -9,9 +9,7 @@ export type {
 export {
   buildProblemView,
   buildStudyStateView,
-  buildTrackView,
   type BuildStudyStateViewInput,
-  type BuildTrackViewInput,
 } from "./domain/policy/hydrate";
 
 export {

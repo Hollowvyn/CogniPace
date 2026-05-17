@@ -1,63 +1,66 @@
 /** Reusable "next in track" card shared by popup and overlay surfaces. */
 import {SurfaceCard, ToneChip} from "@design-system/atoms";
 import {difficultyTone} from "@features/problems";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import Button, {ButtonProps} from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {labelForStatus} from "../presentation/labels";
-
-import type {TrackQuestionView} from "../../domain/model";
+import type { Problem } from "@features/problems";
 
 export interface ActiveTrackNextCardProps {
   actionLabel?: string;
-  activeTrackId?: string;
+  trackId?: string;
   buttonFullWidth?: boolean;
   buttonVariant?: ButtonProps["variant"];
   compact?: boolean;
   label?: string;
+  groupId?: string;
+  groupName?: string;
   onOpenProblem: (target: {
     slug: string;
     trackId?: string;
     groupId?: string;
   }) => Promise<void> | void;
-  view: TrackQuestionView;
+  problem: Problem;
 }
 
 export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
   const {
     actionLabel = "Continue Path",
-    activeTrackId,
     buttonFullWidth = false,
     buttonVariant = "outlined",
     compact = false,
+    groupId,
+    groupName,
     label = "Next in track",
     onOpenProblem,
-    view,
+    problem,
+    trackId,
   } = props;
-  const phaseLabel = view.reviewPhase ? view.reviewPhase.toUpperCase() : null;
+  const summary = getStudyStateSummary(problem.studyState);
+  const phaseLabel = summary.phase.toUpperCase();
 
   return (
-    <SurfaceCard compact={compact} label={label} title={view.title}>
+    <SurfaceCard compact={compact} label={label} title={problem.title}>
       <Stack spacing={compact ? 1.15 : 1.5}>
         <Stack direction="row" flexWrap="wrap" gap={1}>
-          <ToneChip label={view.chapterTitle}/>
+          {groupName ? <ToneChip label={groupName}/> : null}
           <ToneChip
-            label={view.difficulty}
-            tone={difficultyTone(view.difficulty)}
+            label={problem.difficulty}
+            tone={difficultyTone(problem.difficulty)}
           />
         </Stack>
         <Typography color="text.secondary" variant="body2">
-          Path: {labelForStatus(view.status)}
-          {phaseLabel ? ` · FSRS: ${phaseLabel}` : ""}
+          FSRS: {phaseLabel}
         </Typography>
         <Button
           fullWidth={buttonFullWidth}
           onClick={() => {
             void onOpenProblem({
-              slug: view.slug,
-              trackId: activeTrackId,
-              groupId: view.groupId,
+              slug: problem.slug,
+              trackId,
+              groupId,
             });
           }}
           size={compact ? "small" : "medium"}
