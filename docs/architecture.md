@@ -45,6 +45,7 @@ src/
 ## Runtime Surfaces
 
 Entry contract:
+
 - `src/entrypoints/*` owns runtime bootstrap only: locate/create mount targets, create the
   React root, install shared providers, and render exactly one surface shell.
 - `src/app/<surface>/` owns React composition only: shells, view-model hooks, and navigation
@@ -64,8 +65,15 @@ Uses the narrow `getPopupShellData` read model.
 Entrypoint: `src/entrypoints/dashboard.tsx`
 Shell: `src/app/dashboard/`
 
-Overview, tracks, library, analytics, and settings screens via `?view=` deep-link.
-Routes: `src/app/dashboard/navigation/routes.ts`.
+Overview, tracks, library, analytics, and settings screens via TanStack Router
+hash routes. Dashboard routes are `#/`, `#/tracks`, `#/library`, `#/analytics`,
+and `#/settings`. Problem create/edit dialogs are route-backed overlays at
+`#/problems/new?background=library|tracks` and
+`#/problems/:slugId/edit?background=library|tracks`; the background search
+parameter selects the visible page behind the modal.
+Routes: `src/app/dashboard/navigation/router.tsx` and
+`src/app/dashboard/navigation/routes.ts`; lookup helpers live in
+`src/app/dashboard/navigation/maps.ts`.
 
 ### Overlay
 
@@ -91,12 +99,17 @@ Each slice is self-contained: `data/datasource/`, `data/repository/`, `domain/mo
 `domain/policy/`, `ui/`, `messaging/handlers.ts`, exported through `server.ts`.
 
 Rules:
+
 - Feature UI calls `api.*` (typed RPC proxy) — no `chrome.*` from UI code.
 - Datasources take a `Db` argument; they do not call `getDb()` themselves.
 - Domain code is pure: no React, no `chrome`, no `window`.
 - Feature UI state may live in screen VM hooks or Zustand stores. Store-backed
   UI follows a UDF/MVI shape: components dispatch intents, stores own async
   command flow, and repositories/runtime clients perform side effects.
+- Screen-specific feature UI lives under `ui/screens/<screen>/`, with local
+  `viewmodel/` and `components/` folders when the screen owns derived state or
+  private composition. Reusable cross-screen feature UI stays under
+  `ui/components/`.
 - Reusable feature UI should prefer domain-model inputs over exported view-row
   models. For example, the problems table consumes `Problem[]` and derives
   display cells from `Problem.studyState`, `Problem.topics`, and
@@ -157,7 +170,8 @@ feature-specific table rows for UI consumers.
 ## Where To Change Things
 
 - Popup UI: `src/app/popup/`
-- Dashboard UI: `src/app/dashboard/` (routes: `navigation/routes.ts`)
+- Dashboard UI: `src/app/dashboard/` (TanStack route tree: `navigation/router.tsx`; route metadata:
+  `navigation/routes.ts`; route lookup maps: `navigation/maps.ts`)
 - Overlay UI: `src/app/overlay/` + `src/features/overlay-session/`
 - Surface bootstrap wiring: `src/app/bootstrap/`
 - Shared theme factories: `src/design-system/theme/`

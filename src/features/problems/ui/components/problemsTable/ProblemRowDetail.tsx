@@ -66,6 +66,7 @@ interface ProblemRowDetailProps {
   commandsPending: PendingProblemTableAction | null;
   dispatchIntent: (intent: ProblemTableIntent) => void;
   now: Date;
+  onEditProblem?: (problem: Problem) => void;
   problem: Problem;
   settings: UserSettings;
   showTrackDetails: boolean;
@@ -101,6 +102,7 @@ export function ProblemRowDetail({
   commandsPending,
   dispatchIntent,
   now,
+  onEditProblem,
   problem,
   settings,
   showTrackDetails,
@@ -230,15 +232,17 @@ export function ProblemRowDetail({
         flexWrap="wrap"
         sx={{ mt: 2, rowGap: 1 }}
       >
-        <Button
-          size="small"
-          disabled={isPendingForProblem}
-          onClick={() => {
-            dispatchIntent({ type: "EDIT_PROBLEM", problem });
-          }}
-        >
-          Edit
-        </Button>
+        {onEditProblem ? (
+          <Button
+            size="small"
+            disabled={isPendingForProblem}
+            onClick={() => {
+              onEditProblem(problem);
+            }}
+          >
+            Edit
+          </Button>
+        ) : null}
         {suspendAction ? (
           <Button
             size="small"

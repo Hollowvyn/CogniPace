@@ -3,7 +3,7 @@
  *  pattern. */
 import { appShellRepository, AppShellPayload } from "@features/app-shell";
 import { Difficulty, problemRepository } from "@features/problems";
-import { createInitialUserSettings , UserSettings } from "@features/settings";
+import { createInitialUserSettings, UserSettings } from "@features/settings";
 import { Rating, StudyState } from "@features/study";
 import { getNextTrackProblem } from "@features/tracks";
 import {
@@ -11,10 +11,9 @@ import {
   isStaleOverlayRequest,
   readProblemPageSnapshot,
 } from "@libs/leetcode";
+import { dashboardExtensionPathForView } from "@libs/runtime-rpc/url";
 import { formatClock } from "@platform/time";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-
 
 import {
   defaultReviewMode,
@@ -41,9 +40,9 @@ export interface OverlayPanelEnvironment {
 }
 
 /** Coordinates overlay orchestration while delegating timer/session logic to dedicated hooks. */
-export function useOverlayPanelVM(
-  environment: OverlayPanelEnvironment
-): { renderModel: OverlayRenderModel | null } {
+export function useOverlayPanelVM(environment: OverlayPanelEnvironment): {
+  renderModel: OverlayRenderModel | null;
+} {
   const { documentRef, windowRef } = environment;
   const timer = useOverlayTimer(windowRef);
   const [postSubmitNext, setPostSubmitNext] =
@@ -121,9 +120,7 @@ export function useOverlayPanelVM(
           ? payload.popup.recommended
           : null);
       const activeTrack = payload.activeTrack;
-      const trackNext = activeTrack
-        ? getNextTrackProblem(activeTrack)
-        : null;
+      const trackNext = activeTrack ? getNextTrackProblem(activeTrack) : null;
 
       if (
         payload.settings.studyMode === "studyPlan" &&
@@ -214,10 +211,7 @@ export function useOverlayPanelVM(
         ) {
           return;
         }
-        setFeedback(
-          (err as Error).message || "Failed to sync problem.",
-          true
-        );
+        setFeedback((err as Error).message || "Failed to sync problem.", true);
         return;
       }
 
@@ -252,10 +246,7 @@ export function useOverlayPanelVM(
         ) {
           return;
         }
-        setFeedback(
-          (err as Error).message || "Failed to fetch context.",
-          true
-        );
+        setFeedback((err as Error).message || "Failed to fetch context.", true);
         return;
       }
 
@@ -282,8 +273,7 @@ export function useOverlayPanelVM(
         studyState: StudyState | null;
       };
       applyProblemContext({
-        difficulty:
-          context.problem?.difficulty ?? pageSnapshot.difficulty,
+        difficulty: context.problem?.difficulty ?? pageSnapshot.difficulty,
         slug,
         studyState: context.studyState ?? null,
         title: context.problem?.title ?? pageSnapshot.title,
@@ -411,13 +401,16 @@ export function useOverlayPanelVM(
             : currentState.selectedRating === 1
               ? "Hard means you got there with friction and should expect a sooner review."
               : "Again means you could not complete it and want the shortest review interval.",
-    tone: isHardModeOvertime || currentState.failureLocked || currentState.selectedRating === 0
-      ? "danger"
-      : currentState.selectedRating === 1
-        ? "warning"
-        : currentState.selectedRating === 3
-          ? "success"
-          : "accent",
+    tone:
+      isHardModeOvertime ||
+      currentState.failureLocked ||
+      currentState.selectedRating === 0
+        ? "danger"
+        : currentState.selectedRating === 1
+          ? "warning"
+          : currentState.selectedRating === 3
+            ? "success"
+            : "accent",
   } as const;
   const actionAssist = {
     id: "overlay-action-help",
@@ -622,7 +615,9 @@ export function useOverlayPanelVM(
             void onHideOverlay();
           },
           onOpenSettings: () => {
-            void problemRepository.openExtensionPage("dashboard.html?view=settings");
+            void problemRepository.openExtensionPage(
+              dashboardExtensionPathForView("settings")
+            );
           },
           sessionLabel: buildSessionLabel(
             currentState.currentState,

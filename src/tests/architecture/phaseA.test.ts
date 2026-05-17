@@ -38,7 +38,7 @@ function rel(absolute: string): string {
 }
 
 describe("architecture / Phase A — surface shells + UI state boundary", () => {
-  it("every capability-feature *Screen.tsx delegates state to a VM hook or UI store", () => {
+  it("capability-feature *Screen.tsx has a screen or feature UI state boundary", () => {
     const featuresRoot = path.join(repoRoot, "src/features");
     if (!fs.existsSync(featuresRoot)) return;
 
@@ -54,6 +54,10 @@ describe("architecture / Phase A — surface shells + UI state boundary", () => 
       );
       const screenName = path.basename(screenFile, ".tsx");
       const baseName = screenName.replace(/Screen$/, "");
+      const expectedScreenVmDir = path.join(
+        path.dirname(screenFile),
+        "viewmodel",
+      );
       const expectedVmFile = path.join(
         featureRoot,
         "ui",
@@ -62,8 +66,10 @@ describe("architecture / Phase A — surface shells + UI state boundary", () => 
       );
       const expectedStoreDir = path.join(featureRoot, "ui", "store");
       expect(
-        fs.existsSync(expectedVmFile) || fs.existsSync(expectedStoreDir),
-        `${rel(screenFile)} → expected sibling ${rel(expectedVmFile)} or ${rel(expectedStoreDir)}`,
+        fs.existsSync(expectedScreenVmDir) ||
+          fs.existsSync(expectedVmFile) ||
+          fs.existsSync(expectedStoreDir),
+        `${rel(screenFile)} → expected ${rel(expectedScreenVmDir)}, ${rel(expectedVmFile)}, or ${rel(expectedStoreDir)}`,
       ).toBe(true);
     }
   });

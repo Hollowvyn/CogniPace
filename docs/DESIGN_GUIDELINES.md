@@ -93,7 +93,8 @@ Labels should explain the state directly, for example:
 
 - avoid unnecessary navigation
 - keep frequent actions one click away
-- prefer direct actions over modal workflows
+- prefer direct actions over unnecessary modal workflows; when a modal is current behavior, keep it route-backed,
+  recoverable, and anchored to the relevant dashboard background
 - preserve enough context for the user to decide quickly
 - surface errors and confirmations inline near the action that caused them
 - use live regions for async feedback and keep helper/status slots mounted even when empty to prevent UI jump

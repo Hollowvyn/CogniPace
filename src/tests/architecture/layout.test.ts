@@ -40,6 +40,9 @@ describe("architecture layout", () => {
       )
     ).toBe(true);
     expect(
+      fs.existsSync(path.join(repoRoot, "src/app/dashboard/navigation/maps.ts"))
+    ).toBe(true);
+    expect(
       fs.existsSync(path.join(repoRoot, "src/app/overlay/OverlayShell.tsx"))
     ).toBe(true);
     expect(

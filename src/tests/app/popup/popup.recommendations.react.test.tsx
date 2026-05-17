@@ -8,17 +8,19 @@ import { openedProblemResponse, renderPopupWithPayload } from "./support";
 describe("Popup Recommendations", () => {
   it("renders the compact header and opens the recommended problem", async () => {
     const { user } = renderPopupWithPayload(undefined, (type, request) =>
-      type === "OPEN_PROBLEM_PAGE" ? openedProblemResponse(request) : undefined
+      type === "openProblemPage" ? openedProblemResponse(request) : undefined
     );
 
     expect(await screen.findByText("Two Sum")).toBeInTheDocument();
-    expect(sendMessageMock).toHaveBeenCalledWith("GET_POPUP_SHELL_DATA", {});
-    expect(
-      screen.getByRole("button", { name: "Refresh popup" })
-    ).toHaveStyle({ height: "34px", width: "34px" });
-    expect(
-      screen.getByRole("button", { name: "Open settings" })
-    ).toHaveStyle({ height: "34px", width: "34px" });
+    expect(sendMessageMock).toHaveBeenCalledWith("getPopupShellData", {});
+    expect(screen.getByRole("button", { name: "Refresh popup" })).toHaveStyle({
+      height: "34px",
+      width: "34px",
+    });
+    expect(screen.getByRole("button", { name: "Open settings" })).toHaveStyle({
+      height: "34px",
+      width: "34px",
+    });
     expect(
       screen.getByRole("button", { name: "Start freestyle mode" })
     ).toHaveStyle({ minHeight: "26px" });
@@ -30,7 +32,7 @@ describe("Popup Recommendations", () => {
     await user.click(screen.getByRole("button", { name: "Open Problem" }));
 
     await waitFor(() => {
-      expect(sendMessageMock).toHaveBeenCalledWith("OPEN_PROBLEM_PAGE", {
+      expect(sendMessageMock).toHaveBeenCalledWith("openProblemPage", {
         slug: "two-sum",
         trackId: undefined,
         groupId: undefined,
@@ -61,20 +63,20 @@ describe("Popup Recommendations", () => {
     );
 
     expect(tabsCreateMock).toHaveBeenCalledWith({
-      url: "chrome-extension://test/dashboard.html?view=tracks",
+      url: "chrome-extension://test/dashboard.html#/tracks",
     });
   });
 
   it("opens the next course problem from the inline continue action", async () => {
     const { user } = renderPopupWithPayload(undefined, (type, request) =>
-      type === "OPEN_PROBLEM_PAGE" ? openedProblemResponse(request) : undefined
+      type === "openProblemPage" ? openedProblemResponse(request) : undefined
     );
 
     expect(await screen.findByText("Contains Duplicate")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Continue path" }));
 
     await waitFor(() => {
-      expect(sendMessageMock).toHaveBeenCalledWith("OPEN_PROBLEM_PAGE", {
+      expect(sendMessageMock).toHaveBeenCalledWith("openProblemPage", {
         slug: "contains-duplicate",
         trackId: "Blind75",
         groupId: "arrays-1",

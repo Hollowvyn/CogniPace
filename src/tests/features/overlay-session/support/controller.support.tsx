@@ -27,10 +27,7 @@ export const COUNTING_BITS_PAGE: OverlayPageFixture = {
 };
 
 export type RuntimePayload = Record<string, unknown> & { slug?: string };
-export type RuntimeHandler = (
-  type: string,
-  payload: RuntimePayload
-) => unknown;
+export type RuntimeHandler = (type: string, payload: RuntimePayload) => unknown;
 
 export function leetcodeProblemUrl(slug: string) {
   return `https://leetcode.com/problems/${slug}/`;
@@ -55,11 +52,9 @@ export function problemForPage(
 }
 
 export function mockOverlayRuntime(handler: RuntimeHandler) {
-  sendMessageMock.mockImplementation(
-    (type: string, payload: unknown = {}) => {
-      return handler(type, payload as RuntimePayload) ?? runtimeOk();
-    }
-  );
+  sendMessageMock.mockImplementation((type: string, payload: unknown = {}) => {
+    return handler(type, payload as RuntimePayload) ?? runtimeOk();
+  });
 }
 
 export function mockCountingBitsRuntime({
@@ -77,7 +72,7 @@ export function mockCountingBitsRuntime({
       return handled;
     }
 
-    if (type === "UPSERT_PROBLEM_FROM_PAGE") {
+    if (type === "upsertProblemFromPage") {
       return runtimeOk({
         problem: problemForPage(COUNTING_BITS_PAGE, timestamp),
         studyState: getStudyState(),
@@ -85,7 +80,7 @@ export function mockCountingBitsRuntime({
     }
 
     if (
-      type === "GET_PROBLEM_CONTEXT" &&
+      type === "getProblemContext" &&
       (!payload.slug || payload.slug === COUNTING_BITS_PAGE.slug)
     ) {
       return runtimeOk({
@@ -94,7 +89,7 @@ export function mockCountingBitsRuntime({
       });
     }
 
-    if (type === "OPEN_EXTENSION_PAGE") {
+    if (type === "openExtensionPage") {
       return runtimeOk({ opened: true });
     }
 
@@ -102,7 +97,9 @@ export function mockCountingBitsRuntime({
   });
 }
 
-export function createOverlayHarness(initialPage: OverlayPageFixture): OverlayHarness {
+export function createOverlayHarness(
+  initialPage: OverlayPageFixture
+): OverlayHarness {
   let nextTimerId = 1;
   const intervals = new Map<number, () => void>();
   const timeouts = new Map<number, () => void>();

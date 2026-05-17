@@ -13,11 +13,13 @@ export interface TrackProblemTableProps {
   settings: UserSettings;
   commands?: ProblemTableCommands;
   emptyMessage?: string;
+  onEditProblem?: (problem: Problem) => void;
   onRefresh?: () => Promise<void> | void;
 }
 
 export function TrackProblemTable(props: TrackProblemTableProps) {
-  const { commands, emptyMessage, onRefresh, problems, settings } = props;
+  const { commands, emptyMessage, onEditProblem, onRefresh, problems, settings } =
+    props;
   const tableCommands = useMemo(
     () => commands ?? createDefaultProblemTableCommands(onRefresh),
     [commands, onRefresh],
@@ -33,6 +35,7 @@ export function TrackProblemTable(props: TrackProblemTableProps) {
     <ProblemsTable
       store={store}
       emptyMessage={emptyMessage ?? "No problems in this group yet."}
+      onEditProblem={onEditProblem}
     />
   );
 }

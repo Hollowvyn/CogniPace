@@ -1,10 +1,14 @@
 import { api } from "@app/api";
 import { Rating, ReviewLogFields, ReviewMode } from "@features/study";
 
-
 import { Difficulty } from "../../domain/model";
 
-import type { Problem, ProblemEditPatch } from "../../domain/model";
+import type {
+  CompanyLabel,
+  Problem,
+  ProblemEditPatch,
+  TopicLabel,
+} from "../../domain/model";
 import type { ProblemSlug } from "@shared/ids";
 
 export const problemRepository = {
@@ -16,8 +20,7 @@ export const problemRepository = {
     url?: string;
   }) => api.upsertProblemFromPage(input),
 
-  getProblemContext: (slug: string) =>
-    api.getProblemContext({ slug }),
+  getProblemContext: (slug: string) => api.getProblemContext({ slug }),
 
   saveReviewResult: (input: {
     slug: string;
@@ -58,11 +61,13 @@ export const problemRepository = {
     source?: "overlay" | "dashboard";
   }) => api.overrideLastReviewResult(input),
 
-  openProblemPage: (target: { slug: string; trackId?: string; groupId?: string }) =>
-    api.openProblemPage(target),
+  openProblemPage: (target: {
+    slug: string;
+    trackId?: string;
+    groupId?: string;
+  }) => api.openProblemPage(target),
 
-  openExtensionPage: (path: string) =>
-    api.openExtensionPage({ path }),
+  openExtensionPage: (path: string) => api.openExtensionPage({ path }),
 
   suspendProblem: (slug: ProblemSlug, suspend: boolean) =>
     api.suspendProblem({ slug, suspend }),
@@ -76,9 +81,19 @@ export const problemRepository = {
     markUserEdit: boolean;
   }) => api.editProblem(input),
 
+  createProblem: (input: { input: string; patch?: ProblemEditPatch }) =>
+    api.createProblem(input),
+
+  getProblemForEdit: (slug: ProblemSlug) =>
+    api.getProblemForEdit({ slug }) as Promise<Problem | null>,
+
   getLibrary: () => api.getLibrary({}) as Promise<Problem[]>,
 
-  getEditChoices: () => api.getEditChoices({}),
+  getTopics: () => api.getTopics({}) as Promise<TopicLabel[]>,
+
+  getCompanies: () => api.getCompanies({}) as Promise<CompanyLabel[]>,
+
+  createCustomCompany: (name: string) => api.createCustomCompany({ name }),
 };
 
 export type ProblemRepository = typeof problemRepository;

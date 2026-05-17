@@ -69,6 +69,7 @@
     "@mui/icons-material": "^7.3.10",
     "@mui/material": "^7.3.10",
     "@sqlite.org/sqlite-wasm": "^3.53.0-build1",
+    "@tanstack/react-router": "^1.170.3",
     "drizzle-orm": "^0.45.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

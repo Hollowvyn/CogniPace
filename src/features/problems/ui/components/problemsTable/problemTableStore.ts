@@ -29,7 +29,6 @@ export type ProblemTableIntent =
   | { type: "CLEAR_EXPANDED" }
   | { type: "TOGGLE_SELECTED"; slug: ProblemSlug }
   | { type: "TOGGLE_PAGE_SELECTION"; slugs: readonly ProblemSlug[] }
-  | { type: "EDIT_PROBLEM"; problem: Problem }
   | { type: "OPEN_PROBLEM"; problem: Problem }
   | { type: "SUSPEND_PROBLEM"; problem: Problem; suspend: boolean }
   | { type: "RESET_SCHEDULE"; problem: Problem }
@@ -166,13 +165,6 @@ export function createProblemTableStore(
                 intent.slugs,
               ),
             }));
-            return;
-          case "EDIT_PROBLEM":
-            void runCommand(
-              { kind: "edit", slug: asProblemSlug(intent.problem.slug) },
-              () => get().commands.editProblem?.(intent.problem),
-              false,
-            );
             return;
           case "OPEN_PROBLEM":
             void runCommand(

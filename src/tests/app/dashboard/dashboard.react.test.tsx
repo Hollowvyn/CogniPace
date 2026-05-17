@@ -6,21 +6,21 @@ import { makePayload } from "../../support/appShellFixtures";
 import { render, screen, waitFor, fireEvent } from "../../support/render";
 import { emitLocalStorageChange, sendMessageMock } from "../../support/setup";
 
-type DashboardRuntimeOverride = (
-  type: string,
-  request: unknown
-) => unknown;
+type DashboardRuntimeOverride = (type: string, request: unknown) => unknown;
 
-function renderDashboardWithPayload(
-  payload = makePayload(),
-  override?: DashboardRuntimeOverride
-) {
+function renderDashboardWithPayload(options: {
+  hash?: string;
+  override?: DashboardRuntimeOverride;
+  payload?: ReturnType<typeof makePayload>;
+} = {}) {
+  const { hash = "#/", override, payload = makePayload() } = options;
+  window.history.pushState({}, "", `/dashboard.html${hash}`);
   sendMessageMock.mockImplementation((type: string, request: unknown) => {
     const overridden = override?.(type, request);
     if (overridden !== undefined) {
       return overridden;
     }
-    if (type === "GET_APP_SHELL_DATA") {
+    if (type === "getAppShellData") {
       return Promise.resolve({ ok: true, data: payload });
     }
     return Promise.resolve({ ok: true, data: {} });
@@ -30,15 +30,8 @@ function renderDashboardWithPayload(
 }
 
 describe("DashboardShell", () => {
-  it("switches views and filters library rows", async () => {
-    const payload = makePayload();
-    const { user } = renderDashboardWithPayload(payload);
-
-    expect(
-      await screen.findByRole("heading", { name: "Dashboard" })
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Library" }));
+  it("filters library rows", async () => {
+    renderDashboardWithPayload({ hash: "#/library" });
 
     expect(await screen.findByText("All Tracked Problems")).toBeInTheDocument();
 
@@ -53,17 +46,16 @@ describe("DashboardShell", () => {
   });
 
   it("saves settings through runtime messaging", async () => {
-    const payload = makePayload();
-    const { user } = renderDashboardWithPayload(payload, (type) =>
-      type === "UPDATE_SETTINGS"
-        ? Promise.resolve({ ok: true, data: {} })
-        : undefined
-    );
-
-    await user.click(await screen.findByRole("button", { name: "Settings" }));
+    const { user } = renderDashboardWithPayload({
+      hash: "#/settings",
+      override: (type) =>
+        type === "updateSettings"
+          ? Promise.resolve({ ok: true, data: {} })
+          : undefined,
+    });
 
     expect(
-      screen.getByRole("button", { name: "Save Settings" })
+      await screen.findByRole("button", { name: "Save Settings" })
     ).toBeDisabled();
 
     const dailyQuestionGoalInput = await screen.findByLabelText(
@@ -80,7 +72,7 @@ describe("DashboardShell", () => {
 
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith(
-        "UPDATE_SETTINGS",
+        "updateSettings",
         expect.objectContaining({
           dailyQuestionGoal: 24,
         })
@@ -90,18 +82,18 @@ describe("DashboardShell", () => {
 
   it("refreshes settings when another extension surface updates app data", async () => {
     let payload = makePayload();
-    const { user } = renderDashboardWithPayload(payload, (type) =>
-      type === "GET_APP_SHELL_DATA"
-        ? Promise.resolve({ ok: true, data: payload })
-        : undefined
-    );
+    renderDashboardWithPayload({
+      hash: "#/settings",
+      payload,
+      override: (type) =>
+        type === "getAppShellData"
+          ? Promise.resolve({ ok: true, data: payload })
+          : undefined,
+    });
 
-    await user.click(await screen.findByRole("button", { name: "Settings" }));
-
-    expect(screen.getByRole("button", { name: "Study plan" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
+    expect(
+      await screen.findByRole("button", { name: "Study plan" })
+    ).toHaveAttribute("aria-pressed", "true");
 
     payload = {
       ...payload,
@@ -141,20 +133,20 @@ describe("DashboardShell", () => {
 
     try {
       const initial = makePayload().settings;
-      const { user } = renderDashboardWithPayload(makePayload(), (type, payload) =>
-        type === "UPDATE_SETTINGS"
-          ? Promise.resolve({
-            ok: true,
-            data: {
-              // The real SW handler always returns the round-tripped
-              // settings; mock the same shape (charter lesson #6).
-              settings: { ...initial, ...(payload as object) },
-            },
-          })
-          : undefined
-      );
-
-      await user.click(await screen.findByRole("button", { name: "Settings" }));
+      const { user } = renderDashboardWithPayload({
+        hash: "#/settings",
+        override: (type, payload) =>
+          type === "updateSettings"
+            ? Promise.resolve({
+                ok: true,
+                data: {
+                  // The real SW handler always returns the round-tripped
+                  // settings; mock the same shape (charter lesson #6).
+                  settings: { ...initial, ...(payload as object) },
+                },
+              })
+            : undefined,
+      });
 
       const dailyQuestionGoalInput = await screen.findByLabelText(
         "Daily Question Goal"
@@ -179,17 +171,13 @@ describe("DashboardShell", () => {
     const payload = makePayload();
     payload.settings.dailyQuestionGoal = 0;
 
-    const { user } = renderDashboardWithPayload(payload);
+    renderDashboardWithPayload({ hash: "#/settings", payload });
 
-    await user.click(await screen.findByRole("button", { name: "Settings" }));
-
-    expect(screen.getByLabelText("Daily Question Goal")).toHaveValue(0);
+    expect(await screen.findByLabelText("Daily Question Goal")).toHaveValue(0);
   });
 
   it("renders settings sections with the new grouped controls", async () => {
-    const { user } = renderDashboardWithPayload(makePayload());
-
-    await user.click(await screen.findByRole("button", { name: "Settings" }));
+    const { user } = renderDashboardWithPayload({ hash: "#/settings" });
 
     expect(
       await screen.findByRole("heading", { name: "Practice Plan" })
@@ -243,16 +231,16 @@ describe("DashboardShell", () => {
   });
 
   it("confirms before resetting study history", async () => {
-    const { user } = renderDashboardWithPayload(makePayload(), (type) =>
-      type === "RESET_STUDY_HISTORY"
-        ? Promise.resolve({ ok: true, data: { reset: true } })
-        : undefined
-    );
-
-    await user.click(await screen.findByRole("button", { name: "Settings" }));
+    const { user } = renderDashboardWithPayload({
+      hash: "#/settings",
+      override: (type) =>
+        type === "resetStudyHistory"
+          ? Promise.resolve({ ok: true, data: { reset: true } })
+          : undefined,
+    });
 
     await user.click(
-      screen.getByRole("button", { name: "Reset study history" })
+      await screen.findByRole("button", { name: "Reset study history" })
     );
 
     expect(
@@ -262,7 +250,7 @@ describe("DashboardShell", () => {
     await user.click(screen.getByRole("button", { name: "Confirm Reset" }));
 
     await waitFor(() => {
-      expect(sendMessageMock).toHaveBeenCalledWith("RESET_STUDY_HISTORY", {});
+      expect(sendMessageMock).toHaveBeenCalledWith("resetStudyHistory", {});
     });
   });
 });

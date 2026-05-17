@@ -1,27 +1,50 @@
 import { SurfaceCard } from "@design-system/atoms";
-import { createInitialUserSettings } from "@features/settings";
+import Button from "@mui/material/Button";
 
-import { EditProblemModalConnected } from "../../components/EditProblemModalConnected";
-import { LibraryProblemTable } from "../../components/problemsTable";
+import { LibraryProblemTable } from "./components/LibraryProblemTable";
+import { useLibraryVM } from "./viewmodel/useLibraryVM";
 
+import type { Problem } from "../../../domain/model";
+import type { ProblemTableCommands } from "../../components/problemsTable";
 import type { AppShellPayload } from "@features/app-shell";
 
 export interface LibraryScreenProps {
+  commands?: ProblemTableCommands;
   payload: AppShellPayload | null;
+  onCreateProblem?: () => void;
+  onEditProblem?: (problem: Problem) => void;
   onRefresh?: () => Promise<void> | void;
 }
 
-export function LibraryScreen({ onRefresh, payload }: LibraryScreenProps) {
+export function LibraryScreen({
+  commands,
+  onCreateProblem,
+  onEditProblem,
+  onRefresh,
+  payload,
+}: LibraryScreenProps) {
+  const viewModel = useLibraryVM(payload);
+
   return (
-    <SurfaceCard label="Library" title="All Tracked Problems">
+    <SurfaceCard
+      action={
+        onCreateProblem ? (
+          <Button size="small" variant="outlined" onClick={onCreateProblem}>
+            Add problem
+          </Button>
+        ) : null
+      }
+      label="Library"
+      title={viewModel.title}
+    >
       <LibraryProblemTable
-        problems={payload?.problems ?? []}
-        tracks={payload?.tracks ?? []}
-        settings={payload?.settings ?? createInitialUserSettings()}
+        commands={commands}
+        problems={viewModel.problems}
+        tracks={viewModel.tracks}
+        settings={viewModel.settings}
+        onEditProblem={onEditProblem}
         onRefresh={onRefresh}
       />
-
-      <EditProblemModalConnected />
     </SurfaceCard>
   );
 }

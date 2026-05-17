@@ -35,7 +35,19 @@ export type { ProblemRepository } from "./data/repository/ProblemRepository";
 
 export { LibraryScreen } from "./ui/screens/library/LibraryScreen";
 export {
-  LibraryProblemTable,
+  ProblemFormDialog,
+  type ProblemFormDialogCloseReason,
+} from "./ui/screens/editcreateform/ProblemFormDialog";
+export {
+  createProblemFormViewModel,
+} from "./ui/screens/editcreateform/viewmodel/problemFormStore";
+export type {
+  ProblemFormIntent,
+  ProblemFormStore,
+} from "./ui/screens/editcreateform/viewmodel/problemFormStore";
+export { LibraryProblemTable } from "./ui/screens/library/components/LibraryProblemTable";
+export type { LibraryProblemTableProps } from "./ui/screens/library/components/LibraryProblemTable";
+export {
   TrackProblemTable,
   type ProblemTableCommands,
 } from "./ui/components/problemsTable";

@@ -1,14 +1,46 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { DashboardShell } from "../../../app/dashboard/DashboardShell";
 import { makePayload } from "../../support/appShellFixtures";
-import { act, render, screen, waitFor } from "../../support/render";
+import { render, screen, waitFor } from "../../support/render";
 import { sendMessageMock } from "../../support/setup";
 
 function renderDashboardWithPayload(payload = makePayload()) {
-  sendMessageMock.mockImplementation((type: string) => {
-    if (type === "GET_APP_SHELL_DATA") {
+  sendMessageMock.mockImplementation((type: string, request: unknown) => {
+    if (type === "getAppShellData") {
       return { ok: true, data: payload };
+    }
+    if (type === "getTracks") {
+      return {
+        ok: true,
+        data: {
+          tracks: payload.tracks,
+          activeTrack: payload.activeTrack,
+          settings: payload.settings,
+        },
+      };
+    }
+    if (type === "getTopics") {
+      return {
+        ok: true,
+        data: payload.topicChoices,
+      };
+    }
+    if (type === "getCompanies") {
+      return {
+        ok: true,
+        data: payload.companyChoices,
+      };
+    }
+    if (type === "getProblemForEdit") {
+      const slug = (request as { slug?: string }).slug;
+      return {
+        ok: true,
+        data: payload.problems.find((problem) => problem.slug === slug) ?? null,
+      };
+    }
+    if (type === "createProblem") {
+      return { ok: true, data: { slug: "valid-palindrome" } };
     }
     return { ok: true, data: {} };
   });
@@ -17,40 +49,100 @@ function renderDashboardWithPayload(payload = makePayload()) {
 }
 
 describe("dashboard navigation", () => {
-  it("pushes history entries for user-initiated view changes", async () => {
+  it("routes user-initiated view changes through TanStack Router", async () => {
     const payload = makePayload();
-    const pushStateSpy = vi.spyOn(window.history, "pushState");
 
     const { user } = renderDashboardWithPayload(payload);
 
     await user.click(await screen.findByRole("button", { name: "Tracks" }));
 
     await waitFor(() => {
-      expect(pushStateSpy).toHaveBeenCalled();
-      expect(String(pushStateSpy.mock.calls.at(-1)?.[2])).toContain(
-        "view=tracks"
-      );
+      expect(window.location.hash).toBe("#/tracks");
     });
+    expect(
+      await screen.findByRole("heading", { name: "Tracks", hidden: true })
+    ).toBeInTheDocument();
   });
 
-  it("syncs the active screen from popstate events", async () => {
+  it("loads screens directly from hash routes", async () => {
     const payload = makePayload();
 
-    window.history.pushState({}, "", "/dashboard.html?view=dashboard");
+    window.history.pushState({}, "", "/dashboard.html#/library");
+
+    renderDashboardWithPayload(payload);
+
+    expect(await screen.findByText("All Tracked Problems")).toBeInTheDocument();
+  });
+
+  it("uses the single problem modal route with background search", async () => {
+    const payload = makePayload();
+
+    window.history.pushState(
+      {},
+      "",
+      "/dashboard.html#/problems/two-sum/edit?background=tracks"
+    );
 
     renderDashboardWithPayload(payload);
 
     expect(
-      await screen.findByRole("heading", { name: "Dashboard" })
+      await screen.findByRole("heading", { name: "Tracks", hidden: true })
     ).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Edit: Two Sum" })
+    ).toBeInTheDocument();
+    expect(window.location.hash).toBe(
+      "#/problems/two-sum/edit?background=tracks"
+    );
+  });
 
-    act(() => {
-      window.history.pushState({}, "", "/dashboard.html?view=library");
-      window.dispatchEvent(new PopStateEvent("popstate"));
-    });
+  it("opens create problem from Tracks on the canonical modal route", async () => {
+    const payload = makePayload();
+
+    window.history.pushState({}, "", "/dashboard.html#/tracks");
+
+    const { user } = renderDashboardWithPayload(payload);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Add problem" })
+    );
 
     expect(
-      await screen.findByText("All Tracked Problems")
+      await screen.findByRole("heading", { name: "Add problem" })
     ).toBeInTheDocument();
+    expect(window.location.hash).toBe("#/problems/new?background=tracks");
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => {
+      expect(window.location.hash).toBe("#/tracks");
+    });
   });
+
+  it("handles saved problem form closes in the route layer", async () => {
+    const payload = makePayload();
+
+    window.history.pushState(
+      {},
+      "",
+      "/dashboard.html#/problems/new?background=library"
+    );
+
+    const { user } = renderDashboardWithPayload(payload);
+
+    await user.type(
+      await screen.findByLabelText(/LeetCode URL or slug/),
+      "valid-palindrome"
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(sendMessageMock).toHaveBeenCalledWith("createProblem", {
+        input: "valid-palindrome",
+      });
+      expect(window.location.hash).toBe("#/library");
+      expect(screen.getByText("Problem added.")).toBeInTheDocument();
+    });
+  });
+
 });

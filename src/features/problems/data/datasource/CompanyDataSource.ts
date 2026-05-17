@@ -1,7 +1,7 @@
 /**
  * Companies repository — SQLite source of truth for the Company aggregate.
  *
- * Mirror of `src/data/topics/repository.ts`. Same conventions:
+ * Same datasource conventions as topics:
  *  - repos throw on failure; SW message boundary catches and serialises.
  *  - upsert preserves `isCustom` via ON CONFLICT(id) DO UPDATE on the
  *    mutable columns only.

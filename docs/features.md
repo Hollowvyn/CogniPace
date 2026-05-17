@@ -280,7 +280,7 @@ Give the user a broader control surface than the popup.
 ### Current Behavior
 
 - overview page surfaces recommendation, active track state, and summary metrics
-- dashboard acts as the navigation root for the wider extension controls
+- dashboard acts as the hash-routed navigation root for overview, tracks, library, analytics, and settings
 
 ### Key States And Edge Cases
 
@@ -357,12 +357,16 @@ Provide a searchable and filterable view of tracked problems.
 - filters by query, track, difficulty, and status
 - displays review state summary and track memberships
 - shows current retrievability (memory strength) per card with color-coded percentage
+- supports route-backed add/edit problem dialogs from Library and Tracks at
+  `#/problems/new?background=library|tracks` and
+  `#/problems/:slugId/edit?background=library|tracks`
 
 ### Key States And Edge Cases
 
 - no problems match the current filter
 - a problem belongs to multiple track contexts
 - imported problems have partial metadata
+- direct loads of problem add/edit modal routes require a stable Library or Tracks background
 
 ### In Scope
 

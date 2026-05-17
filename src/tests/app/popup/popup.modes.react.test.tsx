@@ -15,7 +15,7 @@ describe("Popup Study Modes", () => {
     }>();
 
     const { user } = renderPopupWithPayload(payload, (type) =>
-      type === "UPDATE_SETTINGS" ? updateResponse.promise : undefined
+      type === "updateSettings" ? updateResponse.promise : undefined
     );
 
     expect(await screen.findByText("Two Sum")).toBeInTheDocument();
@@ -28,7 +28,7 @@ describe("Popup Study Modes", () => {
     ).toBeInTheDocument();
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith(
-        "UPDATE_SETTINGS",
+        "updateSettings",
         expect.objectContaining({ studyMode: "freestyle" })
       );
     });
@@ -50,7 +50,7 @@ describe("Popup Study Modes", () => {
     const updateResponse = deferred<{ ok: boolean; error: string }>();
 
     const { user } = renderPopupWithPayload(undefined, (type) =>
-      type === "UPDATE_SETTINGS" ? updateResponse.promise : undefined
+      type === "updateSettings" ? updateResponse.promise : undefined
     );
 
     expect(await screen.findByText("Blind 75")).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe("Popup Study Modes", () => {
     const updateResponse = deferred<never>();
 
     const { user } = renderPopupWithPayload(undefined, (type) =>
-      type === "UPDATE_SETTINGS" ? updateResponse.promise : undefined
+      type === "updateSettings" ? updateResponse.promise : undefined
     );
 
     expect(await screen.findByText("Blind 75")).toBeInTheDocument();

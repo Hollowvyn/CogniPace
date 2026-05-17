@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 
-import { ProblemsTable } from "./ProblemsTable";
-import { createDefaultProblemTableCommands } from "./problemTableCommands";
-import { useProblemTableStore } from "./useProblemTableStore";
+import { ProblemsTable } from "../../../components/problemsTable/ProblemsTable";
+import { createDefaultProblemTableCommands } from "../../../components/problemsTable/problemTableCommands";
+import { useProblemTableStore } from "../../../components/problemsTable/useProblemTableStore";
 
-import type { ProblemTableCommands } from "./types";
-import type { Problem } from "../../../domain/model";
+import type { Problem } from "../../../../domain/model";
+import type { ProblemTableCommands } from "../../../components/problemsTable/types";
 import type { UserSettings } from "@features/settings";
 import type { Track } from "@features/tracks";
 
@@ -14,11 +14,13 @@ export interface LibraryProblemTableProps {
   tracks: readonly Track[];
   settings: UserSettings;
   commands?: ProblemTableCommands;
+  onEditProblem?: (problem: Problem) => void;
   onRefresh?: () => Promise<void> | void;
 }
 
 export function LibraryProblemTable(props: LibraryProblemTableProps) {
-  const { commands, onRefresh, problems, settings, tracks } = props;
+  const { commands, onEditProblem, onRefresh, problems, settings, tracks } =
+    props;
   const tableCommands = useMemo(
     () => commands ?? createDefaultProblemTableCommands(onRefresh),
     [commands, onRefresh],
@@ -39,6 +41,7 @@ export function LibraryProblemTable(props: LibraryProblemTableProps) {
       showRetentionColumn
       showSelection
       padToPageSize
+      onEditProblem={onEditProblem}
     />
   );
 }

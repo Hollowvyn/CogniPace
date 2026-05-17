@@ -10,13 +10,27 @@ import {
   slugToUrl,
 } from "@libs/leetcode";
 
-const ALLOWED_DASHBOARD_VIEWS = new Set([
-  "dashboard",
-  "tracks",
+export type DashboardView =
+  | "dashboard"
+  | "tracks"
+  | "library"
+  | "analytics"
+  | "settings";
+
+export type DashboardModalBackground = "library" | "tracks";
+
+const ALLOWED_MODAL_BACKGROUNDS = new Set<DashboardModalBackground>([
   "library",
-  "analytics",
-  "settings",
+  "tracks",
 ]);
+
+export const DASHBOARD_VIEW_PATHS: Record<DashboardView, string> = {
+  dashboard: "/",
+  tracks: "/tracks",
+  library: "/library",
+  analytics: "/analytics",
+  settings: "/settings",
+};
 
 // Re-export for handler callers that previously imported from
 // `@libs/runtime-rpc/validator` (now removed).
@@ -30,6 +44,40 @@ export function canonicalProblemUrlForOpen(slugInput: string): string {
     throw new Error("Invalid slug.");
   }
   return slugToUrl(normalizedSlug);
+}
+
+export function isDashboardModalBackground(
+  value: unknown
+): value is DashboardModalBackground {
+  return (
+    typeof value === "string" &&
+    ALLOWED_MODAL_BACKGROUNDS.has(value as DashboardModalBackground)
+  );
+}
+
+function dashboardPathForView(view: DashboardView): string {
+  return DASHBOARD_VIEW_PATHS[view];
+}
+
+export function dashboardExtensionPathForView(view: DashboardView): string {
+  return `dashboard.html#${dashboardPathForView(view)}`;
+}
+
+function dashboardProblemCreatePath(
+  background: DashboardModalBackground = "library"
+): string {
+  return `dashboard.html#/problems/new?background=${background}`;
+}
+
+function dashboardProblemEditPath(
+  slugInput: string,
+  background: DashboardModalBackground = "library"
+): string {
+  const slug = normalizeSlug(slugInput);
+  if (!slug) {
+    throw new Error("Invalid slug.");
+  }
+  return `dashboard.html#/problems/${slug}/edit?background=${background}`;
 }
 
 /** Whitelist of internal extension pages the UI is allowed to open via the
@@ -49,34 +97,104 @@ export function validateExtensionPagePath(pathInput: string): string {
   ) {
     throw new Error("Invalid extension path.");
   }
-
-  const parsed = new URL(value, "https://extension.invalid/");
-  const fileName = parsed.pathname.replace(/^\//, "");
-  if (parsed.hash) {
+  try {
+    if (decodeURIComponent(value).includes("..")) {
+      throw new Error("Invalid extension path.");
+    }
+  } catch {
     throw new Error("Invalid extension path.");
   }
 
+  const parsed = new URL(value, "https://extension.invalid/");
+  const fileName = parsed.pathname.replace(/^\//, "");
+
   if (fileName === "dashboard.html") {
-    const params: string[] = [];
-    let viewCount = 0;
-    parsed.searchParams.forEach((_, key) => {
-      params.push(key);
-      if (key === "view") {
-        viewCount += 1;
-      }
-    });
-    if (params.some((key) => key !== "view")) {
-      throw new Error("Invalid dashboard path.");
-    }
-    if (viewCount > 1) {
-      throw new Error("Invalid dashboard path.");
-    }
-    const view = parsed.searchParams.get("view");
-    if (view && !ALLOWED_DASHBOARD_VIEWS.has(view)) {
-      throw new Error("Invalid dashboard view.");
-    }
-    return view ? `dashboard.html?view=${view}` : "dashboard.html";
+    return validateDashboardPath(parsed);
   }
 
   throw new Error("Unknown extension path.");
+}
+
+function validateDashboardPath(parsed: URL): string {
+  if (parsed.search) {
+    throw new Error("Invalid dashboard path.");
+  }
+
+  if (!parsed.hash) {
+    return dashboardExtensionPathForView("dashboard");
+  }
+
+  return validateDashboardHash(parsed.hash);
+}
+
+function validateDashboardHash(hash: string): string {
+  const raw = hash.slice(1);
+  if (!raw || raw === "/") {
+    return dashboardExtensionPathForView("dashboard");
+  }
+  if (!raw.startsWith("/")) {
+    throw new Error("Invalid dashboard path.");
+  }
+
+  const parsed = new URL(raw, "https://dashboard.invalid");
+  if (parsed.hash) {
+    throw new Error("Invalid dashboard path.");
+  }
+  const pathPart = parsed.pathname;
+
+  if (Object.values(DASHBOARD_VIEW_PATHS).includes(pathPart)) {
+    if (parsed.search) {
+      throw new Error("Invalid dashboard path.");
+    }
+    return `dashboard.html#${pathPart}`;
+  }
+
+  if (pathPart === "/problems/new") {
+    return dashboardProblemCreatePath(
+      validateModalBackground(parsed.searchParams)
+    );
+  }
+
+  const editMatch = /^\/problems\/([^/]+)\/edit$/.exec(pathPart);
+  if (editMatch) {
+    const slugSegment = decodeURIComponent(editMatch[1] ?? "");
+    const slug = normalizeSlug(slugSegment);
+    if (!slug || slug !== slugSegment) {
+      throw new Error("Invalid dashboard problem route.");
+    }
+    return dashboardProblemEditPath(
+      slug,
+      validateModalBackground(parsed.searchParams)
+    );
+  }
+
+  throw new Error("Invalid dashboard path.");
+}
+
+function validateModalBackground(
+  searchParams: URLSearchParams
+): DashboardModalBackground {
+  const params: string[] = [];
+  let backgroundCount = 0;
+  searchParams.forEach((_, key) => {
+    params.push(key);
+    if (key === "background") {
+      backgroundCount += 1;
+    }
+  });
+  if (params.some((key) => key !== "background")) {
+    throw new Error("Invalid dashboard problem route.");
+  }
+  if (backgroundCount > 1) {
+    throw new Error("Invalid dashboard problem route.");
+  }
+
+  const background = searchParams.get("background");
+  if (!background) {
+    throw new Error("Invalid dashboard problem route.");
+  }
+  if (!isDashboardModalBackground(background)) {
+    throw new Error("Invalid dashboard problem background.");
+  }
+  return background;
 }

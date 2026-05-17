@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { openProblemPage } from "@features/problems/server";
 import { describe, it } from "vitest";
 
-
 interface ChromeTabsMock {
   createdTabs: chrome.tabs.CreateProperties[];
   restore: () => void;
@@ -26,10 +25,7 @@ function installChromeTabsMock(): ChromeTabsMock {
           createdTabs.push(properties);
           return Promise.resolve({} as chrome.tabs.Tab);
         },
-        update: (
-          id: number,
-          properties: chrome.tabs.UpdateProperties
-        ) => {
+        update: (id: number, properties: chrome.tabs.UpdateProperties) => {
           updatedTabs.push({ id, properties });
           return Promise.resolve({ id, ...properties } as chrome.tabs.Tab);
         },
@@ -78,7 +74,7 @@ describe("openProblemPage", () => {
       await openProblemPage({ slug: "two-sum" }, {
         tab: {
           id: 11,
-          url: "chrome-extension://test-extension/dashboard.html?view=library",
+          url: "chrome-extension://test-extension/dashboard.html#/library",
         },
       } as chrome.runtime.MessageSender);
     } finally {
