@@ -1,20 +1,8 @@
-import {
-  getDashboardRoute,
-  getDashboardViewForPathname,
-} from "@app/dashboard/navigation/maps";
+import { getDashboardRoute } from "@app/dashboard/navigation/routes";
 import { describe, expect, it } from "vitest";
 
 describe("dashboard routes", () => {
-  it("maps router pathnames to dashboard route metadata", () => {
-    expect(getDashboardViewForPathname("/tracks")).toBe("tracks");
-    expect(
-      getDashboardViewForPathname("/problems/two-sum/edit", "tracks")
-    ).toBe("tracks");
-    expect(getDashboardViewForPathname("/problems/new", "library")).toBe(
-      "library"
-    );
-    expect(getDashboardViewForPathname("/problems/new")).toBe("dashboard");
-    expect(getDashboardViewForPathname("/unknown")).toBe("dashboard");
+  it("returns dashboard route metadata", () => {
     expect(getDashboardRoute("analytics").label).toBe("Analytics");
   });
 });
