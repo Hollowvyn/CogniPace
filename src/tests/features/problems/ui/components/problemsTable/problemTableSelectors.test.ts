@@ -1,6 +1,7 @@
 import {
   createDefaultFilters,
   filterAndSortProblems,
+  getProblemTrackItems,
 } from "@features/problems/ui/components/problemsTable";
 import { createInitialUserSettings } from "@features/settings";
 import { describe, expect, it } from "vitest";
@@ -9,6 +10,7 @@ import { makePayload } from "../../../../../support/appShellFixtures";
 import {
   makeProblem,
   makeScheduledState,
+  makeTrack,
 } from "../../../../../support/fixtures";
 
 import type { Difficulty, Problem } from "@features/problems";
@@ -22,7 +24,7 @@ function problem(
   title: string,
   difficulty: Difficulty,
   phase: Exclude<StudyPhase, "Suspended"> | "New" = "New",
-  nextReviewAt?: string,
+  nextReviewAt?: string
 ): Problem {
   const base = makeProblem(slug, {
     title,
@@ -30,7 +32,7 @@ function problem(
   });
   if (phase === "New") return base;
   const scheduled = makeScheduledState(
-    nextReviewAt ?? "2026-04-10T00:00:00.000Z",
+    nextReviewAt ?? "2026-04-10T00:00:00.000Z"
   );
   return {
     ...base,
@@ -56,7 +58,7 @@ describe("problem table selectors", () => {
       { ...createDefaultFilters(), query: "sum" },
       { key: "title", direction: "asc" },
       settings,
-      now,
+      now
     );
     expect(out.map((p) => p.title)).toEqual(["3Sum", "Two Sum"]);
   });
@@ -72,7 +74,7 @@ describe("problem table selectors", () => {
       { ...createDefaultFilters(), difficulty: "Hard" },
       { key: "title", direction: "asc" },
       settings,
-      now,
+      now
     );
     expect(out).toHaveLength(1);
     expect(out[0].title).toBe("C");
@@ -89,7 +91,7 @@ describe("problem table selectors", () => {
       { ...createDefaultFilters(), phase: "New" },
       { key: "title", direction: "asc" },
       settings,
-      now,
+      now
     );
     expect(out).toHaveLength(1);
     expect(out[0].title).toBe("A");
@@ -127,7 +129,7 @@ describe("problem table selectors", () => {
       createDefaultFilters(),
       { key: "title", direction: "asc" },
       settings,
-      now,
+      now
     );
     expect(asc.map((p) => p.title)).toEqual(["Alpha", "Bravo", "Charlie"]);
     const desc = filterAndSortProblems(
@@ -135,13 +137,9 @@ describe("problem table selectors", () => {
       createDefaultFilters(),
       { key: "title", direction: "desc" },
       settings,
-      now,
+      now
     );
-    expect(desc.map((p) => p.title)).toEqual([
-      "Charlie",
-      "Bravo",
-      "Alpha",
-    ]);
+    expect(desc.map((p) => p.title)).toEqual(["Charlie", "Bravo", "Alpha"]);
   });
 
   it("sorts by difficulty Easy < Medium < Hard < Unknown", () => {
@@ -156,7 +154,7 @@ describe("problem table selectors", () => {
       createDefaultFilters(),
       { key: "difficulty", direction: "asc" },
       settings,
-      now,
+      now
     );
     expect(out.map((p) => p.difficulty)).toEqual([
       "Easy",
@@ -177,7 +175,7 @@ describe("problem table selectors", () => {
       createDefaultFilters(),
       { key: "nextReview", direction: "asc" },
       settings,
-      now,
+      now
     );
     expect(out.map((p) => p.title)).toEqual(["B", "A", "C"]);
   });
@@ -193,8 +191,37 @@ describe("problem table selectors", () => {
       createDefaultFilters(),
       { key: "source", direction: "asc" },
       settings,
-      now,
+      now
     );
     expect(out.map((p) => p.title)).toEqual(["Charlie", "Alpha", "Bravo"]);
+  });
+
+  it("returns stable problem track item membership in track order", () => {
+    const problem = makeProblem("two-sum");
+    const earlyTrack = {
+      ...makeTrack("early-track", [
+        { groupId: "early-arrays", slugs: ["two-sum"] },
+      ]),
+      name: "Early Track",
+    };
+    const unrelatedTrack = {
+      ...makeTrack("unrelated-track", [
+        { groupId: "unrelated", slugs: ["valid-palindrome"] },
+      ]),
+      name: "Unrelated Track",
+    };
+    const laterTrack = {
+      ...makeTrack("later-track", [
+        { groupId: "later-arrays", slugs: ["contains-duplicate", "two-sum"] },
+      ]),
+      name: "Later Track",
+    };
+
+    expect(
+      getProblemTrackItems(problem, [laterTrack, unrelatedTrack, earlyTrack])
+    ).toEqual([
+      { id: laterTrack.id, name: "Later Track" },
+      { id: earlyTrack.id, name: "Early Track" },
+    ]);
   });
 });

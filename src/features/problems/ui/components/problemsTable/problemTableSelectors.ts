@@ -11,6 +11,11 @@ import type { StudyPhase, StudyStateSummary } from "@features/study";
 import type { Track } from "@features/tracks";
 import type { TrackId } from "@shared/ids";
 
+export interface ProblemTrackItem {
+  id: TrackId;
+  name: string;
+}
+
 export function filterAndSortProblems(
   problems: readonly Problem[],
   filters: ProblemsTableFilters,
@@ -87,19 +92,19 @@ export function getProblemSuspendedReason(
   return undefined;
 }
 
-export function getProblemTrackLabels(
+export function getProblemTrackItems(
   problem: Problem,
   tracks: readonly Track[],
-): string[] {
-  const labels: string[] = [];
+): ProblemTrackItem[] {
+  const items: ProblemTrackItem[] = [];
   for (const track of tracks) {
     if (track.groups.some((group) =>
       group.problems.some((candidate) => candidate.slug === problem.slug)
     )) {
-      labels.push(track.name);
+      items.push({ id: track.id, name: track.name });
     }
   }
-  return labels;
+  return items;
 }
 
 export function listTrackOptions(
