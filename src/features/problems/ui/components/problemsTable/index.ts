@@ -5,8 +5,10 @@ export {
   filterAndSortProblems,
   getProblemStudySummary,
   getProblemSuspendedReason,
+  getProblemTrackItems,
   listTrackOptions,
   pageProblems,
+  type ProblemTrackItem,
 } from "./problemTableSelectors";
 export {
   ROWS_PER_PAGE_OPTIONS,

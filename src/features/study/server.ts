@@ -13,7 +13,7 @@ export type {
   StudyStateMutationResponse,
   StudyHistoryResetResponse,
 } from "./domain/model";
-export { createDefaultStudyState } from "./domain/model";
+export { createDefaultStudyState, StudyPhaseEnum } from "./domain/model";
 
 export {
   asProblemSlug,

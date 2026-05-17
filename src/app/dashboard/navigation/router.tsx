@@ -1,58 +1,36 @@
-import { AnalyticsScreen } from "@features/analytics";
-import { OverviewScreen } from "@features/app-shell";
-import {
-  LibraryScreen,
-  ProblemFormDialog,
-  problemRepository,
-  type Problem,
-  type ProblemFormDialogCloseReason,
-} from "@features/problems";
-import { createDefaultProblemTableCommands } from "@features/problems/ui/components/problemsTable";
-import { SettingsScreen as SettingsView } from "@features/settings";
-import { TracksScreen as TracksView } from "@features/tracks";
 import {
   isDashboardModalBackground,
   type DashboardModalBackground,
-  type DashboardView,
 } from "@libs/runtime-rpc/url";
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
-import { asProblemSlug, type ProblemSlug } from "@shared/ids";
 import {
   createHashHistory,
-  createRootRoute,
   createRoute,
+  createRouteMask,
+  createRootRoute,
   createRouter,
-  Outlet,
+  redirect,
   RouterProvider,
-  useNavigate,
-  useRouterState,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
-  DashboardControllerProvider,
-  useDashboardController,
-} from "../DashboardControllerContext";
-import { DashboardHeader } from "../sections/DashboardHeader";
-import { DashboardRail } from "../sections/DashboardRail";
-import { DashboardFrame } from "../sections/DashboardSurface";
-import { PreV7BackupSnackbar } from "../sections/PreV7BackupSnackbar";
-import { useDashboardShellVM } from "../useDashboardShellVM";
-
-import { getDashboardRoute, getDashboardViewForPathname } from "./maps";
-import {
-  DASHBOARD_PROBLEM_EDIT_PATH,
-  DASHBOARD_PROBLEM_EDIT_TO,
-  DASHBOARD_PROBLEM_NEW_PATH,
-  DASHBOARD_PROBLEM_NEW_TO,
-} from "./routes";
-
-import type { ProblemTableCommands } from "@features/problems/ui/components/problemsTable";
+  DashboardAnalyticsRoute,
+  DashboardLibraryProblemRoute,
+  DashboardLibraryRoute,
+  DashboardNotFoundRoute,
+  DashboardOverviewRoute,
+  DashboardRootLayout,
+  DashboardSettingsRoute,
+  DashboardTracksProblemRoute,
+  DashboardTracksRoute,
+} from "./DashboardRouteComponents";
+import { problemModalRoutes, problemRoutePaths } from "./routes";
 
 interface DashboardProblemSearch {
   background: DashboardModalBackground;
 }
+
+const MODAL_BACKGROUNDS = ["library", "tracks"] as const;
 
 const rootRoute = createRootRoute({
   component: DashboardRootLayout,
@@ -63,59 +41,117 @@ const overviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: DashboardOverviewRoute,
+  staticData: { dashboardView: "dashboard" },
 });
 
 const tracksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "tracks",
   component: DashboardTracksRoute,
+  staticData: { dashboardView: "tracks" },
 });
 
 const libraryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "library",
   component: DashboardLibraryRoute,
+  staticData: { dashboardView: "library" },
 });
 
 const analyticsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "analytics",
   component: DashboardAnalyticsRoute,
+  staticData: { dashboardView: "analytics" },
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "settings",
   component: DashboardSettingsRoute,
+  staticData: { dashboardView: "settings" },
+});
+
+const libraryProblemNewRoute = createRoute({
+  getParentRoute: () => libraryRoute,
+  path: problemRoutePaths.newPath,
+  component: DashboardLibraryProblemRoute,
+});
+
+const libraryProblemEditRoute = createRoute({
+  getParentRoute: () => libraryRoute,
+  path: problemRoutePaths.editPath,
+  component: DashboardLibraryProblemRoute,
+});
+
+const tracksProblemNewRoute = createRoute({
+  getParentRoute: () => tracksRoute,
+  path: problemRoutePaths.newPath,
+  component: DashboardTracksProblemRoute,
+});
+
+const tracksProblemEditRoute = createRoute({
+  getParentRoute: () => tracksRoute,
+  path: problemRoutePaths.editPath,
+  component: DashboardTracksProblemRoute,
 });
 
 const problemNewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: DASHBOARD_PROBLEM_NEW_PATH,
+  path: problemRoutePaths.newPath,
   validateSearch: validateProblemSearch,
-  component: DashboardProblemNewRoute,
+  beforeLoad: ({ search }) => {
+    return redirect({
+      to: problemModalRoutes[search.background].newTo,
+      replace: true,
+    });
+  },
 });
 
 const problemEditRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: DASHBOARD_PROBLEM_EDIT_PATH,
+  path: problemRoutePaths.editPath,
   validateSearch: validateProblemSearch,
-  component: DashboardProblemEditRoute,
+  beforeLoad: ({ params, search }) => {
+    return redirect({
+      to: problemModalRoutes[search.background].editTo,
+      params: { slugId: params.slugId },
+      replace: true,
+    });
+  },
 });
 
 const routeTree = rootRoute.addChildren([
   overviewRoute,
-  tracksRoute,
-  libraryRoute,
+  tracksRoute.addChildren([tracksProblemNewRoute, tracksProblemEditRoute]),
+  libraryRoute.addChildren([libraryProblemNewRoute, libraryProblemEditRoute]),
   analyticsRoute,
   settingsRoute,
   problemNewRoute,
   problemEditRoute,
 ]);
 
+const dashboardRouteMasks = MODAL_BACKGROUNDS.flatMap((background) => [
+  createRouteMask({
+    routeTree,
+    from: problemModalRoutes[background].newTo,
+    to: problemRoutePaths.publicNewTo,
+    search: { background },
+    unmaskOnReload: true,
+  }),
+  createRouteMask({
+    routeTree,
+    from: problemModalRoutes[background].editTo,
+    to: problemRoutePaths.publicEditTo,
+    search: { background },
+    unmaskOnReload: true,
+  }),
+]);
+
 export function createDashboardRouter() {
   return createRouter({
     routeTree,
+    routeMasks: dashboardRouteMasks,
     history: createHashHistory(),
     scrollToTopSelectors: [],
   });
@@ -137,252 +173,13 @@ export function DashboardRouterProvider(props: {
   return <RouterProvider router={router} />;
 }
 
-function DashboardRootLayout() {
-  const controller = useDashboardShellVM();
-  const navigate = useNavigate();
-  const activeView = useActiveDashboardView();
-  const activeRoute = getDashboardRoute(activeView);
-
-  return (
-    <DashboardControllerProvider value={controller}>
-      <DashboardFrame>
-        <Stack
-          alignItems={{ lg: "flex-start", xs: "stretch" }}
-          direction={{ lg: "row", xs: "column" }}
-          spacing={2}
-        >
-          <DashboardRail
-            activeView={activeView}
-            onNavigate={(view) => {
-              void navigate({ to: getDashboardRoute(view).path });
-            }}
-          />
-
-          <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
-            <Stack spacing={2} sx={{ minWidth: 0, width: "100%" }}>
-              <DashboardHeader
-                onOpenSettings={() => {
-                  void navigate({ to: getDashboardRoute("settings").path });
-                }}
-                onRefresh={() => {
-                  void controller.refresh();
-                }}
-                route={activeRoute}
-                status={controller.status}
-              />
-              <Outlet />
-            </Stack>
-          </Box>
-        </Stack>
-
-        <PreV7BackupSnackbar />
-      </DashboardFrame>
-    </DashboardControllerProvider>
-  );
-}
-
-function DashboardOverviewRoute() {
-  const controller = useDashboardController();
-  const navigate = useNavigate();
-  return (
-    <OverviewScreen
-      onGoToSettings={() =>
-        void navigate({ to: getDashboardRoute("settings").path })
-      }
-      onGoToTracks={() =>
-        void navigate({ to: getDashboardRoute("tracks").path })
-      }
-      onOpenProblem={async (target) => {
-        try {
-          await problemRepository.openProblemPage(target);
-        } catch (err) {
-          controller.setStatus({
-            message: (err as Error).message || "Failed to open problem.",
-            isError: true,
-            scope: target.trackId ? "track" : "recommendation",
-          });
-        }
-      }}
-      onToggleMode={controller.onToggleMode}
-      payload={controller.payload}
-    />
-  );
-}
-
-function DashboardTracksRoute() {
-  const commands = useDashboardProblemTableCommands();
-  const editProblem = useEditProblemNavigation("tracks");
-  const navigate = useNavigate();
-  return (
-    <TracksView
-      problemCommands={commands}
-      onEditProblem={editProblem}
-      onCreateProblem={() => {
-        void navigate({
-          to: DASHBOARD_PROBLEM_NEW_TO,
-          search: { background: "tracks" },
-        });
-      }}
-    />
-  );
-}
-
-function DashboardLibraryRoute() {
-  return <DashboardLibraryContent />;
-}
-
-function DashboardAnalyticsRoute() {
-  const controller = useDashboardController();
-  return <AnalyticsScreen payload={controller.payload} />;
-}
-
-function DashboardSettingsRoute() {
-  const controller = useDashboardController();
-  return (
-    <SettingsView
-      currentSettings={controller.payload?.settings ?? null}
-      importFile={controller.importFile}
-      onExportData={controller.onExportData}
-      onImportData={controller.onImportData}
-      onResetStudyHistory={() => {
-        void controller.onResetStudyHistory();
-      }}
-      onSetImportFile={controller.setImportFile}
-      onSettingsSaved={controller.applySavedSettings}
-      onStatus={controller.setStatus}
-    />
-  );
-}
-
-function DashboardProblemNewRoute() {
-  const search = problemNewRoute.useSearch();
-  return <DashboardProblemModal background={search.background} />;
-}
-
-function DashboardProblemEditRoute() {
-  const params = problemEditRoute.useParams();
-  const search = problemEditRoute.useSearch();
-  return (
-    <DashboardProblemModal
-      background={search.background}
-      slugId={asProblemSlug(params.slugId)}
-    />
-  );
-}
-
-function DashboardProblemModal(props: {
-  background: DashboardModalBackground;
-  slugId?: ProblemSlug;
-}) {
-  const { refresh, setStatus } = useDashboardController();
-  const navigate = useNavigate();
-  const closeTo = getDashboardRoute(props.background).path;
-  const formKey = props.slugId ? `edit:${props.slugId}` : "new";
-  const close = useCallback(
-    (reason: ProblemFormDialogCloseReason): void => {
-      if (reason.type === "saved") {
-        setStatus({
-          message:
-            reason.mode === "create" ? "Problem added." : "Problem updated.",
-          isError: false,
-        });
-        void refresh(false);
-      }
-      void navigate({
-        to: closeTo,
-        replace: true,
-      });
-    },
-    [closeTo, navigate, refresh, setStatus]
-  );
-
-  return (
-    <>
-      <DashboardBackgroundContent view={props.background} />
-      <ProblemFormDialog
-        key={formKey}
-        onClose={close}
-        slugId={props.slugId}
-      />
-    </>
-  );
-}
-
-function DashboardBackgroundContent(props: { view: DashboardModalBackground }) {
-  if (props.view === "tracks") {
-    return <DashboardTracksRoute />;
+function validateProblemSearch(search: Record<string, unknown>) {
+  const background = search.background;
+  if (background === undefined) {
+    return { background: "library" } satisfies DashboardProblemSearch;
   }
-  return <DashboardLibraryContent />;
-}
-
-function DashboardLibraryContent() {
-  const controller = useDashboardController();
-  const commands = useDashboardProblemTableCommands();
-  const editProblem = useEditProblemNavigation("library");
-  const navigate = useNavigate();
-  return (
-    <LibraryScreen
-      commands={commands}
-      onEditProblem={editProblem}
-      onCreateProblem={() => {
-        void navigate({
-          to: DASHBOARD_PROBLEM_NEW_TO,
-          search: { background: "library" },
-        });
-      }}
-      onRefresh={controller.refresh}
-      payload={controller.payload}
-    />
-  );
-}
-
-function DashboardNotFoundRoute() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    void navigate({ to: "/", replace: true });
-  }, [navigate]);
-
-  return null;
-}
-
-function useDashboardProblemTableCommands(): ProblemTableCommands {
-  const { refresh } = useDashboardController();
-  return useMemo(() => {
-    return createDefaultProblemTableCommands(() => refresh(false));
-  }, [refresh]);
-}
-
-function useEditProblemNavigation(background: DashboardModalBackground) {
-  const navigate = useNavigate();
-  return useCallback(
-    (problem: Problem): void => {
-      void navigate({
-        to: DASHBOARD_PROBLEM_EDIT_TO,
-        params: { slugId: problem.slug },
-        search: { background },
-      });
-    },
-    [background, navigate]
-  );
-}
-
-function useActiveDashboardView(): DashboardView {
-  const location = useRouterState({ select: (state) => state.location });
-  return useMemo(() => {
-    const background = (location.search as { background?: unknown }).background;
-    return getDashboardViewForPathname(location.pathname, background);
-  }, [location.pathname, location.search]);
-}
-
-function validateProblemSearch(
-  search: Record<string, unknown>
-): DashboardProblemSearch {
-  if (search.background === undefined) {
-    return { background: "library" };
+  if (isDashboardModalBackground(background)) {
+    return { background } satisfies DashboardProblemSearch;
   }
-  if (!isDashboardModalBackground(search.background)) {
-    throw new Error("Invalid dashboard problem background.");
-  }
-  return { background: search.background };
+  throw new Error("Invalid dashboard problem background.");
 }

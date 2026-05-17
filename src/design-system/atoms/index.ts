@@ -3,9 +3,24 @@ export { BrandMark } from "./BrandMark";
 export { CogniPaceIcon } from "./CogniPaceIcon";
 export { SurfaceCard } from "./card/SurfaceCard";
 export { MetricCard } from "./card/MetricCard";
+export {
+  CompanyChip,
+  CompanyChipList,
+  type CompanyChipListItem,
+  type CompanyChipListProps,
+  type CompanyChipProps,
+} from "./chip/CompanyChip";
 export { NumericDisplay } from "./chip/NumericDisplay";
 export { ProgressTrack } from "./chip/ProgressTrack";
 export { ToneChip } from "./chip/ToneChip";
+export { DifficultyChip } from "./chip/DifficultyChip";
+export {
+  TopicChip,
+  TopicChipList,
+  type TopicChipListItem,
+  type TopicChipListProps,
+  type TopicChipProps,
+} from "./chip/TopicChip";
 export { FieldAssistRow } from "./feedback/FieldAssistRow";
 export { InlineStatusRegion } from "./feedback/InlineStatusRegion";
 export { StatusSurface } from "./feedback/StatusSurface";

@@ -69,11 +69,13 @@ Overview, tracks, library, analytics, and settings screens via TanStack Router
 hash routes. Dashboard routes are `#/`, `#/tracks`, `#/library`, `#/analytics`,
 and `#/settings`. Problem create/edit dialogs are route-backed overlays at
 `#/problems/new?background=library|tracks` and
-`#/problems/:slugId/edit?background=library|tracks`; the background search
-parameter selects the visible page behind the modal.
+`#/problems/:slugId/edit?background=library|tracks`. In-app modal navigation uses
+TanStack nested child routes under `/library/problems/*` and `/tracks/problems/*` masked
+to the canonical public modal URLs, so the selected Library or Tracks route stays mounted
+and preserves transient table state. Direct public modal URL loads redirect into the same
+nested route shape and start from a fresh stable background.
 Routes: `src/app/dashboard/navigation/router.tsx` and
-`src/app/dashboard/navigation/routes.ts`; lookup helpers live in
-`src/app/dashboard/navigation/maps.ts`.
+`src/app/dashboard/navigation/routes.ts`.
 
 ### Overlay
 
@@ -171,7 +173,7 @@ feature-specific table rows for UI consumers.
 
 - Popup UI: `src/app/popup/`
 - Dashboard UI: `src/app/dashboard/` (TanStack route tree: `navigation/router.tsx`; route metadata:
-  `navigation/routes.ts`; route lookup maps: `navigation/maps.ts`)
+  `navigation/routes.ts`)
 - Overlay UI: `src/app/overlay/` + `src/features/overlay-session/`
 - Surface bootstrap wiring: `src/app/bootstrap/`
 - Shared theme factories: `src/design-system/theme/`

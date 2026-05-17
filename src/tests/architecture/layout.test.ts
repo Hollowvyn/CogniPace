@@ -40,9 +40,6 @@ describe("architecture layout", () => {
       )
     ).toBe(true);
     expect(
-      fs.existsSync(path.join(repoRoot, "src/app/dashboard/navigation/maps.ts"))
-    ).toBe(true);
-    expect(
       fs.existsSync(path.join(repoRoot, "src/app/overlay/OverlayShell.tsx"))
     ).toBe(true);
     expect(
@@ -57,15 +54,18 @@ describe("architecture layout", () => {
       fs.existsSync(
         path.join(
           repoRoot,
-          "src/features/overlay-session/ui/hooks/useOverlayPanelVM.ts",
-        ),
+          "src/features/overlay-session/ui/hooks/useOverlayPanelVM.ts"
+        )
       )
     ).toBe(true);
 
     // OverlayRoot.tsx (the pre-Phase-A overlay screen) is gone.
     expect(
       fs.existsSync(
-        path.join(repoRoot, "src/features/overlay-session/ui/screens/OverlayRoot.tsx")
+        path.join(
+          repoRoot,
+          "src/features/overlay-session/ui/screens/OverlayRoot.tsx"
+        )
       )
     ).toBe(false);
 
@@ -77,7 +77,9 @@ describe("architecture layout", () => {
       fs.existsSync(path.join(repoRoot, "src/ui/popup/PopupApp.tsx"))
     ).toBe(false);
     expect(
-      fs.existsSync(path.join(repoRoot, "src/ui/screens/dashboard/DashboardApp.tsx"))
+      fs.existsSync(
+        path.join(repoRoot, "src/ui/screens/dashboard/DashboardApp.tsx")
+      )
     ).toBe(false);
     expect(
       fs.existsSync(path.join(repoRoot, "src/ui/dashboard/DashboardApp.tsx"))
@@ -87,8 +89,12 @@ describe("architecture layout", () => {
     ).toBe(false);
     expect(fs.existsSync(path.join(repoRoot, "src/content.ts"))).toBe(false);
     expect(fs.existsSync(path.join(repoRoot, "src/background.ts"))).toBe(false);
-    expect(fs.existsSync(path.join(repoRoot, "src/app/providers.tsx"))).toBe(false);
-    expect(fs.existsSync(path.join(repoRoot, "src/app/di/index.tsx"))).toBe(false);
+    expect(fs.existsSync(path.join(repoRoot, "src/app/providers.tsx"))).toBe(
+      false
+    );
+    expect(fs.existsSync(path.join(repoRoot, "src/app/di/index.tsx"))).toBe(
+      false
+    );
   });
 
   // The old "ui layer free of runtime transport" and "domain layer free
@@ -106,8 +112,8 @@ describe("architecture layout", () => {
     const appShellRepository = read(
       path.join(
         repoRoot,
-        "src/features/app-shell/data/repository/AppShellRepository.ts",
-      ),
+        "src/features/app-shell/data/repository/AppShellRepository.ts"
+      )
     );
     expect(storageAdapter).toContain("chrome.storage.local");
     // UI repositories reach the SW via the typed proxy at @app/api, not
@@ -117,13 +123,16 @@ describe("architecture layout", () => {
 
   it("uses explicit overlay variants instead of a shared boolean mode prop", () => {
     const overlayPanel = read(
-      path.join(repoRoot, "src/features/overlay-session/ui/screens/OverlayPanel.tsx")
+      path.join(
+        repoRoot,
+        "src/features/overlay-session/ui/screens/OverlayPanel.tsx"
+      )
     );
     const overlayRenderModel = read(
       path.join(
         repoRoot,
-        "src/features/overlay-session/ui/screens/types/OverlayRenderModel.ts",
-      ),
+        "src/features/overlay-session/ui/screens/types/OverlayRenderModel.ts"
+      )
     );
 
     expect(overlayRenderModel).toContain('variant: "collapsed"');

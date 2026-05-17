@@ -9,8 +9,12 @@
  * for percent, track name, description, progress meter, current chapter
  * line, then the next-up problem inline with its CTA row underneath.
  */
-import { ProgressTrack, SurfaceCard, ToneChip } from "@design-system/atoms";
-import { difficultyTone } from "@features/problems";
+import {
+  DifficultyChip,
+  ProgressTrack,
+  SurfaceCard,
+  ToneChip,
+} from "@design-system/atoms";
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
@@ -90,9 +94,7 @@ export function ActiveTrackOverviewCard(props: ActiveTrackOverviewCardProps) {
           <Typography color="text.secondary" variant="body2">
             {progress.completedQuestions}/{progress.totalQuestions} questions
             traversed
-            {activeGroup?.name
-              ? ` · Current chapter: ${activeGroup.name}`
-              : ""}
+            {activeGroup?.name ? ` · Current chapter: ${activeGroup.name}` : ""}
           </Typography>
           <Typography color="text.secondary" variant="body2">
             Study mode: {studyMode}
@@ -159,7 +161,9 @@ function NextUpRow({
   onOpenTracks: () => void;
   trackId: string;
 }) {
-  const phaseLabel = getStudyStateSummary(problem.studyState).phase.toUpperCase();
+  const phaseLabel = getStudyStateSummary(
+    problem.studyState
+  ).phase.toUpperCase();
 
   return (
     <Stack spacing={1}>
@@ -182,10 +186,7 @@ function NextUpRow({
           </Typography>
           <Stack direction="row" flexWrap="wrap" gap={0.75}>
             {group.name ? <ToneChip label={group.name} /> : null}
-            <ToneChip
-              label={problem.difficulty}
-              tone={difficultyTone(problem.difficulty)}
-            />
+            <DifficultyChip difficulty={problem.difficulty} />
           </Stack>
           <Typography color="text.secondary" variant="caption">
             FSRS: {phaseLabel}

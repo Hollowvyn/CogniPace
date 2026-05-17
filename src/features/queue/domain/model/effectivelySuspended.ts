@@ -4,7 +4,7 @@
  * `skipPremium`) with one derived flag the queue and the UI both read.
  *
  * - `studyState.suspended` is the SSoT for the user's per-problem
- *   decision (FSRS-aligned, set via the Suspend action).
+ *   scheduling gate, set via the Suspend action.
  * - `settings.questionFilters.skipPremium` reframes premium gating as
  *   "treat premium as suspended" — the runtime check is identical.
  */

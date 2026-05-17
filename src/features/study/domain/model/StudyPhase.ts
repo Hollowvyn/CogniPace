@@ -1,6 +1,3 @@
-export type StudyPhase =
-  | "New"
-  | "Learning"
-  | "Review"
-  | "Relearning"
-  | "Suspended";
+import type { StudyPhaseEnum } from "./StudyPhaseEnum";
+
+export type StudyPhase = keyof typeof StudyPhaseEnum | "Suspended";

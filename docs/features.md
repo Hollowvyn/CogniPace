@@ -360,6 +360,8 @@ Provide a searchable and filterable view of tracked problems.
 - supports route-backed add/edit problem dialogs from Library and Tracks at
   `#/problems/new?background=library|tracks` and
   `#/problems/:slugId/edit?background=library|tracks`
+- keeps the existing Library or Tracks screen mounted behind in-app problem dialogs so table filters, pagination,
+  selection, and expanded rows survive modal open and close
 
 ### Key States And Edge Cases
 
@@ -367,6 +369,7 @@ Provide a searchable and filterable view of tracked problems.
 - a problem belongs to multiple track contexts
 - imported problems have partial metadata
 - direct loads of problem add/edit modal routes require a stable Library or Tracks background
+- direct loads of problem add/edit modal routes start with a fresh Library or Tracks background state
 
 ### In Scope
 

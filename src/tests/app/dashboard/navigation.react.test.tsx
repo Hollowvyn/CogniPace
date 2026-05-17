@@ -119,6 +119,38 @@ describe("dashboard navigation", () => {
     });
   });
 
+  it("preserves Library table state behind in-app problem modals", async () => {
+    const payload = makePayload();
+
+    window.history.pushState({}, "", "/dashboard.html#/library");
+
+    const { user } = renderDashboardWithPayload(payload);
+
+    await user.type(await screen.findByLabelText("Search problems"), "merge");
+    await user.click(
+      await screen.findByRole("button", { name: "Expand Merge Intervals" })
+    );
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Edit: Merge Intervals" })
+    ).toBeInTheDocument();
+    expect(window.location.hash).toBe(
+      "#/problems/merge-intervals/edit?background=library"
+    );
+    expect(screen.getByDisplayValue("merge")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => {
+      expect(window.location.hash).toBe("#/library");
+    });
+    expect(screen.getByDisplayValue("merge")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Collapse Merge Intervals" })
+    ).toBeInTheDocument();
+  });
+
   it("handles saved problem form closes in the route layer", async () => {
     const payload = makePayload();
 
@@ -144,5 +176,4 @@ describe("dashboard navigation", () => {
       expect(screen.getByText("Problem added.")).toBeInTheDocument();
     });
   });
-
 });

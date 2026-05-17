@@ -1,5 +1,6 @@
-import { ToneChip } from "@design-system/atoms/chip/ToneChip";
+import { DifficultyChip, SurfaceTooltip, ToneChip } from "@design-system/atoms";
 import { SurfaceTableContainer } from "@design-system/atoms/table/SurfaceTableContainer";
+import { toneStyles, type Tone } from "@design-system/atoms/tone";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import ErrorRounded from "@mui/icons-material/ErrorRounded";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
@@ -23,14 +24,16 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import {
+  calendarDayDistance,
+  formatRelativeCalendarDate,
+} from "@platform/time";
 import { asProblemSlug } from "@shared/ids";
+import { capitalizeFirst } from "@shared/strings";
 import React, { Fragment, useCallback, useMemo } from "react";
 
 import {
-  difficultyTone,
-  formatDisplayDate,
   formatRetention,
   formatStudyPhase,
   retrievalTone,
@@ -50,14 +53,13 @@ import {
   type RowsPerPage,
   type SortDirection,
   type SortKey,
+  type SuspendedReason,
 } from "./types";
-import {
-  useProblemTableStoreSelector,
-} from "./useProblemTableStore";
+import { useProblemTableStoreSelector } from "./useProblemTableStore";
 
 import type { ProblemTableStore } from "./problemTableStore";
 import type { Difficulty, Problem } from "../../../domain/model";
-import type { StudyPhase } from "@features/study";
+import type { StudyPhase, StudyStateSummary } from "@features/study";
 import type { ProblemSlug } from "@shared/ids";
 
 interface ProblemsTableProps {
@@ -79,7 +81,7 @@ const DIFFICULTY_OPTIONS: ReadonlyArray<Difficulty | "all"> = [
   "Unknown",
 ];
 
-const PHASE_OPTIONS: ReadonlyArray<StudyPhase | "all" | "New"> = [
+const PHASE_OPTIONS: ReadonlyArray<StudyPhase | "all"> = [
   "all",
   "New",
   "Learning",
@@ -110,38 +112,38 @@ export function ProblemsTable(props: ProblemsTableProps) {
   const rowsPerPage = useProblemTableStoreSelector(store, (s) => s.rowsPerPage);
   const selectedSlugs = useProblemTableStoreSelector(
     store,
-    (s) => s.selectedSlugs,
+    (s) => s.selectedSlugs
   );
   const expandedSlug = useProblemTableStoreSelector(
     store,
-    (s) => s.expandedSlug,
+    (s) => s.expandedSlug
   );
   const pendingAction = useProblemTableStoreSelector(
     store,
-    (s) => s.pendingAction,
+    (s) => s.pendingAction
   );
   const error = useProblemTableStoreSelector(store, (s) => s.error);
   const dispatchIntent = useProblemTableStoreSelector(
     store,
-    (s) => s.dispatchIntent,
+    (s) => s.dispatchIntent
   );
 
   const filteredProblems = useMemo(
     () => filterAndSortProblems(problems, filters, sort, settings, now, tracks),
-    [filters, now, problems, settings, sort, tracks],
+    [filters, now, problems, settings, sort, tracks]
   );
   const pageRows = useMemo(
     () => pageProblems(filteredProblems, page, rowsPerPage),
-    [filteredProblems, page, rowsPerPage],
+    [filteredProblems, page, rowsPerPage]
   );
   const trackOptions = useMemo(
     () => listTrackOptions(problems, tracks),
-    [problems, tracks],
+    [problems, tracks]
   );
 
   const isSelected = useCallback(
     (slug: ProblemSlug) => selectedSlugs.has(slug),
-    [selectedSlugs],
+    [selectedSlugs]
   );
 
   const allOnPageSelected =
@@ -157,12 +159,14 @@ export function ProblemsTable(props: ProblemsTableProps) {
         sort.key === key
           ? {
               key,
-              direction: (sort.direction === "asc" ? "desc" : "asc") as SortDirection,
+              direction: (sort.direction === "asc"
+                ? "desc"
+                : "asc") as SortDirection,
             }
           : { key, direction: "asc" as SortDirection };
       dispatchIntent({ type: "SET_SORT", sort: nextSort });
     },
-    [dispatchIntent, sort],
+    [dispatchIntent, sort]
   );
 
   const totalColumns =
@@ -207,7 +211,8 @@ export function ProblemsTable(props: ProblemsTableProps) {
             onChange={(event) => {
               dispatchIntent({
                 type: "SET_DIFFICULTY",
-                difficulty: event.target.value as ProblemsTableFilters["difficulty"],
+                difficulty: event.target
+                  .value as ProblemsTableFilters["difficulty"],
               });
             }}
           >
@@ -219,10 +224,10 @@ export function ProblemsTable(props: ProblemsTableProps) {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel id="problems-table-phase">Phase</InputLabel>
+          <InputLabel id="problems-table-status">Status</InputLabel>
           <Select
-            labelId="problems-table-phase"
-            label="Phase"
+            labelId="problems-table-status"
+            label="Status"
             value={filters.phase}
             onChange={(event) => {
               dispatchIntent({
@@ -233,7 +238,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
           >
             {PHASE_OPTIONS.map((value) => (
               <MenuItem key={value} value={value}>
-                {value === "all" ? "All phases" : formatStudyPhase(value)}
+                {value === "all" ? "All statuses" : formatStudyPhase(value)}
               </MenuItem>
             ))}
           </Select>
@@ -248,7 +253,8 @@ export function ProblemsTable(props: ProblemsTableProps) {
               onChange={(event) => {
                 dispatchIntent({
                   type: "SET_TRACK_FILTER",
-                  trackId: event.target.value as ProblemsTableFilters["trackId"],
+                  trackId: event.target
+                    .value as ProblemsTableFilters["trackId"],
                 });
               }}
             >
@@ -294,7 +300,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                       dispatchIntent({
                         type: "TOGGLE_PAGE_SELECTION",
                         slugs: pageRows.map((problem) =>
-                          asProblemSlug(problem.slug),
+                          asProblemSlug(problem.slug)
                         ),
                       });
                     }}
@@ -350,10 +356,12 @@ export function ProblemsTable(props: ProblemsTableProps) {
                 const studySummary = getProblemStudySummary(
                   problem,
                   now,
-                  settings.memoryReview.targetRetention,
+                  settings.memoryReview.targetRetention
                 );
                 const suspended = getProblemSuspendedReason(problem, settings);
-                const phase = suspended ? "Suspended" : studySummary?.phase ?? "New";
+                const phase: StudyPhase = suspended
+                  ? "Suspended"
+                  : (studySummary?.phase ?? "New");
                 const isDue = studySummary?.isDue && !suspended;
                 const isExpanded = expandedSlug === slug;
                 return (
@@ -364,7 +372,10 @@ export function ProblemsTable(props: ProblemsTableProps) {
                       data-expanded-row={isExpanded ? "true" : undefined}
                       onClick={(event) => {
                         const target = event.target as Element | null;
-                        if (target?.closest("a, button, input, [role='button']")) return;
+                        if (
+                          target?.closest("a, button, input, [role='button']")
+                        )
+                          return;
                         event.stopPropagation();
                         dispatchIntent({ type: "TOGGLE_EXPANDED", slug });
                       }}
@@ -433,38 +444,21 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <ToneChip
-                          label={problem.difficulty}
-                          tone={difficultyTone(problem.difficulty)}
-                        />
+                        <DifficultyChip difficulty={problem.difficulty} />
                       </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          <Tooltip
-                            title={suspendedTooltip(suspended)}
-                            disableHoverListener={!suspended}
-                            disableFocusListener={!suspended}
-                            disableTouchListener={!suspended}
-                            arrow
-                          >
-                            <Typography
-                              variant="body2"
-                              color={isDue ? "warning.main" : "text.secondary"}
-                              sx={
-                                suspended
-                                  ? {
-                                      cursor: "help",
-                                      textDecorationLine: "underline",
-                                      textDecorationStyle: "dotted",
-                                      textUnderlineOffset: "3px",
-                                    }
-                                  : undefined
-                              }
-                            >
-                              {formatStudyPhase(phase)}
-                            </Typography>
-                          </Tooltip>
-                          {isDue ? <ToneChip label="DUE" tone="accent" /> : null}
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          alignItems="center"
+                        >
+                          <StudyPhaseStatusText
+                            phase={phase}
+                            suspendedReason={suspended}
+                          />
+                          {isDue ? (
+                            <ToneChip label="Due" tone="accent" />
+                          ) : null}
                         </Stack>
                       </TableCell>
                       {showRetentionColumn ? (
@@ -475,17 +469,28 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         </TableCell>
                       ) : null}
                       <TableCell>
-                        <Typography variant="body1" color="text.secondary">
-                          {formatDisplayDate(studySummary?.nextReviewAt, "—")}
-                        </Typography>
+                        <ProblemDateText
+                          iso={studySummary?.nextReviewAt}
+                          now={now}
+                          emptyLabel="Unscheduled"
+                          tone={nextReviewDateTone(
+                            studySummary,
+                            now,
+                            Boolean(suspended),
+                          )}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body1" color="text.secondary">
-                          {formatDisplayDate(studySummary?.lastReviewedAt, "—")}
-                        </Typography>
+                        <ProblemDateText
+                          iso={studySummary?.lastReviewedAt}
+                          now={now}
+                          emptyLabel="No solves"
+                        />
                       </TableCell>
                     </TableRow>
-                    <TableRow data-expanded-row={isExpanded ? "true" : undefined}>
+                    <TableRow
+                      data-expanded-row={isExpanded ? "true" : undefined}
+                    >
                       <TableCell
                         colSpan={totalColumns}
                         sx={{
@@ -526,7 +531,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         sx={{ borderBottom: "none", height: 53 }}
                       />
                     </TableRow>
-                  ),
+                  )
                 )
               : null}
           </TableBody>
@@ -553,6 +558,231 @@ export function ProblemsTable(props: ProblemsTableProps) {
   );
 }
 
+interface StudyPhaseStatusContent {
+  label: string;
+  tone: Tone;
+  tooltip: string;
+}
+
+const STUDY_PHASE_STATUS_CONTENT: Record<StudyPhase, StudyPhaseStatusContent> = {
+  New: {
+    label: "New",
+    tone: "default",
+    tooltip: "Not reviewed yet.",
+  },
+  Learning: {
+    label: "Learning",
+    tone: "info",
+    tooltip: "In an early FSRS learning step.",
+  },
+  Review: {
+    label: "Review",
+    tone: "success",
+    tooltip: "On the regular FSRS review schedule.",
+  },
+  Relearning: {
+    label: "Relearning",
+    tone: "accent",
+    tooltip: "Recently missed and back in a relearning step.",
+  },
+  Suspended: {
+    label: "Suspended",
+    tone: "danger",
+    tooltip: "Suspended.",
+  },
+};
+
+function StudyPhaseStatusText({
+  phase,
+  suspendedReason,
+}: {
+  phase: StudyPhase;
+  suspendedReason?: SuspendedReason;
+}) {
+  const content = STUDY_PHASE_STATUS_CONTENT[phase];
+  const toneStyle = toneStyles[content.tone];
+  const tooltip =
+    phase === "Suspended"
+      ? suspendedTooltip(suspendedReason) || content.tooltip
+      : content.tooltip;
+
+  return (
+    <SurfaceTooltip title={tooltip}>
+      <Box
+        component="span"
+        sx={{
+          alignItems: "center",
+          color: toneStyle.color,
+          cursor: "help",
+          display: "inline-flex",
+          gap: 0.75,
+          minWidth: 0,
+        }}
+      >
+        <Box
+          aria-hidden
+          component="span"
+          sx={{
+            backgroundColor: toneStyle.color,
+            borderRadius: "50%",
+            boxShadow: `0 0 0 3px ${toneStyle.background}`,
+            flex: "0 0 auto",
+            height: 7,
+            width: 7,
+          }}
+        />
+        <Typography
+          component="span"
+          variant="body2"
+          sx={{
+            color: "inherit",
+            fontWeight: 500,
+            lineHeight: 1.5,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {content.label}
+        </Typography>
+      </Box>
+    </SurfaceTooltip>
+  );
+}
+
+type ProblemDateTone = "neutral" | "accent" | "danger";
+
+function ProblemDateText({
+  emptyLabel,
+  iso,
+  now,
+  tone = "neutral",
+}: {
+  emptyLabel: string;
+  iso?: string;
+  now: Date;
+  tone?: ProblemDateTone;
+}) {
+  const date = parseProblemDate(iso);
+  if (!date || !iso) {
+    return (
+      <ProblemDateStack
+        primary="—"
+        secondary={emptyLabel}
+        tone="neutral"
+      />
+    );
+  }
+
+  const relativeLabel = capitalizeFirst(
+    formatRelativeCalendarDate(iso, now, "—"),
+  );
+  const secondary = isRelativeCalendarDate(date, now)
+    ? formatCompactDate(date, now)
+    : "";
+
+  return (
+    <ProblemDateStack
+      dateTime={iso}
+      primary={relativeLabel}
+      secondary={secondary}
+      tone={tone}
+    />
+  );
+}
+
+function ProblemDateStack({
+  dateTime,
+  primary,
+  secondary,
+  tone,
+}: {
+  dateTime?: string;
+  primary: string;
+  secondary: string;
+  tone: ProblemDateTone;
+}) {
+  const primaryColor =
+    tone === "danger"
+      ? toneStyles.danger.color
+      : tone === "accent"
+        ? toneStyles.accent.color
+        : toneStyles.default.color;
+
+  return (
+    <Stack
+      component="span"
+      spacing={0.1}
+      sx={{ display: "inline-flex", minHeight: 34, minWidth: 0 }}
+    >
+      <Typography
+        component={dateTime ? "time" : "span"}
+        dateTime={dateTime}
+        variant="body2"
+        sx={{
+          color: primaryColor,
+          fontVariantNumeric: "tabular-nums",
+          fontWeight: 600,
+          lineHeight: 1.25,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {primary}
+      </Typography>
+      <Typography
+        aria-hidden={secondary ? undefined : true}
+        component="span"
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1.2,
+          visibility: secondary ? "visible" : "hidden",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {secondary || "Date detail"}
+      </Typography>
+    </Stack>
+  );
+}
+
+function nextReviewDateTone(
+  summary: StudyStateSummary | null | undefined,
+  now: Date,
+  suspended: boolean,
+): ProblemDateTone {
+  if (!summary?.nextReviewAt || suspended) return "neutral";
+
+  const date = parseProblemDate(summary.nextReviewAt);
+  if (!date) return "neutral";
+
+  const calendarDistance = calendarDayDistance(date, now);
+  if (summary.isOverdue || calendarDistance < 0) return "danger";
+  if (summary.isDue || calendarDistance === 0) return "accent";
+  return "neutral";
+}
+
+function parseProblemDate(iso?: string): Date | null {
+  if (!iso) return null;
+
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isRelativeCalendarDate(date: Date, relativeTo: Date): boolean {
+  const distance = calendarDayDistance(date, relativeTo);
+  return distance >= -6 && distance <= 6;
+}
+
+function formatCompactDate(date: Date, relativeTo: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    ...(date.getFullYear() !== relativeTo.getFullYear()
+      ? { year: "numeric" as const }
+      : {}),
+  }).format(date);
+}
+
 function SortableHeadCell({
   currentSort,
   label,
@@ -566,7 +796,9 @@ function SortableHeadCell({
 }) {
   return (
     <TableCell
-      sortDirection={currentSort.key === sortKey ? currentSort.direction : false}
+      sortDirection={
+        currentSort.key === sortKey ? currentSort.direction : false
+      }
     >
       <TableSortLabel
         active={currentSort.key === sortKey}

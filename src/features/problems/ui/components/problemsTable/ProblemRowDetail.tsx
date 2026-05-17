@@ -4,11 +4,10 @@
  * Two-column grid layout:
  *
  *   ┌─ Details ──────────────────────┐ ┌─ Analytics and history ─────┐
- *   │ Difficulty: [chip]              │ │ Stability:      0.2 days    │
- *   │ Status:   ☑ Premium  ☐ Suspend  │ │ Difficulty:     6.4 / 10    │
+ *   │ Premium:  [Premium only]        │ │ Stability:      0.2 days    │
  *   │ Topics:   [chips with tooltip]  │ │ Retrievability: 100%        │
  *   │ Companies:[chips with tooltip]  │ │ Reps:           1           │
- *   │ Tracks:   Blind 75 · NeetCode…  │ │                             │
+ *   │ Tracks:   [chips with tooltip]  │ │                             │
  *   │                                  │ │ Last 5 attempts             │
  *   │                                  │ │ May 9  May 7  Apr 22  …     │
  *   │                                  │ │ ↑ each date colored by      │
@@ -17,15 +16,17 @@
  *                Pattern (optional) / Notes (optional)
  *                                       [ Edit ] [ Suspend ] [ Reset ]
  *
- * Topic + Company chip rows cap at MAX_VISIBLE_CHIPS; overflow collapses
+ * Topic, company, and track chip rows cap their visible chips; overflow collapses
  * into a `+N more` chip whose tooltip lists the rest. The "Open in
  * LeetCode" CTA lives on the title in the collapsed row.
  */
-import { ToneChip } from "@design-system/atoms/chip/ToneChip";
+import { CompanyChipList, TopicChipList } from "@design-system/atoms";
 import { type Tone } from "@design-system/atoms/tone";
 import { cognipaceTokens } from "@design-system/theme";
+import { TrackChipList, type Track } from "@features/tracks";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import { alpha } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
@@ -41,7 +42,7 @@ import {
 import {
   getProblemStudySummary,
   getProblemSuspendedReason,
-  getProblemTrackLabels,
+  getProblemTrackItems,
 } from "./problemTableSelectors";
 
 import type { ProblemTableIntent } from "./problemTableStore";
@@ -57,10 +58,6 @@ import type {
   ReviewMode,
   StudyStateSummary,
 } from "@features/study";
-import type { Track } from "@features/tracks";
-
-
-const MAX_VISIBLE_CHIPS = 6;
 
 interface ProblemRowDetailProps {
   commandsPending: PendingProblemTableAction | null;
@@ -77,6 +74,32 @@ interface SuspendAction {
   label: string;
   onClick: () => void;
 }
+
+const premiumAccessChipHeight = 24;
+const premiumAccessChipLabelPaddingX = 0.9;
+
+const premiumAccessChipTypography = {
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: 0,
+  lineHeight: "20px",
+  textTransform: "none",
+} as const;
+
+const premiumAccessChipUi = {
+  free: {
+    label: "Free",
+    backgroundColor: alpha(cognipaceTokens.paperStrong, 0.7),
+    borderColor: alpha(cognipaceTokens.outlineStrong, 0.34),
+    color: cognipaceTokens.mutedText,
+  },
+  premium: {
+    label: "Premium only",
+    backgroundColor: alpha(cognipaceTokens.accent, 0.14),
+    borderColor: alpha(cognipaceTokens.accentSoft, 0.28),
+    color: cognipaceTokens.accentSoft,
+  },
+} as const;
 
 /** Resolves the right Suspend/Resume action for a given row based on
  * its `suspended` reason. Manual: standard toggle. Premium-only: the
@@ -118,7 +141,7 @@ export function ProblemRowDetail({
   const notes = problem.studyState?.notes;
   const interviewPattern = problem.studyState?.interviewPattern;
   const suspended = getProblemSuspendedReason(problem, settings);
-  const trackLabels = getProblemTrackLabels(problem, tracks);
+  const trackItems = getProblemTrackItems(problem, tracks);
   const suspendAction = resolveSuspendAction(
     suspended,
     (suspend) => {
@@ -149,45 +172,20 @@ export function ProblemRowDetail({
             <SectionHeading>Details</SectionHeading>
 
             <DetailRow label="Premium">
-              <Typography
-                variant="body2"
-                sx={{ fontVariantNumeric: "tabular-nums" }}
-                color={problem.isPremium ? "warning.main" : "text.secondary"}
-              >
-                {problem.isPremium ? "true" : "false"}
-              </Typography>
+              <PremiumAccessChip isPremium={problem.isPremium === true} />
             </DetailRow>
 
             <DetailRow label="Topics">
-              <ChipOverflow
-                items={problem.topics.map((t) => ({ id: t.id, label: t.name }))}
-                tone="info"
-                emptyHint="None"
-              />
+              <TopicChipList topics={problem.topics} />
             </DetailRow>
 
             <DetailRow label="Companies">
-              <ChipOverflow
-                items={problem.companies.map((c) => ({
-                  id: c.id,
-                  label: c.name,
-                }))}
-                tone="accent"
-                emptyHint="None"
-              />
+              <CompanyChipList companies={problem.companies} />
             </DetailRow>
 
             {showTrackDetails ? (
               <DetailRow label="Tracks">
-                {trackLabels.length > 0 ? (
-                  <Typography variant="body2" color="text.primary">
-                    {trackLabels.join(" · ")}
-                  </Typography>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Independent
-                  </Typography>
-                )}
+                <TrackChipList tracks={trackItems} />
               </DetailRow>
             ) : null}
           </Stack>
@@ -266,6 +264,35 @@ export function ProblemRowDetail({
   );
 }
 
+function PremiumAccessChip({ isPremium }: { isPremium: boolean }) {
+  const ui = isPremium ? premiumAccessChipUi.premium : premiumAccessChipUi.free;
+
+  return (
+    <Chip
+      label={ui.label}
+      size="small"
+      sx={{
+        ...premiumAccessChipTypography,
+        backgroundColor: ui.backgroundColor,
+        border: `1px solid ${ui.borderColor}`,
+        color: ui.color,
+        height: premiumAccessChipHeight,
+        minHeight: premiumAccessChipHeight,
+        maxWidth: "100%",
+        "& .MuiChip-label": {
+          minWidth: 0,
+          overflow: "hidden",
+          px: premiumAccessChipLabelPaddingX,
+          py: 0,
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          ...premiumAccessChipTypography,
+        },
+      }}
+    />
+  );
+}
+
 /** A single label/value row. */
 function DetailRow({
   label,
@@ -316,59 +343,6 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
     >
       {children}
     </Typography>
-  );
-}
-
-/**
- * Renders a row of chips capped at MAX_VISIBLE_CHIPS. Overflow collapses
- * into a `+N more` chip whose tooltip lists the hidden labels.
- */
-function ChipOverflow({
-  items,
-  tone,
-  emptyHint,
-}: {
-  items: Array<{ id: string; label: string }>;
-  tone: Tone;
-  emptyHint: string;
-}) {
-  if (items.length === 0) {
-    return (
-      <Typography variant="body2" color="text.secondary">
-        {emptyHint}
-      </Typography>
-    );
-  }
-  const visible = items.slice(0, MAX_VISIBLE_CHIPS);
-  const overflow = items.slice(MAX_VISIBLE_CHIPS);
-  return (
-    <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ rowGap: 0.5 }}>
-      {visible.map((item) => (
-        <ToneChip key={item.id} label={item.label} tone={tone} />
-      ))}
-      {overflow.length > 0 ? (
-        <Tooltip
-          arrow
-          title={
-            <Stack spacing={0.25}>
-              {overflow.map((item) => (
-                <Typography
-                  key={item.id}
-                  variant="caption"
-                  sx={{ color: "inherit" }}
-                >
-                  {item.label}
-                </Typography>
-              ))}
-            </Stack>
-          }
-        >
-          <span>
-            <ToneChip label={`+${overflow.length} more`} tone="default" />
-          </span>
-        </Tooltip>
-      ) : null}
-    </Stack>
   );
 }
 

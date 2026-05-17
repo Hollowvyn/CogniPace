@@ -1,13 +1,14 @@
 import {Card, createEmptyCard, fsrs, generatorParameters, Rating as FsrsRating, State as FsrsState,} from "ts-fsrs";
 
 import {
-  AttemptHistoryEntry,
-  FsrsCardSnapshot,
-  Rating,
-  ReviewLogFields,
-  StudyPhase,
-  StudyState,
-  StudyStateSummary,
+  StudyPhaseEnum,
+  type AttemptHistoryEntry,
+  type FsrsCardSnapshot,
+  type Rating,
+  type ReviewLogFields,
+  type StudyPhase,
+  type StudyState,
+  type StudyStateSummary,
 } from "./types";
 import {uniqueStrings} from "./utils";
 
@@ -79,16 +80,30 @@ function toFsrsState(state: FsrsCardSnapshot["state"]): FsrsState {
   }
 }
 
-function phaseFromFsrsState(
-  state: FsrsState
-): Exclude<StudyPhase, "Suspended"> {
+function phaseEnumFromFsrsState(state: FsrsState): StudyPhaseEnum {
   switch (state) {
     case FsrsState.Learning:
-      return "Learning";
+      return StudyPhaseEnum.Learning;
     case FsrsState.Review:
-      return "Review";
+      return StudyPhaseEnum.Review;
     case FsrsState.Relearning:
+      return StudyPhaseEnum.Relearning;
+    default:
+      return StudyPhaseEnum.New;
+  }
+}
+
+function phaseLabelFromEnum(
+  phase: StudyPhaseEnum
+): Exclude<StudyPhase, "Suspended"> {
+  switch (phase) {
+    case StudyPhaseEnum.Learning:
+      return "Learning";
+    case StudyPhaseEnum.Review:
+      return "Review";
+    case StudyPhaseEnum.Relearning:
       return "Relearning";
+    case StudyPhaseEnum.New:
     default:
       return "New";
   }
@@ -477,7 +492,7 @@ export function getStudyStateSummary(
 ): StudyStateSummary {
   if (!state) {
     return {
-      phase: "New",
+      phase: phaseLabelFromEnum(StudyPhaseEnum.New),
       reviewCount: 0,
       lapses: 0,
       suspended: false,
@@ -528,8 +543,8 @@ export function getStudyStateSummary(
     phase: state.suspended
       ? "Suspended"
       : card
-        ? phaseFromFsrsState(card.state)
-        : "New",
+        ? phaseLabelFromEnum(phaseEnumFromFsrsState(card.state))
+        : phaseLabelFromEnum(StudyPhaseEnum.New),
     nextReviewAt,
     lastReviewedAt,
     reviewCount,
@@ -545,4 +560,3 @@ export function getStudyStateSummary(
     retrievability,
   };
 }
-

@@ -33,15 +33,19 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 
-
 function renderInTheme(node: React.ReactNode): HTMLElement {
-  const { container } = render(<AppProviders surface="dashboard">{node}</AppProviders>);
+  const { container } = render(
+    <AppProviders surface="dashboard">{node}</AppProviders>
+  );
   return container;
 }
 
 async function expectNoAxeViolations(node: React.ReactNode): Promise<void> {
   const container = renderInTheme(node);
-  const results = await axe(container);
+  // axe color contrast needs canvas APIs that jsdom does not implement.
+  const results = await axe(container, {
+    rules: { "color-contrast": { enabled: false } },
+  });
   // vitest-axe attaches matchers; falling back to direct violations check
   // for environments where the matcher isn't extended.
   expect(results.violations).toEqual([]);
@@ -62,9 +66,7 @@ describe("design-system atoms a11y smoke", () => {
   });
 
   it("MetricCard renders without axe violations", async () => {
-    await expectNoAxeViolations(
-      <MetricCard label="Streak" value="7 days" />,
-    );
+    await expectNoAxeViolations(<MetricCard label="Streak" value="7 days" />);
   });
 
   it("NumericDisplay renders without axe violations", async () => {
@@ -73,12 +75,18 @@ describe("design-system atoms a11y smoke", () => {
 
   it("ProgressTrack renders without axe violations", async () => {
     await expectNoAxeViolations(
-      <ProgressTrack ariaLabel="Completion progress" value={42} />,
+      <ProgressTrack ariaLabel="Completion progress" value={42} />
     );
   });
 
   it("ToneChip renders without axe violations across tones", async () => {
-    for (const tone of ["default", "accent", "info", "success", "danger"] as const) {
+    for (const tone of [
+      "default",
+      "accent",
+      "info",
+      "success",
+      "danger",
+    ] as const) {
       await expectNoAxeViolations(<ToneChip label="status" tone={tone} />);
     }
   });
@@ -89,7 +97,7 @@ describe("design-system atoms a11y smoke", () => {
 
   it("InlineStatusRegion renders without axe violations", async () => {
     await expectNoAxeViolations(
-      <InlineStatusRegion message="" isError={false} />,
+      <InlineStatusRegion message="" isError={false} />
     );
   });
 
@@ -99,7 +107,7 @@ describe("design-system atoms a11y smoke", () => {
 
   it("SurfaceSectionLabel renders without axe violations", async () => {
     await expectNoAxeViolations(
-      <SurfaceSectionLabel>Section title</SurfaceSectionLabel>,
+      <SurfaceSectionLabel>Section title</SurfaceSectionLabel>
     );
   });
 
@@ -113,7 +121,7 @@ describe("design-system atoms a11y smoke", () => {
 
   it("SurfaceIconButton renders without axe violations", async () => {
     await expectNoAxeViolations(
-      <SurfaceIconButton aria-label="Close">x</SurfaceIconButton>,
+      <SurfaceIconButton aria-label="Close">x</SurfaceIconButton>
     );
   });
 
@@ -132,7 +140,7 @@ describe("design-system atoms a11y smoke", () => {
             </tr>
           </tbody>
         </table>
-      </SurfaceTableContainer>,
+      </SurfaceTableContainer>
     );
   });
 });
