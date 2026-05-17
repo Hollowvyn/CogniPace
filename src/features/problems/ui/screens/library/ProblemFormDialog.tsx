@@ -1,4 +1,4 @@
-import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
+import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -18,7 +18,7 @@ import { useEffect } from "react";
 
 import { useProblemFormViewModel } from "../../store/problemFormStore";
 
-import type { CompanyLabel, Difficulty } from "../../../domain/model";
+import type { Difficulty } from "../../../domain/model";
 import type { ProblemSlug } from "@shared/ids";
 
 export interface ProblemFormDialogProps {
@@ -26,21 +26,9 @@ export interface ProblemFormDialogProps {
 }
 
 const DIFFICULTY_OPTIONS: Difficulty[] = ["Easy", "Medium", "Hard", "Unknown"];
-const CREATE_COMPANY_SENTINEL = "__create_company__";
-
-const companyFilter = createFilterOptions<CompanyLabel>({
-  matchFrom: "any",
-  trim: true,
-});
-
-function extractSentinelName(label: string): string {
-  const match = /^\+ Add "(.+)"$/.exec(label);
-  return match?.[1]?.trim() ?? "";
-}
 
 export function ProblemFormDialog(props: ProblemFormDialogProps) {
-  const dispatch = useProblemFormViewModel((state) => state.dispatch);
-  const uiState = useProblemFormViewModel((state) => state.uiState);
+  const { dispatch, uiState } = useProblemFormViewModel();
 
   useEffect(() => {
     dispatch({ type: "Load", slugId: props.slugId });
@@ -130,9 +118,7 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
               onChange={(_, next) => {
                 dispatch({ type: "SetTopics", value: next });
               }}
-              isOptionEqualToValue={(option, value) =>
-                typeof value !== "string" && option.id === value.id
-              }
+              isOptionEqualToValue={(option, value) => option.id === value.id}
               getOptionLabel={(option) => option.name}
               renderInput={(params) => (
                 <TextField
@@ -144,46 +130,23 @@ export function ProblemFormDialog(props: ProblemFormDialogProps) {
               )}
             />
 
-            <Autocomplete<CompanyLabel, true, false, true>
+            <Autocomplete
               multiple
-              freeSolo
               options={uiState.companyOptions}
               value={uiState.values.companies}
-              filterOptions={(options, params) => {
-                const filtered = companyFilter(options, params);
-                const inputValue = params.inputValue.trim();
-                const matchesExisting = options.some(
-                  (option) =>
-                    option.name.toLowerCase() === inputValue.toLowerCase()
-                );
-                if (inputValue && !matchesExisting) {
-                  filtered.push({
-                    id: CREATE_COMPANY_SENTINEL,
-                    name: `+ Add "${inputValue}"`,
-                  });
-                }
-                return filtered;
-              }}
               onChange={(_, next) => {
                 dispatch({
                   type: "SetCompanies",
-                  value: next.map((entry) =>
-                    typeof entry === "string" ||
-                    entry.id !== CREATE_COMPANY_SENTINEL
-                      ? entry
-                      : extractSentinelName(entry.name)
-                  ),
+                  value: next,
                 });
               }}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              getOptionLabel={(option) =>
-                typeof option === "string" ? option : option.name
-              }
+              getOptionLabel={(option) => option.name}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="Companies"
-                  placeholder="Type a company name to add a new one..."
+                  placeholder="Choose companies..."
                   size="small"
                 />
               )}

@@ -40,9 +40,6 @@ function mockProblemFormRuntime(
     if (type === "editProblem") {
       return { ok: true, data: { slug: problem.slug } };
     }
-    if (type === "createCustomCompany") {
-      return { ok: true, data: { id: "acme" } };
-    }
     return { ok: true, data: {} };
   });
 }
@@ -163,7 +160,7 @@ describe("useProblemFormViewModel", () => {
     });
   });
 
-  it("keeps custom companies as draft state until save", async () => {
+  it("saves selected companies by id", async () => {
     mockProblemFormRuntime();
 
     act(() => {
@@ -179,11 +176,10 @@ describe("useProblemFormViewModel", () => {
     act(() => {
       const dispatch = useProblemFormViewModel.getState().dispatch;
       dispatch({ type: "ChangeProblemInput", value: "valid-palindrome" });
-      dispatch({ type: "SetCompanies", value: ["Acme"] });
-    });
-
-    expect(sendMessageMock).not.toHaveBeenCalledWith("createCustomCompany", {
-      name: "Acme",
+      dispatch({
+        type: "SetCompanies",
+        value: [{ id: "meta", name: "Meta" }],
+      });
     });
 
     act(() => {
@@ -191,12 +187,9 @@ describe("useProblemFormViewModel", () => {
     });
 
     await waitFor(() => {
-      expect(sendMessageMock).toHaveBeenCalledWith("createCustomCompany", {
-        name: "Acme",
-      });
       expect(sendMessageMock).toHaveBeenCalledWith("createProblem", {
         input: "valid-palindrome",
-        patch: { companyIds: ["acme"] },
+        patch: { companyIds: ["meta"] },
       });
     });
   });

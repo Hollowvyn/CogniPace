@@ -68,13 +68,12 @@ export async function saveProblemForm(
   try {
     const current = get();
     const { mode, slugId, values } = current.uiState;
-    const valuesForSave = await resolveCompanyValues(values);
     const savedSlugId =
       mode === "create"
-        ? await createProblem(valuesForSave)
-        : await editProblem(slugId, valuesForSave);
+        ? await createProblem(values)
+        : await editProblem(slugId, values);
 
-    setSavedState(set, emitEffect, mode, savedSlugId, valuesForSave);
+    setSavedState(set, emitEffect, mode, savedSlugId, values);
   } catch (err) {
     set((current) => ({
       uiState: makeProblemFormUiState({
@@ -240,30 +239,4 @@ function setSavedState(
     }),
   }));
   emitEffect({ mode, slugId: savedSlugId, type: "Saved" });
-}
-
-async function resolveCompanyValues(
-  values: ProblemFormValues
-): Promise<ProblemFormValues> {
-  const companies: CompanyLabel[] = [];
-  const seenIds = new Set<string>();
-
-  for (const entry of values.companies) {
-    const company =
-      typeof entry === "string" ? await createCompany(entry) : entry;
-    if (!company || seenIds.has(company.id)) {
-      continue;
-    }
-    seenIds.add(company.id);
-    companies.push(company);
-  }
-
-  return { ...values, companies };
-}
-
-async function createCompany(name: string): Promise<CompanyLabel | null> {
-  const trimmed = name.trim();
-  if (!trimmed) return null;
-  const result = await problemRepository.createCustomCompany(trimmed);
-  return { id: result.id, name: trimmed };
 }

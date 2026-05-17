@@ -7,22 +7,16 @@ import {
   type ProblemFormGet,
   type ProblemFormSet,
 } from "./problemFormCommands";
-import {
-  createProblemFormUiState,
-  normalizeCompanySelection,
-} from "./problemFormModel";
+import { createProblemFormUiState } from "./problemFormModel";
 
 import type {
-  ProblemFormCompanySelection,
   ProblemFormIntent,
   ProblemFormUiEffect,
   ProblemFormViewModel,
 } from "./problemFormTypes";
-import type { Difficulty, TopicLabel } from "../../domain/model";
+import type { CompanyLabel, Difficulty, TopicLabel } from "../../domain/model";
 
 export type {
-  ProblemFormCompanySelection,
-  ProblemFormCompanyValue,
   ProblemFormIntent,
   ProblemFormLoadError,
   ProblemFormMode,
@@ -120,13 +114,8 @@ function setTopics(set: ProblemFormSet, value: TopicLabel[]): void {
   updateProblemFormValues(set, { topics: value });
 }
 
-function setCompanies(
-  set: ProblemFormSet,
-  value: ProblemFormCompanySelection
-): void {
-  updateProblemFormValues(set, {
-    companies: normalizeCompanySelection(value),
-  });
+function setCompanies(set: ProblemFormSet, value: CompanyLabel[]): void {
+  updateProblemFormValues(set, { companies: value });
 }
 
 function setPremium(set: ProblemFormSet, value: boolean): void {

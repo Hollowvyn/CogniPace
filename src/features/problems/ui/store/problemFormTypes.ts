@@ -13,7 +13,7 @@ export interface ProblemFormValues {
   difficulty: Difficulty;
   url: string;
   topics: TopicLabel[];
-  companies: ProblemFormCompanyValue[];
+  companies: CompanyLabel[];
   isPremium: boolean;
 }
 
@@ -40,9 +40,6 @@ export type ProblemFormUiEffect =
   | { type: "CloseRequested" }
   | { mode: ProblemFormMode; slugId: ProblemSlug; type: "Saved" };
 
-export type ProblemFormCompanySelection = ReadonlyArray<string | CompanyLabel>;
-export type ProblemFormCompanyValue = string | CompanyLabel;
-
 export type ProblemFormIntent =
   | { type: "Load"; slugId?: ProblemSlug }
   | { type: "ChangeProblemInput"; value: string }
@@ -50,7 +47,7 @@ export type ProblemFormIntent =
   | { type: "SetDifficulty"; value: Difficulty }
   | { type: "ChangeUrl"; value: string }
   | { type: "SetTopics"; value: TopicLabel[] }
-  | { type: "SetCompanies"; value: ProblemFormCompanySelection }
+  | { type: "SetCompanies"; value: CompanyLabel[] }
   | { type: "SetPremium"; value: boolean }
   | { type: "Save" }
   | { type: "Cancel" };

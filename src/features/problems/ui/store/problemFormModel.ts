@@ -1,8 +1,6 @@
 import { normalizeSlug, parseProblemInput } from "@libs/leetcode";
 
 import type {
-  ProblemFormCompanySelection,
-  ProblemFormCompanyValue,
   ProblemFormLoadError,
   ProblemFormMode,
   ProblemFormUiState,
@@ -18,34 +16,6 @@ import type { ProblemSlug } from "@shared/ids";
 
 export function parseProblemFormSlug(input: string): ProblemSlug {
   return normalizeSlug(parseProblemInput(input).slug);
-}
-
-export function normalizeCompanySelection(
-  selection: ProblemFormCompanySelection
-): ProblemFormCompanyValue[] {
-  const companies: ProblemFormCompanyValue[] = [];
-  const seenKeys = new Set<string>();
-
-  for (const entry of selection) {
-    if (typeof entry === "string") {
-      const trimmed = entry.trim();
-      const key = `new:${trimmed.toLowerCase()}`;
-      if (!trimmed || seenKeys.has(key)) {
-        continue;
-      }
-      seenKeys.add(key);
-      companies.push(trimmed);
-      continue;
-    }
-
-    if (seenKeys.has(entry.id)) {
-      continue;
-    }
-    seenKeys.add(entry.id);
-    companies.push(entry);
-  }
-
-  return companies;
 }
 
 export function createEmptyProblemFormValues(): ProblemFormValues {
@@ -154,7 +124,7 @@ export function buildCreatePatch(values: ProblemFormValues): ProblemEditPatch {
     patch.topicIds = values.topics.map((topic) => topic.id);
   }
   if (values.companies.length > 0) {
-    patch.companyIds = values.companies.map(companyValueId).filter(Boolean);
+    patch.companyIds = values.companies.map((company) => company.id);
   }
   return patch;
 }
@@ -166,14 +136,10 @@ export function buildEditPatch(values: ProblemFormValues): ProblemEditPatch {
     url: values.url.trim(),
     isPremium: values.isPremium,
     topicIds: values.topics.map((topic) => topic.id),
-    companyIds: values.companies.map(companyValueId).filter(Boolean),
+    companyIds: values.companies.map((company) => company.id),
   };
 }
 
 export function hasPatchValues(patch: ProblemEditPatch): boolean {
   return Object.values(patch).some((value) => value !== undefined);
-}
-
-function companyValueId(company: ProblemFormCompanyValue): string {
-  return typeof company === "string" ? "" : company.id;
 }
