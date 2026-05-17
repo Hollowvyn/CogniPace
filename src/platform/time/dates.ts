@@ -26,6 +26,61 @@ export function formatClock(totalMs: number): string {
   return `${mm}:${ss}`;
 }
 
+function formatMonthDay(date: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+function formatMonthDayYear(date: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatWeekday(date: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "long",
+  }).format(date);
+}
+
+export function calendarDayDistance(date: Date, relativeTo: Date): number {
+  const dayMs = 24 * 60 * 60 * 1000;
+  return Math.round(
+    (startOfDay(date).getTime() - startOfDay(relativeTo).getTime()) / dayMs,
+  );
+}
+
+export function formatRelativeCalendarDate(
+  iso?: string,
+  relativeTo = new Date(),
+  fallback = "-",
+): string {
+  if (!iso) return fallback;
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return fallback;
+
+  const difference = calendarDayDistance(date, relativeTo);
+  if (difference === 0) return "today";
+  if (difference === 1) return "tomorrow";
+  if (difference === -1) return "yesterday";
+  if (difference >= 2 && difference <= 6) {
+    return `this ${formatWeekday(date)}`;
+  }
+  if (difference <= -2 && difference >= -6) {
+    return `last ${formatWeekday(date)}`;
+  }
+  if (date.getFullYear() === relativeTo.getFullYear()) {
+    return formatMonthDay(date);
+  }
+
+  return formatMonthDayYear(date);
+}
+
 /** Returns a copy of the provided date at local start-of-day. */
 export function startOfDay(date: Date): Date {
   const copy = new Date(date);

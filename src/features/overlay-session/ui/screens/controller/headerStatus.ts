@@ -1,79 +1,22 @@
-import {ReviewMode, StudyState} from "@features/study";
-import {getStudyStateSummary} from "@libs/fsrs/studyState";
+import { ReviewMode, StudyState } from "@features/study";
+import { getStudyStateSummary } from "@libs/fsrs/studyState";
+import {
+  calendarDayDistance,
+  formatRelativeCalendarDate,
+} from "@platform/time";
 
-import {defaultReviewMode} from "../../../domain/policy/reviewPolicy";
+import { defaultReviewMode } from "../../../domain/policy/reviewPolicy";
 import {
   OverlayHeaderStatus,
   OverlayHeaderStatusCard,
   OverlayHeaderStatusTone,
 } from "../overlayPanel.types";
 
-function startOfLocalDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function differenceInCalendarDays(left: Date, right: Date): number {
-  const dayMs = 24 * 60 * 60 * 1000;
-  const leftDay = startOfLocalDay(left).getTime();
-  const rightDay = startOfLocalDay(right).getTime();
-  return Math.round((leftDay - rightDay) / dayMs);
-}
-
-function formatMonthDay(date: Date): string {
-  return new Intl.DateTimeFormat(undefined, {
-    day: "numeric",
-    month: "short",
-  }).format(date);
-}
-
-function formatMonthDayYear(date: Date): string {
-  return new Intl.DateTimeFormat(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
-
-function formatWeekday(date: Date): string {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "long",
-  }).format(date);
-}
-
 export function formatSubmissionDateLabel(
   iso?: string,
   relativeTo = new Date()
 ): string {
-  if (!iso) {
-    return "-";
-  }
-
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return "-";
-  }
-
-  const difference = differenceInCalendarDays(date, relativeTo);
-  if (difference === 0) {
-    return "today";
-  }
-  if (difference === 1) {
-    return "tomorrow";
-  }
-  if (difference === -1) {
-    return "yesterday";
-  }
-  if (difference >= 2 && difference <= 6) {
-    return `this ${formatWeekday(date)}`;
-  }
-  if (difference <= -2 && difference >= -6) {
-    return `last ${formatWeekday(date)}`;
-  }
-  if (date.getFullYear() === relativeTo.getFullYear()) {
-    return formatMonthDay(date);
-  }
-
-  return formatMonthDayYear(date);
+  return formatRelativeCalendarDate(iso, relativeTo, "-");
 }
 
 export function buildSessionLabel(
@@ -97,7 +40,7 @@ export function buildDueTone(
     return "neutral";
   }
 
-  const difference = differenceInCalendarDays(date, relativeTo);
+  const difference = calendarDayDistance(date, relativeTo);
   if (difference <= 0) {
     return "danger";
   }

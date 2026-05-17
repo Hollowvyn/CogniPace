@@ -25,11 +25,15 @@ import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import {
+  calendarDayDistance,
+  formatRelativeCalendarDate,
+} from "@platform/time";
 import { asProblemSlug } from "@shared/ids";
+import { capitalizeFirst } from "@shared/strings";
 import React, { Fragment, useCallback, useMemo } from "react";
 
 import {
-  formatDisplayDate,
   formatRetention,
   formatStudyPhase,
   retrievalTone,
@@ -55,7 +59,7 @@ import { useProblemTableStoreSelector } from "./useProblemTableStore";
 
 import type { ProblemTableStore } from "./problemTableStore";
 import type { Difficulty, Problem } from "../../../domain/model";
-import type { StudyPhase } from "@features/study";
+import type { StudyPhase, StudyStateSummary } from "@features/study";
 import type { ProblemSlug } from "@shared/ids";
 
 interface ProblemsTableProps {
@@ -465,14 +469,23 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         </TableCell>
                       ) : null}
                       <TableCell>
-                        <Typography variant="body1" color="text.secondary">
-                          {formatDisplayDate(studySummary?.nextReviewAt, "—")}
-                        </Typography>
+                        <ProblemDateText
+                          iso={studySummary?.nextReviewAt}
+                          now={now}
+                          emptyLabel="Unscheduled"
+                          tone={nextReviewDateTone(
+                            studySummary,
+                            now,
+                            Boolean(suspended),
+                          )}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body1" color="text.secondary">
-                          {formatDisplayDate(studySummary?.lastReviewedAt, "—")}
-                        </Typography>
+                        <ProblemDateText
+                          iso={studySummary?.lastReviewedAt}
+                          now={now}
+                          emptyLabel="No solves"
+                        />
                       </TableCell>
                     </TableRow>
                     <TableRow
@@ -633,6 +646,141 @@ function StudyPhaseStatusText({
       </Box>
     </SurfaceTooltip>
   );
+}
+
+type ProblemDateTone = "neutral" | "accent" | "danger";
+
+function ProblemDateText({
+  emptyLabel,
+  iso,
+  now,
+  tone = "neutral",
+}: {
+  emptyLabel: string;
+  iso?: string;
+  now: Date;
+  tone?: ProblemDateTone;
+}) {
+  const date = parseProblemDate(iso);
+  if (!date || !iso) {
+    return (
+      <ProblemDateStack
+        primary="—"
+        secondary={emptyLabel}
+        tone="neutral"
+      />
+    );
+  }
+
+  const relativeLabel = capitalizeFirst(
+    formatRelativeCalendarDate(iso, now, "—"),
+  );
+  const secondary = isRelativeCalendarDate(date, now)
+    ? formatCompactDate(date, now)
+    : "";
+
+  return (
+    <ProblemDateStack
+      dateTime={iso}
+      primary={relativeLabel}
+      secondary={secondary}
+      tone={tone}
+    />
+  );
+}
+
+function ProblemDateStack({
+  dateTime,
+  primary,
+  secondary,
+  tone,
+}: {
+  dateTime?: string;
+  primary: string;
+  secondary: string;
+  tone: ProblemDateTone;
+}) {
+  const primaryColor =
+    tone === "danger"
+      ? toneStyles.danger.color
+      : tone === "accent"
+        ? toneStyles.accent.color
+        : toneStyles.default.color;
+
+  return (
+    <Stack
+      component="span"
+      spacing={0.1}
+      sx={{ display: "inline-flex", minHeight: 34, minWidth: 0 }}
+    >
+      <Typography
+        component={dateTime ? "time" : "span"}
+        dateTime={dateTime}
+        variant="body2"
+        sx={{
+          color: primaryColor,
+          fontVariantNumeric: "tabular-nums",
+          fontWeight: 600,
+          lineHeight: 1.25,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {primary}
+      </Typography>
+      <Typography
+        aria-hidden={secondary ? undefined : true}
+        component="span"
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1.2,
+          visibility: secondary ? "visible" : "hidden",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {secondary || "Date detail"}
+      </Typography>
+    </Stack>
+  );
+}
+
+function nextReviewDateTone(
+  summary: StudyStateSummary | null | undefined,
+  now: Date,
+  suspended: boolean,
+): ProblemDateTone {
+  if (!summary?.nextReviewAt || suspended) return "neutral";
+
+  const date = parseProblemDate(summary.nextReviewAt);
+  if (!date) return "neutral";
+
+  const calendarDistance = calendarDayDistance(date, now);
+  if (summary.isOverdue || calendarDistance < 0) return "danger";
+  if (summary.isDue || calendarDistance === 0) return "accent";
+  return "neutral";
+}
+
+function parseProblemDate(iso?: string): Date | null {
+  if (!iso) return null;
+
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isRelativeCalendarDate(date: Date, relativeTo: Date): boolean {
+  const distance = calendarDayDistance(date, relativeTo);
+  return distance >= -6 && distance <= 6;
+}
+
+function formatCompactDate(date: Date, relativeTo: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    ...(date.getFullYear() !== relativeTo.getFullYear()
+      ? { year: "numeric" as const }
+      : {}),
+  }).format(date);
 }
 
 function SortableHeadCell({
