@@ -1,5 +1,6 @@
-import { DifficultyChip, ToneChip } from "@design-system/atoms";
+import { DifficultyChip, SurfaceTooltip, ToneChip } from "@design-system/atoms";
 import { SurfaceTableContainer } from "@design-system/atoms/table/SurfaceTableContainer";
+import { toneStyles, type Tone } from "@design-system/atoms/tone";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import ErrorRounded from "@mui/icons-material/ErrorRounded";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
@@ -23,7 +24,6 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { asProblemSlug } from "@shared/ids";
 import React, { Fragment, useCallback, useMemo } from "react";
@@ -49,6 +49,7 @@ import {
   type RowsPerPage,
   type SortDirection,
   type SortKey,
+  type SuspendedReason,
 } from "./types";
 import { useProblemTableStoreSelector } from "./useProblemTableStore";
 
@@ -76,7 +77,7 @@ const DIFFICULTY_OPTIONS: ReadonlyArray<Difficulty | "all"> = [
   "Unknown",
 ];
 
-const PHASE_OPTIONS: ReadonlyArray<StudyPhase | "all" | "New"> = [
+const PHASE_OPTIONS: ReadonlyArray<StudyPhase | "all"> = [
   "all",
   "New",
   "Learning",
@@ -219,10 +220,10 @@ export function ProblemsTable(props: ProblemsTableProps) {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel id="problems-table-phase">Phase</InputLabel>
+          <InputLabel id="problems-table-status">Status</InputLabel>
           <Select
-            labelId="problems-table-phase"
-            label="Phase"
+            labelId="problems-table-status"
+            label="Status"
             value={filters.phase}
             onChange={(event) => {
               dispatchIntent({
@@ -233,7 +234,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
           >
             {PHASE_OPTIONS.map((value) => (
               <MenuItem key={value} value={value}>
-                {value === "all" ? "All phases" : formatStudyPhase(value)}
+                {value === "all" ? "All statuses" : formatStudyPhase(value)}
               </MenuItem>
             ))}
           </Select>
@@ -354,7 +355,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                   settings.memoryReview.targetRetention
                 );
                 const suspended = getProblemSuspendedReason(problem, settings);
-                const phase = suspended
+                const phase: StudyPhase = suspended
                   ? "Suspended"
                   : (studySummary?.phase ?? "New");
                 const isDue = studySummary?.isDue && !suspended;
@@ -447,32 +448,12 @@ export function ProblemsTable(props: ProblemsTableProps) {
                           spacing={0.5}
                           alignItems="center"
                         >
-                          <Tooltip
-                            title={suspendedTooltip(suspended)}
-                            disableHoverListener={!suspended}
-                            disableFocusListener={!suspended}
-                            disableTouchListener={!suspended}
-                            arrow
-                          >
-                            <Typography
-                              variant="body2"
-                              color={isDue ? "warning.main" : "text.secondary"}
-                              sx={
-                                suspended
-                                  ? {
-                                      cursor: "help",
-                                      textDecorationLine: "underline",
-                                      textDecorationStyle: "dotted",
-                                      textUnderlineOffset: "3px",
-                                    }
-                                  : undefined
-                              }
-                            >
-                              {formatStudyPhase(phase)}
-                            </Typography>
-                          </Tooltip>
+                          <StudyPhaseStatusText
+                            phase={phase}
+                            suspendedReason={suspended}
+                          />
                           {isDue ? (
-                            <ToneChip label="DUE" tone="accent" />
+                            <ToneChip label="Due" tone="accent" />
                           ) : null}
                         </Stack>
                       </TableCell>
@@ -561,6 +542,96 @@ export function ProblemsTable(props: ProblemsTableProps) {
         rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS as unknown as number[]}
       />
     </Box>
+  );
+}
+
+interface StudyPhaseStatusContent {
+  label: string;
+  tone: Tone;
+  tooltip: string;
+}
+
+const STUDY_PHASE_STATUS_CONTENT: Record<StudyPhase, StudyPhaseStatusContent> = {
+  New: {
+    label: "New",
+    tone: "default",
+    tooltip: "Not reviewed yet.",
+  },
+  Learning: {
+    label: "Learning",
+    tone: "info",
+    tooltip: "In an early FSRS learning step.",
+  },
+  Review: {
+    label: "Review",
+    tone: "success",
+    tooltip: "On the regular FSRS review schedule.",
+  },
+  Relearning: {
+    label: "Relearning",
+    tone: "accent",
+    tooltip: "Recently missed and back in a relearning step.",
+  },
+  Suspended: {
+    label: "Suspended",
+    tone: "danger",
+    tooltip: "Suspended.",
+  },
+};
+
+function StudyPhaseStatusText({
+  phase,
+  suspendedReason,
+}: {
+  phase: StudyPhase;
+  suspendedReason?: SuspendedReason;
+}) {
+  const content = STUDY_PHASE_STATUS_CONTENT[phase];
+  const toneStyle = toneStyles[content.tone];
+  const tooltip =
+    phase === "Suspended"
+      ? suspendedTooltip(suspendedReason) || content.tooltip
+      : content.tooltip;
+
+  return (
+    <SurfaceTooltip title={tooltip}>
+      <Box
+        component="span"
+        sx={{
+          alignItems: "center",
+          color: toneStyle.color,
+          cursor: "help",
+          display: "inline-flex",
+          gap: 0.75,
+          minWidth: 0,
+        }}
+      >
+        <Box
+          aria-hidden
+          component="span"
+          sx={{
+            backgroundColor: toneStyle.color,
+            borderRadius: "50%",
+            boxShadow: `0 0 0 3px ${toneStyle.background}`,
+            flex: "0 0 auto",
+            height: 7,
+            width: 7,
+          }}
+        />
+        <Typography
+          component="span"
+          variant="body2"
+          sx={{
+            color: "inherit",
+            fontWeight: 500,
+            lineHeight: 1.5,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {content.label}
+        </Typography>
+      </Box>
+    </SurfaceTooltip>
   );
 }
 

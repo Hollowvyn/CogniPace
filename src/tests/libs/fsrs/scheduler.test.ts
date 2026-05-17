@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
 import { createInitialUserSettings } from "@features/settings";
-import { Rating, StudyState } from "@features/study";
+import { StudyPhaseEnum, type Rating, type StudyState } from "@features/study";
 import {
   applyReview,
   overrideLastReview,
@@ -51,6 +51,27 @@ describe("FSRS scheduler", () => {
     assert.equal(secondSummary.phase, "Review");
     assert.equal(secondSummary.nextReviewAt, "2026-03-03T15:10:00.000Z");
     assert.equal(second.fsrsCard?.scheduledDays, 2);
+  });
+
+  it("keeps suspension outside the FSRS phase enum", () => {
+    const reviewed = applyReview({
+      rating: 2,
+      difficulty: "Medium",
+      settings,
+      now: "2026-03-01T15:00:00.000Z",
+    });
+    const suspended = { ...reviewed, suspended: true };
+    const summary = getStudyStateSummary(
+      suspended,
+      new Date("2026-03-01T15:00:00.000Z")
+    );
+
+    assert.equal(StudyPhaseEnum.New, 0);
+    assert.equal(StudyPhaseEnum.Learning, 1);
+    assert.equal("Suspended" in StudyPhaseEnum, false);
+    assert.equal(reviewed.fsrsCard?.state, "Learning");
+    assert.equal(summary.phase, "Suspended");
+    assert.equal(summary.suspended, true);
   });
 
   it("follows raw FSRS output for early repeats", () => {

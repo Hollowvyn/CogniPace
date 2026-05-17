@@ -33,7 +33,7 @@ export interface ProblemTableSort {
 export interface ProblemsTableFilters {
   query: string;
   difficulty: Difficulty | "all";
-  phase: StudyPhase | "New" | "all";
+  phase: StudyPhase | "all";
   trackId: TrackId | "all";
 }
 

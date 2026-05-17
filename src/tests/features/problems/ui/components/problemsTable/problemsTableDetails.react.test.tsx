@@ -2,7 +2,11 @@ import { LibraryProblemTable, TrackProblemTable } from "@features/problems";
 import { createInitialUserSettings } from "@features/settings";
 import { describe, expect, it } from "vitest";
 
-import { makeProblem, makeTrack } from "../../../../../support/fixtures";
+import {
+  makeProblem,
+  makeScheduledState,
+  makeTrack,
+} from "../../../../../support/fixtures";
 import { render, screen } from "../../../../../support/render";
 
 const settings = createInitialUserSettings();
@@ -15,6 +19,50 @@ function track(id: string, name: string, slugs: string[]) {
 }
 
 describe("problem table expanded details", () => {
+  it("renders status text and tooltips without all-caps phase labels", async () => {
+    const learningState = makeScheduledState("2026-06-01T00:00:00.000Z");
+    const learningProblem = {
+      ...makeProblem("learning-card", { title: "Learning Card" }),
+      studyState: {
+        ...learningState,
+        fsrsCard: {
+          ...learningState.fsrsCard!,
+          state: "Learning" as const,
+        },
+      },
+    };
+    const suspendedProblem = {
+      ...makeProblem("suspended-card", { title: "Suspended Card" }),
+      studyState: {
+        ...makeScheduledState("2026-06-01T00:00:00.000Z"),
+        suspended: true,
+      },
+    };
+
+    const { user } = render(
+      <LibraryProblemTable
+        problems={[learningProblem, suspendedProblem]}
+        tracks={[]}
+        settings={settings}
+      />
+    );
+
+    expect(screen.getByText("Learning")).toBeInTheDocument();
+    expect(screen.queryByText("LEARNING")).not.toBeInTheDocument();
+    expect(screen.getByText("Suspended")).toBeInTheDocument();
+
+    await user.hover(screen.getByText("Suspended"));
+    expect(await screen.findByText("Suspended manually.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("combobox", { name: "Status" }));
+    expect(
+      await screen.findByRole("option", { name: "All statuses" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Relearning" })
+    ).toBeInTheDocument();
+  });
+
   it("renders premium labels and track names in library expanded rows", async () => {
     const premiumProblem = makeProblem("two-sum", {
       title: "Two Sum",

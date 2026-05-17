@@ -25,11 +25,11 @@ export function recommendedTone(reason: RecommendedReason): Tone {
 
 /** Formats a study phase with a screen-specific fallback. */
 export function formatStudyPhase(
-  phase?: StudyPhase | "New" | null,
-  fallback = "NEW"
+  phase?: StudyPhase | null,
+  fallback = "New"
 ): string {
   if (!phase) return fallback;
-  return phase.toUpperCase();
+  return phase;
 }
 
 /**

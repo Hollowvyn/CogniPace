@@ -176,7 +176,7 @@ function phaseOf(
   problem: Problem,
   settings: UserSettings,
   now: Date,
-): StudyPhase | "New" {
+): StudyPhase {
   if (getProblemSuspendedReason(problem, settings)) return "Suspended";
   if (!problem.studyState) return "New";
   return getStudyStateSummary(
@@ -200,8 +200,8 @@ function difficultyOrdinal(value: Difficulty): number {
   }
 }
 
-function phaseOrdinal(phase: StudyPhase | "New"): string {
-  const order: Record<StudyPhase | "New", number> = {
+function phaseOrdinal(phase: StudyPhase): string {
+  const order: Record<StudyPhase, number> = {
     New: 0,
     Learning: 1,
     Review: 2,

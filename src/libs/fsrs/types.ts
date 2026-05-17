@@ -15,6 +15,6 @@ export type {
   StudyState,
   StudyStateSummary,
 } from "@features/study";
-export { createDefaultStudyState } from "@features/study";
+export { createDefaultStudyState, StudyPhaseEnum } from "@features/study";
 export type { Difficulty } from "@features/problems";
 export type { UserSettings } from "@features/settings";
