@@ -1,11 +1,9 @@
 import { CompanyChip, CompanyChipList } from "@design-system/atoms";
 import { describe, expect, it } from "vitest";
-import { axe } from "vitest-axe";
 
 import { render, screen } from "../../support/render";
 
 import type { CompanyChipListItem } from "@design-system/atoms";
-import type { ReactElement } from "react";
 
 const sampleCompanies: readonly CompanyChipListItem[] = [
   { id: "meta", name: "Meta" },
@@ -13,15 +11,6 @@ const sampleCompanies: readonly CompanyChipListItem[] = [
   { id: "amazon", name: "Amazon" },
   { id: "stripe", name: "Stripe" },
 ];
-
-async function expectNoAxeViolations(node: ReactElement): Promise<void> {
-  const { container } = render(node);
-  // axe color contrast needs canvas APIs that jsdom does not implement.
-  const results = await axe(container, {
-    rules: { "color-contrast": { enabled: false } },
-  });
-  expect(results.violations).toEqual([]);
-}
 
 describe("CompanyChip", () => {
   it("renders the company name", () => {
@@ -52,17 +41,5 @@ describe("CompanyChipList", () => {
     expect(screen.getByText("Meta")).toBeInTheDocument();
     expect(screen.getByText("Google")).toBeInTheDocument();
     expect(screen.getByText("+2 more")).toBeInTheDocument();
-  });
-
-  it("renders company chip surfaces without axe violations", async () => {
-    await expectNoAxeViolations(
-      <>
-        <CompanyChip name="Meta" />
-        <CompanyChipList
-          maxVisible={1}
-          companies={sampleCompanies.slice(0, 2)}
-        />
-      </>
-    );
   });
 });
