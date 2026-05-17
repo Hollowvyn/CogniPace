@@ -1,4 +1,8 @@
-import { useProblemFormViewModel } from "@features/problems";
+import {
+  subscribeProblemFormEffect,
+  useProblemFormViewModel,
+  type ProblemFormUiEffect,
+} from "@features/problems";
 import { asProblemSlug } from "@shared/ids";
 import { describe, expect, it } from "vitest";
 
@@ -46,6 +50,10 @@ function mockProblemFormRuntime(
 describe("useProblemFormViewModel", () => {
   it("loads create state and saves a new problem with patch values", async () => {
     mockProblemFormRuntime();
+    const emittedEffects: ProblemFormUiEffect[] = [];
+    const unsubscribe = subscribeProblemFormEffect((effect) => {
+      emittedEffects.push(effect);
+    });
 
     act(() => {
       useProblemFormViewModel.getState().dispatch({ type: "Load" });
@@ -56,6 +64,7 @@ describe("useProblemFormViewModel", () => {
         true
       );
     });
+    expect(useProblemFormViewModel.getState().uiState.canSave).toBe(true);
 
     act(() => {
       const dispatch = useProblemFormViewModel.getState().dispatch;
@@ -83,15 +92,16 @@ describe("useProblemFormViewModel", () => {
           difficulty: "Easy",
         },
       });
-      expect(useProblemFormViewModel.getState().uiEffect).toMatchObject({
+      expect(emittedEffects).toContainEqual({
         type: "Saved",
         mode: "create",
         slugId: "valid-palindrome",
       });
     });
+    unsubscribe();
   });
 
-  it("loads edit state, tracks dirty state, and saves an edit patch", async () => {
+  it("loads edit state and saves the current form values", async () => {
     mockProblemFormRuntime();
 
     act(() => {
@@ -115,8 +125,6 @@ describe("useProblemFormViewModel", () => {
         .dispatch({ type: "ChangeTitle", value: "Two Sum Updated" });
     });
 
-    expect(useProblemFormViewModel.getState().uiState.isDirty).toBe(true);
-
     act(() => {
       useProblemFormViewModel.getState().dispatch({ type: "Save" });
     });
@@ -124,7 +132,14 @@ describe("useProblemFormViewModel", () => {
     await waitFor(() => {
       expect(sendMessageMock).toHaveBeenCalledWith("editProblem", {
         slug: "two-sum",
-        patch: { title: "Two Sum Updated" },
+        patch: {
+          title: "Two Sum Updated",
+          difficulty: "Easy",
+          url: "https://leetcode.com/problems/two-sum/",
+          isPremium: false,
+          topicIds: ["arrays"],
+          companyIds: [],
+        },
         markUserEdit: true,
       });
     });

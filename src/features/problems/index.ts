@@ -35,7 +35,10 @@ export type { ProblemRepository } from "./data/repository/ProblemRepository";
 
 export { LibraryScreen } from "./ui/screens/library/LibraryScreen";
 export { ProblemFormDialog } from "./ui/screens/library/ProblemFormDialog";
-export { useProblemFormViewModel } from "./ui/store/problemFormStore";
+export {
+  subscribeProblemFormEffect,
+  useProblemFormViewModel,
+} from "./ui/store/problemFormStore";
 export type {
   ProblemFormIntent,
   ProblemFormUiEffect,

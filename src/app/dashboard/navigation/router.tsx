@@ -4,8 +4,8 @@ import {
   LibraryScreen,
   ProblemFormDialog,
   problemRepository,
+  subscribeProblemFormEffect,
   type Problem,
-  useProblemFormViewModel,
 } from "@features/problems";
 import { createDefaultProblemTableCommands } from "@features/problems/ui/components/problemsTable";
 import { SettingsScreen as SettingsView } from "@features/settings";
@@ -25,7 +25,6 @@ import {
   createRouter,
   Outlet,
   RouterProvider,
-  useBlocker,
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
@@ -281,53 +280,37 @@ function DashboardProblemModal(props: {
 
 function useProblemFormRouteController(background: DashboardModalBackground) {
   const { refresh, setStatus } = useDashboardController();
-  const dispatch = useProblemFormViewModel((state) => state.dispatch);
-  const formEffect = useProblemFormViewModel((state) => state.uiEffect);
-  const isDirty = useProblemFormViewModel((state) => state.uiState.isDirty);
   const navigate = useNavigate();
   const closeTo = getDashboardRoute(background).path;
-
-  useBlocker({
-    disabled: !isDirty,
-    enableBeforeUnload: isDirty,
-    shouldBlockFn: () =>
-      isDirty && !window.confirm("Discard unsaved problem changes?"),
-  });
 
   const close = useCallback(
     (replace = true): void => {
       void navigate({
         to: closeTo,
         replace,
-        ignoreBlocker: true,
       });
     },
     [closeTo, navigate]
   );
 
   useEffect(() => {
-    if (!formEffect) return;
-
-    dispatch({ type: "ConsumeEffect", id: formEffect.id });
-
-    if (formEffect.type === "CloseRequested") {
-      if (isDirty && !window.confirm("Discard unsaved problem changes?")) {
+    return subscribeProblemFormEffect((effect) => {
+      if (effect.type === "CloseRequested") {
+        close(true);
         return;
       }
-      close(true);
-      return;
-    }
 
-    void (async () => {
-      setStatus({
-        message:
-          formEffect.mode === "create" ? "Problem added." : "Problem updated.",
-        isError: false,
-      });
-      await refresh(false);
-      close(true);
-    })();
-  }, [close, dispatch, formEffect, isDirty, refresh, setStatus]);
+      void (async () => {
+        setStatus({
+          message:
+            effect.mode === "create" ? "Problem added." : "Problem updated.",
+          isError: false,
+        });
+        await refresh(false);
+        close(true);
+      })();
+    });
+  }, [close, refresh, setStatus]);
 }
 
 function DashboardBackgroundContent(props: { view: DashboardModalBackground }) {
