@@ -1,27 +1,19 @@
 /** UI-presentation helpers for the problems feature. Maps problem-domain
- *  values (Difficulty, RecommendedReason, StudyPhase, retrievability)
- *  to display strings and to the design-system Tone vocabulary. */
-import type { Difficulty, RecommendedReason } from "../../domain/model";
+ *  values (RecommendedReason, StudyPhase, retrievability) to display
+ *  strings and to the design-system Tone vocabulary. */
+import type { RecommendedReason } from "../../domain/model";
 import type { Tone } from "@design-system/atoms/tone";
 import type { StudyPhase } from "@features/study";
-
 
 /** Formats an ISO date for display with a screen-specific fallback. */
 export function formatDisplayDate(
   iso?: string,
-  fallback = "Not scheduled",
+  fallback = "Not scheduled"
 ): string {
   if (!iso) return fallback;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return fallback;
   return date.toLocaleDateString();
-}
-
-/** Maps difficulty to the shared tone system used by chips and badges. */
-export function difficultyTone(difficulty: Difficulty): Tone {
-  if (difficulty === "Easy") return "info";
-  if (difficulty === "Hard") return "danger";
-  return "accent";
 }
 
 /** Maps recommendation reason to the shared tone system. */
@@ -34,7 +26,7 @@ export function recommendedTone(reason: RecommendedReason): Tone {
 /** Formats a study phase with a screen-specific fallback. */
 export function formatStudyPhase(
   phase?: StudyPhase | "New" | null,
-  fallback = "NEW",
+  fallback = "NEW"
 ): string {
   if (!phase) return fallback;
   return phase.toUpperCase();

@@ -6,6 +6,7 @@ export { MetricCard } from "./card/MetricCard";
 export { NumericDisplay } from "./chip/NumericDisplay";
 export { ProgressTrack } from "./chip/ProgressTrack";
 export { ToneChip } from "./chip/ToneChip";
+export { DifficultyChip } from "./chip/DifficultyChip";
 export { FieldAssistRow } from "./feedback/FieldAssistRow";
 export { InlineStatusRegion } from "./feedback/InlineStatusRegion";
 export { StatusSurface } from "./feedback/StatusSurface";

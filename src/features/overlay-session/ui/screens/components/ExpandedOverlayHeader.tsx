@@ -1,6 +1,11 @@
-import {StatusSurface, SurfaceIconButton, SurfaceSectionLabel, SurfaceTooltip, ToneChip,} from "@design-system/atoms";
-import {cognipaceTokens} from "@design-system/theme";
-import {Difficulty, difficultyTone} from "@features/problems";
+import {
+  DifficultyChip,
+  StatusSurface,
+  SurfaceIconButton,
+  SurfaceSectionLabel,
+  SurfaceTooltip,
+} from "@design-system/atoms";
+import { cognipaceTokens } from "@design-system/theme";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import VisibilityOffRounded from "@mui/icons-material/VisibilityOffRounded";
@@ -8,17 +13,11 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
-import {OverlayHeaderSectionViewModel, OverlayHeaderStatusCard, OverlayHeaderStatusTone,} from "../overlayPanel.types";
-
-const difficultyBadgeStyles: Record<
-  Difficulty,
-  ReturnType<typeof difficultyTone>
-> = {
-  Easy: "info",
-  Medium: "accent",
-  Hard: "danger",
-  Unknown: "default",
-};
+import {
+  OverlayHeaderSectionViewModel,
+  OverlayHeaderStatusCard,
+  OverlayHeaderStatusTone,
+} from "../overlayPanel.types";
 
 const statusToneStyles: Record<
   OverlayHeaderStatusTone,
@@ -42,16 +41,10 @@ const statusToneStyles: Record<
   },
 };
 
-function DifficultyBadge(props: { difficulty: Difficulty }) {
-  return <ToneChip label={props.difficulty} tone={difficultyBadgeStyles[props.difficulty]}/>;
-}
-
-function HeaderStatusCard(
-  props: {
-    card: OverlayHeaderStatusCard;
-    empty?: boolean;
-  }
-) {
+function HeaderStatusCard(props: {
+  card: OverlayHeaderStatusCard;
+  empty?: boolean;
+}) {
   const toneStyle = statusToneStyles[props.card.tone];
 
   return (
@@ -97,10 +90,10 @@ export function ExpandedOverlayStatus(props: {
         justifyContent="space-between"
         spacing={1}
       >
-        <Box sx={{minWidth: 0}}>
+        <Box sx={{ minWidth: 0 }}>
           <SurfaceSectionLabel>{props.header.sessionLabel}</SurfaceSectionLabel>
         </Box>
-        <DifficultyBadge difficulty={props.header.difficulty}/>
+        <DifficultyChip difficulty={props.header.difficulty} />
       </Stack>
       <Stack
         direction="row"
@@ -120,11 +113,9 @@ export function ExpandedOverlayStatus(props: {
   );
 }
 
-export function ExpandedOverlayHeader(
-  props: {
-    header: OverlayHeaderSectionViewModel;
-  }
-) {
+export function ExpandedOverlayHeader(props: {
+  header: OverlayHeaderSectionViewModel;
+}) {
   return (
     <Stack
       alignItems="center"
@@ -146,7 +137,7 @@ export function ExpandedOverlayHeader(
               props.header.onCollapse();
             }}
           >
-            <KeyboardArrowDownRounded fontSize="small"/>
+            <KeyboardArrowDownRounded fontSize="small" />
           </SurfaceIconButton>
         </SurfaceTooltip>
         <SurfaceTooltip title="Open settings">
@@ -157,7 +148,7 @@ export function ExpandedOverlayHeader(
               props.header.onOpenSettings();
             }}
           >
-            <SettingsRounded fontSize="small"/>
+            <SettingsRounded fontSize="small" />
           </SurfaceIconButton>
         </SurfaceTooltip>
         <SurfaceTooltip title="Hide overlay">
@@ -168,7 +159,7 @@ export function ExpandedOverlayHeader(
               props.header.onHide();
             }}
           >
-            <VisibilityOffRounded fontSize="small"/>
+            <VisibilityOffRounded fontSize="small" />
           </SurfaceIconButton>
         </SurfaceTooltip>
         <Box
@@ -182,11 +173,11 @@ export function ExpandedOverlayHeader(
           }}
         />
       </Stack>
-      <Stack alignItems="center" direction="row" sx={{flex: 1, minWidth: 0}}>
+      <Stack alignItems="center" direction="row" sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           color="primary.light"
           noWrap
-          sx={{flexShrink: 1, minWidth: 0}}
+          sx={{ flexShrink: 1, minWidth: 0 }}
           variant="overline"
         >
           {props.header.title}

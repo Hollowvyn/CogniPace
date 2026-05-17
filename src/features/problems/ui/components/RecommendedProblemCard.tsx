@@ -1,12 +1,12 @@
 /** Recommendation card shared by popup, dashboard overview, and overlay post-submit. */
-import { SurfaceCard, ToneChip } from "@design-system/atoms";
+import { DifficultyChip, SurfaceCard, ToneChip } from "@design-system/atoms";
 import { RecommendedProblemView } from "@features/problems";
 import Button, { ButtonProps } from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
-import { difficultyTone, formatDisplayDate, recommendedTone } from "../presentation/studyState";
+import { formatDisplayDate, recommendedTone } from "../presentation/studyState";
 
 export interface RecommendedProblemCardProps {
   buttonFullWidth?: boolean;
@@ -17,7 +17,9 @@ export interface RecommendedProblemCardProps {
   emptyTitle?: string;
   headerAction?: ReactNode;
   helper?: ReactNode;
-  onOpenProblem: (target: Pick<RecommendedProblemView, "slug">) => Promise<void> | void;
+  onOpenProblem: (
+    target: Pick<RecommendedProblemView, "slug">
+  ) => Promise<void> | void;
   recommended: RecommendedProblemView | null;
   showNextReviewDate?: boolean;
 }
@@ -54,12 +56,7 @@ export function RecommendedProblemCard(props: RecommendedProblemCardProps) {
     <SurfaceCard
       compact={compact}
       action={
-        headerAction ?? (
-          <ToneChip
-            label={recommended.difficulty}
-            tone={difficultyTone(recommended.difficulty)}
-          />
-        )
+        headerAction ?? <DifficultyChip difficulty={recommended.difficulty} />
       }
       label="Recommended Now"
       title={recommended.title}

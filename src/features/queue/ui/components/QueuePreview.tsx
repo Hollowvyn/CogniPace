@@ -1,5 +1,5 @@
-import { InsetSurface, ToneChip } from "@design-system/atoms";
-import { difficultyTone, formatDisplayDate } from "@features/problems";
+import { DifficultyChip, InsetSurface } from "@design-system/atoms";
+import { formatDisplayDate } from "@features/problems";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -43,10 +43,7 @@ export function QueuePreview(props: QueuePreviewProps) {
               </Typography>
             </Box>
             <Stack direction="row" spacing={1}>
-              <ToneChip
-                label={item.difficulty}
-                tone={difficultyTone(item.difficulty)}
-              />
+              <DifficultyChip difficulty={item.difficulty} />
               <Button
                 onClick={() => {
                   void props.onOpenProblem({ slug: item.slug });

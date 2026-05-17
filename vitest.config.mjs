@@ -34,15 +34,17 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    include: [
-      "src/tests/**/*.react.test.tsx",
-    ],
+    include: ["src/tests/**/*.react.test.tsx", "src/tests/**/*.a11y.test.tsx"],
     setupFiles: ["src/tests/support/setup.tsx"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
       include: ["src/**/*"],
-      exclude: ["src/**/*.test.ts", "src/**/*.test.tsx", "src/entrypoints/**/*"],
+      exclude: [
+        "src/**/*.test.ts",
+        "src/**/*.test.tsx",
+        "src/entrypoints/**/*",
+      ],
     },
   },
 });

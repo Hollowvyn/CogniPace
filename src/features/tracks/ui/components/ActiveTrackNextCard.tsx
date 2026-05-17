@@ -1,8 +1,7 @@
 /** Reusable "next in track" card shared by popup and overlay surfaces. */
-import {SurfaceCard, ToneChip} from "@design-system/atoms";
-import {difficultyTone} from "@features/problems";
+import { DifficultyChip, SurfaceCard, ToneChip } from "@design-system/atoms";
 import { getStudyStateSummary } from "@libs/fsrs/studyState";
-import Button, {ButtonProps} from "@mui/material/Button";
+import Button, { ButtonProps } from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -45,11 +44,8 @@ export function ActiveTrackNextCard(props: ActiveTrackNextCardProps) {
     <SurfaceCard compact={compact} label={label} title={problem.title}>
       <Stack spacing={compact ? 1.15 : 1.5}>
         <Stack direction="row" flexWrap="wrap" gap={1}>
-          {groupName ? <ToneChip label={groupName}/> : null}
-          <ToneChip
-            label={problem.difficulty}
-            tone={difficultyTone(problem.difficulty)}
-          />
+          {groupName ? <ToneChip label={groupName} /> : null}
+          <DifficultyChip difficulty={problem.difficulty} />
         </Stack>
         <Typography color="text.secondary" variant="body2">
           FSRS: {phaseLabel}

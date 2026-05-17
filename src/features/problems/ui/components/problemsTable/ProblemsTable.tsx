@@ -1,4 +1,4 @@
-import { ToneChip } from "@design-system/atoms/chip/ToneChip";
+import { DifficultyChip, ToneChip } from "@design-system/atoms";
 import { SurfaceTableContainer } from "@design-system/atoms/table/SurfaceTableContainer";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import ErrorRounded from "@mui/icons-material/ErrorRounded";
@@ -29,7 +29,6 @@ import { asProblemSlug } from "@shared/ids";
 import React, { Fragment, useCallback, useMemo } from "react";
 
 import {
-  difficultyTone,
   formatDisplayDate,
   formatRetention,
   formatStudyPhase,
@@ -51,9 +50,7 @@ import {
   type SortDirection,
   type SortKey,
 } from "./types";
-import {
-  useProblemTableStoreSelector,
-} from "./useProblemTableStore";
+import { useProblemTableStoreSelector } from "./useProblemTableStore";
 
 import type { ProblemTableStore } from "./problemTableStore";
 import type { Difficulty, Problem } from "../../../domain/model";
@@ -110,38 +107,38 @@ export function ProblemsTable(props: ProblemsTableProps) {
   const rowsPerPage = useProblemTableStoreSelector(store, (s) => s.rowsPerPage);
   const selectedSlugs = useProblemTableStoreSelector(
     store,
-    (s) => s.selectedSlugs,
+    (s) => s.selectedSlugs
   );
   const expandedSlug = useProblemTableStoreSelector(
     store,
-    (s) => s.expandedSlug,
+    (s) => s.expandedSlug
   );
   const pendingAction = useProblemTableStoreSelector(
     store,
-    (s) => s.pendingAction,
+    (s) => s.pendingAction
   );
   const error = useProblemTableStoreSelector(store, (s) => s.error);
   const dispatchIntent = useProblemTableStoreSelector(
     store,
-    (s) => s.dispatchIntent,
+    (s) => s.dispatchIntent
   );
 
   const filteredProblems = useMemo(
     () => filterAndSortProblems(problems, filters, sort, settings, now, tracks),
-    [filters, now, problems, settings, sort, tracks],
+    [filters, now, problems, settings, sort, tracks]
   );
   const pageRows = useMemo(
     () => pageProblems(filteredProblems, page, rowsPerPage),
-    [filteredProblems, page, rowsPerPage],
+    [filteredProblems, page, rowsPerPage]
   );
   const trackOptions = useMemo(
     () => listTrackOptions(problems, tracks),
-    [problems, tracks],
+    [problems, tracks]
   );
 
   const isSelected = useCallback(
     (slug: ProblemSlug) => selectedSlugs.has(slug),
-    [selectedSlugs],
+    [selectedSlugs]
   );
 
   const allOnPageSelected =
@@ -157,12 +154,14 @@ export function ProblemsTable(props: ProblemsTableProps) {
         sort.key === key
           ? {
               key,
-              direction: (sort.direction === "asc" ? "desc" : "asc") as SortDirection,
+              direction: (sort.direction === "asc"
+                ? "desc"
+                : "asc") as SortDirection,
             }
           : { key, direction: "asc" as SortDirection };
       dispatchIntent({ type: "SET_SORT", sort: nextSort });
     },
-    [dispatchIntent, sort],
+    [dispatchIntent, sort]
   );
 
   const totalColumns =
@@ -207,7 +206,8 @@ export function ProblemsTable(props: ProblemsTableProps) {
             onChange={(event) => {
               dispatchIntent({
                 type: "SET_DIFFICULTY",
-                difficulty: event.target.value as ProblemsTableFilters["difficulty"],
+                difficulty: event.target
+                  .value as ProblemsTableFilters["difficulty"],
               });
             }}
           >
@@ -248,7 +248,8 @@ export function ProblemsTable(props: ProblemsTableProps) {
               onChange={(event) => {
                 dispatchIntent({
                   type: "SET_TRACK_FILTER",
-                  trackId: event.target.value as ProblemsTableFilters["trackId"],
+                  trackId: event.target
+                    .value as ProblemsTableFilters["trackId"],
                 });
               }}
             >
@@ -294,7 +295,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                       dispatchIntent({
                         type: "TOGGLE_PAGE_SELECTION",
                         slugs: pageRows.map((problem) =>
-                          asProblemSlug(problem.slug),
+                          asProblemSlug(problem.slug)
                         ),
                       });
                     }}
@@ -350,10 +351,12 @@ export function ProblemsTable(props: ProblemsTableProps) {
                 const studySummary = getProblemStudySummary(
                   problem,
                   now,
-                  settings.memoryReview.targetRetention,
+                  settings.memoryReview.targetRetention
                 );
                 const suspended = getProblemSuspendedReason(problem, settings);
-                const phase = suspended ? "Suspended" : studySummary?.phase ?? "New";
+                const phase = suspended
+                  ? "Suspended"
+                  : (studySummary?.phase ?? "New");
                 const isDue = studySummary?.isDue && !suspended;
                 const isExpanded = expandedSlug === slug;
                 return (
@@ -364,7 +367,10 @@ export function ProblemsTable(props: ProblemsTableProps) {
                       data-expanded-row={isExpanded ? "true" : undefined}
                       onClick={(event) => {
                         const target = event.target as Element | null;
-                        if (target?.closest("a, button, input, [role='button']")) return;
+                        if (
+                          target?.closest("a, button, input, [role='button']")
+                        )
+                          return;
                         event.stopPropagation();
                         dispatchIntent({ type: "TOGGLE_EXPANDED", slug });
                       }}
@@ -433,13 +439,14 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <ToneChip
-                          label={problem.difficulty}
-                          tone={difficultyTone(problem.difficulty)}
-                        />
+                        <DifficultyChip difficulty={problem.difficulty} />
                       </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          alignItems="center"
+                        >
                           <Tooltip
                             title={suspendedTooltip(suspended)}
                             disableHoverListener={!suspended}
@@ -464,7 +471,9 @@ export function ProblemsTable(props: ProblemsTableProps) {
                               {formatStudyPhase(phase)}
                             </Typography>
                           </Tooltip>
-                          {isDue ? <ToneChip label="DUE" tone="accent" /> : null}
+                          {isDue ? (
+                            <ToneChip label="DUE" tone="accent" />
+                          ) : null}
                         </Stack>
                       </TableCell>
                       {showRetentionColumn ? (
@@ -485,7 +494,9 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         </Typography>
                       </TableCell>
                     </TableRow>
-                    <TableRow data-expanded-row={isExpanded ? "true" : undefined}>
+                    <TableRow
+                      data-expanded-row={isExpanded ? "true" : undefined}
+                    >
                       <TableCell
                         colSpan={totalColumns}
                         sx={{
@@ -526,7 +537,7 @@ export function ProblemsTable(props: ProblemsTableProps) {
                         sx={{ borderBottom: "none", height: 53 }}
                       />
                     </TableRow>
-                  ),
+                  )
                 )
               : null}
           </TableBody>
@@ -566,7 +577,9 @@ function SortableHeadCell({
 }) {
   return (
     <TableCell
-      sortDirection={currentSort.key === sortKey ? currentSort.direction : false}
+      sortDirection={
+        currentSort.key === sortKey ? currentSort.direction : false
+      }
     >
       <TableSortLabel
         active={currentSort.key === sortKey}

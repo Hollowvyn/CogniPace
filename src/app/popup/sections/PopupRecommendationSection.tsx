@@ -1,12 +1,15 @@
 import {
+  DifficultyChip,
   FieldAssistRow,
   InlineStatusRegion,
   SurfaceIconButton,
   SurfaceTooltip,
-  ToneChip,
 } from "@design-system/atoms";
 import { UiStatus } from "@features/app-shell";
-import { difficultyTone, RecommendedProblemView , RecommendedProblemCard } from "@features/problems";
+import {
+  RecommendedProblemView,
+  RecommendedProblemCard,
+} from "@features/problems";
 import ShuffleRounded from "@mui/icons-material/ShuffleRounded";
 import Stack from "@mui/material/Stack";
 
@@ -17,10 +20,7 @@ function RecommendationHeaderAction(props: {
 }) {
   return (
     <Stack alignItems="center" direction="row" spacing={0.75}>
-      <ToneChip
-        label={props.difficulty}
-        tone={difficultyTone(props.difficulty)}
-      />
+      <DifficultyChip difficulty={props.difficulty} />
       {props.canShuffle ? (
         <SurfaceTooltip title="Shuffle recommendation">
           <SurfaceIconButton

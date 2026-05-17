@@ -38,9 +38,7 @@ export {
   ProblemFormDialog,
   type ProblemFormDialogCloseReason,
 } from "./ui/screens/editcreateform/ProblemFormDialog";
-export {
-  createProblemFormViewModel,
-} from "./ui/screens/editcreateform/viewmodel/problemFormStore";
+export { createProblemFormViewModel } from "./ui/screens/editcreateform/viewmodel/problemFormStore";
 export type {
   ProblemFormIntent,
   ProblemFormStore,
@@ -54,10 +52,4 @@ export {
 export { RecommendedProblemCard } from "./ui/components/RecommendedProblemCard";
 export type { RecommendedProblemCardProps } from "./ui/components/RecommendedProblemCard";
 
-// UI-presentation helpers — cross-feature consumers (tracks cards, popup,
-// queue, overlay-session) map problem-domain values (Difficulty,
-// RecommendedReason, retrievability) to the shared design-system Tone.
-export {
-  difficultyTone,
-  formatDisplayDate,
-} from "./ui/presentation/studyState";
+export { formatDisplayDate } from "./ui/presentation/studyState";
